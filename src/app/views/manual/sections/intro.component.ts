@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   host: { id: 'intro' },
   templateUrl: './intro.component.html',
-  styleUrls: ['../manual.shared.scss'],
+  styleUrls: ['./intro.component.scss'], // ✅ BIEN
   imports: [
     CommonModule,
     MatCardModule,

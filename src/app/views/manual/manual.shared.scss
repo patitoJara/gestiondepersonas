@@ -1,8 +1,11 @@
+//C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\views\manual\manual.shared.scss
+
 /* =====================================================
    🎨 MANUAL DEL SISTEMA — ESTILO INSTITUCIONAL
 ===================================================== */
 
-/* 🎯 Paleta base */
+
+/* Paleta */
 $color-primary: #1976d2;
 $color-info: #0288d1;
 $color-success: #2e7d32;
@@ -15,23 +18,6 @@ $text-muted: #607d8b;
 
 $bg-soft: #f5f7fa;
 $bg-card: #fafafa;
-
-/* =====================================================
-   CONTENEDOR GENERAL
-===================================================== */
-.manual-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  background: $bg-soft;
-  padding: 16px;
-  border-radius: 20px;
-
-  color: $text-body;
-  font-size: 14.5px;
-  line-height: 1.6;
-}
 
 /* =====================================================
    CABECERA
@@ -74,8 +60,9 @@ $bg-card: #fafafa;
   border-radius: 16px;
   padding: 20px;
   background: white;
-
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  scroll-margin-top: 90px; // compensación header
 }
 
 .section-header {
@@ -189,50 +176,60 @@ $bg-card: #fafafa;
   color: $color-primary;
 }
 
-/* =====================================================
+/* ===============================
    ÍNDICE DEL MANUAL
-===================================================== */
-.manual-index {
-  border-radius: 16px;
-  padding: 16px 18px;
-  background: white;
-
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.manual-index h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: $text-primary;
-}
-
+================================ */
 .manual-index ul {
   list-style: none;
   padding-left: 0;
-  margin: 0;
 }
 
 .manual-index li {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .manual-index a {
   display: inline-block;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  color: $color-primary;
-  transition: color 0.15s ease;
-}
+  padding: 4px 8px;
+  border-radius: 6px;
 
-$color-primary-dark: #155fa0; // azul un poco más oscuro
+  color: $color-primary;
+  font-weight: 500;
+  text-decoration: none;
+
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
 
 .manual-index a:hover {
-  text-decoration: underline;
-  color: $color-primary-dark;
+  background: rgba($color-primary, 0.08);
+  color: $color-primary;
+}
+/* Texto guía bajo el índice */
+.index-hint {
+  font-size: 13px;
+  color: $text-muted;
+  margin-bottom: 10px;
 }
 
-.manual-section {
-  scroll-margin-top: 90px; // ajusta según altura real del header
+/* ÍNDICE INTERACTIVO */
+.manual-index a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  border-radius: 8px;
+
+  color: $color-primary;
+  font-weight: 500;
+  text-decoration: none;
+
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.manual-index a:hover {
+  background: rgba($color-primary, 0.1);
+  transform: translateX(4px);
 }

@@ -1,194 +1,36 @@
-/* =====================================================
-   🎨 MANUAL DEL SISTEMA — ESTILO INSTITUCIONAL
-===================================================== */
+//C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\views\manual\manual.component.scss
 
-/* 🎯 Paleta base */
-$color-primary: #1976d2;
-$color-info: #0288d1;
-$color-success: #2e7d32;
-$color-warning: #ed6c02;
-$color-rule: #6a1b9a;
+// src/app/views/manual/manual.component.scss
 
-$text-primary: #263238;
-$text-body: #455a64;
-$text-muted: #607d8b;
+@use './manual.shared.scss' as *;
 
-$bg-soft: #f5f7fa;
-$bg-card: #fafafa;
-
-/* =====================================================
-   CONTENEDOR GENERAL
-===================================================== */
 .manual-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
 
   background: $bg-soft;
-  padding: 16px;
+  padding: 24px;
   border-radius: 20px;
 
   color: $text-body;
   font-size: 14.5px;
   line-height: 1.6;
+
+  /* 🔑 CENTRADO REAL DEL CONTENIDO */
+  max-width: 1200px;
+  margin: 0 auto;
+
+  /* 🔑 Scroll interno del manual */
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
 }
 
-/* =====================================================
-   CABECERA
-===================================================== */
-.manual-header {
-  border-radius: 16px;
-  padding: 22px;
-  background: $bg-card;
-}
-
-.header-row {
+.manual-content {
   display: flex;
-  align-items: center;
-  gap: 16px;
-}
+  flex-direction: column;
+  gap: 20px;
 
-.header-icon {
-  font-size: 38px;
-  color: $color-primary;
-  opacity: 0.9;
-}
-
-.manual-header h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.manual-header p {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: $text-muted;
-}
-
-/* =====================================================
-   SECCIONES
-===================================================== */
-.manual-section {
-  border-radius: 16px;
-  padding: 20px;
-  background: white;
-
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.section-header h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-.section-header mat-icon {
-  font-size: 20px;
-  color: $color-primary;
-}
-
-/* =====================================================
-   TEXTO
-===================================================== */
-.manual-section p {
-  margin: 0 0 10px;
-  color: $text-body;
-  font-size: 14.5px;
-  line-height: 1.6;
-}
-
-/* =====================================================
-   LISTAS
-===================================================== */
-.manual-list {
-  padding-left: 20px;
-  margin: 8px 0 10px;
-}
-
-.manual-list li {
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: $text-body;
-}
-
-/* =====================================================
-   CAJAS DE ÉNFASIS (CLAVE)
-===================================================== */
-.manual-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-
-  padding: 12px 14px;
-  margin-top: 12px;
-
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-
-  mat-icon {
-    font-size: 20px;
-    margin-top: 2px;
-  }
-}
-
-/* 🔵 Información */
-.box-info {
-  background: rgba($color-info, 0.08);
-  border-left: 4px solid $color-info;
-
-  mat-icon {
-    color: $color-info;
-  }
-}
-
-/* 🟡 Advertencia */
-.box-warning {
-  background: rgba($color-warning, 0.1);
-  border-left: 4px solid $color-warning;
-
-  mat-icon {
-    color: $color-warning;
-  }
-}
-
-/* 🟣 Regla / Restricción */
-.box-rule {
-  background: rgba($color-rule, 0.08);
-  border-left: 4px solid $color-rule;
-
-  mat-icon {
-    color: $color-rule;
-  }
-}
-
-/* 🟢 Buenas prácticas / Confirmación */
-.box-success {
-  background: rgba($color-success, 0.08);
-  border-left: 4px solid $color-success;
-
-  mat-icon {
-    color: $color-success;
-  }
-}
-
-/* =====================================================
-   UTILIDADES
-===================================================== */
-.icon-primary {
-  color: $color-primary;
-}
-
-.manual-section {
-  scroll-margin-top: 90px; // ajusta según altura real del header
+  max-width: 1000px;   // 👈 contenido más legible
+  margin: 0 auto;      // 👈 centra dentro del fondo
 }

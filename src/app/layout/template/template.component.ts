@@ -25,6 +25,7 @@ import { routes } from '../../app.routes';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { firstValueFrom } from 'rxjs';
 
 let globalReloadListenerAdded = false;
 
@@ -205,42 +206,27 @@ export class TemplateComponent implements OnInit {
   }
 
   async extendSession(): Promise<void> {
-    if (this.dialog.openDialogs.length > 0) {
-      this.dialog.closeAll();
-    }
     if (this.isRefreshing) return;
-
     this.isRefreshing = true;
-    this.snackBar.open('🔄 Renovando sesión...', '', {
-      duration: 2500,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-    });
 
-    const newToken = await this.auth.refresh();
+    try {
+      this.snackBar.open('🔄 Renovando sesión...', '', { duration: 2000 });
 
-    if (newToken) {
-      this.snackBar.open('✅ Sesión extendida correctamente', '', {
-        duration: 2500,
-        horizontalPosition: 'end',
-        verticalPosition: 'top',
-        panelClass: ['success-snackbar'],
-      });
+      await firstValueFrom(this.auth.refresh());
 
-      // 🔥 Recalcular expiración REAL
+      // 🔥 recalcula con el token NUEVO
       this.startRealExpirationTimer();
       this.showExtendButton = false;
-    } else {
-      this.snackBar.open('❌ No se pudo extender la sesión', '', {
-        duration: 2500,
-        horizontalPosition: 'end',
-        verticalPosition: 'top',
-        panelClass: ['error-snackbar'],
-      });
-    }
 
-    this.isRefreshing = false;
-    this.cdr.detectChanges();
+      this.snackBar.open('✅ Sesión extendida correctamente', '', {
+        duration: 2000,
+      });
+    } catch {
+      // El logout ya ocurre en AuthLoginService
+    } finally {
+      this.isRefreshing = false;
+      this.cdr.detectChanges();
+    }
   }
 
   private handleSessionTimeout(): void {

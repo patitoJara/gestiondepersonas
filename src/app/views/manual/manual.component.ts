@@ -1,20 +1,17 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; 
-
 
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon'; // ✅ CLAVE
+import { MatIconModule } from '@angular/material/icon';
 
-
-import { IntroComponent } from '../../views/manual/sections/intro.component';
-import { DemandaComponent } from '../../views/manual/sections/demanda.component';
-import { ListadoComponent } from '../../views/manual/sections/listado.component';
-import { MantenedoresComponent } from '../../views/manual/sections/mantenedores.component';
-import { RolesComponent } from '../../views/manual/sections/roles.component';
-import { SeguridadComponent } from '../../views/manual/sections/seguridad.component';
+import { IntroComponent } from './sections/intro.component';
+import { DemandaComponent } from './sections/demanda.component';
+import { ListadoComponent } from './sections/listado.component';
+import { MantenedoresComponent } from './sections/mantenedores.component';
+import { RolesComponent } from './sections/roles.component';
+import { SeguridadComponent } from './sections/seguridad.component';
 
 @Component({
   selector: 'app-manual',
@@ -23,19 +20,28 @@ import { SeguridadComponent } from '../../views/manual/sections/seguridad.compon
   styleUrls: ['./manual.component.scss'],
   imports: [
     CommonModule,
-    RouterModule,
     MatCardModule,
     MatExpansionModule,
-    MatExpansionModule,
     MatListModule,
-    MatIconModule,    
+    MatIconModule,
     IntroComponent,
     DemandaComponent,
     ListadoComponent,
     MantenedoresComponent,
     RolesComponent,
-    SeguridadComponent
+    SeguridadComponent,
   ],
 })
-export class ManualComponent {}
+export class ManualComponent {
 
+  scrollTo(id: string): void {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
+
+}
