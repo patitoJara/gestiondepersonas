@@ -1,0 +1,194 @@
+/* ===============================================
+   💠 ESTILO INSTITUCIONAL — BIENVENIDA RDA-SM
+   =============================================== */
+
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background-color: #f7f9fc;
+  font-family: "Roboto", "Segoe UI", Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* === 📋 TARJETA PRINCIPAL === */
+.welcome-card {
+  width: 100%;
+  max-width: 950px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 2.5rem 3rem;
+  border: 1px solid #e3e8f0;
+}
+
+/* === 🧩 BLOQUES DE INFORMACIÓN === */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem; /* 🔹 más aire entre bloques */
+  margin-bottom: 2rem;
+}
+
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 1rem 1.2rem;
+  border: 1px solid #e0e6ed;
+  border-radius: 12px;
+  background-color: #f9fbfd;
+  transition: all 0.25s ease;
+
+  mat-icon {
+    font-size: 22px;
+    color: #1976d2;
+    margin-top: 3px;
+  }
+
+  .label {
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .value {
+    color: #334155;
+    font-weight: 400;
+    font-size: 0.96rem;
+    line-height: 1.4;
+  }
+
+  &:hover {
+    background: #eef5ff;
+    border-color: #c7dbf6;
+  }
+}
+
+/* === 🧭 PROGRAMA ACTIVO === */
+.active-program {
+  margin-top: 2.5rem;
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #0d47a1;
+    margin-bottom: 1rem;
+  }
+
+  .mat-mdc-form-field {
+    width: 100%;
+    margin-bottom: 1.2rem;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1565c0;
+    color: #fff;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.55rem 1.2rem;
+    box-shadow: 0 3px 6px rgba(21, 101, 192, 0.25);
+    transition: all 0.25s ease;
+
+    &:hover {
+      background: #0d47a1;
+      transform: translateY(-1px);
+    }
+
+    mat-icon {
+      font-size: 18px;
+    }
+  }
+}
+
+/* === 📌 MENSAJE FINAL === */
+.footer-msg {
+  margin-top: 2.5rem;
+  font-size: 0.95rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  mat-icon {
+    font-size: 20px;
+    color: #1565c0;
+  }
+}
+
+
+/* === ✔️ ACTIVO (programa / rol) === */
+
+.program-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+}
+
+.program-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 0.95rem;
+}
+
+.program-item .check {
+  font-size: 18px;
+  color: #1976d2;
+}
+
+.program-item span.active {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+
+.welcome-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 2rem;
+
+  min-height: 48px;   /* 🔥 espacio real */
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e3f2fd;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;     /* 🔥 nunca se achica */
+  overflow: visible; /* 🔥 CLAVE */
+
+  mat-icon {
+  font-size: 28px;
+  line-height: 28px;   /* 🔥 CLAVE */
+  width: 28px;
+  height: 28px;
+  display: block;      /* 🔥 evita clipping inline */
+  color: #1565c0;
+  }
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: #0d47a1;
+}
+
+.username {
+  font-weight: 700;
+  color: #111827;
+}
+

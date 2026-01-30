@@ -1,0 +1,235 @@
+// ../../shared/styles/base-list.scss
+
+
+/* =======================================================
+   🧩 BASE DE LISTAS — Mantenedores estándar SSM
+   ======================================================= */
+
+/* === Toolbar general (buscador + botones + acción derecha) === */
+.list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 12px;
+}
+
+/* === Bloque de filtros (usando nombre actual .filters) === */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  input {
+    flex: 1;
+    max-width: 230px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #cfd8dc;
+    font-size: 0.9rem;
+  }
+
+  button {
+    min-width: 90px;
+    height: 36px;
+    font-size: 0.85rem;
+    text-transform: none;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    background: #fff;
+    transition: all 0.25s ease;
+
+    &:hover {
+      background-color: #e3f2fd;
+      border-color: #90caf9;
+      color: #1565c0;
+    }
+
+    &.active {
+      background-color: #1565c0;
+      color: #fff;
+      border-color: #1565c0;
+    }
+  }
+}
+
+/* === Acción principal derecha (Nuevo) === */
+.right-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  button {
+    font-weight: 500;
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+}
+
+/* === Tabla y contenedor === */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: unset;
+  border-collapse: collapse;
+}
+
+/* === Evitar scroll horizontal global === */
+:host {
+  display: block;
+  overflow-x: hidden;
+}
+
+mat-sidenav-content {
+  overflow-x: hidden !important;
+}
+
+/* === Chips de estado === */
+mat-chip {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* === Iconos de acción === */
+:host ::ng-deep .mat-mdc-icon-button {
+  color: #1565c0 !important;
+  opacity: 1 !important;
+  transition: transform 0.2s ease;
+
+  &:hover mat-icon {
+    transform: scale(1.1);
+    color: #0d47a1 !important;
+  }
+
+  &[disabled] mat-icon {
+    opacity: 0.4 !important;
+    color: rgba(0, 0, 0, 0.38) !important;
+  }
+}
+
+/* =======================================================
+   🎨 Ajustes visuales adicionales globales
+   ======================================================= */
+
+/* 🔹 Espaciado superior respecto a la barra principal azul */
+.list-toolbar {
+  margin-top: 10px; /* separa visualmente del header */
+}
+
+/* 🔹 Input de búsqueda mejorado */
+.filters input {
+  background-color: #342d70;
+  color: #000;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  width: 220px;
+
+  &::placeholder {
+    color: #757575; /* placeholder visible */
+    opacity: 1;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #90caf9;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+  }
+}
+
+/* 🔹 Asegura alineación vertical correcta */
+.filters,
+.right-actions {
+  margin-top: 4px;
+}
+
+
+/* =======================================================
+   ✨ Ajuste visual superior del bloque .filters
+   ======================================================= */
+
+.list-toolbar {
+  margin-top: 14px; /* separa del header azul */
+  align-items: flex-end;
+}
+
+/* 🔍 Campo de búsqueda y botones de filtro */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+
+  /* Campo de búsqueda */
+  input {
+    background-color: #fff;
+    color: #000;
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    width: 240px;
+    height: 34px;
+    box-sizing: border-box;
+    margin-top: 3px; /* baja el input respecto al header */
+
+    &::placeholder {
+      color: #616161;
+      opacity: 1;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #90caf9;
+      box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+    }
+  }
+
+  /* Botones de filtro */
+  button {
+    min-width: 90px;
+    height: 34px;
+    font-size: 0.85rem;
+    text-transform: none;
+    border: 1px solid #cfd8dc;
+    border-radius: 16px;
+    background: #fff;
+    transition: all 0.25s ease;
+
+    &:hover {
+      background-color: #e3f2fd;
+      border-color: #90caf9;
+      color: #1565c0;
+    }
+
+    &.active {
+      background-color: #1565c0;
+      color: #fff;
+      border-color: #1565c0;
+    }
+  }
+}
+
+/* === Iconos de acción visibles siempre === */
+:host ::ng-deep .mat-mdc-icon-button mat-icon {
+  color: #1565c0 !important;  /* azul institucional */
+  opacity: 1 !important;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* Hover: azul más fuerte */
+:host ::ng-deep .mat-mdc-icon-button:hover mat-icon {
+  color: #0d47a1 !important;
+  transform: scale(1.1);
+}
+
+

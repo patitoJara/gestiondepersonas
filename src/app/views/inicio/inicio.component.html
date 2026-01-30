@@ -1,0 +1,83 @@
+<mat-card class="welcome-card">
+  <!-- 🧭 Encabezado -->
+
+  <div class="welcome-header">
+    <div class="avatar">
+      <mat-icon>account_circle</mat-icon>
+    </div>
+
+    <h2>
+      Bienvenido, <span class="username">{{ fullName }}</span>
+    </h2>
+  </div>
+
+  <!-- 🧱 CONTENEDOR PRINCIPAL -->
+  <div class="main-grid">
+    <div class="left-column">
+      <!-- Programas disponibles -->
+      <div class="info-box">
+        <mat-icon>apps</mat-icon>
+        <div>
+          <span class="label">Programas disponibles</span>
+          <ul class="program-list">
+            <li *ngFor="let p of programs" class="program-item">
+              <mat-icon *ngIf="p === activeProgram" class="check">
+                check_circle
+              </mat-icon>
+
+              <span [class.active]="p === activeProgram">
+                {{ p }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Roles disponibles -->
+      <div class="info-box">
+        <mat-icon>security</mat-icon>
+        <div>
+          <span class="label">Roles disponibles</span>
+          <ul class="program-list">
+            <li *ngFor="let r of roles" class="program-item">
+              <mat-icon *ngIf="r === activeRole" class="check">
+                check_circle
+              </mat-icon>
+
+              <span [class.active]="r === activeRole">
+                {{ r }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Nombre completo -->
+      <div class="info-box">
+        <mat-icon>person</mat-icon>
+        <div>
+          <span class="label">Nombre completo</span>
+          <span class="value">{{ fullName || "Sin nombre" }}</span>
+        </div>
+      </div>
+
+      <!-- Fecha y hora -->
+      <div class="info-box">
+        <mat-icon>calendar_today</mat-icon>
+        <div>
+          <span class="label">Fecha y hora actual</span>
+          <span class="value">
+            {{ currentDate | date: "fullDate" }} —
+            {{ currentDate | date: "shortTime" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📩 Mensaje final -->
+  <div class="footer-msg">
+    <mat-icon>info</mat-icon>
+    <span>Seleccione una opción en el menú lateral para comenzar.</span>
+  </div>
+</mat-card>

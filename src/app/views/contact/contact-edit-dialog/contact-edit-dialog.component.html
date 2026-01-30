@@ -1,0 +1,58 @@
+<!-- C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\views\contact\contact-edit-dialog\contact-edit-dialog.component.html -->
+
+<h2 mat-dialog-title class="v2-header">
+  <mat-icon>person</mat-icon>
+  Editar datos del referente
+</h2>
+<mat-dialog-content *ngIf="form">
+  <div class="demand-v2 demand-layout v2">
+    <div class="col-left">
+      <div class="card card-blue">
+
+        <form [formGroup]="form" class="inline-form-grid">
+          <!-- NOMBRES (MISMA FILA) -->
+          <div class="field-line">
+            <label>Nombre *</label>
+            <input formControlName="name" />
+          </div>
+          <!-- TELÉFONO SOLO -->
+          <div class="field-line">
+            <label>Teléfono / Celular</label>
+            <input formControlName="cellphone" />
+          </div>          
+          <!-- CORREO (FILA COMPLETA) -->
+          <div class="field-line full-row">
+            <label>Correo</label>
+            <input formControlName="email" />
+            <mat-error *ngIf="form.get('email')?.hasError('pattern')">
+              Formato de correo no válido (ej: nombre&#64;dominio.cl)
+            </mat-error>            
+          </div>
+
+          <!-- DIRECCIÓN (FILA COMPLETA) -->
+          <div class="field-line full-row">
+            <label>Descripción</label>
+            <input formControlName="description" />
+          </div>
+        </form>
+        
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button color="warn" (click)="cancelar()">
+    Cancelar
+  </button>
+
+  <button
+    *ngIf="form"
+    mat-flat-button
+    color="primary"
+    [disabled]="form.invalid"
+    (click)="guardar()"
+  >
+    Guardar cambios
+  </button>
+</mat-dialog-actions>

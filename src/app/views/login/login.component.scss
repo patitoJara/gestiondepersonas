@@ -1,0 +1,265 @@
+/* =======================================================
+   🔐 LOGIN INSTITUCIONAL – SERVICIO DE SALUD MAGALLANES
+   Versión blanca profesional con sello inferior
+   ======================================================= */
+
+/* 🌐 RESET GENERAL */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 🚫 sin scroll */
+  height: 100%;
+  width: 100%;
+}
+
+/* 🌐 Estructura general */
+.login-wrapper {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: #f5f7fa;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* 💼 Tarjeta de acceso */
+.login-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.15);
+  padding: 40px 36px 48px;
+  width: 380px;
+  max-width: 92%;
+  text-align: center;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🏛️ Encabezado institucional */
+.logo-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.logo-header img {
+  width: 110px;
+  margin-bottom: 8px;
+}
+
+.logo-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a237e;
+  margin: 0;
+}
+
+.logo-header p {
+  margin: 2px 0 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* 📋 Título */
+.form-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #0d47a1;
+  margin: 10px 0 4px;
+}
+
+/* 📄 Subtítulo */
+.subtitle {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 1.4rem;
+}
+
+/* 📋 Formulario */
+.login-form {
+  width: 100%;
+}
+
+mat-form-field.full {
+  width: 100%;
+  margin-bottom: 1.2rem;
+}
+
+/* 🔘 Botón principal */
+.login-btn {
+  width: 100%;
+  height: 46px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: #1565c0 !important;
+  color: #fff !important;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #0d47a1 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(13, 71, 161, 0.25);
+}
+
+/* 🔗 Enlaces secundarios */
+/* ================================
+   🔗 ENLACES INFERIORES LOGIN
+   ================================ */
+.links-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  font-size: 0.9rem;
+
+  a {
+    color: #1565c0;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.25s ease;
+
+    &:hover {
+      color: #0d47a1;
+      text-decoration: underline;
+    }
+  }
+
+  /* Agrupa "¿Olvidaste?" y "Cambiar contraseña" en una misma línea */
+  .access-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+
+    a {
+      color: #0d47a1;
+      font-weight: 500;
+    }
+
+    .divider {
+      color: #999;
+      font-weight: 300;
+    }
+  }
+
+  /* "Acerca del sistema" separado, más discreto */
+  .system-link {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 400;
+
+    &:hover {
+      color: #0d47a1;
+    }
+  }
+}
+
+/* ⚙️ Opciones */
+.options-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  margin-top: 14px;
+}
+
+/* ⚠️ Error */
+.error {
+  color: #d32f2f;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* 🦶 Sello de Gobierno */
+.footer-seal {
+  position: fixed;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  color: #555;
+  font-size: 0.85rem;
+  z-index: 20;
+}
+
+.footer-seal img {
+  height: 26px;
+  width: auto;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.footer-seal img:hover {
+  opacity: 1;
+}
+
+/* 📱 Responsive */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 24px 40px;
+    width: 92%;
+  }
+
+  .logo-header img {
+    width: 90px;
+  }
+
+  .logo-header h2 {
+    font-size: 1rem;
+  }
+
+  .form-title {
+    font-size: 1.2rem;
+  }
+}
+
+
+
+/* ============================
+   🔗 Enlaces clickeables
+   ============================ */
+.links-row a {
+  cursor: pointer; /* 🖱️ Muestra la manito al pasar el mouse */
+  color: #1565c0;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.25s ease;
+
+  &:hover {
+    color: #0d47a1;
+    text-decoration: underline;
+  }
+}
+
+.login-button {
+  background-color: #0066cc;
+}

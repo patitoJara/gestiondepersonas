@@ -1,0 +1,27 @@
+/* ===========================
+   🎨 THEME (Angular Material v19+)
+   =========================== */
+@use '@angular/material' as mat;
+
+/* Núcleo base */
+@include mat.core();
+
+/* Paleta base personalizada */
+$theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,  // reemplaza "azure" del antiguo refs
+  ),
+  typography: (
+    brand-family: 'Roboto, "Helvetica Neue", sans-serif',
+    bold-weight: 600,
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+/* Aplica tema global */
+:root {
+  @include mat.all-component-themes($theme);
+}

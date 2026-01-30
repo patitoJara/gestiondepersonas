@@ -1,0 +1,30 @@
+@use '../../shared/styles/base-list.scss' as *;
+
+.filters input {
+  width: 300px;
+}
+
+/* ============================================
+   🔗 ENLACES DE RECUPERACIÓN Y CAMBIO DE CONTRASEÑA
+   ============================================ */
+
+.links-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
+.recover-link,
+.change-link {
+  color: #1565c0;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.recover-link:hover,
+.change-link:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}

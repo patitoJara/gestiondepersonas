@@ -1,0 +1,158 @@
+<div class="detalle-container">
+
+  <h2>SERVICIO DE SALUD MAGALLANES</h2>
+  <h3>Departamento de Salud Mental</h3>
+  <h3>Detalle Demanda</h3>
+
+  <hr />
+
+  <!-- ====================== PROGRAMA ====================== -->
+  <div class="titulo">Programa</div>
+
+  <table>
+    <tr>
+      <td><b>N° Ficha:</b></td>
+      <td>{{ reg?.id }} - {{ reg?.program?.id }}</td>
+
+      <td><b>Fecha Atención:</b></td>
+      <td>{{ format(reg?.date_attention) }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Programa:</b></td>
+      <td colspan="3">{{ reg?.program?.name || '---' }}</td>
+    </tr>
+  </table>
+
+
+  <!-- ====================== DATOS GENERALES ====================== -->
+  <div class="titulo">Datos Generales</div>
+
+  <table>
+    <tr>
+      <td><b>Postulante:</b></td>
+      <td>{{ getNombrePostulante() }}</td>
+
+      <td><b>Rut:</b></td>
+      <td>{{ reg?.postulant?.rut || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Fecha Nacimiento:</b></td>
+      <td>{{ format(reg?.postulant?.birthdate, 'dd-MM-yyyy') }}</td>
+
+      <td><b>Dirección:</b></td>
+      <td>{{ reg?.postulant?.address || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Mail:</b></td>
+      <td>{{ reg?.postulant?.email || '---' }}</td>
+
+      <td><b>Celular:</b></td>
+      <td>{{ reg?.postulant?.phone || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Comuna:</b></td>
+      <td>{{ reg?.postulant?.commune?.name || '---' }}</td>
+
+      <td><b>Sexo:</b></td>
+      <td>{{ reg?.postulant?.sex?.name || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Previsión:</b></td>
+      <td>{{ reg?.postulant?.convPrev?.name || '---' }}</td>
+
+      <td><b># Tratamientos:</b></td>
+      <td>{{ reg?.number_tto || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Tipo Contacto:</b></td>
+      <td>{{ reg?.contactType?.name || '---' }}</td>
+
+      <td><b>Quien Solicita:</b></td>
+      <td>{{ reg?.sender?.name || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Quien Deriva:</b></td>
+      <td>{{ reg?.diverter?.name || '---' }}</td>
+
+      <td><b>Estado:</b></td>
+      <td>{{ reg?.state?.name || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Resultado:</b></td>
+      <td colspan="3">{{ reg?.result?.name || '---' }}</td>
+    </tr>
+
+    <tr>
+      <td><b>Observaciones:</b></td>
+      <div class="obs-text">
+      <td colspan="3">{{ reg?.description || '---' }}</td>
+      </div>
+    </tr>
+  </table>
+
+
+  <!-- ====================== SUSTANCIAS ====================== -->
+  <div class="titulo">Sustancias Asociadas</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nivel</th>
+        <th>Sustancia</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let s of sustancias">
+        <td>{{ s?.level }}</td>
+        <td>{{ s?.substance?.name }}</td>
+      </tr>
+
+      <tr *ngIf="sustancias.length === 0">
+        <td colspan="2" class="sin-data">Sin sustancias registradas</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- ====================== MOVIMIENTOS ====================== -->
+  <div class="titulo">Movimientos</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Profesión</th>
+        <th>Profesional</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Estado</th>
+        <th>ID</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let m of movimientos">
+        <td>{{ m?.profession?.name }}</td>
+        <td>{{ m?.full_name }}</td>
+        <td>{{ format(m?.date_attention) }}</td>
+        <td>{{ m?.hour_attention }}</td>
+        <td>{{ m?.state }}</td>
+        <td>{{ m?.id }}</td>
+      </tr>
+
+      
+      <tr *ngIf="movimientos.length === 0">
+        <td colspan="6" class="sin-data">Sin movimientos registrados</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>

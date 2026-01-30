@@ -1,0 +1,76 @@
+<!-- =======================================================
+     📨 RECUPERAR CONTRASEÑA — FORMATO LOGIN SSM
+     Versión institucional, limpia y uniforme
+     ======================================================= -->
+<div class="login-wrapper">
+  <div class="login-card animate-entry">
+    <!-- 🏛️ Logo y encabezado -->
+    <div class="logo-header">
+      <img src="assets/logoSSM.png" alt="Logo Servicio de Salud Magallanes" />
+      <h2>Servicio de Salud Magallanes</h2>
+      <p>Departamento de Salud Mental</p>
+    </div>
+
+    <h3 class="form-title">Recuperar Contraseña</h3>
+    <p class="subtitle">
+      Ingresa tu correo electrónico. Se enviará un mensaje al soporte con copia a tu correo.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="recover()" novalidate>
+      <!-- 📧 Correo electrónico -->
+      <mat-form-field appearance="fill" class="full">
+        <mat-label>Correo electrónico</mat-label>
+        <input
+          matInput
+          type="email"
+          formControlName="email"
+          placeholder="usuario@redsalud.gob.cl"
+          autocomplete="email"
+        />
+        <mat-error *ngIf="f.email.touched && f.email.hasError('required')">
+          El correo es obligatorio.
+        </mat-error>
+        <mat-error *ngIf="f.email.touched && f.email.hasError('email')">
+          Ingresa un correo válido.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- 🔘 Botón principal -->
+      <button
+        mat-flat-button
+        color="primary"
+        class="login-btn"
+        type="submit"
+        [disabled]="loading || form.invalid"
+      >
+        <ng-container *ngIf="!loading; else loadingTpl">Enviar correo</ng-container>
+      </button>
+
+      <ng-template #loadingTpl>
+        <mat-spinner diameter="18"></mat-spinner>&nbsp; Enviando...
+      </ng-template>
+
+      <!-- ✅ Confirmación -->
+      <div *ngIf="sent" class="confirmation">
+        <mat-icon color="primary">mark_email_read</mat-icon>
+        <p>
+          ✅ Correo enviado a soporte y copia a tu dirección.
+          Conserva el mensaje como respaldo hasta recibir respuesta del equipo TIC.
+        </p>
+      </div>
+
+      <!-- 🔗 Volver -->
+      <div class="links-row">
+        <a routerLink="/auth/login" class="back-link">
+          <mat-icon>arrow_back</mat-icon> Volver al inicio de sesión
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- 🦶 Sello Gobierno -->
+  <footer class="footer-seal">
+    <img src="assets/logoGobierno.png" alt="Gobierno de Chile" />
+    <span>Gobierno de Chile — Ministerio de Salud</span>
+  </footer>
+</div>

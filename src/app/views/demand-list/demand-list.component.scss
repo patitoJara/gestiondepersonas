@@ -1,0 +1,111 @@
+// demand-list.component
+// quien deriva styles
+@use '../../shared/styles/base-list.scss' as *;
+
+
+
+/* ============================================
+   🔵 TAMAÑO DE LETRA IGUAL A LA TABLA (14px)
+   ============================================ */
+
+.filtros mat-form-field,
+.filtros input,
+.filtros mat-select,
+.filtros .mat-mdc-select-value,
+.filtros .mat-mdc-select-placeholder,
+.filtros .mat-mdc-form-field-infix,
+.filtros .mat-mdc-form-field-input-control {
+  font-size: 14px !important;
+}
+
+/* Label un poco más chico (como Material tabla) */
+.filtros .mat-mdc-form-field-label {
+  font-size: 13px !important;
+}
+
+/* Botones también 14px */
+.filtros button {
+  font-size: 14px !important;
+}
+
+
+/* ============================================
+   🔵 ALTURA COMPACTA (density -2 estilo admin)
+   ============================================ */
+
+.filtros .mat-mdc-form-field {
+  --mdc-filled-text-field-container-height: 36px !important;
+  --mdc-outlined-text-field-container-height: 36px !important;
+  --mdc-outlined-text-field-outline-width: 1px;
+}
+
+/* Ajustar padding interno del campo */
+.filtros .mat-mdc-text-field-wrapper {
+  padding: 0 8px !important;
+}
+
+/* Ícono del datepicker compacto */
+.filtros .mat-mdc-form-field-icon-prefix,
+.filtros .mat-mdc-form-field-icon-suffix {
+  padding: 4px !important;
+}
+
+/* ============================================
+   🔵 ANCHOS UNIFORMES
+   ============================================ */
+.filtros mat-form-field {
+  width: 200px !important;  /* Ajustable */
+}
+
+
+.mat-mdc-option {
+  font-size: 14px !important;
+}
+
+
+
+/* ===============================
+   📅 Calendario estilizado
+   =============================== */
+::ng-deep .mat-calendar-header {
+  background-color: #1565c0 !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .mat-calendar-controls button {
+  color: #ffffff !important;
+}
+
+::ng-deep .mat-calendar-period-button {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+::ng-deep .mat-calendar-controls button:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 4px;
+}
+
+::ng-deep .mat-calendar-body-selected {
+  background-color: #1565c0 !important;
+  color: #ffffff !important;
+}
+
+::ng-deep .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+  border-color: #1565c0 !important;
+}
+
+.tabla-wrapper {
+  width: 100%;
+  overflow-x: auto;          /* ⭐ Hace aparecer scroll horizontal */
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla {
+  min-width: 1000px;         /* ⭐ Evita que se comprima la tabla */
+}
+
+.mat-table {
+  width: 100%;
+}

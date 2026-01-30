@@ -1,0 +1,16 @@
+/* ============================================================
+   🎨 Angular Material estilo institucional SSM
+   ============================================================ */
+
+:root {
+  --ssm-primary: #1565c0;
+  --ssm-accent: #00bcd4;
+}
+
+/* Toolbar */
+.mat-toolbar {
+  background-color: var(--ssm-primary) !important;
+  color: #fff !important;
+}
+
+/* No se requiere nada más aquí, el loader es externo */

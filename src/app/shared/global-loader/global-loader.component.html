@@ -1,0 +1,18 @@
+<!-- C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\shared\global-loader\global-loader.component.html  -->
+
+<ng-container *ngIf="loader.loading$ | async as loading">
+  <div *ngIf="loading" class="loader-overlay">
+    <div class="loader-box">
+      <img src="../../../assets/logoSSM.png" class="loader-logo" alt="SSM" />
+      <div class="spinner"></div>
+      <p>Procesando… por favor espere</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="global-loader-backdrop">
+    <mat-progress-spinner
+      diameter="48"
+      mode="indeterminate">
+    </mat-progress-spinner>
+  </div>
+</ng-container>

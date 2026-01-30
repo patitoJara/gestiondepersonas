@@ -1,0 +1,407 @@
+// C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\styles.scss
+
+/* ============================================================
+   🎨 SSM DESIGN SYSTEM — Patricio + Sirus — v1.0
+   Angular Material M3 • Estilos globales • Diseño institucional
+   ============================================================ */
+
+@use "@angular/material" as mat;
+
+/* ============================
+   🌈 VARIABLES INSTITUCIONALES
+   ============================ */
+:root {
+  /* Paleta SSM */
+  --ssm-primary: #1565c0;
+  --ssm-primary-dark: #0d47a1;
+  --ssm-primary-light: #e3f2fd;
+
+  --ssm-accent: #00838f;
+
+  --ssm-warn: #ff9800;
+  --ssm-error: #d32f2f;
+  --ssm-success: #2e7d32;
+
+  --ssm-surface: #ffffff;
+
+  --ssm-radius: 12px;
+  --ssm-radius-lg: 18px;
+
+  --ssm-font: "Roboto", "Helvetica Neue", sans-serif;
+}
+
+/* ============================
+   🟦 THEME ANGULAR MATERIAL M3
+   ============================ */
+@include mat.core();
+
+$theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: (
+      brand-family: var(--ssm-font),
+      bold-weight: 600,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
+
+:root {
+  @include mat.all-component-themes($theme);
+}
+
+/* ============================
+   🌐 BASE GLOBAL
+   ============================ */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--ssm-surface);
+  font-family: var(--ssm-font);
+  color: #212121;
+  overflow-x: hidden;
+}
+
+/* ============================
+   ✏️ FORMULARIOS COMPACTOS
+   ============================ */
+form mat-form-field {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.mat-mdc-text-field-wrapper {
+  background: #fff !important;
+  border-radius: var(--ssm-radius);
+  padding: 0 8px !important;
+  transition: 0.15s ease;
+}
+
+.mat-mdc-form-field-focus-overlay {
+  background: rgba(21, 101, 192, 0.1) !important;
+}
+
+.mat-mdc-form-field-label {
+  font-size: 13px !important;
+}
+
+.mat-mdc-input-element {
+  font-size: 14px !important;
+}
+
+.mat-mdc-form-field-icon-suffix,
+.mat-mdc-form-field-icon-prefix {
+  padding: 4px !important;
+}
+
+/* ============================
+   🧱 GRID UNIVERSAL BLOCK 1–10
+   ============================ */
+@for $i from 1 through 10 {
+  .block#{$i}-row {
+    display: grid;
+    grid-template-columns: repeat(#{$i}, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  [class*="block"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  [class*="block"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================
+   📋 TABLAS
+   ============================ */
+.tabla-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.mat-mdc-header-row {
+  background-color: var(--ssm-primary-light) !important;
+  color: var(--ssm-primary-dark) !important;
+  font-weight: 600;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f1f5ff !important;
+}
+
+/* ============================
+   🪟 TOOLBAR
+   ============================ */
+.topbar {
+  background: var(--ssm-primary) !important;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.topbar mat-icon {
+  color: white !important;
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* ============================
+   🧱 SIDENAV
+   ============================ */
+.sidenav {
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+}
+
+.sidenav a[mat-list-item] {
+  margin: 4px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--ssm-primary-dark);
+}
+
+.sidenav a[mat-list-item]:hover {
+  background: var(--ssm-primary-light);
+}
+
+.sidenav a.active {
+  background: #bbdefb !important;
+  font-weight: 600;
+}
+
+/* ============================
+   ⏱️ TIMER DE SESIÓN
+   ============================ */
+.session-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.session-timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--ssm-primary-dark);
+  color: white;
+  font-weight: 600;
+}
+
+.session-timer.warn {
+  background: var(--ssm-warn) !important;
+}
+
+.extend-btn {
+  height: 32px !important;
+  border-radius: 999px !important;
+  font-weight: 600;
+}
+
+/* ============================
+   📅 DATEPICKER SSM
+   ============================ */
+::ng-deep .mat-mdc-calendar-header {
+  background: var(--ssm-primary) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-calendar-header .mat-icon {
+  color: white !important;
+}
+
+::ng-deep .mat-calendar-body-selected {
+  background: var(--ssm-primary) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+  border-color: var(--ssm-primary) !important;
+}
+
+/* ============================
+   🧾 PRINT — CITACIÓN
+   ============================ */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #print-citation,
+  #print-citation * {
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  mat-sidenav {
+    visibility: visible !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+  }
+
+  .citacion-print {
+    padding: 24px;
+    font-size: 14px;
+  }
+}
+
+/* ============================
+   🍫 SNACKBARS SSM
+   ============================ */
+::ng-deep .mat-mdc-snack-bar-container {
+  border-radius: var(--ssm-radius) !important;
+  color: #fff !important;
+}
+
+::ng-deep .mat-mdc-snack-bar-success {
+  background: var(--ssm-primary) !important;
+}
+
+::ng-deep .mat-mdc-snack-bar-warn {
+  background: var(--ssm-warn) !important;
+}
+
+::ng-deep .mat-mdc-snack-bar-error {
+  background: var(--ssm-error) !important;
+}
+
+/* ============================
+   🌬️ ANIMACIONES
+   ============================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+app-login,
+app-recover,
+app-change-password {
+  animation: fadeIn 0.4s ease;
+}
+
+/* Elimina scroll en radios */
+mat-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 0;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+mat-radio-button {
+  margin-right: 12px;
+}
+
+/* TITULOS DE SECCIONES */
+.section-title,
+.mat-subtitle,
+.titulo-seccion {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1565c0; /* Azul institucional */
+  margin: 12px 0 4px 0;
+  padding-left: 4px;
+}
+
+.panel-card {
+  background: #ffffff !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden !important;
+}
+
+.panel-header {
+  background: #0d47a1 !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.panel-header button mat-icon {
+  color: white !important;
+}
+
+/// modal de los ingresos
+///
+::ng-deep .mat-dialog-container {
+  max-height: 92vh !important; /* aumenta el alto total */
+  height: auto !important;
+  overflow: hidden !important; /* quita scroll general */
+}
+
+/* ================================
+   🔥 FIX DEFINITIVO SIDENAV MDC
+   ================================ */
+
+.mat-drawer-inner-container {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+}
+
+.mat-drawer,
+.mat-sidenav,
+mat-sidenav {
+  overflow-x: hidden !important;
+}
+
+.mat-drawer-content,
+.mat-sidenav-content {
+  overflow-x: hidden !important;
+}
+
+/* ============================
+   ✨ Animación íconos menú
+   ============================ */
+
+mat-nav-list a.mat-mdc-list-item mat-icon {
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+mat-nav-list a.mat-mdc-list-item:hover mat-icon {
+  transform: translateX(4px) scale(1.1);
+  color: var(--ssm-primary);
+}
+
+mat-nav-list a.active mat-icon {
+  transform: scale(1.15);
+  transition: transform 0.25s ease;
+}
+
+.menu-section-title mat-icon {
+  transition: transform 0.3s ease;
+}
+
+.menu-section-title:hover mat-icon {
+  transform: rotate(90deg);
+}

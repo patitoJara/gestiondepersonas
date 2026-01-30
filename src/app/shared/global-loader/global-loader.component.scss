@@ -1,0 +1,78 @@
+// C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\shared\global-loader\global-loader.component.scss
+
+/* ===============================
+   🧱 OVERLAY GLOBAL (BLOQUEA CLICKS)
+   =============================== */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(3px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  pointer-events: auto; /* 🔥 BLOQUEA interacción */
+  cursor: wait;
+}
+
+/* ===============================
+   📦 CAJA DEL LOADER
+   =============================== */
+.loader-box {
+  background: #ffffff;
+  padding: 28px 40px;
+  border-radius: 16px;
+  text-align: center;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  pointer-events: none; /* 🔑 NO interfiere con animaciones */
+}
+
+/* ===============================
+   🏥 LOGO INSTITUCIONAL
+   =============================== */
+.loader-logo {
+  width: 90px;
+  margin-bottom: 16px;
+  opacity: 0.95;
+}
+
+/* ===============================
+   🔄 SPINNER
+   =============================== */
+.spinner {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 6px solid #bbdefb;
+  border-top-color: #0d47a1;
+
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 12px;
+}
+
+/* Animación */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===============================
+   📝 TEXTO
+   =============================== */
+p {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0d47a1;
+}

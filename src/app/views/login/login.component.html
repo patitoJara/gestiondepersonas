@@ -1,0 +1,111 @@
+<!-- =======================================================
+     🧩 LOGIN INSTITUCIONAL — SERVICIO DE SALUD MAGALLANES
+     Departamento de Salud Mental — Sistema RDA-SM
+     ======================================================= -->
+
+<div class="login-wrapper">
+  <!-- 🌊 Fondo institucional -->
+  <div class="background-overlay"></div>
+
+  <!-- 💼 Tarjeta principal -->
+  <div class="login-card animate-entry" appearance="outlined">
+    <!-- 🏛️ Logo institucional -->
+    <div class="logo-header">
+      <img src="assets/logoSSM.png" alt="Logo Servicio de Salud Magallanes" />
+      <h2>Servicio de Salud Magallanes</h2>
+      <p>Departamento de Salud Mental</p>
+    </div>
+
+    <!-- 📘 Título -->
+    <h3 class="form-title">Acceso al Sistema</h3>
+    <p class="subtitle">Demanda de Atención de Tratamiento de Drogas</p>
+
+    <!-- 🧾 Formulario -->
+    <form [formGroup]="form" (ngSubmit)="login()" class="login-form" novalidate>
+      <!-- 📧 Correo -->
+      <mat-form-field appearance="fill" class="full">
+        <mat-label>Correo electrónico</mat-label>
+        <input
+          matInput
+          type="email"
+          formControlName="email"
+          placeholder="usuario@dominio.com"
+          required
+        />
+        <!--           autocomplete="email" -->
+        <mat-error *ngIf="f.email.touched && f.email.hasError('required')">
+          El correo es obligatorio.
+        </mat-error>
+        <mat-error *ngIf="f.email.touched && f.email.hasError('email')">
+          Ingresa un correo válido.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- 🔑 Contraseña -->
+      <mat-form-field appearance="fill" class="full">
+        <mat-label>Contraseña</mat-label>
+        <input
+          matInput
+          [type]="hidePwd ? 'password' : 'text'"
+          formControlName="password"
+          placeholder="Tu contraseña"
+          autocomplete="current-password"
+          required
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="hidePwd = !hidePwd"
+          [attr.aria-label]="
+            hidePwd ? 'Mostrar contraseña' : 'Ocultar contraseña'
+          "
+        >
+          <mat-icon>{{ hidePwd ? "visibility" : "visibility_off" }}</mat-icon>
+        </button>
+        <mat-error
+          *ngIf="f.password.touched && f.password.hasError('required')"
+        >
+          La contraseña es obligatoria.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- 🔘 Botón principal -->
+      <button
+        mat-flat-button
+        color="primary"
+        class="login-btn"
+        type="submit"
+        [disabled]="loading || form.invalid"
+        (mousedown)="$event.preventDefault()"
+      >
+        <ng-container *ngIf="!loading; else loadingTpl">
+          INGRESAR
+        </ng-container>
+      </button>
+
+      <!-- 🔗 Enlaces secundarios -->
+
+      <div class="links-row">
+        <div class="access-links">
+          <a (click)="goToRecover()">¿Olvidaste tu contraseña?</a>
+          <span class="divider">|</span>
+          <a routerLink="/auth/change-password">Cambiar contraseña</a>
+        </div>
+
+        <a routerLink="/about-public" class="system-link">Acerca del sistema</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- 🦶 Sello Gobierno -->
+  <footer class="footer-seal">
+    <img src="assets/logoGobierno.png" alt="Gobierno de Chile" />
+    <span>Gobierno de Chile — Ministerio de Salud</span>
+  </footer>
+</div>
+
+<!-- 🌀 Template único para loading -->
+<ng-template #loadingTpl>
+  <mat-spinner diameter="18"></mat-spinner>&nbsp; Ingresando...
+</ng-template>

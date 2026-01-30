@@ -1,0 +1,11 @@
+{
+  "angular.log": "verbose",
+  "angular.projects": {
+    "rda-sm": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "tsconfig": "tsconfig.app.json"
+    }
+  }
+}

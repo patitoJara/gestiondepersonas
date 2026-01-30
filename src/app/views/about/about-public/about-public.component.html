@@ -1,0 +1,37 @@
+<!-- 🌐 Vista pública (sin login) -->
+<div class="login-wrapper">
+  <!-- 💼 Tarjeta principal -->
+  <div class="login-card animate-entry" appearance="outlined">
+    <!-- 🏛️ Logo institucional -->
+    <div class="logo-header">
+      <img src="assets/logoSSM.png" alt="Logo Servicio de Salud Magallanes" />
+      <h2>Servicio de Salud Magallanes</h2>
+      <p>Departamento de Salud Mental</p>
+    </div>
+
+    <!-- 📘 Título -->
+    <h3 class="form-title">Acerca del sistema</h3>
+    <p class="subtitle">
+      Sistema para el registro y gestión de la demanda de atención en
+      tratamientos de drogas — Área Salud Mental del Servicio de Salud
+      Magallanes.
+    </p>
+
+    <p style="font-size: 0.9rem; color: #555">
+      Desarrollado por el Equipo TIC — SSM<br />
+      © {{ currentYear }} Ministerio de Salud — Gobierno de Chile.
+    </p>
+
+    <!-- 🔗 Enlace de retorno -->
+    <a routerLink="/auth/login" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al inicio de sesión
+    </a>
+  </div>
+
+  <!-- 🦶 Sello Gobierno -->
+  <footer class="footer-seal">
+    <img src="assets/logoGobierno.png" alt="Gobierno de Chile" />
+    <span>Gobierno de Chile — Ministerio de Salud</span>
+  </footer>
+</div>

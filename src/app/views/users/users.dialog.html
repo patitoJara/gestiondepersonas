@@ -1,0 +1,175 @@
+<!-- src/app/views/users/users.dialog.html -->
+
+<h2 mat-dialog-title>
+  {{ form.value.id ? 'Editar usuario' : 'Nuevo usuario' }}
+</h2>
+
+<div mat-dialog-content class="dialog-body">
+  <p class="note-required">
+    <span class="asterisk">*</span> Campos obligatorios
+  </p>
+  <form [formGroup]="form" class="form-grid">
+    <!-- campo requerido -->
+    <mat-form-field appearance="outline" class="col-6">
+      <mat-label>Nombre 1<span class="required"></span></mat-label>
+      <input matInput formControlName="firstName" />
+      <mat-error *ngIf="form.get('firstName')?.hasError('required')">
+        El nombre es obligatorio
+      </mat-error>
+    </mat-form-field>
+    <!-- fin campo requerido -->
+
+    <mat-form-field appearance="outline" class="col-6">
+      <mat-label>Nombre 2</mat-label>
+      <input matInput formControlName="secondName" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="col-6">
+      <mat-label>Apellido 1</mat-label>
+      <input matInput formControlName="firstLastName" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="col-6">
+      <mat-label>Apellido 2</mat-label>
+      <input matInput formControlName="secondLastName" />
+    </mat-form-field>
+
+    <!-- campo requerido -->
+    <mat-form-field appearance="outline" class="col-3">
+      <mat-label>RUT<span class="required"></span></mat-label>
+      <input
+        matInput
+        formControlName="rut"
+        required
+        (input)="autoFormatAndValidateRut($event)"
+        maxlength="12"
+        placeholder="Ej: 11.799.136-9"
+      />
+      <mat-error *ngIf="form.get('rut')?.hasError('required')">
+        El RUT es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('rut')?.hasError('rutInvalido')">
+        RUT inválido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="col-9">
+      <mat-label>Email<span class="required"></span></mat-label>
+      <input
+        matInput
+        formControlName="email"
+        required
+        type="email"
+        placeholder="ejemplo@redsalud.cl"
+        required
+      />
+      <mat-error *ngIf="form.get('email')?.hasError('required')">
+        El email es obligatorio
+      </mat-error>
+    </mat-form-field>
+    <!-- fin campo requerido -->
+
+    <!-- Usuario + Password -->
+
+    <mat-form-field appearance="outline" class="col-6">
+      <mat-label>Nick</mat-label>
+      <input matInput formControlName="username" />
+    </mat-form-field>
+
+    <!-- campo requerido -->
+    <mat-form-field appearance="fill" class="col-6">
+      <mat-label
+        >{{ isEditing ? 'Cambiar contraseña (opcional)' : 'Contraseña'
+        }}</mat-label
+      >
+      <input
+        matInput
+        formControlName="password"
+        [type]="hidePassword ? 'password' : 'text'"
+        autocomplete="new-password"
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        (click)="hidePassword = !hidePassword"
+        [attr.aria-label]="'Toggle password visibility'"
+        [attr.aria-pressed]="!hidePassword"
+        matTooltip="Mostrar/Ocultar contraseña"
+        type="button"
+      >
+        <mat-icon
+          >{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon
+        >
+      </button>
+
+      <mat-error *ngIf="form.get('password')?.hasError('required')">
+        La contraseña es obligatoria
+      </mat-error>
+      <mat-error *ngIf="form.get('password')?.hasError('minlength')">
+        Mínimo 6 caracteres
+      </mat-error>
+    </mat-form-field>
+
+    <!-- fin campo requerido -->
+
+    <!-- campo requerido -->
+    <!-- Programas y Roles -->
+    <mat-dialog-content class="dialog-content">
+      <div class="bottom-section">
+        <mat-card appearance="outlined" class="programs-card">
+          <mat-card-header>
+            <mat-card-title
+              >Programas <span class="required">*</span></mat-card-title
+            >
+          </mat-card-header>
+          <mat-card-content class="scrollable-content">
+            <mat-selection-list
+              formControlName="programs"
+              class="scrollable-list"
+            >
+              <mat-list-option
+                *ngFor="let program of programs"
+                [value]="program.id"
+              >
+                {{ program.name }}
+              </mat-list-option>
+
+              <mat-error *ngIf="form.get('programs')?.hasError('required')">
+                El programa es obligatoria
+              </mat-error>
+            </mat-selection-list>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="role-card">
+          <mat-card-header>
+            <mat-card-title
+              >Roles <span class="required">*</span></mat-card-title
+            >
+          </mat-card-header>
+          <mat-card-content>
+            <mat-selection-list formControlName="roles" class="scrollable-list">
+              <mat-list-option *ngFor="let role of roles" [value]="role.id">
+                {{ role.name }}
+              </mat-list-option>
+              <mat-error *ngIf="form.get('roles')?.hasError('required')">
+                El rol es obligatorio
+              </mat-error>
+            </mat-selection-list>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-dialog-content>
+    <!-- fin campo requerido -->
+  </form>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid"
+  >
+    Guardar
+  </button>
+</div>
