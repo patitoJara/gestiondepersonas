@@ -126,10 +126,9 @@ interface Demandante {
     { provide: DateAdapter, useClass: ChileDateAdapter },
   ],
 })
-export class DemandListComponent implements OnInit, AfterViewInit {
+export class DemandListComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
-    private cdRef: ChangeDetectorRef,
     private communeService: CommuneService,
     private sexService: SexService,
     private contactTypeService: ContactTypeService,
@@ -150,7 +149,7 @@ export class DemandListComponent implements OnInit, AfterViewInit {
     private professionService: ProfessionService,
     private demandDetailViewService: DemandDetailViewService,
     private registerFullLoader: RegisterFullLoaderService,
-    private registerService: RegisterService
+    private registerService: RegisterService,
   ) {}
 
   // =============================================================
@@ -178,6 +177,8 @@ export class DemandListComponent implements OnInit, AfterViewInit {
   ];
 
   dataSource = new MatTableDataSource<Demandante>([]);
+  private datasetBase: Demandante[] = [];
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
@@ -205,25 +206,22 @@ export class DemandListComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.cargarFormulario();
-    this.loadCatalogs();
+    this.loadCatalogs(); // catálogos
+    this.cargarDatosTablaReal(); // snapshot
   }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-
-    merge(this.sort.sortChange, this.paginator.page).subscribe(() =>
-      this.cargarDatosTablaReal()
-    );
-
-    this.cargarDatosTablaReal();
+    this.paginator.pageSize = 9;
   }
+
+
 
   // =============================================================
   cargarFormulario() {
     this.formFiltros = this.fb.group({
       programa: [null],
-      //sexo: [null],
       comuna: [null],
       tcontacto: [null],
       sustancia: [null],
@@ -240,55 +238,33 @@ export class DemandListComponent implements OnInit, AfterViewInit {
   cargarDatosTablaReal(): void {
     this.isLoading = true;
 
-    const page = this.paginator?.pageIndex ?? 0;
-    const size = this.paginator?.pageSize ?? 10;
-
-    const active = this.sort?.active ?? 'id';
-    const direction = (this.sort?.direction as '' | 'asc' | 'desc') || 'asc';
-    const sort = `${active},${direction}`;
-
     this.registerService
-      .getAllPaginated({ page, size, sort })
+      .getAll() // 🔥 UNA sola llamada
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: (res) => {
-          const rows: any[] = Array.isArray(res) ? res : res?.content ?? [];
-
+        next: (rows: any[]) => {
           console.log('👉 R AWS registers:', rows);
-          console.log(
-            'REGISTER IDS:',
-            rows.map((r) => r.id)
-          );
-          console.log(
-            'POSTULANTS:',
-            rows.map((r) => r.postulant?.id ?? 'SIN_POSTULANTE')
-          );
 
           // ================================
-          //  llamadas paralelas por registro
+          // llamadas paralelas por registro
           // ================================
           const requests = rows.map((reg) =>
             this.registerSubstanceService.searchByRegisterId(reg.id).pipe(
               map((resp: any) => {
-                // Normalizar SIEMPRE a pageable
-                const pageable:
-                  | { content: any[] }
-                  | { content: any[]; [key: string]: any } = Array.isArray(resp)
-                  ? { content: resp }
-                  : resp;
+                const pageable = Array.isArray(resp) ? { content: resp } : resp;
 
-                const subs = pageable.content ?? [];
+                const subs = pageable?.content ?? [];
 
                 const principal = subs.find(
-                  (x: any) => x.level === 'Principal'
+                  (x: any) => x.level === 'Principal',
                 );
 
                 return {
                   reg,
                   principal: principal?.substance?.name ?? '---',
                 };
-              })
-            )
+              }),
+            ),
           );
 
           forkJoin(requests).subscribe({
@@ -297,27 +273,28 @@ export class DemandListComponent implements OnInit, AfterViewInit {
                 const r = item.reg;
 
                 return {
-                  id: r.id,                  
-                  postulante: `${r.postulant?.firstName ?? ''} ${ r.postulant?.lastName ?? '' }`.trim(),                  
+                  id: r.id,
+                  postulante:
+                    `${r.postulant?.firstName ?? ''} ${r.postulant?.lastName ?? ''}`.trim(),
                   rut: r.postulant?.rut ?? '---',
                   programa: r.program?.name ?? '---',
                   comuna: r.postulant?.commune?.name ?? '---',
-                  dias: r.date_attention? this.getDiasTranscurridos(r.date_attention): 0,
+                  dias: r.date_attention
+                    ? this.getDiasTranscurridos(r.date_attention)
+                    : 0,
                   fecha: r.date_attention,
                   estado: r.state?.name ?? '---',
                   usuario: r.user?.username ?? '---',
                   sustancia: item.principal,
                   tipoContacto: r.contactType?.name ?? '---',
-                  //sexo: r.postulant?.sex?.name ?? '---',                  
                 };
               });
-
-              this.dataSource.data = tabla;
-
-              setTimeout(() => {
-                this.actualizarFiltrosPorTabla();
-                this.cdRef.detectChanges();
-              });
+              // 🔒 dataset completo (snapshot)
+              this.datasetBase = tabla;
+              // ✅ ESTA LÍNEA FALTABA
+              this.actualizarFiltrosPorTabla();
+              // aplica filtros actuales (o ninguno)
+              this.aplicarFiltros();
             },
           });
         },
@@ -334,7 +311,6 @@ export class DemandListComponent implements OnInit, AfterViewInit {
 
     forkJoin({
       programs: this.programService.listAll(),
-      //sexes: this.sexService.listAll(),
       communes: this.communeService.listAll(),
       contactTypes: this.contactTypeService.listAll(),
       substances: this.substanceService.listAll(),
@@ -342,13 +318,10 @@ export class DemandListComponent implements OnInit, AfterViewInit {
     }).subscribe({
       next: (data) => {
         this.programsCatalog = data.programs;
-        //this.sexesCatalog = data.sexes;
         this.communesCatalog = data.communes;
         this.contactTypesCatalog = data.contactTypes;
         this.substancesCatalog = data.substances;
         this.statesCatalog = data.states;
-
-        this.actualizarFiltrosPorTabla();
       },
       complete: () => (this.isLoading = false),
       error: (err) => console.error('❌ Error catálogos:', err),
@@ -359,109 +332,127 @@ export class DemandListComponent implements OnInit, AfterViewInit {
   // FILTROS (FRONT)
   // =============================================================
   actualizarFiltrosPorTabla(): void {
-    const data = this.dataSource.data;
+    const data = this.datasetBase;
 
-    const norm = (txt: string) =>
-      this.normalizar(this.formatearTexto(txt || ''));
+    this.programs = this.unique(data.map((d) => d.programa)).map((name) => ({
+      name,
+    }));
 
-    const unique = <T>(arr: T[]) => Array.from(new Set(arr));
+    this.communes = this.unique(data.map((d) => d.comuna)).map((name) => ({
+      name,
+    }));
 
-    this.programs = this.programsCatalog.filter((p) =>
-      unique(data.map((d) => norm(d.programa))).includes(norm(p.name))
+    this.contactTypes = this.unique(data.map((d) => d.tipoContacto)).map(
+      (name) => ({ name }),
     );
 
-   /* this.sexes = this.sexesCatalog.filter((s) =>
-      unique(data.map((d) => norm(d.sexo))).includes(norm(s.name))
-    );*/
+    this.substances = Array.from(
+      new Set(data.map((d) => d.sustancia).filter((s) => s && s !== '---')),
+    ).sort();
 
-    this.communes = this.communesCatalog.filter((c) =>
-      unique(data.map((d) => norm(d.comuna))).includes(norm(c.name))
-    );
-
-    this.contactTypes = this.contactTypesCatalog.filter((t) =>
-      unique(data.map((d) => norm(d.tipoContacto))).includes(norm(t.name))
-    );
-
-    this.states = this.statesCatalog.filter((st) =>
-      unique(data.map((d) => norm(d.estado))).includes(norm(st.name))
-    );
-
-    this.substances = []; // no llega del backend (solo principal)
+    this.states = this.unique(data.map((d) => d.estado)).map((name) => ({
+      name,
+    }));
   }
 
+  // =============================================================
+  // FUNCION PARA ELIMINAR DUPLICADOS
+  // =============================================================
+  private unique<T>(arr: T[]): T[] {
+    return Array.from(new Set(arr));
+  }
+
+  // =============================================================
+  // APLICAR FILTROS EN FONTEND
+  // =============================================================
   aplicarFiltros(): void {
     const f = this.formFiltros.value;
 
-    this.dataSource.filterPredicate = (
-      item: Demandante,
-      filterText: string
-    ) => {
-      const v = JSON.parse(filterText);
+    const hayFiltros =
+      !!f.programa ||
+      !!f.comuna ||
+      !!f.tcontacto ||
+      !!f.sustancia ||
+      !!f.estado ||
+      !!(f.nombre && f.nombre.trim()) ||
+      !!f.fechaInicio ||
+      !!f.fechaFin;
 
-      const norm = (s: string) => this.normalizar(s ?? '');
+    const filtrados = !hayFiltros
+      ? this.datasetBase
+      : this.datasetBase.filter((item) => {
+          const norm = (s: string) => this.normalizar(s ?? '');
 
-      const nombreOK = v.nombre
-        ? norm(item.postulante).includes(norm(v.nombre))
-        : true;
+          const nombreOK = f.nombre
+            ? norm(item.postulante).includes(norm(f.nombre))
+            : true;
 
-      const programaOK = v.programa
-        ? norm(item.programa) ===
-          norm(
-            this.programsCatalog.find((p) => p.id === v.programa)?.name || ''
-          )
-        : true;
-/*
-      const sexoOK = v.sexo
-        ? norm(item.sexo) ===
-          norm(this.sexesCatalog.find((s) => s.id === v.sexo)?.name || '')
-        : true;
-*/
-      const comunaOK = v.comuna
-        ? norm(item.comuna) ===
-          norm(this.communesCatalog.find((c) => c.id === v.comuna)?.name || '')
-        : true;
+          const programaOK = f.programa
+            ? norm(item.programa) === norm(f.programa)
+            : true;
 
-      const contactoOK = v.tcontacto
-        ? norm(item.tipoContacto) ===
-          norm(
-            this.contactTypesCatalog.find((t) => t.id === v.tcontacto)?.name ||
-              ''
-          )
-        : true;
+          const sustanciaOK = f.sustancia
+            ? norm(item.sustancia) === norm(f.sustancia)
+            : true;
 
-      const estadoOK = v.estado
-        ? norm(item.estado) ===
-          norm(this.statesCatalog.find((e) => e.id === v.estado)?.name || '')
-        : true;
+          const tcontactOK = f.tcontacto
+            ? norm(item.tipoContacto) === norm(f.tcontacto)
+            : true;
 
-      // FECHAS
-      const fInicio = this.parsearFecha(v.fechaInicio);
-      const fFin = this.parsearFecha(v.fechaFin);
-      const fReg = this.parsearFecha(item.fecha);
+          const comunaOK = f.comuna
+            ? norm(item.comuna) === norm(f.comuna)
+            : true;
 
-      let fechaOK = true;
+          const estadoOK = f.estado
+            ? norm(item.estado) === norm(f.estado)
+            : true;
 
-      if (fReg) {
-        fechaOK = (!fInicio || fReg >= fInicio) && (!fFin || fReg <= fFin);
-      }
+          // 📅 fechas sin hora
+          const soloFecha = (v: any): number => {
+            const d = new Date(v);
+            return new Date(
+              d.getFullYear(),
+              d.getMonth(),
+              d.getDate(),
+            ).getTime();
+          };
 
-      //sexoOK &&
-      return (
-        nombreOK &&
-        programaOK &&        
-        comunaOK &&
-        contactoOK &&
-        estadoOK &&
-        fechaOK
-      );
-    };
+          const fechaItem = item.fecha ? soloFecha(item.fecha) : null;
+          const desde = f.fechaInicio ? soloFecha(f.fechaInicio) : null;
+          const hasta = f.fechaFin ? soloFecha(f.fechaFin) : null;
 
-    this.dataSource.filter = JSON.stringify(f);
+          const fechaOK =
+            (!desde || (fechaItem !== null && fechaItem >= desde)) &&
+            (!hasta || (fechaItem !== null && fechaItem <= hasta));
+
+          return (
+            nombreOK &&
+            programaOK &&
+            sustanciaOK &&
+            tcontactOK &&
+            comunaOK &&
+            estadoOK &&
+            fechaOK
+          );
+        });
+
+    this.dataSource.data = filtrados;
+
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator;
+      this.paginator.firstPage();
+    }
   }
 
   limpiarFiltros(): void {
     this.formFiltros.reset();
-    this.dataSource.filter = '';
+
+    this.dataSource.data = this.datasetBase;
+
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator; // 👈 CLAVE
+      this.paginator.firstPage();
+    }
   }
 
   // =============================================================
@@ -511,7 +502,7 @@ export class DemandListComponent implements OnInit, AfterViewInit {
     const hoySinHora = new Date(
       hoy.getFullYear(),
       hoy.getMonth(),
-      hoy.getDate()
+      hoy.getDate(),
     );
 
     const diffMs = hoySinHora.getTime() - fechaSinHora.getTime();
@@ -542,8 +533,8 @@ export class DemandListComponent implements OnInit, AfterViewInit {
       //this.demandDetailViewService.show(full.registro, sustancias, movimientos);
       this.demandDetailViewService.generate(
         full.registro,
-        sustancias,        
-        movimientos
+        sustancias,
+        movimientos,
       );
     });
   }
@@ -566,7 +557,7 @@ export class DemandListComponent implements OnInit, AfterViewInit {
       this.demandDetailViewService.generate(
         full.registro,
         sustancias,
-        movimientos
+        movimientos,
       );
     });
   }

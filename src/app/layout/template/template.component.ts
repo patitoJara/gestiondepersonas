@@ -26,6 +26,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { firstValueFrom } from 'rxjs';
+import { NavigationStateService } from '@app/core/services/navigation-state.service';
 
 let globalReloadListenerAdded = false;
 
@@ -62,7 +63,8 @@ export class TemplateComponent implements OnInit {
   private dialog = inject(MatDialog);
   @ViewChild('drawer') drawer!: MatSidenav;
   mantenedoresOpen = true;
-
+  private navState = inject(NavigationStateService);
+  private restored = false;
   constructor() {}
 
   private router = inject(Router);
@@ -177,6 +179,7 @@ export class TemplateComponent implements OnInit {
       this.tokenService.getActiveProgram() || this.userPrograms[0] || null;
 
     this.isSessionReady = true;
+    this.restoreLastRoute();
 
     // Tiempo sesión
     //this.startTimer(60);
@@ -494,5 +497,27 @@ export class TemplateComponent implements OnInit {
 
   goToProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+  private restoreLastRoute(): void {
+    if (this.restored) return;
+
+    const last = this.navState.getLastRoute();
+
+    // ⛔ Protecciones
+    if (!last || last === '/inicio' || last.startsWith('/auth')) {
+      return;
+    }
+
+    this.restored = true;
+
+    // ✅ MOSTRAR LAYOUT
+    this.menuVisible = true;
+
+    // ✅ RECONSTRUIR MENÚ (CLAVE)
+    this.buildMenu();
+
+    // ✅ NAVEGAR
+    this.router.navigateByUrl(last);
   }
 }

@@ -8,8 +8,10 @@ import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // 🚀 La app siempre inicia en LOGIN
-  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
+  //{ path: '', redirectTo: 'auth/login', pathMatch: 'full' },
+  //{ path: '', redirectTo: 'inicio', pathMatch: 'full' },
 
+  { path: '', redirectTo: 'inicio', pathMatch: 'full' },
   // 🔐 Layout principal (protegido)
   {
     path: '',

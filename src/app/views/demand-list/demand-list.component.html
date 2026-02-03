@@ -2,92 +2,76 @@
   <h4 class="titulo">🔎 Filtros de Búsqueda</h4>
 
   <form [formGroup]="formFiltros" (ngSubmit)="aplicarFiltros()">
-    <mat-card
-      appearance="outlined"
-      class="section-card mt-24"
-      [class.loaded]="!isLoading"
-    >
-      <div class="block2-row">
-        <!-- PROGRAMA -->
-        <mat-form-field appearance="fill">
-          <mat-label>Programa</mat-label>
-          <mat-select formControlName="programa">
-            <mat-option *ngFor="let c of programs" [value]="c.id">
+    <div class="fila-6">
+      <div class="field-clinico-linea">
+        <label>Programa</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
+          <mat-select formControlName="programa" panelClass="clinico-select-panel">
+            <mat-option *ngFor="let c of programs" [value]="c.name">
+              {{ c.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="field-clinico-linea">
+        <label>Comuna</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
+          <mat-select formControlName="comuna" panelClass="clinico-select-panel">
+            <mat-option *ngFor="let c of communes" [value]="c.name">
+              {{ c.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="field-clinico-linea">
+        <label>Tipo Contacto</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
+          <mat-select formControlName="tcontacto" panelClass="clinico-select-panel">
+            <mat-option *ngFor="let c of contactTypes" [value]="c.name">
+              {{ c.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="field-clinico-linea">
+        <label>Sustancia</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
+          <mat-select formControlName="sustancia" panelClass="clinico-select-panel">
+            <mat-option *ngFor="let c of substances" [value]="c">
+              {{ c }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="field-clinico-linea">
+        <label>Estado</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
+          <mat-select formControlName="estado"panelClass="clinico-select-panel">
+            <mat-option *ngFor="let c of states" [value]="c.name">
               {{ c.name }}
             </mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
-      <div class="block5-row">
-        <!-- SEXO -->
-         <!--
-        <mat-form-field appearance="fill">
-          <mat-label>Sexo</mat-label>
-          <mat-select formControlName="sexo">
-            <mat-option *ngFor="let c of sexes" [value]="c.id">
-              {{ c.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        -->
-
-        <!-- COMUNA -->
-        <mat-form-field appearance="fill">
-          <mat-label>Comuna</mat-label>
-          <mat-select formControlName="comuna">
-            <mat-option *ngFor="let c of communes" [value]="c.id">
-              {{ c.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- TIPO CONTACTO -->
-        <mat-form-field appearance="fill">
-          <mat-label>Tipo Contacto</mat-label>
-          <mat-select formControlName="tcontacto">
-            <mat-option *ngFor="let c of contactTypes" [value]="c.id">
-              {{ c.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <!-- SUSTANCIA -->
-        <mat-form-field appearance="fill">
-          <mat-label>Sustancia</mat-label>
-          <mat-select formControlName="sustancia">
-            <mat-option *ngFor="let c of substances" [value]="c.id">
-              {{ c.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- ESTADO -->
-        <mat-form-field appearance="fill">
-          <mat-label>Estado</mat-label>
-          <mat-select formControlName="estado">
-            <mat-option *ngFor="let c of states" [value]="c.id">
-              {{ c.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-
-      <div class="block7-row">
-        <!-- FILTROS ADICIONALES -->
-        <!-- NOMBRE -->
-        <mat-form-field appearance="fill">
-          <mat-label>Nombre</mat-label>
+      <div class="field-clinico-linea">
+        <label>Nombre</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
           <input
             matInput
             formControlName="nombre"
             placeholder="Buscar por nombre"
           />
         </mat-form-field>
+      </div>
 
-        <!-- FECHA INICIO -->
+    </div>
 
-        <mat-form-field appearance="fill">
-          <mat-label>Fecha inicio</mat-label>
+
+    <div class="fila-4">
+      <div class="field-clinico-linea">
+        <label>Fecha inicio</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
           <input
             matInput
             [matDatepicker]="pickerInicio"
@@ -99,10 +83,11 @@
           ></mat-datepicker-toggle>
           <mat-datepicker #pickerInicio></mat-datepicker>
         </mat-form-field>
+      </div>
 
-        <!-- FECHA FIN -->
-        <mat-form-field appearance="fill">
-          <mat-label>Fecha fin</mat-label>
+      <div class="field-clinico-linea">
+        <label>Fecha final</label>
+        <mat-form-field appearance="fill" class="clinico-form-field">
           <input
             matInput
             [matDatepicker]="pickerFin"
@@ -114,143 +99,128 @@
           ></mat-datepicker-toggle>
           <mat-datepicker #pickerFin></mat-datepicker>
         </mat-form-field>
-        <!-- BOTONES -->
+      </div>
 
-        <div class="acciones-filtros">
+      <div class="field-clinico-linea field-actions">
+        <label>Acciones</label>
+        <div class="actions-50">
           <button mat-raised-button color="primary" type="submit">
-            <mat-icon>filter_alt</mat-icon> Buscar
-          </button>
-          <!--
-          <button mat-raised-button color="primary" (click)="aplicarFiltros()">
             <mat-icon>filter_alt</mat-icon>
-            Aplicar
+            Buscar
           </button>
-          -->
 
-          <button mat-button color="warn" (click)="limpiarFiltros()">
+          <button
+            mat-button
+            color="warn"
+            type="button"
+            (click)="limpiarFiltros()"
+          >
             <mat-icon>filter_alt_off</mat-icon>
             Limpiar
           </button>
         </div>
       </div>
-    </mat-card>
+    </div>
   </form>
 
-  <!-- ========================= TABLA ========================= -->
+  <h4 class="titulo">📋 Listado de Demandas</h4>
+  <div class="tabla-wrapper">
+    <table mat-table [dataSource]="dataSource" matSort class="tabla">
+      <!-- ID -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+        <td mat-cell *matCellDef="let el">{{ el.id }}</td>
+      </ng-container>
 
-  <mat-card class="tabla-card">
-    <h4 class="titulo">📋 Listado de Demandas</h4>
-    <div class="tabla-wrapper">
-      <table mat-table [dataSource]="dataSource" matSort class="tabla">
-        <!-- ID -->
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-          <td mat-cell *matCellDef="let el">{{ el.id }}</td>
-        </ng-container>
+      <!-- POSTULANTE -->
+      <ng-container matColumnDef="postulante">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Postulante</th>
+        <td mat-cell *matCellDef="let el">{{ el.postulante }}</td>
+      </ng-container>
 
-        <!-- POSTULANTE -->
-        <ng-container matColumnDef="postulante">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Postulante</th>
-          <td mat-cell *matCellDef="let el">{{ el.postulante }}</td>
-        </ng-container>
+      <!-- RUT -->
+      <ng-container matColumnDef="rut">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Rut</th>
+        <td mat-cell *matCellDef="let el">{{ el.rut }}</td>
+      </ng-container>
 
-        <!-- RUT -->
-        <ng-container matColumnDef="rut">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Rut</th>
-          <td mat-cell *matCellDef="let el">{{ el.rut }}</td>
-        </ng-container>        
+      <!-- PROGRAMA -->
+      <ng-container matColumnDef="programa">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Programa</th>
+        <td mat-cell *matCellDef="let el">{{ el.programa }}</td>
+      </ng-container>
 
-        <!-- PROGRAMA -->
-        <ng-container matColumnDef="programa">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Programa</th>
-          <td mat-cell *matCellDef="let el">{{ el.programa }}</td>
-        </ng-container>
+      <!-- COMUNA -->
+      <ng-container matColumnDef="comuna">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Comuna</th>
+        <td mat-cell *matCellDef="let el">{{ el.comuna }}</td>
+      </ng-container>
 
-        <!-- COMUNA -->
-        <ng-container matColumnDef="comuna">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Comuna</th>
-          <td mat-cell *matCellDef="let el">{{ el.comuna }}</td>
-        </ng-container>
+      <!-- DIAS trancurridos -->
+      <ng-container matColumnDef="dias">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>D-Trans.</th>
+        <td mat-cell *matCellDef="let el">
+          {{ el.dias }}
+        </td>
+      </ng-container>
 
-        <!-- DIAS trancurridos -->
-        <ng-container matColumnDef="dias">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>D-Trans.</th>
-          <td mat-cell *matCellDef="let el">
-            {{ el.dias }}
-          </td>
-        </ng-container>  
-        
-        <!-- FECHA -->
-        <ng-container matColumnDef="fecha">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fec-Demanda</th>
-          <td mat-cell *matCellDef="let el">
-            {{ el.fecha | date : "dd/MM/yyyy" }}
-          </td>
-        </ng-container>    
-        
-        <!-- ESTADO -->
-        <ng-container matColumnDef="estado">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
-          <td mat-cell *matCellDef="let el">{{ el.estado }}</td>
-        </ng-container>
+      <!-- FECHA -->
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Fec-Demanda</th>
+        <td mat-cell *matCellDef="let el">
+          {{ el.fecha | date: "dd/MM/yyyy" }}
+        </td>
+      </ng-container>
 
+      <!-- ESTADO -->
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+        <td mat-cell *matCellDef="let el">{{ el.estado }}</td>
+      </ng-container>
 
-        <!-- USUARIO -->
-        <ng-container matColumnDef="usuario">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
-          <td mat-cell *matCellDef="let el">{{ el.usuario }}</td>
-        </ng-container>
+      <!-- USUARIO -->
+      <ng-container matColumnDef="usuario">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+        <td mat-cell *matCellDef="let el">{{ el.usuario }}</td>
+      </ng-container>
 
-        <!-- SUSTANCIA -->
-        <ng-container matColumnDef="sustancia">
-          <th mat-header-cell *matHeaderCellDef>Sustancia-Principal</th>
-          <td mat-cell *matCellDef="let el">{{ el.sustancia }}</td>
-        </ng-container>        
-    
-        <!-- TIPO CONTACTO -->
-        <ng-container matColumnDef="tipoContacto">
-          <th mat-header-cell *matHeaderCellDef>Tipo Contacto</th>
-          <td mat-cell *matCellDef="let el">{{ el.tipoContacto }}</td>
-        </ng-container>
+      <!-- SUSTANCIA -->
+      <ng-container matColumnDef="sustancia">
+        <th mat-header-cell *matHeaderCellDef>Sustancia-Principal</th>
+        <td mat-cell *matCellDef="let el">{{ el.sustancia }}</td>
+      </ng-container>
 
-        <!-- ACCIONES -->
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef>Acciones</th>
-          <td mat-cell *matCellDef="let el">
-            <!-- Ver pantalla -->
-            <button
-              mat-icon-button
-              color="primary"
-              matTooltip="Ver Detalle"
-              (click)="verDetalle(el)"
-            >
-              <mat-icon>visibility</mat-icon>
-            </button>
+      <!-- TIPO CONTACTO -->
+      <ng-container matColumnDef="tipoContacto">
+        <th mat-header-cell *matHeaderCellDef>Tipo Contacto</th>
+        <td mat-cell *matCellDef="let el">{{ el.tipoContacto }}</td>
+      </ng-container>
 
-            <!-- Imprimir -->
-            <!--
-            <button
-              mat-icon-button
-              color="accent"
-              matTooltip="Imprimir Detalle"
-              (click)="imprimirDetalle(el)"
-            >            
-              <mat-icon>local_printshop</mat-icon>              
-            </button>
-            -->
-          </td>
-        </ng-container>
+      <!-- ACCIONES -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let el">
+          <!-- Ver pantalla -->
+          <button
+            mat-icon-button
+            color="primary"
+            matTooltip="Ver Detalle"
+            (click)="verDetalle(el)"
+          >
+            <mat-icon>visibility</mat-icon>
+          </button>
+        </td>
+      </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
 
-      <mat-paginator
-        [pageSize]="5"
-        [pageSizeOptions]="[5, 10, 20]"
-        showFirstLastButtons
-      >
-      </mat-paginator>
-    </div>
-  </mat-card>
+    <mat-paginator
+      [pageSize]="7"
+      [pageSizeOptions]="[5, 10, 20]"
+      showFirstLastButtons
+    >
+    </mat-paginator>
+  </div>
 </mat-card>
