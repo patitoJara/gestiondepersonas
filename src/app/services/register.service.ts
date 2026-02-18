@@ -92,7 +92,6 @@ export class RegisterService {
   }
 
   update(id: number, data: any) {
-    //alert(`PUT a: ${this.resourceUrl}/${id}`);
     return this.http.put<Register>(`${this.resourceUrl}/${id}`, data);
   }
 

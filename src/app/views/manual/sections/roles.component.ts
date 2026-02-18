@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-roles',
   standalone: true,
-  host: { id: 'roles' },
+  //host: { id: 'roles' },
   templateUrl: './roles.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [

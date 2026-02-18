@@ -1,7 +1,7 @@
-<div class="manual-container">
+<div class="manual-container" #manualScroll (scroll)="onScroll()">
   <div class="manual-content">
     <!-- CABECERA -->
-    <mat-card class="manual-header">
+    <mat-card class="manual-header" id="manual-top">
       <div class="header-row">
         <mat-icon class="header-icon">menu_book</mat-icon>
         <div>
@@ -12,7 +12,7 @@
     </mat-card>
 
     <!-- ÍNDICE -->
-    <mat-card class="manual-section manual-index">
+    <mat-card class="manual-section manual-index" id="indice">
       <h3>Índice</h3>
       <p class="index-hint">
         Haz clic en una sección para ir directamente al contenido
@@ -20,12 +20,9 @@
 
       <ul class="manual-list">
         <li><a (click)="scrollTo('intro')">📘 Introducción</a></li>
-        <li>
-          <a (click)="scrollTo('modulo-demandas')">📝 Módulo de Demandas</a>
-        </li>
-        <li>
-          <a (click)="scrollTo('listado-demandas')">📋 Listado de Demandas</a>
-        </li>
+        <li><a (click)="scrollTo('modulo-demandas')">📝 Módulo de Demandas</a></li>
+        <li><a (click)="scrollTo('modulo-transferencia')">🔀 Transferir Demandante de un Programa a Otro</a></li>
+        <li><a (click)="scrollTo('listado-demandas')">📋 Listado de Demandas</a></li>        
         <li><a (click)="scrollTo('mantenedores')">🛠️ Mantenedores</a></li>
         <li><a (click)="scrollTo('roles')">🔐 Roles y Permisos</a></li>
         <li><a (click)="scrollTo('seguridad')">🛡️ Seguridad y Sesión</a></li>
@@ -35,9 +32,21 @@
     <!-- SECCIONES -->
     <app-intro></app-intro>
     <app-demanda></app-demanda>
+    <app-transfer></app-transfer>
     <app-listado></app-listado>
     <app-mantenedores></app-mantenedores>
     <app-roles></app-roles>
     <app-seguridad></app-seguridad>
   </div>
 </div>
+
+<button
+  *ngIf="showIndexBtn"
+  class="btn-indice"
+  mat-fab
+  color="primary"
+  matTooltip="Volver al índice"
+  (click)="scrollTo('indice')"
+>
+  <mat-icon>arrow_upward</mat-icon>
+</button>

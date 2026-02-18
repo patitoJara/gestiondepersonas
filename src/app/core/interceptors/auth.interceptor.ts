@@ -1,12 +1,23 @@
 // src/app/core/interceptors/auth.interceptor.ts
+
 import {
   HttpInterceptorFn,
   HttpErrorResponse,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+import {
+  catchError,
+  switchMap,
+  throwError,
+  BehaviorSubject,
+  filter,
+  take,
+} from 'rxjs';
 import { TokenService } from '../../services/token.service';
 import { AuthLoginService } from '../../services/auth.login.service';
+
+let isRefreshing = false;
+let refreshSubject = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService = inject(TokenService);
@@ -25,9 +36,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const authReq = token
     ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
+        setHeaders: { Authorization: `Bearer ${token}` },
       })
     : req;
 
@@ -37,23 +46,48 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // 🔄 USAR refresh EXISTENTE
+      // 🚫 Si ya estamos refrescando, esperar
+      if (isRefreshing) {
+        return refreshSubject.pipe(
+          filter((token) => token !== null),
+          take(1),
+          switchMap((newToken) => {
+            const retryReq = req.clone({
+              setHeaders: { Authorization: `Bearer ${newToken}` },
+            });
+            return next(retryReq);
+          }),
+        );
+      }
+
+      // 🔒 Iniciar refresh único
+      isRefreshing = true;
+      refreshSubject.next(null);
+
       return authService.refresh().pipe(
-        switchMap(() => {
-          const newToken = tokenService.getAccessToken();
+        switchMap((response: any) => {
+          const newToken = response?.token;
 
           if (!newToken) {
+            tokenService.clear();
             return throwError(() => error);
           }
 
-          // 🔁 REINTENTO ÚNICO
-          return next(
-            req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${newToken}`,
-              },
-            }),
-          );
+          tokenService.setAccessToken(newToken);
+
+          isRefreshing = false;
+          refreshSubject.next(newToken);
+
+          const retryReq = req.clone({
+            setHeaders: { Authorization: `Bearer ${newToken}` },
+          });
+
+          return next(retryReq);
+        }),
+        catchError((refreshError) => {
+          isRefreshing = false;
+          tokenService.clear();
+          return throwError(() => refreshError);
         }),
       );
     }),

@@ -3,7 +3,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-
 @Injectable({ providedIn: 'root' })
 export class TokenService {
   private readonly TOKEN_KEY = 'token';
@@ -11,6 +10,7 @@ export class TokenService {
   private readonly ACTIVE_PROGRAM_KEY = 'activeProgram';
   private readonly ACTIVE_ROLE_KEY = 'activeRole';
   private readonly EXPIRES_AT_KEY = 'token_expires_at';
+  private readonly ACTIVE_PROGRAM_ID_KEY = 'activeProgramId';
 
   // BehaviorSubjects
   private activeProgram$ = new BehaviorSubject<string | null>(
@@ -27,9 +27,20 @@ export class TokenService {
   // =====================================================
   // 🔑 TOKENS SOLO EN sessionStorage
   // =====================================================
+  /*
   setTokens(token: string, refreshToken: string): void {
     sessionStorage.setItem(this.TOKEN_KEY, token);
     sessionStorage.setItem(this.REFRESH_KEY, refreshToken);
+
+    console.log('[TokenService] 💾 Tokens guardados en sessionStorage');
+  }
+  */
+
+  setTokens(token: string, refreshToken: string): void {
+    sessionStorage.setItem(this.TOKEN_KEY, token);
+    sessionStorage.setItem(this.REFRESH_KEY, refreshToken);
+
+    this.setExpirationFromToken(token); // 🔥 CLAVE ABSOLUTA
 
     console.log('[TokenService] 💾 Tokens guardados en sessionStorage');
   }
@@ -67,6 +78,7 @@ export class TokenService {
     sessionStorage.removeItem(this.REFRESH_KEY);
     sessionStorage.removeItem(this.ACTIVE_PROGRAM_KEY);
     sessionStorage.removeItem(this.ACTIVE_ROLE_KEY);
+    sessionStorage.removeItem(this.ACTIVE_PROGRAM_ID_KEY);
   }
 
   // =====================================================
@@ -143,4 +155,15 @@ export class TokenService {
     sessionStorage.setItem(this.ACTIVE_ROLE_KEY, role);
     this.activeRole$.next(role);
   }
+
+  getActiveProgramId(): number | null {
+    const value = sessionStorage.getItem(this.ACTIVE_PROGRAM_ID_KEY);
+    return value ? Number(value) : null;
+  }
+
+  setActiveProgramId(programId: number): void {
+    sessionStorage.setItem(this.ACTIVE_PROGRAM_ID_KEY, programId.toString());
+  }
+
+  
 }

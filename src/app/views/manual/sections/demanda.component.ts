@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-demanda',
   standalone: true,
-  host: { id: 'modulo-demandas' },
+  //host: { id: 'modulo-demandas' },
   templateUrl: './demanda.component.html',
   styleUrls: ['../manual.shared.scss'],
   

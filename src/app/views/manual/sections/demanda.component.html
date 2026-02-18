@@ -1,4 +1,4 @@
-<mat-card class="manual-section">
+<mat-card class="manual-section" id="modulo-demandas">
   <div class="section-header">
     <mat-icon>assignment</mat-icon>
     <h2>Módulo de Demandas</h2>
@@ -95,6 +95,55 @@
       Antes de guardar o actualizar una demanda, el sistema valida la existencia
       de un RUT válido, la selección de una sustancia principal, el cumplimiento
       de campos clínicos obligatorios y la vigencia de la sesión del usuario.
+    </div>
+  </div>
+
+  <!-- Control de salida -->
+  <h3 class="manual-subtitle">Control de salida con cambios sin guardar</h3>
+
+  <div class="manual-box box-warning">
+    <mat-icon>warning</mat-icon>
+    <div>
+      Cuando una demanda presenta modificaciones sin guardar, el sistema activa
+      mecanismos de protección para evitar la pérdida accidental de información.
+    </div>
+  </div>
+
+  <p>
+    El sistema identifica que existen cambios pendientes cuando el botón
+    <strong>Guardar Demanda</strong> se encuentra habilitado, lo que indica que
+    el formulario contiene modificaciones pendientes de guardar respecto del
+    último estado almacenado.
+  </p>
+
+  <ul class="manual-list">
+    <li>
+      <strong>Navegación interna:</strong> si el usuario intenta salir del
+      módulo de Demandas (por menú, cambio de vista o retorno a Inicio), el
+      sistema mostrará un mensaje de confirmación propio del sistema indicando
+      que existen modificaciones sin guardar, permitiendo cancelar la acción o
+      salir perdiendo los cambios.
+    </li>
+
+    <li>
+      <strong>Recarga del navegador (F5) o cierre de pestaña:</strong> el
+      navegador mostrará una advertencia estándar de seguridad del navegador. En
+      navegadores como <strong>Google Chrome</strong> y
+      <strong>Microsoft Edge</strong>, el mensaje mostrado es similar a:
+      <br /><br />
+      <em>"Changes you made may not be saved."</em>
+      <br /><br />
+      Este mensaje es generado por el navegador y no puede ser personalizado ni
+      traducido por el sistema.
+    </li>
+  </ul>
+
+  <div class="manual-box box-info">
+    <mat-icon>info</mat-icon>
+    <div>
+      Este control se aplica únicamente cuando existen cambios pendientes y no
+      interfiere con la navegación normal cuando la demanda se encuentra
+      guardada.
     </div>
   </div>
 </mat-card>

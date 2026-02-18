@@ -3,9 +3,16 @@ import emailjs, { EmailJSResponseStatus } from 'emailjs-com';
 
 @Injectable({ providedIn: 'root' })
 export class EmailService {
-  private serviceId = 'service_f56t47b';
-  private templateId = 'template_ajgvyt8';
+  // con mi gmail
+  //private serviceId = 'service_f56t47b';
+  //private templateId = 'template_ajgvyt8';
+  //private publicKey = 'rHZGN1qKPFPSLn8tc';
+
+  // con mi redsalud.gob.co
+  private serviceId = 'default_service';
+  private templateId = 'template_a953qnq';
   private publicKey = 'rHZGN1qKPFPSLn8tc';
+
 
   /**
    * Envía un correo dinámico usando EmailJS

@@ -1,0 +1,140 @@
+<mat-card class="manual-section" id="modulo-transferencia">
+  <div class="section-header">
+    <mat-icon>swap_horiz</mat-icon>
+    <h2>Módulo de Transferencia de Demandante entre Programas</h2>
+  </div>
+
+  <!-- Caja informativa principal -->
+  <div class="manual-box box-info">
+    <mat-icon>info</mat-icon>
+    <div>
+      El módulo de Transferencia permite trasladar formalmente un demandante 
+      desde un programa activo a otro dentro del sistema RDA-SM, asegurando 
+      trazabilidad clínica, notificación institucional y consistencia normativa.
+    </div>
+  </div>
+
+  <!-- Objetivo -->
+  <h3 class="manual-subtitle">Objetivo del módulo</h3>
+
+  <p>
+    La transferencia está diseñada para mantener la continuidad del proceso 
+    terapéutico cuando un usuario requiere cambiar de programa por razones 
+    clínicas, administrativas o territoriales.
+  </p>
+
+  <div class="manual-box box-success">
+    <mat-icon>verified</mat-icon>
+    <div>
+      La transferencia no elimina información previa. El registro clínico original 
+      mantiene su historial, y el nuevo programa asume la continuidad del proceso.
+    </div>
+  </div>
+
+  <!-- Flujo del proceso -->
+  <h3 class="manual-subtitle">Flujo del proceso de transferencia</h3>
+
+  <ul class="manual-list">
+    <li>
+      <strong>Paso 1 – Buscar RUT:</strong> se ingresa el RUT del demandante. 
+      El sistema valida formato y existencia de registros asociados.
+    </li>
+
+    <li>
+      <strong>Paso 2 – Seleccionar Registro:</strong> si existen múltiples 
+      registros, el usuario selecciona el correspondiente al programa activo.
+    </li>
+
+    <li>
+      <strong>Paso 3 – Revisión Clínica:</strong> se muestra una ficha resumen 
+      tipo hoja clínica con datos del postulante y del registro actual.
+    </li>
+
+    <li>
+      <strong>Paso 4 – Programa Destino:</strong> se selecciona el programa 
+      al cual será transferido el demandante. El sistema excluye automáticamente 
+      el programa de origen.
+    </li>
+
+    <li>
+      <strong>Paso 5 – Confirmación:</strong> se muestra un resumen de la 
+      transferencia incluyendo programa destino y lista de correos que serán notificados.
+    </li>
+
+    <li>
+      <strong>Paso 6 – Ejecución:</strong> el sistema confirma la operación y 
+      registra la transferencia.
+    </li>
+  </ul>
+
+  <!-- Notificación -->
+  <h3 class="manual-subtitle">Notificación automática</h3>
+
+  <div class="manual-box box-rule">
+    <mat-icon>mail</mat-icon>
+    <div>
+      Al ejecutar la transferencia, el sistema genera una notificación por 
+      correo electrónico a:
+      <ul>
+        <li>Profesionales asociados al programa de origen</li>
+        <li>Profesionales asociados al programa destino</li>
+        <li>Usuarios con rol Supervisor</li>
+        <li>Usuarios con rol Administrador</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>
+    Esta notificación informa que el demandante ha sido transferido, 
+    permitiendo coordinación clínica inmediata entre equipos.
+  </p>
+
+  <!-- Validaciones -->
+  <h3 class="manual-subtitle">Validaciones del sistema</h3>
+
+  <div class="manual-box box-warning">
+    <mat-icon>warning</mat-icon>
+    <div>
+      El sistema no permite ejecutar la transferencia si:
+      <ul>
+        <li>No se ha seleccionado un programa destino.</li>
+        <li>El usuario no posee permisos suficientes.</li>
+        <li>El registro clínico no está vigente.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Seguridad -->
+  <h3 class="manual-subtitle">Seguridad y control</h3>
+
+  <div class="manual-box box-info">
+    <mat-icon>lock</mat-icon>
+    <div>
+      El proceso mantiene trazabilidad institucional, registrando:
+      <ul>
+        <li>Usuario que ejecuta la transferencia</li>
+        <li>Programa de origen</li>
+        <li>Programa destino</li>
+        <li>Fecha y hora del evento</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Reinicio -->
+  <h3 class="manual-subtitle">Finalización del proceso</h3>
+
+  <p>
+    Una vez completada la transferencia, el sistema muestra un mensaje de 
+    confirmación y permite reiniciar el módulo para realizar una nueva 
+    transferencia si fuese necesario.
+  </p>
+
+  <div class="manual-box box-success">
+    <mat-icon>check_circle</mat-icon>
+    <div>
+      La transferencia es una acción formal dentro del sistema y debe ser 
+      realizada únicamente cuando exista validación clínica o administrativa 
+      correspondiente.
+    </div>
+  </div>  
+</mat-card>

@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-mantenedores',
   standalone: true,
-  host: { id: 'mantenedores' },
+  //host: { id: 'mantenedores' },
   templateUrl: './mantenedores.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [

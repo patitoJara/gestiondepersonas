@@ -31,7 +31,9 @@
         <div class="role-program-item">
           <mat-form-field appearance="fill">
             <mat-label>Programa</mat-label>
-            <mat-select [(ngModel)]="activeProgram">
+            <mat-select [(ngModel)]="activeProgram"
+              (selectionChange)="onProgramChange($event.value)"
+            >
               <mat-option *ngFor="let p of userPrograms" [value]="p">{{
                 p
               }}</mat-option>

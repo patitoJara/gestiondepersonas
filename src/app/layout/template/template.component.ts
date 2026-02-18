@@ -27,6 +27,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { firstValueFrom } from 'rxjs';
 import { NavigationStateService } from '@app/core/services/navigation-state.service';
+import { SessionService } from '@app/core/services/session.service';
 
 let globalReloadListenerAdded = false;
 
@@ -76,6 +77,7 @@ export class TemplateComponent implements OnInit {
   private isLoggingOut = false;
   private expirationRetryCount = 0;
   private readonly MAX_EXP_RETRIES = 5;
+  private sessionService = inject(SessionService);
 
   userRoles: string[] = [];
   userPrograms: string[] = [];
@@ -135,15 +137,6 @@ export class TemplateComponent implements OnInit {
     // =============================================
     const rolesFromToken = this.tokenService.getUserRoles();
 
-    /*
-    if (profile.roles && profile.roles.length > 0) {
-      this.userRoles = profile.roles;
-    } else if (rolesFromToken.length > 0) {
-      this.userRoles = rolesFromToken;
-    } else {
-      this.userRoles = [];
-    }*/
-
     this.userRoles =
       rolesFromToken.length > 0 ? rolesFromToken : (profile.roles ?? []);
 
@@ -159,16 +152,6 @@ export class TemplateComponent implements OnInit {
     // 🔥 Normalizamos todo a strings
     this.userPrograms = rawPrograms.map((p: any) => p.name ?? p);
 
-    /*const programsFromToken = this.tokenService.getUserPrograms();
-
-     if (profile.programs && profile.programs.length > 0) {
-      this.userPrograms = profile.programs;
-    } else if (programsFromToken.length > 0) {
-      this.userPrograms = programsFromToken;
-    } else {
-      this.userPrograms = [];
-    }*/
-
     // =============================================
     // 🟦 ACTIVO
     // =============================================
@@ -178,13 +161,104 @@ export class TemplateComponent implements OnInit {
     this.activeProgram =
       this.tokenService.getActiveProgram() || this.userPrograms[0] || null;
 
+    // =============================================
+    // 🆕 GUARDAR ID DEL PROGRAMA ACTIVO (SIN ROMPER NADA)
+    // =============================================
+
+    // =============================================
+    // 🆕 DEBUG — GUARDAR ID DEL PROGRAMA ACTIVO
+    // =============================================
+
+    console.log('🔎 DEBUG 1 — profile.programs:', profile.programs);
+    console.log('🔎 DEBUG 2 — activeProgram actual:', this.activeProgram);
+    /*
+    if (profile.programs?.length && this.activeProgram) {
+      const selectedProgram = profile.programs.find(
+        (p: any) => p.name === this.activeProgram,
+      );
+
+      console.log('🔎 DEBUG 3 — selectedProgram encontrado:', selectedProgram);
+
+      if (selectedProgram?.id) {
+        console.log('✅ DEBUG 4 — ID encontrado:', selectedProgram.id);
+
+        this.tokenService.setActiveProgramId(selectedProgram.id);
+
+        console.log(
+          '💾 DEBUG 5 — ID guardado en sessionStorage:',
+          this.tokenService.getActiveProgramId(),
+        );
+      } else {
+        console.warn('⚠️ DEBUG 6 — No se encontró el programa por nombre');
+
+        // 🔥 fallback defensivo
+        const firstProgram = profile.programs[0];
+
+        console.log('🔎 DEBUG 7 — fallback firstProgram:', firstProgram);
+
+        if (firstProgram?.id) {
+          console.log('✅ DEBUG 8 — Fallback ID usado:', firstProgram.id);
+
+          this.tokenService.setActiveProgramId(firstProgram.id);
+          this.tokenService.setActiveProgram(firstProgram.name);
+          this.activeProgram = firstProgram.name;
+
+          console.log(
+            '💾 DEBUG 9 — ID guardado por fallback:',
+            this.tokenService.getActiveProgramId(),
+          );
+        } else {
+          console.error(
+            '❌ DEBUG 10 — Ni siquiera el primer programa tiene ID',
+          );
+        }
+      }
+    } else {
+      console.warn('⚠️ DEBUG 11 — profile.programs vacío o activeProgram null');
+    }
+    
+*/
+
+    // 🔹 NUEVO: obtener programas también desde tokenService
+    const programsFromToken = this.tokenService.getUserPrograms();
+
+    // 🔹 Unificamos ambos orígenes (sin eliminar nada)
+    const allPrograms =
+      profile.programs?.length > 0 ? profile.programs : programsFromToken;
+
+    console.log('🔎 DEBUG 1 — profile.programs:', profile.programs);
+    console.log('🔎 DEBUG 2 — programsFromToken:', programsFromToken);
+    console.log('🔎 DEBUG 3 — activeProgram actual:', this.activeProgram);
+    console.log('🔎 DEBUG 4 — allPrograms usados:', allPrograms);
+
+    if (allPrograms?.length && this.activeProgram) {
+      const selectedProgram = allPrograms.find(
+        (p: any) => (p.name ?? p) === this.activeProgram,
+      );
+
+      console.log('🔎 DEBUG 5 — selectedProgram encontrado:', selectedProgram);
+
+      if (selectedProgram?.id) {
+        console.log('✅ DEBUG 6 — ID encontrado:', selectedProgram.id);
+
+        this.tokenService.setActiveProgramId(selectedProgram.id);
+
+        console.log(
+          '💾 DEBUG 7 — ID guardado:',
+          this.tokenService.getActiveProgramId(),
+        );
+      } else {
+        console.warn('⚠️ DEBUG 8 — No se encontró ID para el programa activo');
+      }
+    } else {
+      console.warn('⚠️ DEBUG 9 — No hay programas disponibles');
+    }
+
     this.isSessionReady = true;
     this.restoreLastRoute();
 
-    // Tiempo sesión
-    //this.startTimer(60);
+    this.sessionService.startSessionFromToken();
     this.startRealExpirationTimer();
-
     this.cdr.detectChanges();
   }
 
@@ -217,15 +291,19 @@ export class TemplateComponent implements OnInit {
 
       await firstValueFrom(this.auth.refresh());
 
-      // 🔥 recalcula con el token NUEVO
+      // 🔥 1️⃣ Reiniciar timer central REAL
+      this.sessionService.startSessionFromToken();
+
+      // 🔥 2️⃣ Reiniciar contador visual
       this.startRealExpirationTimer();
+
       this.showExtendButton = false;
 
       this.snackBar.open('✅ Sesión extendida correctamente', '', {
         duration: 2000,
       });
     } catch {
-      // El logout ya ocurre en AuthLoginService
+      // logout lo maneja AuthLoginService
     } finally {
       this.isRefreshing = false;
       this.cdr.detectChanges();
@@ -254,8 +332,23 @@ export class TemplateComponent implements OnInit {
       }
     }
 
-    sessionStorage.setItem('activeRole', this.activeRole || '');
-    sessionStorage.setItem('activeProgram', this.activeProgram || '');
+    // 🔹 Guardamos lo que ya existía
+    this.tokenService.setActiveRole(this.activeRole || '');
+    this.tokenService.setActiveProgram(this.activeProgram || '');
+
+    // 🔹 🔥 NUEVO: Guardar también el ID
+    const profile = this.tokenService.getUserProfile();
+
+    if (profile?.programs?.length > 0 && this.activeProgram) {
+      const selectedProgram = profile.programs.find(
+        (p: any) => p.name === this.activeProgram,
+      );
+
+      if (selectedProgram?.id) {
+        this.tokenService.setActiveProgramId(selectedProgram.id);
+        console.log('🆔 Programa activo ID guardado:', selectedProgram.id);
+      }
+    }
 
     this.buildMenu();
 
@@ -367,6 +460,7 @@ export class TemplateComponent implements OnInit {
       program: 'apps',
       commune: 'location_city',
       demand: 'assignment_add',
+      transfer: 'swap_horiz',
       substances: 'science',
       states: 'fact_check',
       professions: 'medication_liquid',
@@ -390,6 +484,7 @@ export class TemplateComponent implements OnInit {
       inicio: 'Inicio',
       manual: 'Manual',
       demand: 'Demandas',
+      transfer: 'Transferir Demandante a otro Programa',
       'demand-list': 'Listado de Demandas',
       user: 'Usuarios',
       roles: 'Roles',
@@ -519,5 +614,32 @@ export class TemplateComponent implements OnInit {
 
     // ✅ NAVEGAR
     this.router.navigateByUrl(last);
+  }
+
+  onProgramChange(programName: string): void {
+    console.log('🔄 Programa cambiado a:', programName);
+
+    this.activeProgram = programName;
+
+    // Guardar nombre
+    this.tokenService.setActiveProgram(programName);
+
+    // Obtener todos los programas (profile o token)
+    const profile = this.tokenService.getUserProfile();
+    const programsFromToken = this.tokenService.getUserPrograms();
+
+    const allPrograms =
+      profile?.programs?.length > 0 ? profile.programs : programsFromToken;
+
+    const selectedProgram = allPrograms.find(
+      (p: any) => p.name === programName,
+    );
+
+    if (selectedProgram?.id) {
+      this.tokenService.setActiveProgramId(selectedProgram.id);
+      console.log('🆔 Nuevo ID guardado:', selectedProgram.id);
+    } else {
+      console.warn('⚠️ No se pudo encontrar ID para el programa');
+    }
   }
 }

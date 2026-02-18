@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-listado',
   standalone: true,
-  host: { id: 'listado-demandas' },
+  //host: { id: 'listado-demandas' },
   templateUrl: './listado.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [

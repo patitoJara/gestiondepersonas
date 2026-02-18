@@ -1,58 +1,70 @@
 // src/app/core/services/session.service.ts
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription, timer } from 'rxjs';
+import { Subscription, Subject, timer } from 'rxjs';
 import { TokenService } from '../../services/token.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService implements OnDestroy {
   private sessionSub?: Subscription;
-
-  // ⏱ 60 minutos (en ms)
+  
+  // ⏱ 60 minutos
   private readonly SESSION_TIME = 60 * 60 * 1000;
+
+  // 🔔 Notificador de expiración (NO hace logout inmediato)
+  sessionExpired$ = new Subject<void>();
+  
 
   constructor(
     private router: Router,
-    private tokenService: TokenService
+    private tokenService: TokenService,
   ) {}
 
-  /**
-   * Inicia o reinicia la sesión
-   * Siempre mata cualquier timer anterior
-   */
   startSession(source: 'login' | 'refresh' | 'reload' = 'login'): void {
     console.log(`⏲ [SessionService] Iniciando sesión desde: ${source}`);
 
-    // 🔥 MUY IMPORTANTE: cancelar cualquier timer viejo
     this.clearSession();
 
     this.sessionSub = timer(this.SESSION_TIME).subscribe(() => {
       console.warn('🚨 [SessionService] Sesión expirada');
-      this.logout('timeout');
+      this.sessionExpired$.next(); // 🔥 SOLO NOTIFICA
     });
   }
 
-  /**
-   * Cancela el temporizador activo
-   */
+  startSessionFromToken(): void {
+    this.clearSession();
+
+    //const expiration = this.tokenService.getExpiration();
+    const expiration = this.tokenService.getTokenExpiration();
+    if (!expiration) return;
+
+    const remaining = expiration - Date.now();
+
+    if (remaining <= 0) {
+      this.sessionExpired$.next();
+      return;
+    }
+
+    this.sessionSub = timer(remaining).subscribe(() => {
+      console.warn('🚨 [SessionService] Token realmente expirado');
+      this.sessionExpired$.next();
+    });
+  }
+
   clearSession(): void {
     if (this.sessionSub) {
       this.sessionSub.unsubscribe();
       this.sessionSub = undefined;
-      console.log('🧹 [SessionService] Timer de sesión cancelado');
+      console.log('🧹 [SessionService] Timer cancelado');
     }
   }
 
-  /**
-   * Logout centralizado
-   */
   logout(reason: 'manual' | 'timeout' = 'manual'): void {
     console.log(`🚪 [SessionService] Logout ejecutado (${reason})`);
 
     this.clearSession();
     this.tokenService.clear();
 
-    // ⚠️ IMPORTANTE: ruta correcta de login
     this.router.navigate(['/auth/login'], { replaceUrl: true });
   }
 

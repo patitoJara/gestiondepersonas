@@ -1,0 +1,244 @@
+/* =========================================
+   🧾 MODAL CITACIÓN — FORMATO REFERENTE
+========================================= */
+
+/* 🔥 CONTENEDOR REAL DEL MODAL (Angular Material) */
+.mat-mdc-dialog-container {
+  padding: 0 !important;
+  border-radius: 6px !important;   /* 👈 poco radio */
+  overflow: hidden !important;     /* 👈 sin scroll */
+}
+
+/* ❌ quitar scroll interno de Material */
+.mat-mdc-dialog-content {
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+/* =========================
+   FICHA BASE
+========================= */
+
+.ficha-modal {
+  padding: 0;
+}
+
+.ficha-referente.ficha-citacion-modal {
+  background: #fafafa;
+  padding: 0;
+}
+
+/* =========================
+   HEADER (igual al referente)
+========================= */
+
+.dialog-header {
+  background: #ef6c00;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  border-radius: 0;
+}
+
+/* =========================
+   CUERPO
+========================= */
+
+.form-citacion-modal {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================
+   GRID
+========================= */
+
+.fila-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+}
+
+/* =========================
+   CAMPO CLÍNICO LINEAL
+========================= */
+
+.field-clinico-linea {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.field-clinico-linea label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #546e7a;
+}
+
+/* =========================
+   MATERIAL → ESTILO REFERENTE
+========================= */
+
+::ng-deep .field-clinico-linea .mat-mdc-form-field {
+  width: 100%;
+}
+
+/* ❌ eliminar caja */
+::ng-deep .field-clinico-linea .mdc-notched-outline {
+  display: none;
+}
+
+/* contenedor limpio */
+::ng-deep .field-clinico-linea .mat-mdc-form-field-flex {
+  padding: 0 !important;
+  background: transparent !important;
+  align-items: flex-end;
+}
+
+/* texto */
+::ng-deep .field-clinico-linea input,
+::ng-deep .field-clinico-linea .mat-mdc-select-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #263238;
+}
+
+/* altura clínica */
+::ng-deep .field-clinico-linea .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  min-height: 22px;
+}
+
+/* línea inferior */
+::ng-deep .field-clinico-linea .mdc-line-ripple {
+  height: 1px;
+  background-color: #9e9e9e;
+}
+
+/* foco */
+::ng-deep
+.field-clinico-linea
+.mat-mdc-form-field.mat-focused
+.mdc-line-ripple {
+  height: 2px;
+  background-color: #1976d2;
+}
+
+
+.mat-mdc-dialog-actions button {
+  min-height: 32px;
+}
+
+/* =========================================
+   🔥 FIX DEFINITIVO SCROLL MODAL
+========================================= */
+
+::ng-deep .mat-mdc-dialog-container,
+::ng-deep .mdc-dialog__surface {
+  overflow: hidden !important;
+  border-radius: 6px !important;
+}
+
+::ng-deep .mat-mdc-dialog-content {
+  overflow: hidden !important;
+  max-height: none !important;
+  padding: 0 !important;
+}
+
+/* =========================================
+   ➖ DIVISIÓN AZUL ENTRE ESTADO Y ACCIONES
+========================================= */
+
+.mat-mdc-dialog-actions {
+  border-top: 2px solid #1976d2;  /* ⬅️ AZUL clínico */
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+/* =========================================
+   🔵 ESTADO READONLY — 2 FILAS, MISMA COLUMNA
+========================================= */
+
+
+.estado-icon {
+  font-size: 16px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* =========================================
+   🔵 ESTADO READONLY — LÍNEA AZUL VISIBLE
+========================================= */
+
+.estado-readonly {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 4px;
+
+  padding-bottom: 14px;   /* ⬅️ MÁS aire */
+  margin-bottom: 14px;    /* ⬅️ CLAVE */
+  border-bottom: 2px solid #1976d2; /* ⬅️ LÍNEA AZUL */
+}
+
+/* =========================================
+   🔵 ESTADO READONLY — DEFINITIVO
+========================================= */
+
+.estado-readonly {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 4px;
+
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 2px solid #1976d2; /* ✅ línea azul visible */
+}
+
+/* Label */
+.estado-readonly label {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #546e7a;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Valor */
+.estado-readonly .estado-text {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Icono */
+.estado-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Colores por estado */
+.estado--agendado { color: #2e7d32; }
+.estado--presento { color: #1565c0; }
+.estado--no-presento { color: #c62828; }
+.estado--cancelado { color: #616161; }

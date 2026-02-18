@@ -48,8 +48,11 @@
   =============================================================== -->
   <div
     class="panel-fichas-overlay"
-    [class.visible]="mostrarPanelFichas"
-    [attr.aria-hidden]="!mostrarPanelFichas"
+    *ngIf="
+      mostrarPanelFichas &&
+      (fichasMismoPrograma.length > 0 || fichasOtrosProgramas.length > 0)
+    "
+    [class.visible]="true"
   >
     <div class="panel-fichas">
       <!-- HEADER -->
@@ -205,11 +208,20 @@
   </div>
 
   <!-- ============================================================
-     FORMULARIO PRINCIPAL
-=============================================================== -->
+        FORMULARIO PRINCIPAL
+      =============================================================== -->
   <!-- FICHA GENERAL REAL -->
   <div class="ficha-general">
     <div class="form-wrapper" style="position: relative">
+      <!-- 🌊 TIMBRE DE AGUA (ESTADO / RESULTADO / OPERATIVO) -->
+      <div
+        class="form-watermark-grid"
+        *ngIf="watermarkText"
+        [attr.data-text]="watermarkText"
+        [style.color]="watermarkColor"
+      ></div>
+
+      <!-- 🧾 FORMULARIO -->
       <form
         [formGroup]="form"
         class="form-grid"
@@ -275,166 +287,180 @@
                         matTooltip="Editar demandante"
                         (click)="editarPostulante()"
                       >
-                        <mat-icon>edit</mat-icon>
+                        <mat-icon>edit_note</mat-icon>
                       </button>
                     </div>
                   </div>
+                  <!-- BLOQUE POSTULANTE -->
+                  <div class="bloque-postulante">
+                    <!-- 🪟 CORTINA -->
+                    <div class="cortina" *ngIf="mostrarBloqueoPostulante"></div>
 
-                  <!-- FECHA NACIMIENTO + EDAD -->
-                  <div class="fila-3">
-                    <!-- FECHA NACIMIENTO -->
-                    <div class="field-clinico-linea">
-                      <label>Fecha Nacimiento</label>
-                      <input
-                        matInput
-                        [matDatepicker]="pickerNacimiento"
-                        formControlName="birthDate"
-                      />
-                    </div>
-
-                    <div class="field-clinico-linea">
-                      <mat-datepicker-toggle
-                        matSuffix
-                        [for]="pickerNacimiento"
-                      ></mat-datepicker-toggle>
-
-                      <mat-datepicker #pickerNacimiento></mat-datepicker>
-                    </div>
-
-                    <div class="field-clinico-linea">
-                      <div *ngIf="form && edad !== null" class="edad-valor">
-                        Edad: <strong>{{ edad }} años</strong>
+                    <!-- FECHA NACIMIENTO + EDAD -->
+                    <div class="fila-3">
+                      <!-- FECHA NACIMIENTO -->
+                      <div class="field-clinico-linea">
+                        <label>Fecha Nacimiento</label>
+                        <input
+                          matInput
+                          [matDatepicker]="pickerNacimiento"
+                          formControlName="birthDate"
+                        />
                       </div>
-                    </div>                  
-                  </div>
 
-                  <!-- PRIMER / SEGUNDO NOMBRE -->
-                  <div class="fila-2">
-                    <div class="field-clinico-linea">
-                      <label>Primer Nombre</label>
-                      <input formControlName="firstName" />
+                      <div class="field-clinico-linea">
+                        <mat-datepicker-toggle
+                          matSuffix
+                          [for]="pickerNacimiento"
+                        ></mat-datepicker-toggle>
+
+                        <mat-datepicker #pickerNacimiento></mat-datepicker>
+                      </div>
+
+                      <div class="field-clinico-linea">
+                        <div *ngIf="form && edad !== null" class="edad-valor">
+                          Edad: <strong>{{ edad }} años</strong>
+                        </div>
+                      </div>
                     </div>
 
-                    <div class="field-clinico-linea">
-                      <label>Segundo Nombre</label>
-                      <input formControlName="secondName" />
-                    </div>
-                  </div>
+                    <!-- PRIMER / SEGUNDO NOMBRE -->
+                    <div class="fila-2">
+                      <div class="field-clinico-linea">
+                        <label>Primer Nombre</label>
+                        <input formControlName="firstName" />
+                      </div>
 
-                  <!-- PRIMER / SEGUNDO APELLIDO -->
-                  <div class="fila-2">
-                    <div class="field-clinico-linea">
-                      <label>Primer Apellido</label>
-                      <input formControlName="firstLastName" />
+                      <div class="field-clinico-linea">
+                        <label>Segundo Nombre</label>
+                        <input formControlName="secondName" />
+                      </div>
                     </div>
 
-                    <div class="field-clinico-linea">
-                      <label>Segundo Apellido</label>
-                      <input formControlName="secondLastName" />
-                    </div>
-                  </div>
+                    <!-- PRIMER / SEGUNDO APELLIDO -->
+                    <div class="fila-2">
+                      <div class="field-clinico-linea">
+                        <label>Primer Apellido</label>
+                        <input formControlName="firstLastName" />
+                      </div>
 
-                  <!-- SEXO + TELÉFONO -->
-                  <div class="fila-2">
-                    <div class="field-clinico-linea">
-                      <label>Sexo *</label>
-                      <mat-form-field
-                        appearance="fill"
-                        class="clinico-form-field"
-                      >
-                        <mat-select
-                          formControlName="sex"
-                          panelClass="clinico-select-panel"
+                      <div class="field-clinico-linea">
+                        <label>Segundo Apellido</label>
+                        <input formControlName="secondLastName" />
+                      </div>
+                    </div>
+
+                    <!-- SEXO + TELÉFONO -->
+                    <div class="fila-2">
+                      <div class="field-clinico-linea">
+                        <label>Sexo *</label>
+                        <mat-form-field
+                          appearance="fill"
+                          class="clinico-form-field"
                         >
-                          <mat-option *ngFor="let s of sexes" [value]="s.id">
-                            {{ s.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-
-                    <div class="field-clinico-linea">
-                      <label>Teléfono</label>
-                      <input formControlName="phone" />
-                    </div>
-                  </div>
-                  <!-- CORREO -->
-                  <div class="fila-1">
-                    <div class="field-clinico-linea">
-                      <label>Correo</label>
-                      <input formControlName="email" />
-                      <mat-error *ngIf="form.get('email')?.hasError('email')">
-                        Correo electrónico inválido
-                      </mat-error>
-
-                      <mat-error *ngIf="form.get('email')?.hasError('pattern')">
-                        Formato de correo no válido (ej: nombre&#64;dominio.cl)
-                      </mat-error>
-                    </div>
-                  </div>
-                  <!-- DIRECCIÓN -->
-                  <div class="fila-1">
-                    <div class="field-clinico-linea">
-                      <label>Dirección</label>
-                      <input formControlName="address" />
-                    </div>
-                  </div>
-                  <!-- COMUNA -->
-                  <div class="fila-1">
-                    <div class="field-clinico-linea">
-                      <label>Comuna</label>
-                      <mat-form-field
-                        appearance="fill"
-                        class="clinico-form-field"
-                      >
-                        <mat-select
-                          formControlName="commune"
-                          panelClass="clinico-select-panel"
-                        >
-                          <mat-option *ngFor="let c of communes" [value]="c.id">
-                            {{ c.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <!-- TIPO PREVISIÓN + PREVISIÓN -->
-                  <div class="fila-2">
-                    <div class="field-clinico-linea">
-                      <label>Tipo Previsión</label>
-                      <mat-form-field
-                        appearance="fill"
-                        class="clinico-form-field"
-                      >
-                        <mat-select
-                          formControlName="intPrev"
-                          panelClass="clinico-select-panel"
-                        >
-                          <mat-option *ngFor="let s of intPrev" [value]="s.id">
-                            {{ s.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-
-                    <div class="field-clinico-linea">
-                      <label>Previsión</label>
-                      <mat-form-field
-                        appearance="fill"
-                        class="clinico-form-field"
-                      >
-                        <mat-select
-                          formControlName="convPrev"
-                          panelClass="clinico-select-panel"
-                        >
-                          <mat-option
-                            *ngFor="let s of filteredConvPrev"
-                            [value]="s.id"
+                          <mat-select
+                            formControlName="sex"
+                            panelClass="clinico-select-panel"
                           >
-                            {{ s.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
+                            <mat-option *ngFor="let s of sexes" [value]="s.id">
+                              {{ s.name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="field-clinico-linea">
+                        <label>Teléfono</label>
+                        <input formControlName="phone" />
+                      </div>
+                    </div>
+                    <!-- CORREO -->
+                    <div class="fila-1">
+                      <div class="field-clinico-linea">
+                        <label>Correo</label>
+                        <input formControlName="email" />
+                        <mat-error *ngIf="form.get('email')?.hasError('email')">
+                          Correo electrónico inválido
+                        </mat-error>
+
+                        <mat-error
+                          *ngIf="form.get('email')?.hasError('pattern')"
+                        >
+                          Formato de correo no válido (ej:
+                          nombre&#64;dominio.cl)
+                        </mat-error>
+                      </div>
+                    </div>
+                    <!-- DIRECCIÓN -->
+                    <div class="fila-1">
+                      <div class="field-clinico-linea">
+                        <label>Dirección</label>
+                        <input formControlName="address" />
+                      </div>
+                    </div>
+                    <!-- COMUNA -->
+                    <div class="fila-1">
+                      <div class="field-clinico-linea">
+                        <label>Comuna</label>
+                        <mat-form-field
+                          appearance="fill"
+                          class="clinico-form-field"
+                        >
+                          <mat-select
+                            formControlName="commune"
+                            panelClass="clinico-select-panel"
+                          >
+                            <mat-option
+                              *ngFor="let c of communes"
+                              [value]="c.id"
+                            >
+                              {{ c.name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                    <!-- TIPO PREVISIÓN + PREVISIÓN -->
+                    <div class="fila-2">
+                      <div class="field-clinico-linea">
+                        <label>Tipo Previsión</label>
+                        <mat-form-field
+                          appearance="fill"
+                          class="clinico-form-field"
+                        >
+                          <mat-select
+                            formControlName="intPrev"
+                            panelClass="clinico-select-panel"
+                          >
+                            <mat-option
+                              *ngFor="let s of intPrev"
+                              [value]="s.id"
+                            >
+                              {{ s.name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="field-clinico-linea">
+                        <label>Previsión</label>
+                        <mat-form-field
+                          appearance="fill"
+                          class="clinico-form-field"
+                        >
+                          <mat-select
+                            formControlName="convPrev"
+                            panelClass="clinico-select-panel"
+                          >
+                            <mat-option
+                              *ngFor="let s of filteredConvPrev"
+                              [value]="s.id"
+                            >
+                              {{ s.name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -447,7 +473,7 @@
                 <div class="form-referente">
                   <!-- 1. NOMBRE + CELULAR -->
                   <div class="fila-1">
-                    <div class="field-clinico-linea">                     
+                    <div class="field-clinico-linea">
                       <label>Nombre</label>
                       <div class="field-inline-action">
                         <input matInput formControlName="name" />
@@ -474,7 +500,6 @@
                       </div>
                     </div>
                   </div>
-
                   <div class="fila-2">
                     <div class="field-clinico-linea">
                       <label>Teléfono / Celular</label>
@@ -541,8 +566,12 @@
                     </div>
 
                     <div class="field-clinico-linea">
-                      <label>Días Transc.</label>
-                      <span class="dias-transcurridos"
+                      <label *ngIf="diasTranscurridos !== null"
+                        >Días Transc.</label
+                      >
+                      <span
+                        class="dias-transcurridos"
+                        *ngIf="diasTranscurridos !== null"
                         >{{ diasTranscurridos }} días</span
                       >
                     </div>
@@ -740,120 +769,122 @@
 
               <!-- ===============================
               GENERAR CITACIÓN
-            ================================ -->
-              <mat-card
-                class="card ficha-citaciones"
-                [class.collapsed]="citacionCollapsed"
-              >
-                <!-- HEADER -->
-                <div
-                  class="card-title-colored card-title-citacion card-collapsible-header"
-                >
-                  <span>
-                    {{ citacionHeaderText }}
-                  </span>
-
-                  <button
-                    mat-icon-button
-                    type="button"
-                    class="collapse-btn"
-                    (click)="citacionCollapsed = !citacionCollapsed"
-                    [matTooltip]="
-                      citacionCollapsed
-                        ? 'Agregar una nueva citación'
-                        : 'Ocultar citación'
-                    "
+              ================================ -->
+              <ng-template #bloqueOculto>
+                <mat-card class="card ficha-citaciones">
+                  <!-- HEADER -->
+                  <div
+                    class="card-title-colored card-title-citacion card-collapsible-header"
                   >
-                    <mat-icon>
-                      {{ citacionCollapsed ? "expand_more" : "expand_less" }}
-                    </mat-icon>
-                  </button>
-                </div>
+                    <span>
+                      {{ citacionHeaderText }}
+                    </span>
 
-                <!-- CONTENIDO -->
-                <div class="form-citaciones" *ngIf="!citacionCollapsed">
-                  <!-- FILA 1: FECHA + HORA -->
-                  <div class="fila-citacion-principal">
-                    <!-- FECHA -->
-                    <div class="field-clinico-linea">
-                      <label>Fecha</label>
-                      <mat-form-field appearance="fill">
-                        <input
-                          matInput
-                          [matDatepicker]="picker"
-                          formControlName="newDate"
-                        />
-                        <mat-datepicker-toggle
-                          matSuffix
-                          [for]="picker"
-                        ></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                      </mat-form-field>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="collapse-btn"
+                      (click)="citacionCollapsed = !citacionCollapsed"
+                      [matTooltip]="
+                        citacionCollapsed
+                          ? 'Agregar una nueva citación'
+                          : 'Ocultar citación'
+                      "
+                    >
+                      <mat-icon>
+                        {{ citacionCollapsed ? "expand_more" : "expand_less" }}
+                      </mat-icon>
+                    </button>
+                  </div>
+
+                  <!-- CONTENIDO -->
+                  <div class="form-citaciones" *ngIf="!citacionCollapsed">
+                    <!-- FILA 1: FECHA + HORA -->
+                    <div class="fila-citacion-principal">
+                      <!-- FECHA -->
+                      <div class="field-clinico-linea">
+                        <label>Fecha</label>
+                        <mat-form-field appearance="fill">
+                          <input
+                            matInput
+                            [matDatepicker]="picker"
+                            formControlName="newDate"
+                          />
+                          <mat-datepicker-toggle
+                            matSuffix
+                            [for]="picker"
+                          ></mat-datepicker-toggle>
+                          <mat-datepicker #picker></mat-datepicker>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- HORA -->
+                      <div class="field-clinico-linea">
+                        <mat-form-field appearance="outline">
+                          <mat-label>Hora</mat-label>
+                          <input
+                            matInput
+                            type="time"
+                            formControlName="newHour"
+                          />
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            tabindex="-1"
+                            (click)="
+                              form
+                                .get('newHour')
+                                ?.setValue(utils.getCurrentTime())
+                            "
+                          >
+                            <mat-icon>schedule</mat-icon>
+                          </button>
+                        </mat-form-field>
+                      </div>
                     </div>
 
-                    <!-- HORA -->
-                    <div class="field-clinico-linea">
-                      <mat-form-field appearance="outline">
-                        <mat-label>Hora</mat-label>
-                        <input matInput type="time" formControlName="newHour" />
+                    <!-- FILA 2: PROFESIÓN + PROFESIONAL + BOTÓN -->
+                    <div class="fila-citacion-secundaria">
+                      <!-- PROFESIÓN -->
+                      <div class="field-clinico-linea">
+                        <label>Profesión</label>
+                        <mat-form-field appearance="fill">
+                          <mat-select formControlName="newProfession">
+                            <mat-option
+                              *ngFor="let p of professions"
+                              [value]="p.id"
+                            >
+                              {{ p.name }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </div>
+
+                      <!-- PROFESIONAL -->
+                      <div class="field-clinico-linea">
+                        <label>Profesional</label>
+                        <mat-form-field appearance="fill">
+                          <input matInput formControlName="newProfessional" />
+                        </mat-form-field>
+                      </div>
+
+                      <!-- BOTÓN -->
+                      <div class="action-center">
                         <button
                           mat-icon-button
-                          matSuffix
+                          class="rut-action-btn"
+                          matTooltip="Agregar nueva citación"
                           type="button"
-                          tabindex="-1"
-                          (click)="
-                            form
-                              .get('newHour')
-                              ?.setValue(utils.getCurrentTime())
-                          "
+                          (click)="addMovement()"
                         >
-                          <mat-icon>schedule</mat-icon>
+                          <mat-icon>event_available</mat-icon>
                         </button>
-                      </mat-form-field>
+                      </div>
                     </div>
                   </div>
-
-                  <!-- FILA 2: PROFESIÓN + PROFESIONAL + BOTÓN -->
-                  <div class="fila-citacion-secundaria">
-                    <!-- PROFESIÓN -->
-                    <div class="field-clinico-linea">
-                      <label>Profesión</label>
-                      <mat-form-field appearance="fill">
-                        <mat-select formControlName="newProfession">
-                          <mat-option
-                            *ngFor="let p of professions"
-                            [value]="p.id"
-                          >
-                            {{ p.name }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-
-                    <!-- PROFESIONAL -->
-                    <div class="field-clinico-linea">
-                      <label>Profesional</label>
-                      <mat-form-field appearance="fill">
-                        <input matInput formControlName="newProfessional" />
-                      </mat-form-field>
-                    </div>
-
-                    <!-- BOTÓN -->
-                    <div class="action-center">
-                      <button
-                        mat-icon-button
-                        class="rut-action-btn"
-                        matTooltip="Agregar nueva citación"
-                        type="button"
-                        (click)="addMovement()"
-                      >
-                        <mat-icon>event_available</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </mat-card>
-
+                </mat-card>
+              </ng-template>
               <!-- ===============================
                   HISTORIAL DE CITACIONES (TABLA)
                   ⚠️ BLOQUE INDEPENDIENTE
@@ -861,6 +892,14 @@
               <mat-card class="card ficha-historial mt-16">
                 <div class="card-title-colored card-title-ladrillo">
                   Historial de Citaciones
+                  <button
+                    mat-icon-button
+                    class="historial-add-btn"
+                    matTooltip="Agregar citación"
+                    (click)="openNuevaCitacionModal()"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
                 </div>
 
                 <div class="historial-wrapper">
@@ -926,6 +965,7 @@
                     </ng-container>
 
                     <!-- ================= ACCIONES ================= -->
+                    <!-- ================= ACCIONES ================= -->
                     <ng-container matColumnDef="actions">
                       <th
                         mat-header-cell
@@ -940,60 +980,88 @@
                         *matCellDef="let m; let i = index"
                         class="actions-cell"
                       >
-                        <!-- 🖨 IMPRIMIR -->
-                        <button
-                          mat-icon-button
-                          type="button"
-                          color="primary"
-                          matTooltip="Imprimir citación"
-                          (click)="imprimirCitacion(i, m)"
-                        >
-                          <mat-icon>description</mat-icon>
-                        </button>
-
-                        <!-- ⋮ MENÚ -->
-                        <button
-                          mat-icon-button
-                          type="button"
-                          [matMenuTriggerFor]="menuActions"
-                          matTooltip="Más acciones"
-                        >
-                          <mat-icon>more_vert</mat-icon>
-                        </button>
-
-                        <mat-menu #menuActions="matMenu">
+                        <!-- 🟢 PERSISTIDA (tiene id) -->
+                        <ng-container *ngIf="m.id; else nuevaCitacion">
+                          <!-- Imprimir -->
                           <button
-                            mat-menu-item
-                            (click)="setMovementState(m, 'AGENDADO')"
+                            type="button"
+                            mat-icon-button
+                            matTooltip="Imprimir citación"
+                            (click)="imprimirCitacion(i, m)"
                           >
-                            <mat-icon>event</mat-icon>
-                            <span>Agendado</span>
+                            <mat-icon>print</mat-icon>
+                          </button>
+
+                          <!-- Cambiar estado -->
+                          <button
+                            type="button"
+                            mat-icon-button
+                            [matMenuTriggerFor]="menuEstados"
+                            matTooltip="Cambiar estado"
+                          >
+                            <mat-icon>more_vert</mat-icon>
+                          </button>
+
+                          <mat-menu #menuEstados="matMenu">
+                            <button
+                              type="button"
+                              mat-menu-item
+                              (click)="setMovementState(m, 'AGENDADO')"
+                            >
+                              <mat-icon>schedule</mat-icon>
+                              <span>Agendado</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              mat-menu-item
+                              (click)="setMovementState(m, 'SE_PRESENTO')"
+                            >
+                              <mat-icon>check_circle</mat-icon>
+                              <span>Se presentó</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              mat-menu-item
+                              (click)="setMovementState(m, 'NO_SE_PRESENTO')"
+                            >
+                              <mat-icon>person_off</mat-icon>
+                              <span>No se presentó</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              mat-menu-item
+                              (click)="setMovementState(m, 'CANCELA_PROGRAMA')"
+                            >
+                              <mat-icon>cancel</mat-icon>
+                              <span>Cancela programa</span>
+                            </button>
+                          </mat-menu>
+                        </ng-container>
+
+                        <!-- 🟡 NUEVA (no tiene id) -->
+                        <ng-template #nuevaCitacion>
+                          <button
+                            type="button"
+                            mat-icon-button
+                            matTooltip="Editar"
+                            (click)="editarMovimiento(i, m); $event.stopPropagation()"
+                          >
+                            <mat-icon>edit</mat-icon>
                           </button>
 
                           <button
-                            mat-menu-item
-                            (click)="setMovementState(m, 'SE_PRESENTO')"
+                            type="button"
+                            mat-icon-button
+                            color="warn"
+                            matTooltip="Eliminar"
+                            (click)="eliminarMovimiento(i); $event.stopPropagation()"
                           >
-                            <mat-icon>check_circle</mat-icon>
-                            <span>Se presentó</span>
+                            <mat-icon>delete</mat-icon>
                           </button>
-
-                          <button
-                            mat-menu-item
-                            (click)="setMovementState(m, 'NO_SE_PRESENTO')"
-                          >
-                            <mat-icon>person_off</mat-icon>
-                            <span>No se presentó</span>
-                          </button>
-
-                          <button
-                            mat-menu-item
-                            (click)="setMovementState(m, 'CANCELA_PROGRAMA')"
-                          >
-                            <mat-icon>cancel</mat-icon>
-                            <span>Cancela programa</span>
-                          </button>
-                        </mat-menu>
+                        </ng-template>
                       </td>
                     </ng-container>
 
@@ -1014,27 +1082,24 @@
               <!-- OBSERVACIONES -->
               <mat-card class="card ficha-notas">
                 <div class="card-title-colored card-title-gris">
-                  Observaciones
+                  <span>OBSERVACIONES</span>
+                  <button
+                    type="button"
+                    mat-icon-button
+                    class="observaciones-add-btn"
+                    matTooltip="Agregar observación"
+                    (click)="openNuevoComentarioModal()"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
                 </div>
-                <mat-form-field
-                  appearance="outline"
-                  class="field-clinical textarea-clinical"
-                >
-                  <mat-label>Descripción de la demanda</mat-label>
 
-                  <textarea
-                    matInput
-                    formControlName="registerDescription"
-                    maxlength="500"
-                    rows="5"
-                  ></textarea>
-
-                  <mat-hint align="end" class="hint-clinical">
-                    {{
-                      form.get("registerDescription")?.value?.length || 0
-                    }}/500
-                  </mat-hint>
-                </mat-form-field>
+                <!-- 🔒 CONTENEDOR CON SCROLL -->
+                <div class="observaciones-wrapper">
+                  <div class="observaciones-content">
+                    {{ observacionesPreview }}
+                  </div>
+                </div>
               </mat-card>
             </div>
             <!-- FIN col-right -->

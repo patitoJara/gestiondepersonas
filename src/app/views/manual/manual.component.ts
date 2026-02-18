@@ -1,6 +1,4 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatListModule } from '@angular/material/list';
@@ -12,6 +10,9 @@ import { ListadoComponent } from './sections/listado.component';
 import { MantenedoresComponent } from './sections/mantenedores.component';
 import { RolesComponent } from './sections/roles.component';
 import { SeguridadComponent } from './sections/seguridad.component';
+import { TransferComponent } from './sections/transfer.component';
+
+import { Component, ViewChild, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-manual',
@@ -30,18 +31,33 @@ import { SeguridadComponent } from './sections/seguridad.component';
     MantenedoresComponent,
     RolesComponent,
     SeguridadComponent,
+    TransferComponent,
   ],
 })
 export class ManualComponent {
+  @ViewChild('manualScroll') manualScroll!: ElementRef<HTMLDivElement>;
+
+  showIndexBtn = false;
+
+  onScroll(): void {
+    const scrollTop = this.manualScroll.nativeElement.scrollTop;
+    this.showIndexBtn = scrollTop > 300;
+  }
+
+  scrollToIndex(): void {
+    this.manualScroll.nativeElement.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  }
 
   scrollTo(id: string): void {
-    const el = document.getElementById(id);
-    if (!el) return;
+    const target = document.getElementById(id);
+    if (!target) return;
 
-    el.scrollIntoView({
+    target.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
   }
-
 }

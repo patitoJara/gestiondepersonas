@@ -135,6 +135,8 @@ export class PostulantEditDialogComponent implements OnInit {
     this.form
       .get('intPrev')
       ?.valueChanges.subscribe((v) => this.filterConvPrevByIntPrev(v));
+
+
   }
 
   async guardar(): Promise<void> {
@@ -184,8 +186,23 @@ export class PostulantEditDialogComponent implements OnInit {
     this.dialogRef.close(true);
   }
 
+  hasPendingChanges(): boolean {
+    return this.form?.dirty === true;
+  }  
+
   cancelar(): void {
-    this.dialogRef.close(false);
+    if (!this.hasPendingChanges()) {
+      this.dialogRef.close(false);
+      return;
+    }
+
+    const confirmar = confirm(
+      'Existen cambios sin guardar. Si sales ahora, se perderán.',
+    );
+
+    if (confirmar) {
+      this.dialogRef.close(false);
+    }
   }
 
   filterConvPrevByIntPrev(typeId: number): void {

@@ -4,15 +4,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-intro',
+  selector: 'app-transfer',
   standalone: true,
-  //host: { id: 'intro' },
-  templateUrl: './intro.component.html',
-  styleUrls: ['../manual.shared.scss'], 
+  //host: { id: 'modulo-demandas' },
+  templateUrl: './transfer.component.html',
+  styleUrls: ['../manual.shared.scss'],
+  
   imports: [
     CommonModule,
     MatCardModule,
     MatIconModule,
   ],
 })
-export class IntroComponent {}
+export class TransferComponent {}

@@ -63,6 +63,13 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { PendingChangesComponent } from '@app/core/guards/pending-changes.interface';
+import { HostListener } from '@angular/core';
+import { switchMap } from 'rxjs/operators';
+
+import { CitacionModalComponent } from './modals/citacion-modal/citacion-modal.component';
+import { ConfirmDialogYesNoComponent } from '@app/shared/confirm-dialog/confirm-dialog-yes-no.component';
+import { ObservacionModalComponent } from '../../views/modals/observaciones-modal/observacion-modal.component';
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -96,7 +103,7 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     MatTooltipModule,
   ],
 })
-export class DemandComponent implements OnInit {
+export class DemandComponent implements OnInit, PendingChangesComponent {
   canClearForm = false; // 🧹 botón limpiar
   canEditPostulant = false; // ✏️ botón editar
 
@@ -112,6 +119,8 @@ export class DemandComponent implements OnInit {
 
   mostrarBloqueoPostulante = false;
   mostrarBloqueoReferente = false;
+
+  estadoFormulario: number | null = null;
 
   // =========================
   // 🔐 FLAGS DE EDICIÓN
@@ -171,6 +180,9 @@ export class DemandComponent implements OnInit {
   fullName = '';
   activeProgram: string | null = null;
 
+  observacionesDraft: string[] = []; // múltiples observaciones UI
+  observacionEnEdicion: string | null = null;
+
   edad: number | null = null;
   diasTranscurridos: number | null = null;
 
@@ -211,14 +223,10 @@ export class DemandComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-
+    this.loadSessionContext();
     this.loadCatalogs().then(() => {
       queueMicrotask(() => {
         this.nuevaDemanda(); // 👈 RESET REAL
-
-        this.form.get('fechaSolicitud')?.valueChanges.subscribe((fecha) => {
-          this.onFechaSolicitudChange(fecha);
-        });
 
         // 📅 Fecha solicitud → días transcurridos
         this.form.get('fechaSolicitud')?.valueChanges.subscribe((fecha) => {
@@ -245,6 +253,21 @@ export class DemandComponent implements OnInit {
     this.setupReactiveListeners();
   }
 
+  /* ==================================================
+   🔒 CONTROL DE CAMBIOS SIN GUARDAR
+================================================== */
+  hasPendingChanges(): boolean {
+    return this.form?.dirty === true && !this.saving;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  unloadNotification(event: BeforeUnloadEvent): void {
+    if (this.hasPendingChanges()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
   private setupReactiveListeners(): void {
     this.form
       .get('result')
@@ -264,6 +287,20 @@ export class DemandComponent implements OnInit {
         this.aplicarReglaPrevision(id);
       });
   }
+
+  private loadSessionContext(): void {
+    // 👤 Usuario
+    const profile = this.tokenService.getUserProfile();
+    this.fullName = profile?.fullName?.trim() ?? '';
+
+    // 🏥 Programa activo (ES STRING)
+    this.activeProgram = this.tokenService.getActiveProgram();
+
+    console.log('🧪 CONTEXTO SESIÓN');
+    console.log('Usuario:', this.fullName);
+    console.log('Programa:', this.activeProgram);
+  }
+
   // ============================================================
   // 🟦 FORMULARIO
   // ============================================================
@@ -309,7 +346,7 @@ export class DemandComponent implements OnInit {
       result: [null, Validators.required],
       notRelevants: [null, Validators.required],
 
-      fechaSolicitud: [now],
+      fechaSolicitud: [null, Validators.required],
 
       // ===============================
       // 🟦 NUEVA ATENCIÓN (FORM AUXILIAR)
@@ -318,7 +355,6 @@ export class DemandComponent implements OnInit {
       newHour: [currentTime],
       newProfession: [null],
       newProfessional: [''],
-
       registerDescription: [''],
     });
   }
@@ -375,6 +411,204 @@ export class DemandComponent implements OnInit {
     });
   }
 
+  deletePendingCitacion(index: number): void {
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-ficha-clinica',
+      disableClose: true,
+      data: {
+        title: 'Eliminar citación',
+        message:
+          'Esta citación aún no ha sido guardada y se perderá definitivamente.',
+        icon: 'warning',
+        color: 'warn',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.movements.splice(index, 1);
+    });
+  }
+
+  editPendingCitacion(index: number, citacion: any): void {
+    const dialogRef = this.dialog.open(CitacionModalComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-ficha-clinica',
+      disableClose: true,
+      data: {
+        professions: this.professions,
+        states: this.states,
+        citacion, // 👈 perfecto
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return;
+
+      this.movements[index] = {
+        ...result,
+        isPersisted: false,
+      };
+    });
+  }
+
+  editarMovimiento(index: number, movement: any): void {
+    if (this.saving) return;
+    if (movement.id) return; // seguridad extra
+
+    const dialogRef = this.dialog.open(CitacionModalComponent, {
+      width: '300px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-ficha-clinica',
+      disableClose: true,
+      data: {
+        professions: this.professions,
+        states: this.states,
+        citacion: movement, // 🔥 IMPORTANTE
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((updated) => {
+      if (!updated) return;
+
+      this.movements[index] = updated;
+      this.movements = [...this.movements];
+
+      this.form.markAsDirty();
+      this.cdRef.detectChanges();
+    });
+  }
+
+  eliminarMovimiento(index: number): void {
+    const movement = this.movements[index];
+
+    // Seguridad extra
+    if (movement?.id) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-ficha-clinica',
+      disableClose: true,
+      data: {
+        title: 'Eliminar citación',
+        message:
+          'Esta citación aún no ha sido guardada y se perderá definitivamente.',
+        icon: 'warning',
+        color: 'warn',
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+
+      this.movements.splice(index, 1);
+      this.movements = [...this.movements];
+
+      this.form.markAsDirty();
+      this.cdRef.detectChanges();
+    });
+  }
+
+  openNuevaCitacionModal(): void {
+    const dialogRef = this.dialog.open(CitacionModalComponent, {
+      width: '300px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-ficha-clinica',
+      disableClose: true,
+      data: {
+        professions: this.professions,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((movement) => {
+      if (!movement) return;
+
+      // 🔥 exactamente igual que addMovement()
+      this.movements = [...this.movements, movement];
+      this.form.markAsDirty();
+      this.cdRef.detectChanges();
+    });
+  }
+
+  openNuevoComentarioModal(): void {
+    this.dialog
+      .open(ObservacionModalComponent, {
+        width: '520px',
+        disableClose: true,
+        data: {
+          context: 'DEMAND',
+          registerId: this.register?.id,
+          observacion: this.observacionEnEdicion,
+        },
+      })
+      .afterClosed()
+      .subscribe((result: any) => {
+        if (!result?.observacion) return;
+
+        // 🔥 AQUÍ ESTÁ LA CLAVE
+        const bloque = this.buildObservacionBloque(result.observacion);
+
+        this.observacionesDraft.push(bloque);
+
+        this.observacionEnEdicion = null;
+        this.form.markAsDirty();
+        this.cdRef.detectChanges();
+      });
+  }
+
+  private ultimoContextoObservacion: {
+    fecha: string;
+    usuario: string;
+    programa: string;
+  } | null = null;
+
+  private buildObservacionBloque(texto: string): string {
+    const ahora = new Date();
+
+    const fecha = ahora.toLocaleDateString('es-CL');
+    const hora = ahora.toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const usuario = this.fullName || 'Profesional';
+    const programa = this.activeProgram || 'Programa';
+
+    const mismoContexto =
+      this.ultimoContextoObservacion &&
+      this.ultimoContextoObservacion.fecha === fecha &&
+      this.ultimoContextoObservacion.usuario === usuario &&
+      this.ultimoContextoObservacion.programa === programa;
+
+    // 🔁 MISMO usuario + programa + fecha → SOLO HORA
+    if (mismoContexto) {
+      return `Hora: ${hora}
+        ${texto}`;
+    }
+    // 🆕 NUEVO CONTEXTO → encabezado completo
+    this.ultimoContextoObservacion = {
+      fecha,
+      usuario,
+      programa,
+    };
+    return `Fecha: ${fecha} Hora: ${hora}
+      Usuario: ${usuario} Programa: ${programa}
+      ${texto}`;
+  }
+
+  private buildFinalObservaciones(): string {
+    return this.observacionesDraft.join('\n\n');
+  }
+
   private getActiveProgramId(): number | null {
     const programList = JSON.parse(sessionStorage.getItem('programs') || '[]');
     const activeName = this.tokenService.getActiveProgram();
@@ -426,50 +660,6 @@ export class DemandComponent implements OnInit {
       movement.__isDirty = true;
     }
     this.cdRef.detectChanges();
-  }
-
-  getStateLabel(state: string): string {
-    switch (state) {
-      case 'AGENDADO':
-        return 'Agendado';
-      case 'SE_PRESENTO':
-        return 'Se presentó';
-      case 'NO_SE_PRESENTO':
-        return 'No se presentó';
-      case 'CANCELA_PROGRAMA':
-        return 'Cancela programa';
-      default:
-        return state;
-    }
-  }
-
-  getStateColor(state: string): 'success' | 'warn' | 'info' {
-    switch (state) {
-      case 'SE_PRESENTO':
-        return 'success';
-      case 'NO_SE_PRESENTO':
-      case 'CANCELA_PROGRAMA':
-        return 'warn';
-      case 'AGENDADO':
-        return 'info';
-      default:
-        return 'info';
-    }
-  }
-
-  getStateIcon(state: string): string {
-    switch (state) {
-      case 'AGENDADO':
-        return 'event';
-      case 'SE_PRESENTO':
-        return 'check_circle';
-      case 'NO_SE_PRESENTO':
-        return 'person_off';
-      case 'CANCELA_PROGRAMA':
-        return 'cancel';
-      default:
-        return 'help';
-    }
   }
 
   // ============================================================
@@ -556,52 +746,50 @@ export class DemandComponent implements OnInit {
       program: { id: this.register.program.id },
       user: { id: userId },
 
-      contactType: { id: this.extractId(this.form.value.contactTypes) },
+      contactType: { id: this.extractId(raw.contactTypes) },
+      sender: { id: this.extractId(raw.senders) },
+      diverter: { id: this.extractId(raw.diverters) },
 
-      sender: { id: this.extractId(this.form.value.senders) },
-      diverter: { id: this.extractId(this.form.value.diverters) },
+      number_tto: Number(raw.ntrat ?? 0),
 
-      number_tto: String(this.form.value.ntrat),
+      description: raw.registerDescription?.trim() || null,
 
-      description: this.form.value.registerDescription || '',
-
-      result: { id: this.extractId(this.form.value.result) },
-      state: { id: this.extractId(this.form.value.state) },
+      result: raw.result ? { id: this.extractId(raw.result) } : null,
+      state: raw.state ? { id: this.extractId(raw.state) } : null,
 
       notRelevant: raw.notRelevants ? { id: Number(raw.notRelevants) } : null,
 
-      date_attention: this.form.get('fechaSolicitud')?.value,
+      date_attention: raw.fechaSolicitud ?? null,
+
       is_history: 'NO',
     };
   }
-
   // ===========================================================
   // 🔁 ACTUALIZAR DEMANDA (MISMA BASE QUE GUARDAR)
   // ===========================================================
-  async updateDemand(): Promise<void> {
-    if (!this.register) return;
+  async updateDemand(): Promise<boolean> {
+    if (!this.register) return false;
+
     const register = this.register;
     const registerId = register.id;
-    // ===============================================
-    // 🔎 VALIDACIÓN ÚNICA (EDIT)
-    // ===============================================
 
     if (!this.validateEditDemand()) {
-      throw new Error('Formulario inválido (EDIT)');
+      console.error('Formulario inválido (EDIT)');
+      return false;
     }
 
     const userId = this.tokenService.getUserId();
     if (!userId) {
       this.showValidationDialog();
-      throw new Error('Usuario inválido');
+      return false;
     }
 
+    this.saving = true;
+
     try {
-      // ===============================================================
-      // 🟦 PASO 1: ACTUALIZAR DATOS DE DEMANDA (FORM)
-      // ===============================================================
+      // 🟦 PASO 1
       await this.demandUpdateService.updateDemand(
-        this.register.id,
+        registerId,
         this.form.getRawValue(),
         {
           userId,
@@ -610,58 +798,53 @@ export class DemandComponent implements OnInit {
         this.register,
       );
 
-      // ===============================================================
-      // 🟦 PASO 1.5: ACTUALIZAR CONTACTO (REFERENTE)
-      // ===============================================================
-      if (this.register?.contact?.id) {
-        await firstValueFrom(
-          this.contactService.update(
-            this.register.contact.id,
-            this.buildContactPayload(),
-          ),
-        );
+      // 🟦 PASO 2
+
+      if (this.observacionesDraft.length > 0) {
+        const base = this.register?.description || '';
+        const nuevas = this.observacionesDraft.join('\n\n');
+        const final = base ? `${base}\n\n${nuevas}` : nuevas;
+
+        this.form.get('registerDescription')?.setValue(final);
       }
-      // ===============================================================
-      // 🟦 PASO 2: ACTUALIZAR REGISTER
-      // ===============================================================
+
       const registerPayload = this.buildRegisterPayload(userId);
 
       await this.demandUpdateService.updateRegister(
-        this.register.id,
+        registerId,
         registerPayload,
       );
 
-      // ===============================================================
-      // 🔥 PASO 3: SINCRONIZAR MOVIMIENTOS (TABLA → BACKEND)
-      // ===============================================================
-      await this.syncRegisterMovements(this.register.id, this.movements);
+      // 🔥 PASO 3
+      await this.syncRegisterMovements(registerId, this.movements);
 
-      // ===============================================================
-      // 🔥 PASO 3.5: ACTUALIZAR SUSTANCIAS (FALTABA)
-      // ===============================================================
-      await this.updateSubstances(this.register.id);
+      // 🔥 PASO 3.5
+      await this.updateSubstances(registerId);
 
-      // ===============================================================
-      // 🔄 PASO 4: RECARGA FINAL DESDE BACKEND
-      // ===============================================================
+      // 🔄 PASO 4
       this.register = await firstValueFrom(
-        this.registerService.getById(this.register.id),
+        this.registerService.getById(registerId),
       );
 
-      // ===============================================================
-      // 🟦 PASO 5: REFRESCAR FORMULARIO + ESTADO
-      // ===============================================================
+      // 🟦 PASO 5
       this.utils.cargarFichaCompletaEnFormulario(this.form, this.register);
 
+      this.observacionesDraft = [];
+      this.observacionEnEdicion = null;
       this.ultimoRutBuscado = null;
+
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
+
       this.cdRef.detectChanges();
 
       console.log('✅ Demanda actualizada correctamente');
+      return true;
     } catch (error) {
       console.error('❌ Error al actualizar la demanda', error);
-      throw error; // 🔥 CLAVE
+      return false;
     } finally {
-      // reservado para loader global
+      this.saving = false;
     }
   }
 
@@ -708,13 +891,21 @@ export class DemandComponent implements OnInit {
   // ===========================================================
   // 💾 GUARDAR DEMANDA (sin tipo de previsión)
   // ===========================================================
-  async saveDemand(): Promise<void> {
+  async saveDemand(): Promise<boolean> {
     // ===============================================
     // 🔎 VALIDACIÓN ÚNICA (NEW)
     // ===============================================
     if (!this.validateNewDemand()) {
-      this.showValidationDialog();
-      return;
+      return false;
+    }
+
+    const fechaSolicitud = this.form.get('fechaSolicitud')?.value;
+
+    if (!fechaSolicitud) {
+      this.showValidationDialog(
+        'Debe ingresar la fecha de solicitud antes de guardar la demanda.',
+      );
+      return false;
     }
 
     // ===============================================
@@ -724,17 +915,8 @@ export class DemandComponent implements OnInit {
     const userId = this.tokenService.getUserId();
 
     if (!profile || !userId) {
-      this.dialog.open(ConfirmDialogOkComponent, {
-        width: '620px',
-        disableClose: true,
-        data: {
-          title: 'Sesión',
-          message: '❌ Sesión inválida. Inicie sesión nuevamente.',
-          icon: 'lock_outline',
-          confirmText: 'OK',
-        },
-      });
-      return;
+      this.showValidationDialog('Sesión inválida. Inicie sesión nuevamente.');
+      return false;
     }
 
     // ===============================================
@@ -745,82 +927,55 @@ export class DemandComponent implements OnInit {
       this.tokenService.getUserPrograms()?.[0];
 
     if (!activeProgram) {
-      this.dialog.open(ConfirmDialogOkComponent, {
-        width: '620px',
-        disableClose: true,
-        data: {
-          title: 'Programa',
-          message: '❌ No hay programa activo asociado al usuario.',
-          icon: 'assignment_ind_off',
-          confirmText: 'OK',
-        },
-      });
-      return;
+      this.showValidationDialog('No hay programa activo asociado al usuario.');
+      return false;
     }
 
     const programList = JSON.parse(sessionStorage.getItem('programs') || '[]');
     const programObj = programList.find((p: any) => p.name === activeProgram);
 
     if (!programObj?.id) {
-      this.dialog.open(ConfirmDialogOkComponent, {
-        width: '620px',
-        disableClose: true,
-        data: {
-          title: 'Programa',
-          message: '❌ Programa activo inválido. Inicie sesión nuevamente.',
-          icon: 'assignment_ind_off',
-          confirmText: 'OK',
-        },
-      });
-      return;
+      this.showValidationDialog(
+        'Programa activo inválido. Inicie sesión nuevamente.',
+      );
+      return false;
     }
 
     try {
       // ===============================================================
       // 🟦 PASO 1: CREAR POSTULANTE
       // ===============================================================
-      const postulantPayload: PostulantCreateDto = {
-        user: { id: userId },
-
-        commune: { id: this.form.value.commune },
-        sex: { id: this.form.value.sex },
-
-        convPrev: this.form.value.convPrev
-          ? {
-              id: this.form.value.convPrev,
-              intPrev: { id: this.form.value.intPrev },
-            }
-          : undefined,
-
-        firstName: this.form.value.firstName?.trim() ?? null,
-        lastName: this.form.value.secondName?.trim() ?? null,
-        firstLastName: this.form.value.firstLastName?.trim() ?? null,
-        secondLastName: this.form.value.secondLastName?.trim() ?? null,
-
-        rut: this.form.value.rut,
-        birthdate: formatDate(this.form.value.birthDate, 'yyyy-MM-dd', 'en-CL'),
-
-        email: this.form.value.email?.trim() ?? null,
-        phone: this.form.value.phone?.trim() ?? null,
-        address: this.form.value.address?.trim() ?? null,
-      };
-
-      // 🔥 AQUÍ FALTABA ESTO
       const postulant = await firstValueFrom(
-        this.postulantCreateService.create(postulantPayload),
+        this.postulantCreateService.create({
+          user: { id: userId },
+          commune: { id: this.form.value.commune },
+          sex: { id: this.form.value.sex },
+          firstName: this.form.value.firstName?.trim() ?? null,
+          lastName: this.form.value.secondName?.trim() ?? null,
+          firstLastName: this.form.value.firstLastName?.trim() ?? null,
+          secondLastName: this.form.value.secondLastName?.trim() ?? null,
+          rut: this.form.value.rut,
+          birthdate: formatDate(
+            this.form.value.birthDate,
+            'yyyy-MM-dd',
+            'en-CL',
+          ),
+          email: this.form.value.email?.trim() ?? null,
+          phone: this.form.value.phone?.trim() ?? null,
+          address: this.form.value.address?.trim() ?? null,
+        }),
       );
 
       // ===============================================================
       // 🟦 PASO 2: CONTACTO
       // ===============================================================
-
       const contact = await firstValueFrom(
         this.contactService.createDto({
           name: this.form.value.name?.trim() || null,
           description: this.form.value.contactDescription?.trim() || null,
           email: this.form.value.emailPostulant?.trim() || null,
           cellphone: this.form.value.cellphone?.trim() || null,
-          postulant: { id: postulant.id! }, // 🔥 CLAVE
+          postulant: { id: postulant.id! },
         }),
       );
 
@@ -829,151 +984,71 @@ export class DemandComponent implements OnInit {
       // ===============================================================
       const raw = this.form.getRawValue();
 
-      console.log('FORM VALUE:', {
-        notRelevants: this.form.value.notRelevants,
-        result: this.form.value.result,
-        state: this.form.value.state,
-      });
-
-      console.log('FORM RAW:', {
-        notRelevants: raw.notRelevants,
-        result: raw.result,
-        state: raw.state,
-      });
+      if (this.observacionesDraft.length > 0) {
+        raw.registerDescription = this.buildFinalObservaciones();
+      }
 
       const register = await firstValueFrom(
         this.registerService.create({
           postulant: { id: postulant.id },
           contact: { id: contact.id },
-
-          contactType: { id: this.extractId(this.form.value.contactTypes)! },
-          sender: { id: this.extractId(this.form.value.senders)! },
-          diverter: { id: this.extractId(this.form.value.diverters)! },
-
           program: { id: programObj.id },
           user: { id: userId },
-
-          number_tto:
-            this.form.value.ntrat === 0
-              ? 0
-              : this.form.value.ntrat
-                ? this.form.value.ntrat
-                : null,
-
-          // 🔑 AQUÍ ESTABA EL PROBLEMA
-          notRelevant: raw.notRelevants ? { id: raw.notRelevants } : null,
-          result: raw.result ? { id: raw.result } : null,
-          state: raw.state ? { id: raw.state } : null,
-
-          date_attention: this.form.get('fechaSolicitud')?.value ?? null,
-          description: this.form.value.registerDescription?.trim() || null,
+          date_attention: fechaSolicitud,
+          description: raw.registerDescription?.trim() || null,
           is_history: 'NO',
         }),
       );
 
       // ===============================================================
-      // 🟦 PASO 4: MOVIMIENTOS
+      // 🟦 PASO 4: MOVIMIENTOS + SUSTANCIAS
       // ===============================================================
       await this.syncRegisterMovements(register.id, this.movements);
-      // ===============================================================
-      // 🟦 PASO 5: SUSTANCIAS (FIX)
-      // ===============================================================
-      const principal = this.extractId(this.form.value.substance);
 
-      const secondaries: number[] = (this.form.value.secondarySubstances || [])
-        .map((s: any) => this.extractId(s))
-        .filter(
-          (s: number | null): s is number => s !== null && s !== principal,
-        );
-
-      // 🟢 Principal
-      if (principal) {
-        await firstValueFrom(
-          this.registerSubstanceServiceDto.create({
-            register: { id: register.id },
-            substance: { id: principal },
-            level: 'Principal',
-          }),
-        );
-      }
-
-      // 🟡 Secundarias
-      for (const s of secondaries) {
-        await firstValueFrom(
-          this.registerSubstanceServiceDto.create({
-            register: { id: register.id },
-            substance: { id: s },
-            level: 'Secundaria',
-          }),
-        );
-      }
-
-      // ===============================================================
-      // 🔥 RECARGA + RESET CLAVE
-      // ===============================================================
+      // 🔄 RECARGA
       this.register = await firstValueFrom(
         this.registerService.getById(register.id),
       );
+
       this.utils.cargarFichaCompletaEnFormulario(this.form, this.register);
 
-      // ===============================================================
-      // 🔄 LA DEMANDA YA EXISTE → PASA A EDIT
-      // ===============================================================
+      // 🔄 PASA A EDIT
       this.currentAction = 'EDIT';
       this.actionLabel = '🔵 Modificando Demanda';
-
-      // 🔒 Regla clínica
-      this.bloquearCamposPostulante();
-      this.bloquearCamposReferente();
-
-      // 🎛️ UX
-      this.canClearForm = true;
-      this.canEditPostulant = true;
 
       this.form.markAsPristine();
       this.form.markAsUntouched();
 
       this.cdRef.detectChanges();
 
-      // ✅ Mensaje final
-      this.mostrarMensajeExito('Demanda creada correctamente');
-      // ===============================================================
-
-      // 🔑 CLAVE: permitir buscar el mismo RUT nuevamente
-      this.ultimoRutBuscado = null;
-
-      this.form.patchValue({
-        newDate: null,
-        newHour: '',
-        newProfession: null,
-        newProfessional: '',
-      });
-
-      //this.cdRef.detectChanges();
+      return true;
     } catch (error) {
       console.error('❌ Error guardar la demanda', error);
-      throw error; // 🔥 CLAVE
-    } finally {
-      // reservado para loader global
+      return false;
     }
   }
 
   // ===========================================================
   // 💾 GUARDAR CLON DE DEMANDA (delegado a DemandCloneService)
   // ===========================================================
-  async saveDemandClone(): Promise<void> {
-    // ❌ NO validar this.register
-    // ❌ NO usar registerId aquí
-
+  async saveDemandClone(): Promise<boolean> {
     if (!this.validateCloneDemand()) {
-      this.showValidationDialog();
-      return;
+      return false;
+    }
+
+    const fechaSolicitud = this.form.get('fechaSolicitud')?.value;
+
+    if (!fechaSolicitud) {
+      this.showValidationDialog(
+        'Debe ingresar la fecha de solicitud antes de guardar la demanda.',
+      );
+      return false;
     }
 
     const userId = this.tokenService.getUserId();
     if (!userId || !this.fichaAnterior?.postulant) {
       this.showValidationDialog();
-      return;
+      return false;
     }
 
     const activeProgram =
@@ -985,13 +1060,12 @@ export class DemandComponent implements OnInit {
 
     if (!programObj?.id) {
       this.showValidationDialog('Programa activo inválido.');
-      return;
+      return false;
     }
 
     try {
       const raw = this.form.getRawValue();
 
-      // 🔑 datos base del clone
       raw.postulantId = this.fichaAnterior.postulant.id;
       raw.contactId = this.fichaAnterior.contact?.id;
 
@@ -999,7 +1073,7 @@ export class DemandComponent implements OnInit {
         this.showValidationDialog(
           'No es posible clonar la demanda: faltan datos del postulante o contacto.',
         );
-        return;
+        return false;
       }
 
       raw.notRelevants ??= this.getNotRelevanteNinguna();
@@ -1011,10 +1085,13 @@ export class DemandComponent implements OnInit {
         this.showValidationDialog(
           'Debe seleccionar una sustancia principal para clonar la demanda.',
         );
-        return;
+        return false;
       }
 
-      // 🟦 AQUÍ SE CREA EL REGISTER
+      if (this.observacionesDraft.length > 0) {
+        raw.registerDescription = this.buildFinalObservaciones();
+      }
+
       const createdRegister = await this.demandCloneService.cloneDemand({
         formRaw: raw,
         userId,
@@ -1022,7 +1099,6 @@ export class DemandComponent implements OnInit {
         movements: this.movements,
       });
 
-      // 🔄 RECARGAR DESDE BACKEND
       this.register = await firstValueFrom(
         this.registerService.getById(createdRegister.id),
       );
@@ -1040,14 +1116,16 @@ export class DemandComponent implements OnInit {
         newProfessional: '',
       });
 
+      this.observacionesDraft = [];
+      this.observacionEnEdicion = null;
+
       this.form.markAsPristine();
       this.form.markAsUntouched();
 
-      // ✅ MENSAJE SOLO AQUÍ
-      this.mostrarMensajeExito('Operación realizada correctamente');
+      return true;
     } catch (error) {
       console.error('❌ Error guardando demanda (CLONE)', error);
-      throw error;
+      return false;
     }
   }
 
@@ -1076,6 +1154,7 @@ export class DemandComponent implements OnInit {
       // ============================
       this.utils.cargarFichaCompletaEnFormulario(this.form, register);
 
+      this.setEstadoFormularioFromRegister(register);
       // ============================
       // 🟦 POSTULANTE COMPLETO (CLAVE)
       // ============================
@@ -1161,7 +1240,7 @@ export class DemandComponent implements OnInit {
       this.form.markAsPristine();
       this.form.markAsUntouched();
 
-      this.cdRef.detectChanges();
+      //this.cdRef.detectChanges();
     } catch (err) {
       console.error('❌ Error cargando demanda completa', err);
     } finally {
@@ -1253,6 +1332,18 @@ export class DemandComponent implements OnInit {
 
   cancel(): void {
     this.nuevaDemanda();
+  }
+
+  get observacionesPreview(): string {
+    const base = this.form.get('registerDescription')?.value || '';
+
+    if (!this.observacionesDraft.length) {
+      return base;
+    }
+
+    return base
+      ? `${base}\n\n${this.observacionesDraft.join('\n\n')}`
+      : this.observacionesDraft.join('\n\n');
   }
 
   // ===========================================================
@@ -1423,16 +1514,26 @@ export class DemandComponent implements OnInit {
     try {
       switch (this.currentAction) {
         case 'EDIT':
-          await this.updateDemand();
+          if (await this.updateDemand()) {
+            this.mostrarMensajeExito('Demanda actualizada correctamente');
+          }
           break;
         case 'CLONE_SAME_PROGRAM':
-          await this.saveDemandClone();
+          if (await this.saveDemandClone()) {
+            this.mostrarMensajeExito('Demanda clonada correctamente');
+          }
           break;
+
         case 'CLONE_OTHER_PROGRAM':
-          await this.saveDemandClone();
+          if (await this.saveDemandClone()) {
+            this.mostrarMensajeExito('Demanda clonada correctamente');
+          }
           break;
+
         case 'NEW':
-          await this.saveDemand();
+          if (await this.saveDemand()) {
+            this.mostrarMensajeExito('Demanda creada correctamente');
+          }
           break;
       }
     } catch (error) {
@@ -1517,6 +1618,16 @@ export class DemandComponent implements OnInit {
   }
 
   validateEditDemand(): boolean {
+    const fechaSolicitud = this.form.get('fechaSolicitud')?.value;
+
+    // 1️⃣ fecha Solicitud
+    if (!fechaSolicitud) {
+      this.showValidationDialog(
+        'Debe ingresar la fecha de solicitud antes de guardar la demanda.',
+      );
+      return false;
+    }
+    // 1️⃣ Sustancia principal
     if (!this.validatePrincipal()) {
       this.showValidationDialog(
         'Debe seleccionar una sustancia principal válida.',
@@ -1524,8 +1635,19 @@ export class DemandComponent implements OnInit {
       return false;
     }
 
+    // 2️⃣ Registro cargado
     if (!this.register?.id) {
       this.showValidationDialog('La demanda no está cargada correctamente.');
+      return false;
+    }
+
+    // 3️⃣ Validación Angular completa
+    if (this.form.invalid) {
+      this.marcarErrores();
+
+      const campos = this.getInvalidFields().join(', ');
+      this.showValidationDialog(`Faltan campos obligatorios: ${campos}`);
+
       return false;
     }
 
@@ -1598,6 +1720,8 @@ export class DemandComponent implements OnInit {
   }
 
   private aplicarReglaPrevision(intPrevId: number): void {
+    // 🔒 Regla clínica SOLO aplica en demanda nueva
+    if (this.currentAction !== 'NEW') return;
     // ⛔ Catálogos aún no cargados
     if (!this.catalogsReady()) return;
 
@@ -1933,26 +2057,6 @@ export class DemandComponent implements OnInit {
     rutInput?.focus();
   }
 
-  /*
-  get actionLabel(): string {
-    switch (this.currentAction) {
-      case 'NEW':
-        return '🟢 Nueva Demanda';
-
-      case 'EDIT':
-        return '🔵 Modificando Demanda';
-
-      case 'CLONE_SAME_PROGRAM':
-        return '🟠 Nueva Demanda (mismo programa)';
-
-      case 'CLONE_OTHER_PROGRAM':
-        return '🟣 Nueva Demanda (otro programa)';
-
-      default:
-        return 'Gestión de Demanda';
-    }
-  }*/
-
   //---------------------------------------------------------------------------------------------------------------------------
   //---------------------------------------------------------------------------------------------------------------------------
   //---------------------------------------------------------------------------------------------------------------------------
@@ -1971,6 +2075,7 @@ export class DemandComponent implements OnInit {
   // ----------------------------------------------------------------------------------------------------------
 
   //🔍 FLUJO RUT (INICIO REAL)
+
   private procesarFichas(registros: any[]): void {
     if (!Array.isArray(registros)) {
       console.error(
@@ -2042,10 +2147,31 @@ export class DemandComponent implements OnInit {
       const registros = await firstValueFrom(
         this.registerService.getAllByRut(rut),
       );
+
       // 🔎 Registrar búsqueda
       this.ultimoRutBuscado = rut;
+
+      // 🧹 LIMPIEZA SIEMPRE
+      this.fichasMismoPrograma = [];
+      this.fichasOtrosProgramas = [];
+      this.mostrarPanelFichas = false;
+
+      // 🚫 SI NO HAY REGISTROS → NO MOSTRAR PANEL
+      if (!registros || registros.length === 0) {
+        return;
+      }
+
       // 👉 Clasificación pura
       this.procesarFichas(registros);
+
+      // ✅ SOLO SI QUEDÓ ALGO CLASIFICADO
+      if (
+        this.fichasMismoPrograma.length > 0 ||
+        this.fichasOtrosProgramas.length > 0
+      ) {
+        this.mostrarPanelFichas = true;
+        this.toggleBodyScroll(true);
+      }
     } catch (e) {
       console.error('❌ Error buscando por RUT', e);
     } finally {
@@ -2275,6 +2401,9 @@ export class DemandComponent implements OnInit {
     // ==================================================
     // 🧹 0️⃣ RESET TOTAL — FORMULARIO COMO RECIÉN CARGADO
     // ==================================================
+    this.ultimoRutBuscado = null;
+    this.estadoFormulario = null;
+    this.mostrarBloqueoPostulante = false;
 
     // 🔹 Estado lógico
     this.register = null;
@@ -2296,6 +2425,8 @@ export class DemandComponent implements OnInit {
     this.habilitarCamposPostulante();
     this.habilitarCamposReferente();
     this.habilitarEstadoDemanda();
+
+    this.mostrarBloqueoPostulante = false;
 
     // 🔹 Reset duro del formulario
     this.form.reset();
@@ -2331,9 +2462,11 @@ export class DemandComponent implements OnInit {
           this.canClearForm = true;
           this.canEditPostulant = true;
           this.habilitarBotonesEdicion();
+
           // 🔒 Bloqueos
-          this.bloquearCamposPostulante();
+          //this.bloquearCamposPostulante();
           this.bloquearCamposReferente();
+          this.mostrarBloqueoPostulante = true;
 
           this.cdRef.detectChanges();
         });
@@ -2392,6 +2525,9 @@ export class DemandComponent implements OnInit {
     // 🎛️ UI
     this.canClearForm = false;
     this.canEditPostulant = false;
+    this.estadoFormulario = null;
+
+    this.mostrarBloqueoPostulante = false;
 
     this.cdRef.detectChanges();
   }
@@ -2424,12 +2560,136 @@ export class DemandComponent implements OnInit {
 
     // 🔹 Reset duro del formulario
     this.form.reset({
-      birthDate: null, 
+      birthDate: null,
       substance: null,
       secondarySubstances: [], // 👈 CLAVE ABSOLUTA
     });
 
+    this.observacionesDraft = [];
+    this.observacionEnEdicion = null;
+
     this.form.markAsPristine();
     this.form.markAsUntouched();
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
+  // timbre de agua
+  // -----------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
+
+  get watermarkText(): string | null {
+    const resultado = this.selectedResult;
+    const estado = this.selectedEstado;
+
+    const sinResultadoId = this.getResultadoSinResultado();
+
+    // 1️⃣ Resultado clínico REAL (no "AÚN SIN RESULTADO")
+    if (resultado && resultado.id !== sinResultadoId) {
+      return resultado.name.toUpperCase();
+    }
+
+    // 2️⃣ Estado de la demanda
+    if (estado) {
+      return estado.name.toUpperCase();
+    }
+
+    // 3️⃣ Ingreso en curso (SOLO si es demanda nueva)
+    if (this.currentAction === 'NEW') {
+      const iniciado =
+        !!this.form.get('rut')?.value ||
+        !!this.form.get('firstName')?.value ||
+        !!this.form.get('firstLastName')?.value;
+
+      return iniciado ? 'INGRESO EN CURSO' : null;
+    }
+
+    return null;
+  }
+
+  get watermarkColor(): string {
+    const resultado = this.selectedResult;
+    const estado = this.selectedEstado;
+
+    const sinResultadoId = this.getResultadoSinResultado();
+
+    if (resultado && resultado.id !== sinResultadoId) {
+      return '#2e7d32'; // verde clínico real
+    }
+
+    if (estado) {
+      return this.getEstadoColor();
+    }
+
+    return '#90a4ae';
+  }
+
+  getStateLabel(state: string): string {
+    switch (state) {
+      case 'AGENDADO':
+        return 'Agendado';
+      case 'SE_PRESENTO':
+        return 'Se presentó';
+      case 'NO_SE_PRESENTO':
+        return 'No se presentó';
+      case 'CANCELA_PROGRAMA':
+        return 'Cancela programa';
+      default:
+        return state;
+    }
+  }
+
+  getEstadoColor(): string {
+    const estado = this.selectedEstado;
+
+    if (!estado) return '#90a4ae';
+
+    switch (estado.code) {
+      case 'EN_TRAMITE':
+        return '#1565c0';
+      case 'EN_ESPERA':
+        return '#f9a825';
+      case 'EGRESADO':
+        return '#2e7d32';
+      case 'ABANDONO':
+        return '#c62828';
+      case 'DERIVADO':
+        return '#6a1b9a';
+      default:
+        return '#546e7a';
+    }
+  }
+
+  getStateIcon(state: string): string {
+    switch (state) {
+      case 'AGENDADO':
+        return 'event';
+      case 'SE_PRESENTO':
+        return 'check_circle';
+      case 'NO_SE_PRESENTO':
+        return 'person_off';
+      case 'CANCELA_PROGRAMA':
+        return 'cancel';
+      default:
+        return 'help';
+    }
+  }
+
+  private setEstadoFormularioFromRegister(register: Register | null): void {
+    this.estadoFormulario = register?.state?.id ?? null;
+  }
+
+  get selectedResult(): any | null {
+    const resultId = this.form.get('result')?.value;
+    if (!resultId || !this.results?.length) return null;
+
+    return this.results.find((r) => r.id === resultId) ?? null;
+  }
+
+  get selectedEstado(): any | null {
+    if (!this.estadoFormulario) return null;
+    return this.states.find((s) => s.id === this.estadoFormulario) ?? null;
   }
 }

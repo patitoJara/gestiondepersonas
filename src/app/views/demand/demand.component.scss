@@ -115,11 +115,18 @@
 }
 
 /* Fila 3 columnas */
-.fila-3 {
+/*.fila-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
+}*/
+
+.fila-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
 }
+
 
 /* Fila 4 columnas */
 .fila-4 {
@@ -412,7 +419,7 @@
 
 ::ng-deep .clinico-select-panel .mat-mdc-option {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 600;   // grueso de la letra
   text-transform: uppercase;
   min-height: 26px;
   line-height: 1.1;
@@ -556,10 +563,165 @@
 
 
 /* =========================================
-   🎨 FICHA — HISTORIAL DE CITACIONES
+   📊 HISTORIAL DE CITACIONES — TABLA
+   Ajuste clínico / UX producción
 ========================================= */
+
 .ficha-historial table {
   font-size: 0.8rem;
+  
+}
+
+/* Anchos de columnas */
+.col-fecha {
+  width: 90px;
+  white-space: nowrap;
+}
+
+.col-hora {
+  width: 70px;
+  white-space: nowrap;
+}
+
+.col-profesion {
+  width: 130px;
+}
+
+.col-profesional {
+  width: auto;
+}
+
+.col-acciones {
+  width: 90px;
+  text-align: center;
+}
+
+/* Texto estado */
+.estado-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #37474f;
+  white-space: nowrap;
+}
+
+/* Celda de acciones */
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Botones de acción */
+.actions-cell button {
+  width: 32px;
+  height: 32px;
+}
+
+.actions-cell mat-icon {
+  font-size: 18px;
+}
+
+
+::ng-deep .ficha-historial .mat-mdc-header-row {
+  height: 20px;              /* ⬅️ alto único */
+}
+
+
+::ng-deep .ficha-historial .mat-mdc-header-cell {
+  height: 20px;              /* ⬅️ todos iguales */
+  line-height: 20px;         /* ⬅️ centrado vertical */
+
+  padding: 0 8px;            /* ⬅️ mismo padding */
+  box-sizing: border-box;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #546e7a;
+
+  white-space: nowrap;
+}
+
+/* Celdas */
+::ng-deep .ficha-historial .mat-mdc-cell {
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+/* Botón agregar citación (header) */
+.historial-add-btn {
+  width: 33px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: background-color 120ms ease;
+}
+
+.historial-add-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.historial-add-btn mat-icon {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.ficha-historial .card-title-colored {
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 14px;            /* ⬅️ alto correcto */
+  margin: -14px -16px 16px -16px;/* ⬅️ aire inferior */
+  min-height: 48px;              /* ⬅️ MISMO alto que Estado Demanda */
+
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 6px 6px 0 0;
+
+}
+/* =========================================
+   📊 HISTORIAL DE CITACIONES — SCROLL FIJO
+========================================= */
+
+.ficha-historial {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔒 contenedor con alto fijo */
+.historial-wrapper {
+  max-height: 220px;        /* ⬅️ MISMO ALTO QUE OBSERVACIONES */
+  min-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;       /* evita salto del scroll */
+}
+
+/* =========================================
+   🧷 HEADER FIJO — HISTORIAL DE CITACIONES
+========================================= */
+
+::ng-deep .ficha-historial table {
+  border-collapse: separate;
+}
+
+::ng-deep .ficha-historial .mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
+  background: #f5f7fa; /* mismo tono institucional */
 }
 
 
@@ -568,8 +730,25 @@
 ========================================= */
 
 .ficha-notas {
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
 }
+
+/* 🔒 mismo alto que historial */
+.observaciones-wrapper {
+  max-height: 220px;
+  min-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* textarea NO controla el alto */
+.textarea-clinical textarea {
+  resize: none;
+  min-height: 100%;
+}
+
 
 /* Contenedor interno */
 .form-notas {
@@ -577,6 +756,82 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.ficha-notas .card-title-colored {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ficha-observaciones .card-title-colored {
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 14px;
+  margin: -14px -16px 16px -16px;
+  min-height: 48px;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 6px 6px 0 0;
+}
+
+/* Botón agregar observación (header) */
+.observaciones-add-btn {
+  width: 33px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: background-color 120ms ease;
+}
+
+.observaciones-add-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.observaciones-add-btn mat-icon {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+/* =========================================
+   📝 OBSERVACIONES — BLOQUE CLÍNICO FIJO
+========================================= */
+
+.ficha-notas {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔒 MISMO ALTO QUE HISTORIAL */
+.observaciones-wrapper {
+  max-height: 210px;
+  min-height: 210px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 12px 14px;
+}
+
+/* TEXTO CLÍNICO */
+.observaciones-content {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-line;
+
+  color: #263238;
+}
+
 
 /* =========================================
    🔥 FIX ESPACIO ENTRE CAMPOS (MAT-SELECT)
@@ -1204,3 +1459,35 @@
 /* fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos */
 /* fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos - fin formatos  */
 
+/* ficha de Bloque */
+
+.bloque-postulante {
+  position: relative;
+}
+
+.cortina {
+  position: absolute;
+  inset: 0;
+  //background: rgba(255, 255, 255, 0.6);
+  //backdrop-filter: blur(2px);
+  z-index: 10;
+  pointer-events: all;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cortina .mensaje {
+  background: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #37474f;
+}
+
+/* fin ficha de Bloque */

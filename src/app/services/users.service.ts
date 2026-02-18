@@ -62,6 +62,11 @@ export class UsersService {
     return this.http.get<User[]>(this.resourceUrl);
   }
 
+
+  getAllUsersPrograms() {
+    return this.http.get<any[]>(`${this.BASE}/api/v1/users_programs`);
+  }
+
   /** ====================== Relaciones ========================== */
   private syncRelations(savedUser: User, original: User): Observable<User> {
     const userId = savedUser.id!;

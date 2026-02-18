@@ -5,6 +5,8 @@ import { AboutPublicComponent } from './views/about/about-public/about-public.co
 import { AboutPrivateComponent } from './views/about/about-private/about-private.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { pendingChangesGuard } from './core/guards/pending-changes.guard';
+
 
 export const routes: Routes = [
   // 🚀 La app siempre inicia en LOGIN
@@ -51,8 +53,20 @@ export const routes: Routes = [
             (m) => m.DemandComponent,
           ),
         canActivate: [roleGuard],
+        canDeactivate: [pendingChangesGuard],
         data: { roles: ['ADMIN', 'ADMINISTRATIVO'] },
       },
+
+      {
+        path: 'transfer',
+        loadComponent: () =>
+          import('./views/transfer/transfer.component').then(
+            (m) => m.TransferComponent,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'ADMINISTRATIVO'] },
+      },      
+
       {
         path: 'demand-list',
         loadComponent: () =>

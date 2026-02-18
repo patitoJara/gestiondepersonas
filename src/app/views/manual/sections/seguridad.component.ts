@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 @Component({
   selector: 'app-seguridad',
   standalone: true,
-  host: { id: 'seguridad' },
+  //host: { id: 'seguridad' },
   templateUrl: './seguridad.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [

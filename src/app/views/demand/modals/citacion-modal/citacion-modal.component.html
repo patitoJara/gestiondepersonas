@@ -1,0 +1,88 @@
+<!-- citacion-modal.component.html -->
+
+<div mat-dialog-content class="ficha-modal">
+  <div class="ficha-referente ficha-citacion-modal">
+    <!-- HEADER -->
+    <div class="dialog-header card-title-orange">DATOS DE LA CITACIÓN</div>
+
+    <!-- BODY -->
+    <form [formGroup]="form" class="form-citacion-modal">
+      <!-- FILA 1 -->
+      <div class="fila-1">
+        <div class="field-clinico-linea">
+          <label>Fecha *</label>
+          <mat-form-field appearance="fill">
+            <input matInput [matDatepicker]="picker" formControlName="date" />
+            <mat-datepicker-toggle matSuffix [for]="picker" />
+            <mat-datepicker #picker />
+          </mat-form-field>
+        </div>
+
+        <div class="field-clinico-linea">
+          <mat-form-field appearance="outline">
+            <mat-label>Hora</mat-label>
+            <input matInput type="time" formControlName="hour" />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              tabindex="-1"
+              (click)="form.get('hour')?.setValue(utils.getCurrentTime())"
+            >
+              <mat-icon>schedule</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="field-clinico-linea">
+        <label>Profesión *</label>
+        <mat-form-field appearance="fill">
+          <mat-select formControlName="profession">
+            <mat-option *ngFor="let p of professions" [value]="p.id">
+              {{ p.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="field-clinico-linea">
+        <label>Profesional *</label>
+        <mat-form-field appearance="fill">
+          <input matInput formControlName="professional" />
+        </mat-form-field>
+      </div>
+
+      <div class="field-clinico-linea estado-readonly">
+        <label>Estado</label>
+
+        <div
+          class="estado-text"
+          [ngClass]="{
+            'estado--agendado': data?.citacion?.state === 'AGENDADO',
+            'estado--presento': data?.citacion?.state === 'SE_PRESENTO',
+            'estado--no-presento': data?.citacion?.state === 'NO_SE_PRESENTO',
+            'estado--cancelado': data?.citacion?.state === 'CANCELA_PROGRAMA',
+          }"
+        >
+          <mat-icon class="estado-icon">
+            {{ estadoIcon }}
+          </mat-icon>
+          {{ data?.citacion?.state || "AGENDADO" }}
+        </div>
+      </div>
+
+      <div mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="confirmar()"
+          [disabled]="form.invalid"
+        >
+          Agregar a la tabla
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

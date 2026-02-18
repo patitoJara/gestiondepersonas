@@ -136,6 +136,14 @@ export class DemandUtilsService {
   // ============================================================
   // 🟦 CARGAR FICHA COMPLETA (REGISTER)
   // ============================================================
+
+  /**
+   * ⚠️ IMPORTANTE
+   * Este método SOLO carga datos.
+   * Quien lo invoque es responsable de decidir
+   * si el formulario debe quedar pristine o dirty.
+   */
+
   cargarFichaCompletaEnFormulario(form: FormGroup, f: any): void {
     if (!f) return;
 
@@ -173,7 +181,7 @@ export class DemandUtilsService {
 
       state: f.state?.id ?? null,
       result: f.result?.id ?? null,
-
+      notRelevants: f.notRelevant?.id ?? null, 
       // ⚠️ mat-datepicker acepta Date
       fechaSolicitud: f.date_attention ? new Date(f.date_attention) : null,
 

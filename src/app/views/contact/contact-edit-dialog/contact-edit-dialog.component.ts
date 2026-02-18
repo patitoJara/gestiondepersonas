@@ -76,6 +76,14 @@ export class ContactEditDialogComponent implements OnInit {
     );
 
     this.form.patchValue(contact);
+
+    this.form.patchValue(contact);
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+  }
+
+  hasPendingChanges(): boolean {
+    return this.form?.dirty === true;
   }
 
   async guardar(): Promise<void> {
@@ -89,6 +97,17 @@ export class ContactEditDialogComponent implements OnInit {
   }
 
   cancelar(): void {
-    this.dialogRef.close(false);
+    if (!this.hasPendingChanges()) {
+      this.dialogRef.close(false);
+      return;
+    }
+
+    const confirmar = confirm(
+      'Existen cambios sin guardar. Si sales ahora, se perderán.',
+    );
+
+    if (confirmar) {
+      this.dialogRef.close(false);
+    }
   }
 }

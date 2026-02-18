@@ -61,8 +61,11 @@ export class AuthLoginService {
         const accessToken = res.token;
         const refreshToken = res.refreshToken;
 
-        // Guarda tokens
-        //this.tokenService.setTokens(accessToken, refreshToken, true);
+        if (!refreshToken) {
+          console.error('[AuthLoginService] ❌ Login sin refreshToken');
+          throw new Error('Login sin refreshToken');
+        }
+
         this.tokenService.setTokens(accessToken, refreshToken);
 
         // Guarda manualmente por compatibilidad
@@ -183,36 +186,40 @@ export class AuthLoginService {
     console.log('[AuthLoginService] 🔄 Intentando refrescar token...');
 
     const refreshToken = this.tokenService.getRefreshToken();
+
     if (!refreshToken) {
-      console.warn('[AuthLoginService] ⚠️ No hay refreshToken disponible.');
+      console.warn(
+        '[AuthLoginService] ⚠️ RefreshToken perdido, cerrando sesión',
+      );
+      this.logout();
       return throwError(() => new Error('No refresh token'));
     }
 
     const url = `${this.BASE_URL}/auth/refresh`;
 
     return this.http.post<AuthResponse>(url, { refreshToken }).pipe(
-      map((res) => {
-        if (!res || !res.token) {
+      tap((res) => {
+        if (!res?.token) {
           throw new Error('Respuesta inválida al refrescar token');
         }
 
-        // 🔐 Guardar tokens
-        this.tokenService.setTokens(res.token, res.refreshToken);
+        // 🔐 IMPORTANTE: si backend no devuelve refreshToken nuevo,
+        // mantener el anterior
+        const newRefresh = res.refreshToken ?? refreshToken;
 
-        // ⏰ CLAVE ABSOLUTA
+        this.tokenService.setTokens(res.token, newRefresh);
         this.tokenService.setExpirationFromToken(res.token);
 
-        // 🧩 Mantener sesión consistente
-        sessionStorage.setItem(
-          'roles',
-          JSON.stringify(res.roles.map((r) => r.name)),
-        );
-        sessionStorage.setItem('programs', JSON.stringify(res.programs));
-        sessionStorage.setItem('profile', JSON.stringify(res.profile));
-
         console.log('[AuthLoginService] 🔁 Token refrescado correctamente.');
+      }),
+      map((res) => res.token),
+      catchError((err) => {
+        console.error('[AuthLoginService] ❌ Refresh falló:', err);
 
-        return res.token;
+        // 🔥 SOLO AQUÍ logout
+        this.logout();
+
+        return throwError(() => err);
       }),
     );
   }

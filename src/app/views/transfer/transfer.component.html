@@ -1,0 +1,306 @@
+<div class="transfer-container">
+  <!-- HEADER -->
+  <div class="transfer-header">
+    <mat-icon>swap_horiz</mat-icon>
+    <span>Transferencia de Demandante</span>
+  </div>
+
+  <!-- BOTÓN VOLVER -->
+  <div class="step-actions-top" *ngIf="currentStep > 1 && currentStep < 7">
+    <button mat-stroked-button color="primary" (click)="prevStep()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al paso anterior
+    </button>
+  </div>
+
+  <!-- STEPPER -->
+  <div class="stepper" [style.--progress]="progress / 100">
+    <div
+      *ngFor="let step of steps"
+      class="step"
+      [class.active]="step.id === currentStep"
+      [class.completed]="step.completed"
+    >
+      <div class="circle">
+        <span *ngIf="!step.completed">{{ step.id }}</span>
+        <mat-icon *ngIf="step.completed">check</mat-icon>
+      </div>
+
+      <div class="label">{{ step.title }}</div>
+
+      <div class="step-meta" *ngIf="getStepMeta(step.id)">
+        {{ getStepMeta(step.id) }}
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div *ngIf="currentStep === 1">
+    <form [formGroup]="form" (ngSubmit)="onRutFinalizado()" class="rut-form">
+      <mat-form-field appearance="fill" class="rut-field">
+        <mat-label>RUT del Demandante</mat-label>
+        <input matInput formControlName="rut" (input)="autoFormatRut($event)" />
+        <mat-icon matSuffix>badge</mat-icon>
+      </mat-form-field>
+
+      <button
+        mat-raised-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid || loading"
+      >
+        Buscar Registro
+      </button>
+    </form>
+  </div>
+
+  <!-- PASO 2 -->
+  <div
+    *ngIf="currentStep === 2 && registers.length > 0"
+    class="registro-select"
+  >
+    <mat-card class="card-elegante">
+      <div class="card-title">
+        <mat-icon>assignment</mat-icon>
+        <span>Seleccione el registro clínico</span>
+      </div>
+
+      <mat-form-field appearance="fill" class="full-width select-profesional">
+        <mat-label>Registro disponible</mat-label>
+        <mat-select (selectionChange)="selectRegister($event.value)">
+          <mat-option *ngFor="let r of registers" [value]="r">
+            <div class="option-line-container">
+              <span>{{ r.program?.name }}</span>
+              <span>{{ r.createdAt | date: "dd/MM/yyyy" }}</span>
+              <span>
+                {{ r.postulant?.firstName }} {{ r.postulant?.lastName }}
+              </span>
+              <span>{{ r.state?.name }}</span>
+            </div>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card>
+  </div>
+
+  <!-- PASO 3 -->
+  <div *ngIf="currentStep === 3 && selectedRegister" class="ficha-wrapper">
+    <div class="ficha-cuaderno">
+      <h2>FICHA DE DEMANDA – REGISTRO CLÍNICO</h2>
+
+      <!-- IDENTIFICACIÓN -->
+      <div class="seccion">
+        <div class="titulo-seccion">IDENTIFICACIÓN DEL DEMANDANTE</div>
+
+        <div class="grid-2">
+          <div>
+            <strong>RUT:</strong>
+            {{ selectedRegister.postulant?.rut }}
+          </div>
+
+          <div>
+            <strong>Nombre:</strong>
+            {{ selectedRegister.postulant?.firstName }}
+            {{ selectedRegister.postulant?.lastName }}
+          </div>
+
+          <div>
+            <strong>Fecha Nacimiento:</strong>
+            {{ selectedRegister.postulant?.birthDate | date: "dd/MM/yyyy" }}
+          </div>
+
+          <div>
+            <strong>Sexo:</strong>
+            {{ selectedRegister.postulant?.sex?.name }}
+          </div>
+
+          <div>
+            <strong>Teléfono:</strong>
+            {{ selectedRegister.postulant?.phone }}
+          </div>
+
+          <div>
+            <strong>Correo:</strong>
+            {{ selectedRegister.postulant?.email }}
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS REGISTRO -->
+      <div class="seccion">
+        <div class="titulo-seccion">DATOS DEL REGISTRO</div>
+
+        <div class="grid-2">
+          <div>
+            <strong>Programa Actual:</strong>
+            {{ currentProgram?.name }}
+          </div>
+
+          <div>
+            <strong>Estado:</strong>
+            {{ selectedRegister.state?.name }}
+          </div>
+
+          <div>
+            <strong>Fecha Ingreso:</strong>
+            {{ selectedRegister.createdAt | date: "dd/MM/yyyy" }}
+          </div>
+
+          <div>
+            <strong>Profesional:</strong>
+            {{ originUserDisplayName  }}
+          </div>
+
+          <div>
+            <strong>Sustancia Principal:</strong>
+            {{ principalSubstance }}
+          </div>
+          <div>
+            <strong>Sustancias Secundarias:</strong>
+            {{ secondarySubstances }}
+          </div>
+
+          <div>
+            <strong>Observaciones:</strong>
+            {{ selectedRegister.description }}
+          </div>
+        </div>
+      </div>
+
+      <div class="ficha-footer">
+        <button mat-raised-button color="primary" (click)="nextStep()">
+          Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4 -->
+  <div *ngIf="currentStep === 4" class="registro-select">
+    <mat-card class="card-elegante compact-card">
+      <div class="card-title">
+        <mat-icon>medical_services</mat-icon>
+        <span>Programa Destino</span>
+      </div>
+
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Seleccione programa destino</mat-label>
+
+        <mat-select
+          [value]="selectedProgramId"
+          (selectionChange)="onProgramSelected($event.value)"
+        >
+          <mat-option *ngFor="let p of availablePrograms" [value]="p.id">
+            {{ p.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="acciones-center">
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="!selectedProgramId"
+          (click)="confirmDestinationProgram()"
+        >
+          Confirmar programa destino
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- PASO 5 -->
+  <div *ngIf="currentStep === 5" class="confirm-card">
+    <mat-card class="card-elegante compact-card">
+      <div class="card-title">
+        <mat-icon>badge</mat-icon>
+        <span>Profesional Destino</span>
+      </div>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Profesional destino</mat-label>
+
+        <mat-select [(value)]="selectedDestinationUserId">
+          <mat-option
+            *ngFor="let u of availableDestinationUsers"
+            [value]="u.id"
+          >
+            <mat-icon class="icon-user">person</mat-icon>
+            {{ getUserDisplayName(u) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="acciones-center">
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="!selectedDestinationUserId"
+          (click)="confirmDestinationUser()"
+        >
+          Confirmar usuario destino
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- PASO 6 – CONFIRMACIÓN -->
+  <div *ngIf="currentStep === 6" class="confirm-card">
+    <div class="confirm-title">
+      <mat-icon>verified</mat-icon>
+      Confirmación Final
+    </div>
+
+    <div class="confirm-body">Usted está transfiriendo a:</div>
+
+    <div class="confirm-program">
+      {{ selectedRegister.postulant?.firstName }}
+      {{ selectedRegister.postulant?.lastName }},
+      {{ selectedRegister.postulant?.rut }}
+    </div>
+
+    <div class="confirm-body">Al programa:</div>
+
+    <div class="confirm-program">
+      {{ selectedProgramName }}
+    </div>
+
+    <div class="confirm-title">
+      <div class="confirm-subtitle">
+        Serán notificados los siguientes correos:
+      </div>
+    </div>
+
+    <div class="confirm-title">
+      <div class="confirm-emails">
+        <mat-chip-set>
+          <mat-chip *ngFor="let email of notificationEmails" selected>
+            <mat-icon matChipAvatar>mail</mat-icon>
+            {{ email }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </div>
+
+    <div class="confirm-actions">
+      <button mat-raised-button color="primary" (click)="executeTransfer()">
+        Ejecutar Transferencia
+      </button>
+    </div>
+  </div>
+
+  <!-- PASO 7 -->
+  <div *ngIf="currentStep === 7" class="success-fullscreen">
+    <div class="success-card">
+      <mat-icon>check_circle</mat-icon>
+      <h2>Transferencia realizada correctamente</h2>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="reiniciarTransferencia()"
+      >
+        Nueva transferencia
+      </button>
+    </div>
+  </div>
+</div>

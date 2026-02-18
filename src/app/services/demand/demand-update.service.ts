@@ -53,6 +53,7 @@ export class DemandUpdateService {
     // ============================================================
 
     // 1️⃣ Buscar contacto existente del postulante
+    /*
     const contactos = await firstValueFrom(this.contactService.getAll());
 
     const contactoExistente =
@@ -79,9 +80,9 @@ export class DemandUpdateService {
     if (formValue.cellphone?.trim()) {
       contactPayload.cellphone = formValue.cellphone.trim();
     }
-
+    */
     // 4️⃣ Crear o actualizar
-    if (contactoExistente?.id) {
+    /* if (contactoExistente?.id) {
       // 🟡 UPDATE seguro
       if (Object.keys(contactPayload).length > 1) {
         await firstValueFrom(
@@ -91,7 +92,7 @@ export class DemandUpdateService {
     } else {
       // 🟢 CREATE
       await firstValueFrom(this.contactService.createDto(contactPayload));
-    }
+    } */
 
     // ============================================================
     // 4️⃣ SUSTANCIAS (SYNC REAL — FIX LEVEL)

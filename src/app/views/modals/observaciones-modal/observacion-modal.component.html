@@ -1,0 +1,53 @@
+
+<!-- C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\views\modals\observaciones-modal\observacion-modal.component.html -->
+
+<div mat-dialog-content class="ficha-modal">
+  <div class="ficha-referente ficha-observacion-modal">
+
+    <!-- HEADER -->
+    <div class="dialog-header dialog-header-observaciones">
+      OBSERVACIONES
+    </div>
+
+    <!-- BODY -->
+    <form [formGroup]="form" class="form-observacion-modal">
+
+      <div class="field-clinico-linea">
+        <label>Observación clínica</label>
+
+        <mat-form-field appearance="fill" class="textarea-clinica">
+          <textarea
+            matInput
+            formControlName="observacion"
+            rows="6"
+            maxlength="500"
+            placeholder="Ingrese observación relevante del proceso clínico"
+          ></textarea>
+
+          <mat-hint align="end">
+            {{ form.get('observacion')?.value?.length || 0 }}/500
+          </mat-hint>
+        </mat-form-field>
+      </div>
+
+    </form>
+
+    <!-- ACTIONS -->
+    <div mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="cancelar()">
+        Cancelar
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="confirmar()"
+        [disabled]="form.invalid"
+      >
+        Guardar observación
+      </button>
+    </div>
+
+  </div>
+</div>
