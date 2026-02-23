@@ -1,0 +1,50 @@
+<div class="analytics-container">
+
+  <!-- FILA 1 - KPIs -->
+  <div class="row row-kpi">
+    <mat-card class="kpi-card">
+      <div class="kpi-title">Demandas Activas</div>
+      <div class="kpi-value">{{ activeCount }}</div>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <div class="kpi-title">Promedio Espera</div>
+      <div class="kpi-value">{{ averageWaitingDays }} días</div>
+    </mat-card>
+  </div>
+
+  <!-- FILA 2 -->
+  <div class="row">
+    <mat-card class="chart-card">
+      <h3>Promedio Espera Mensual</h3>
+      <div class="chart-container">
+        <canvas baseChart [data]="lineChartData" [type]="'line'"></canvas>
+      </div>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <h3>Promedio por Programa</h3>
+      <div class="chart-container">
+        <canvas baseChart [data]="barChartData" [type]="'bar'" [options]="chartOptions"></canvas>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- FILA 3 -->
+  <div class="row">
+    <mat-card class="chart-card">
+      <h3>Sustancias Principales</h3>
+      <div class="chart-container">
+        <canvas baseChart [data]="principalChartData" [type]="'bar'" [options]="chartOptions"></canvas>
+      </div>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <h3>Sustancias Secundarias</h3>
+      <div class="chart-container">
+        <canvas baseChart [data]="secondaryChartData" [type]="'bar'" [options]="chartOptions"></canvas>
+      </div>
+    </mat-card>
+  </div>
+
+</div>

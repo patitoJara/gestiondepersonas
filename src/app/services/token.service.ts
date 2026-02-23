@@ -21,6 +21,11 @@ export class TokenService {
     sessionStorage.getItem(this.ACTIVE_ROLE_KEY),
   );
 
+  // 🔥 CONTEXTO ACTIVO EN MEMORIA
+  private activeRoleMemory: string | null = null;
+  private activeProgramMemory: string | null = null;
+  private activeProgramIdMemory: number | null = null;
+
   activeProgramChanges = this.activeProgram$.asObservable();
   activeRoleChanges = this.activeRole$.asObservable();
 
@@ -128,42 +133,71 @@ export class TokenService {
     return JSON.parse(sessionStorage.getItem('roles') || '[]');
   }
 
-  getUserPrograms(): string[] {
+  getUserPrograms(): { id: number; name: string }[] {
     return JSON.parse(sessionStorage.getItem('programs') || '[]');
   }
 
   // =====================================================
-  // 🧭 PROGRAMA ACTIVO
+  // 🎭 gets
   // =====================================================
+
   getActiveProgram(): string | null {
     return sessionStorage.getItem(this.ACTIVE_PROGRAM_KEY);
   }
 
-  setActiveProgram(program: string): void {
-    sessionStorage.setItem(this.ACTIVE_PROGRAM_KEY, program);
-    this.activeProgram$.next(program);
-  }
-
-  // =====================================================
-  // 🎭 ROL ACTIVO
-  // =====================================================
   getActiveRole(): string | null {
     return sessionStorage.getItem(this.ACTIVE_ROLE_KEY);
   }
-
-  setActiveRole(role: string): void {
-    sessionStorage.setItem(this.ACTIVE_ROLE_KEY, role);
-    this.activeRole$.next(role);
-  }
-
-  getActiveProgramId(): number | null {
-    const value = sessionStorage.getItem(this.ACTIVE_PROGRAM_ID_KEY);
-    return value ? Number(value) : null;
-  }
-
-  setActiveProgramId(programId: number): void {
-    sessionStorage.setItem(this.ACTIVE_PROGRAM_ID_KEY, programId.toString());
-  }
-
   
+  getActiveProgramId(): number | null {
+    // 🔥 Primero intentar memoria
+    if (this.activeProgramIdMemory !== null) {
+      return this.activeProgramIdMemory;
+    }
+
+    // 🔥 Si no existe en memoria, intentar sessionStorage
+    const value = sessionStorage.getItem(this.ACTIVE_PROGRAM_ID_KEY);
+
+    const parsed = value ? Number(value) : null;
+
+    // 🔥 Si viene desde storage, restaurar en memoria
+    if (parsed !== null) {
+      this.activeProgramIdMemory = parsed;
+    }
+
+    return parsed;
+  }
+
+  // =====================================================
+  // 🎭 Seters
+  // =====================================================
+  setActiveRole(role: string | null): void {
+    this.activeRoleMemory = role;
+    if (role) {
+      sessionStorage.setItem('activeRole', role);
+    } else {
+      sessionStorage.removeItem('activeRole');
+    }
+  }
+
+  setActiveProgram(program: string | null): void {
+    this.activeProgramMemory = program;
+    if (program) {
+      sessionStorage.setItem('activeProgram', program);
+    } else {
+      sessionStorage.removeItem('activeProgram');
+    }
+  }
+
+  setActiveProgramId(programId: number | null): void {
+    this.activeProgramIdMemory = programId;
+
+    if (programId !== null) {
+      sessionStorage.setItem(this.ACTIVE_PROGRAM_ID_KEY, programId.toString());
+    } else {
+      sessionStorage.removeItem(this.ACTIVE_PROGRAM_ID_KEY);
+    }
+
+    console.log('💾 activeProgramId guardado en memoria:', programId);
+  }
 }

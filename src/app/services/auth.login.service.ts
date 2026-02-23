@@ -26,7 +26,7 @@ export interface AuthResponse {
   tokenType: string;
   expiresIn: number;
   roles: Array<{ id: number; name: string }>;
-  programs: string[];
+  programs: Array<{ id: number; name: string }>;  
   profile: AuthProfile;
 }
 
@@ -41,7 +41,7 @@ export class AuthLoginService {
   private readonly BASE_URL = environment.BaseUrl;
 
   private roles: string[] = [];
-  private programs: string[] = [];
+  private programs: { id: number; name: string }[] = [];
   private profile: AuthProfile | null = null;
 
   // ==========================================================
@@ -135,7 +135,7 @@ export class AuthLoginService {
     return this.getRoles().includes(role.toUpperCase());
   }
 
-  getPrograms(): string[] {
+  getPrograms(): { id: number; name: string }[] {
     if (this.programs.length === 0 && sessionStorage.getItem('programs')) {
       this.programs = JSON.parse(sessionStorage.getItem('programs')!);
     }

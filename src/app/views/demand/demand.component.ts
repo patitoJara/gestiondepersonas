@@ -71,6 +71,8 @@ import { CitacionModalComponent } from './modals/citacion-modal/citacion-modal.c
 import { ConfirmDialogYesNoComponent } from '@app/shared/confirm-dialog/confirm-dialog-yes-no.component';
 import { ObservacionModalComponent } from '../../views/modals/observaciones-modal/observacion-modal.component';
 
+import { LoaderService } from '../../services/loader.service';
+
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 @Component({
@@ -104,6 +106,8 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   ],
 })
 export class DemandComponent implements OnInit, PendingChangesComponent {
+  private loader = inject(LoaderService);
+
   canClearForm = false; // 🧹 botón limpiar
   canEditPostulant = false; // ✏️ botón editar
 
@@ -896,25 +900,19 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
     // 🔎 VALIDACIÓN ÚNICA (NEW)
     // ===============================================
     if (!this.validateNewDemand()) {
+      this.showValidationDialog();
       return false;
     }
 
+    const userId = this.tokenService.getUserId();
+    const programId = this.tokenService.getActiveProgramId();
+    const raw = this.form.getRawValue();
     const fechaSolicitud = this.form.get('fechaSolicitud')?.value;
-
-    if (!fechaSolicitud) {
-      this.showValidationDialog(
-        'Debe ingresar la fecha de solicitud antes de guardar la demanda.',
-      );
-      return false;
-    }
 
     // ===============================================
     // 🔹 SESIÓN USUARIO
     // ===============================================
-    const profile = this.tokenService.getUserProfile();
-    const userId = this.tokenService.getUserId();
-
-    if (!profile || !userId) {
+    if (!userId) {
       this.showValidationDialog('Sesión inválida. Inicie sesión nuevamente.');
       return false;
     }
@@ -922,22 +920,8 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
     // ===============================================
     // 🔹 PROGRAMA ACTIVO
     // ===============================================
-    const activeProgram =
-      this.tokenService.getActiveProgram() ||
-      this.tokenService.getUserPrograms()?.[0];
-
-    if (!activeProgram) {
+    if (!programId) {
       this.showValidationDialog('No hay programa activo asociado al usuario.');
-      return false;
-    }
-
-    const programList = JSON.parse(sessionStorage.getItem('programs') || '[]');
-    const programObj = programList.find((p: any) => p.name === activeProgram);
-
-    if (!programObj?.id) {
-      this.showValidationDialog(
-        'Programa activo inválido. Inicie sesión nuevamente.',
-      );
       return false;
     }
 
@@ -945,25 +929,34 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
       // ===============================================================
       // 🟦 PASO 1: CREAR POSTULANTE
       // ===============================================================
+      const postulantPayload: PostulantCreateDto = {
+        user: { id: userId },
+
+        commune: { id: raw.commune },
+        sex: { id: raw.sex },
+
+        convPrev: raw.convPrev
+          ? {
+              id: raw.convPrev,
+              intPrev: { id: raw.intPrev },
+            }
+          : undefined,
+
+        firstName: raw.firstName?.trim() ?? null,
+        lastName: raw.secondName?.trim() ?? null,
+        firstLastName: raw.firstLastName?.trim() ?? null,
+        secondLastName: raw.secondLastName?.trim() ?? null,
+
+        rut: raw.rut,
+        birthdate: formatDate(raw.birthDate, 'yyyy-MM-dd', 'en-CL'),
+
+        email: raw.email?.trim() ?? null,
+        phone: raw.phone?.trim() ?? null,
+        address: raw.address?.trim() ?? null,
+      };
+
       const postulant = await firstValueFrom(
-        this.postulantCreateService.create({
-          user: { id: userId },
-          commune: { id: this.form.value.commune },
-          sex: { id: this.form.value.sex },
-          firstName: this.form.value.firstName?.trim() ?? null,
-          lastName: this.form.value.secondName?.trim() ?? null,
-          firstLastName: this.form.value.firstLastName?.trim() ?? null,
-          secondLastName: this.form.value.secondLastName?.trim() ?? null,
-          rut: this.form.value.rut,
-          birthdate: formatDate(
-            this.form.value.birthDate,
-            'yyyy-MM-dd',
-            'en-CL',
-          ),
-          email: this.form.value.email?.trim() ?? null,
-          phone: this.form.value.phone?.trim() ?? null,
-          address: this.form.value.address?.trim() ?? null,
-        }),
+        this.postulantCreateService.create(postulantPayload),
       );
 
       // ===============================================================
@@ -971,10 +964,10 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
       // ===============================================================
       const contact = await firstValueFrom(
         this.contactService.createDto({
-          name: this.form.value.name?.trim() || null,
-          description: this.form.value.contactDescription?.trim() || null,
-          email: this.form.value.emailPostulant?.trim() || null,
-          cellphone: this.form.value.cellphone?.trim() || null,
+          name: raw.name?.trim() || null,
+          description: raw.contactDescription?.trim() || null,
+          email: raw.emailPostulant?.trim() || null,
+          cellphone: raw.cellphone?.trim() || null,
           postulant: { id: postulant.id! },
         }),
       );
@@ -982,44 +975,102 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
       // ===============================================================
       // 🟦 PASO 3: REGISTER
       // ===============================================================
-      const raw = this.form.getRawValue();
-
-      if (this.observacionesDraft.length > 0) {
-        raw.registerDescription = this.buildFinalObservaciones();
-      }
-
       const register = await firstValueFrom(
         this.registerService.create({
           postulant: { id: postulant.id },
           contact: { id: contact.id },
-          program: { id: programObj.id },
+
+          contactType: { id: this.extractId(raw.contactTypes)! },
+          sender: { id: this.extractId(raw.senders)! },
+          diverter: { id: this.extractId(raw.diverters)! },
+
+          program: { id: programId },
           user: { id: userId },
-          date_attention: fechaSolicitud,
+
+          number_tto: raw.ntrat === 0 ? 0 : raw.ntrat ? raw.ntrat : null,
+
+          notRelevant: raw.notRelevants ? { id: raw.notRelevants } : null,
+          result: raw.result ? { id: raw.result } : null,
+          state: raw.state ? { id: raw.state } : null,
+
+          date_attention: fechaSolicitud ?? null,
           description: raw.registerDescription?.trim() || null,
           is_history: 'NO',
         }),
       );
 
       // ===============================================================
-      // 🟦 PASO 4: MOVIMIENTOS + SUSTANCIAS
+      // 🟦 PASO 4: MOVIMIENTOS
       // ===============================================================
       await this.syncRegisterMovements(register.id, this.movements);
 
+      // ===============================================================
+      // 🟦 PASO 5: SUSTANCIAS
+      // ===============================================================
+      const principal = this.extractId(raw.substance);
+
+      const secondaries: number[] = (raw.secondarySubstances || [])
+        .map((s: any) => this.extractId(s))
+        .filter(
+          (s: number | null): s is number => s !== null && s !== principal,
+        );
+
+      if (principal) {
+        await firstValueFrom(
+          this.registerSubstanceServiceDto.create({
+            register: { id: register.id },
+            substance: { id: principal },
+            level: 'Principal',
+          }),
+        );
+      }
+
+      for (const s of secondaries) {
+        await firstValueFrom(
+          this.registerSubstanceServiceDto.create({
+            register: { id: register.id },
+            substance: { id: s },
+            level: 'Secundaria',
+          }),
+        );
+      }
+
+      // ===============================================================
       // 🔄 RECARGA
+      // ===============================================================
       this.register = await firstValueFrom(
         this.registerService.getById(register.id),
       );
 
       this.utils.cargarFichaCompletaEnFormulario(this.form, this.register);
 
+      // ===============================================================
       // 🔄 PASA A EDIT
+      // ===============================================================
       this.currentAction = 'EDIT';
       this.actionLabel = '🔵 Modificando Demanda';
+
+      this.bloquearCamposPostulante();
+      this.bloquearCamposReferente();
+
+      this.canClearForm = true;
+      this.canEditPostulant = true;
 
       this.form.markAsPristine();
       this.form.markAsUntouched();
 
       this.cdRef.detectChanges();
+
+      this.mostrarMensajeExito('Demanda creada correctamente');
+
+      this.ultimoRutBuscado = null;
+
+      this.form.patchValue({
+        newDate: null,
+        newHour: '',
+        newProfession: null,
+        newProfessional: '',
+      });
 
       return true;
     } catch (error) {
@@ -1510,38 +1561,46 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
   async viewAction(): Promise<void> {
     if (this.saving || !this.currentAction) return;
 
+    this.loader.lock();
     this.saving = true;
+
+    let success = false;
+    let message = '';
     try {
       switch (this.currentAction) {
         case 'EDIT':
-          if (await this.updateDemand()) {
-            this.mostrarMensajeExito('Demanda actualizada correctamente');
-          }
+          success = await this.updateDemand();
+          message = 'Demanda actualizada correctamente';
           break;
         case 'CLONE_SAME_PROGRAM':
-          if (await this.saveDemandClone()) {
-            this.mostrarMensajeExito('Demanda clonada correctamente');
-          }
+          success = await this.saveDemandClone();
+          message = 'Demanda clonada correctamente';
           break;
 
         case 'CLONE_OTHER_PROGRAM':
-          if (await this.saveDemandClone()) {
-            this.mostrarMensajeExito('Demanda clonada correctamente');
-          }
+          success = await this.saveDemandClone();
+          message = 'Demanda clonada correctamente';
           break;
-
         case 'NEW':
-          if (await this.saveDemand()) {
-            this.mostrarMensajeExito('Demanda creada correctamente');
-          }
+          success = await this.saveDemand();
+          message = 'Demanda creada correctamente';
           break;
       }
     } catch (error) {
-      this.mostrarMensajeError('Error al guardar la demanda');
-    } finally {
+      this.loader.unlock();
       this.saving = false;
+      this.mostrarMensajeError('Error al guardar la demanda');
       this.cdRef.detectChanges();
+      return;
     }
+
+    // 🔥 Liberar SIEMPRE antes del diálogo
+    this.loader.unlock();
+    this.saving = false;
+    if (success) {
+      this.mostrarMensajeExito(message);
+    }
+    this.cdRef.detectChanges();
   }
 
   private mostrarMensajeExito(mensaje: string): void {
@@ -2397,115 +2456,127 @@ export class DemandComponent implements OnInit, PendingChangesComponent {
   //-------------------------------------------------------------------------------------------------------
   //-------------------------------------------------------------------------------------------------------
 
-  seleccionarUsoDeFicha(f: any, accion: 'EDITAR' | 'USAR_DATOS'): void {
-    // ==================================================
-    // 🧹 0️⃣ RESET TOTAL — FORMULARIO COMO RECIÉN CARGADO
-    // ==================================================
-    this.ultimoRutBuscado = null;
-    this.estadoFormulario = null;
-    this.mostrarBloqueoPostulante = false;
+  async seleccionarUsoDeFicha(
+    f: any,
+    accion: 'EDITAR' | 'USAR_DATOS',
+  ): Promise<void> {
+    this.loader.lock(); // 🔒 BLOQUEAR VISTA
 
-    // 🔹 Estado lógico
-    this.register = null;
-    this.fichaAnterior = null;
-    this.cargandoPrevision = false;
+    try {
+      // ==================================================
+      // 🧹 0️⃣ RESET TOTAL — FORMULARIO COMO RECIÉN CARGADO
+      // ==================================================
+      this.ultimoRutBuscado = null;
+      this.estadoFormulario = null;
+      this.mostrarBloqueoPostulante = false;
 
-    // 🔹 Estado UI
-    this.mostrarPanelFichas = false;
-    this.toggleBodyScroll(false);
+      // 🔹 Estado lógico
+      this.register = null;
+      this.fichaAnterior = null;
+      this.cargandoPrevision = false;
 
-    // 🔹 Flags UX
-    this.panelCerradoManualmente = false;
+      // 🔹 Estado UI
+      this.mostrarPanelFichas = false;
+      this.toggleBodyScroll(false);
 
-    // 🔹 Secciones dinámicas
-    this.movements = [];
-    this.citacionCollapsed = true;
+      // 🔹 Flags UX
+      this.panelCerradoManualmente = false;
 
-    // 🔹 Estado de campos — TODO habilitado
-    this.habilitarCamposPostulante();
-    this.habilitarCamposReferente();
-    this.habilitarEstadoDemanda();
+      // 🔹 Secciones dinámicas
+      this.movements = [];
+      this.citacionCollapsed = true;
 
-    this.mostrarBloqueoPostulante = false;
+      // 🔹 Estado de campos — TODO habilitado
+      this.habilitarCamposPostulante();
+      this.habilitarCamposReferente();
+      this.habilitarEstadoDemanda();
 
-    // 🔹 Reset duro del formulario
-    this.form.reset();
-    this.form.markAsPristine();
-    this.form.markAsUntouched();
+      this.mostrarBloqueoPostulante = false;
 
-    // 🔹 Flags UI base
-    this.canClearForm = false;
-    this.canEditPostulant = false;
+      // 🔹 Reset duro del formulario
+      this.form.reset();
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
 
-    this.ocultarBotonesEdicion();
-    // ==================================================
-    // 🧭 1️⃣ CONTEXTO DE PROGRAMA ACTIVO
-    // ==================================================
+      // 🔹 Flags UI base
+      this.canClearForm = false;
+      this.canEditPostulant = false;
 
-    const activeProgramId = this.getActiveProgramId();
+      this.ocultarBotonesEdicion();
+      // ==================================================
+      // 🧭 1️⃣ CONTEXTO DE PROGRAMA ACTIVO
+      // ==================================================
 
-    // ==================================================
-    // 🔵 CASO 1: FICHA DEL MISMO PROGRAMA
-    // ==================================================
-    if (f.program?.id === activeProgramId) {
-      // ----------------------------------------------
-      // 🔵 A. EDITAR DEMANDA EXISTENTE
-      // ----------------------------------------------
-      if (accion === 'EDITAR') {
-        this.currentAction = 'EDIT';
-        this.actionLabel = '🔵 Modificando Demanda';
-        // 🔥 AQUÍ ESTABA EL PROBLEMA
-        this.loadDemandCompleta(f.id);
+      const activeProgramId = this.getActiveProgramId();
 
-        queueMicrotask(() => {
-          // 🎛️ UI
-          this.canClearForm = true;
-          this.canEditPostulant = true;
-          this.habilitarBotonesEdicion();
+      // ==================================================
+      // 🔵 CASO 1: FICHA DEL MISMO PROGRAMA
+      // ==================================================
+      if (f.program?.id === activeProgramId) {
+        // ----------------------------------------------
+        // 🔵 A. EDITAR DEMANDA EXISTENTE
+        // ----------------------------------------------
+        if (accion === 'EDITAR') {
+          this.currentAction = 'EDIT';
+          this.actionLabel = '🔵 Modificando Demanda';
+          // 🔥 AQUÍ ESTABA EL PROBLEMA
+          this.loadDemandCompleta(f.id);
 
-          // 🔒 Bloqueos
-          //this.bloquearCamposPostulante();
-          this.bloquearCamposReferente();
-          this.mostrarBloqueoPostulante = true;
+          queueMicrotask(() => {
+            // 🎛️ UI
+            this.canClearForm = true;
+            this.canEditPostulant = true;
+            this.habilitarBotonesEdicion();
 
-          this.cdRef.detectChanges();
-        });
-        return;
+            // 🔒 Bloqueos
+            //this.bloquearCamposPostulante();
+            this.bloquearCamposReferente();
+            this.mostrarBloqueoPostulante = true;
+
+            this.cdRef.detectChanges();
+          });
+          return;
+        }
+
+        // ----------------------------------------------
+        // 🟠 B. USAR DATOS (MISMO PROGRAMA)
+        // ----------------------------------------------
+        else {
+          this.currentAction = 'CLONE_SAME_PROGRAM';
+          this.actionLabel =
+            '🟠 Nueva Demanda (usando datos del mismo programa)';
+          this.usarDatos(f);
+        }
       }
 
-      // ----------------------------------------------
-      // 🟠 B. USAR DATOS (MISMO PROGRAMA)
-      // ----------------------------------------------
+      // ==================================================
+      // 🟣 CASO 2: FICHA DE OTRO PROGRAMA
+      // ==================================================
       else {
-        this.currentAction = 'CLONE_SAME_PROGRAM';
-        this.actionLabel = '🟠 Nueva Demanda (usando datos del mismo programa)';
+        this.currentAction = 'CLONE_OTHER_PROGRAM';
+        this.actionLabel = '🟠 Nueva Demanda (usando datos de otro programa)';
         this.usarDatos(f);
       }
+
+      // ==================================================
+      // 📦 2️⃣ CARGA DE DATOS (NEUTRA, SIN DECISIÓN)
+      // ==================================================
+      queueMicrotask(() => {
+        // 🎛️ UI
+        this.canClearForm = true;
+        this.canEditPostulant = true;
+        this.habilitarBotonesEdicion();
+        // 🔒 Bloqueos
+        this.bloquearCamposPostulante();
+        this.bloquearCamposReferente();
+
+        this.cdRef.detectChanges();
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.loader.unlock(); // 🔓 SIEMPRE LIBERAR
     }
-
-    // ==================================================
-    // 🟣 CASO 2: FICHA DE OTRO PROGRAMA
-    // ==================================================
-    else {
-      this.currentAction = 'CLONE_OTHER_PROGRAM';
-      this.actionLabel = '🟠 Nueva Demanda (usando datos de otro programa)';
-      this.usarDatos(f);
-    }
-
-    // ==================================================
-    // 📦 2️⃣ CARGA DE DATOS (NEUTRA, SIN DECISIÓN)
-    // ==================================================
-    queueMicrotask(() => {
-      // 🎛️ UI
-      this.canClearForm = true;
-      this.canEditPostulant = true;
-      this.habilitarBotonesEdicion();
-      // 🔒 Bloqueos
-      this.bloquearCamposPostulante();
-      this.bloquearCamposReferente();
-
-      this.cdRef.detectChanges();
-    });
   }
 
   // ==================================================

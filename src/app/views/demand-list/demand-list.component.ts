@@ -1,13 +1,7 @@
 // ===================================================================
 // DEMAND LIST COMPONENT — COMPLETO, ORDENADO Y COMPILABLE
 // ===================================================================
-import {
-  Component,
-  OnInit,
-  ViewChild,
-  AfterViewInit,
-  ChangeDetectorRef,
-} from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 
 import { CommonModule, registerLocaleData } from '@angular/common';
 import localeEsCL from '@angular/common/locales/es-CL';
@@ -73,6 +67,8 @@ import { RegisterService } from '../../services/register.service';
 
 import { DemandDetailViewService } from '@app/services/reports/demand-detail-view.service';
 import { RegisterFullLoaderService } from '@app/services/register-full-loader.service';
+import { LoaderService } from '../../services/loader.service';
+import { firstValueFrom } from 'rxjs';
 
 registerLocaleData(localeEsCL);
 
@@ -127,6 +123,8 @@ interface Demandante {
   ],
 })
 export class DemandListComponent implements OnInit {
+  private loader = inject(LoaderService);
+
   constructor(
     private fb: FormBuilder,
     private communeService: CommuneService,
@@ -204,10 +202,18 @@ export class DemandListComponent implements OnInit {
   // INIT
   // ===================================================================
 
-  ngOnInit(): void {
-    this.cargarFormulario();
-    this.loadCatalogs(); // catálogos
-    this.cargarDatosTablaReal(); // snapshot
+  async ngOnInit(): Promise<void> {
+    this.loader.lock();
+
+    try {
+      await this.cargarFormulario();
+      await this.loadCatalogs();
+      await this.cargarDatosTablaReal();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.loader.unlock();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -215,8 +221,6 @@ export class DemandListComponent implements OnInit {
     this.dataSource.sort = this.sort;
     this.paginator.pageSize = 9;
   }
-
-
 
   // =============================================================
   cargarFormulario() {
@@ -235,97 +239,70 @@ export class DemandListComponent implements OnInit {
   // =============================================================
   //   🚀 CARGA DATOS CON SUSTANCIA PRINCIPAL
   // =============================================================
-  cargarDatosTablaReal(): void {
-    this.isLoading = true;
+  async cargarDatosTablaReal(): Promise<void> {
+    const rows: any[] = await firstValueFrom(this.registerService.getAll());
 
-    this.registerService
-      .getAll() // 🔥 UNA sola llamada
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: (rows: any[]) => {
-          console.log('👉 R AWS registers:', rows);
+    const requests = rows.map((reg) =>
+      this.registerSubstanceService.searchByRegisterId(reg.id).pipe(
+        map((resp: any) => {
+          const pageable = Array.isArray(resp) ? { content: resp } : resp;
+          const subs = pageable?.content ?? [];
+          const principal = subs.find((x: any) => x.level === 'Principal');
 
-          // ================================
-          // llamadas paralelas por registro
-          // ================================
-          const requests = rows.map((reg) =>
-            this.registerSubstanceService.searchByRegisterId(reg.id).pipe(
-              map((resp: any) => {
-                const pageable = Array.isArray(resp) ? { content: resp } : resp;
+          return {
+            reg,
+            principal: principal?.substance?.name ?? '---',
+          };
+        }),
+      ),
+    );
 
-                const subs = pageable?.content ?? [];
+    const results = await firstValueFrom(forkJoin(requests));
 
-                const principal = subs.find(
-                  (x: any) => x.level === 'Principal',
-                );
+    const tabla: Demandante[] = results.map((item) => {
+      const r = item.reg;
 
-                return {
-                  reg,
-                  principal: principal?.substance?.name ?? '---',
-                };
-              }),
-            ),
-          );
+      return {
+        id: r.id,
+        postulante:
+          `${r.postulant?.firstName ?? ''} ${r.postulant?.lastName ?? ''}`.trim(),
+        rut: r.postulant?.rut ?? '---',
+        programa: r.program?.name ?? '---',
+        comuna: r.postulant?.commune?.name ?? '---',
+        dias: r.date_attention
+          ? this.getDiasTranscurridos(r.date_attention)
+          : 0,
+        fecha: r.date_attention ? new Date(r.date_attention) : new Date(),
+        estado: r.state?.name ?? '---',
+        usuario: r.user?.username ?? '---',
+        sustancia: item.principal,
+        tipoContacto: r.contactType?.name ?? '---',
+      };
+    });
 
-          forkJoin(requests).subscribe({
-            next: (results: { reg: any; principal: string }[]) => {
-              const tabla: Demandante[] = results.map((item) => {
-                const r = item.reg;
-
-                return {
-                  id: r.id,
-                  postulante:
-                    `${r.postulant?.firstName ?? ''} ${r.postulant?.lastName ?? ''}`.trim(),
-                  rut: r.postulant?.rut ?? '---',
-                  programa: r.program?.name ?? '---',
-                  comuna: r.postulant?.commune?.name ?? '---',
-                  dias: r.date_attention
-                    ? this.getDiasTranscurridos(r.date_attention)
-                    : 0,
-                  fecha: r.date_attention,
-                  estado: r.state?.name ?? '---',
-                  usuario: r.user?.username ?? '---',
-                  sustancia: item.principal,
-                  tipoContacto: r.contactType?.name ?? '---',
-                };
-              });
-              // 🔒 dataset completo (snapshot)
-              this.datasetBase = tabla;
-              // ✅ ESTA LÍNEA FALTABA
-              this.actualizarFiltrosPorTabla();
-              // aplica filtros actuales (o ninguno)
-              this.aplicarFiltros();
-            },
-          });
-        },
-
-        error: (err) => console.error('❌ Error cargando tabla:', err),
-      });
+    this.datasetBase = tabla;
+    this.actualizarFiltrosPorTabla();
+    this.aplicarFiltros();
   }
 
   // =============================================================
   // CATÁLOGOS
   // =============================================================
-  loadCatalogs(): void {
-    this.isLoading = true;
-
-    forkJoin({
-      programs: this.programService.listAll(),
-      communes: this.communeService.listAll(),
-      contactTypes: this.contactTypeService.listAll(),
-      substances: this.substanceService.listAll(),
-      states: this.stateService.listAll(),
-    }).subscribe({
-      next: (data) => {
-        this.programsCatalog = data.programs;
-        this.communesCatalog = data.communes;
-        this.contactTypesCatalog = data.contactTypes;
-        this.substancesCatalog = data.substances;
-        this.statesCatalog = data.states;
-      },
-      complete: () => (this.isLoading = false),
-      error: (err) => console.error('❌ Error catálogos:', err),
-    });
+  async loadCatalogs(): Promise<void> {
+    const data = await firstValueFrom(
+      forkJoin({
+        programs: this.programService.listAll(),
+        communes: this.communeService.listAll(),
+        contactTypes: this.contactTypeService.listAll(),
+        substances: this.substanceService.listAll(),
+        states: this.stateService.listAll(),
+      }),
+    );
+    this.programsCatalog = data.programs;
+    this.communesCatalog = data.communes;
+    this.contactTypesCatalog = data.contactTypes;
+    this.substancesCatalog = data.substances;
+    this.statesCatalog = data.states;
   }
 
   // =============================================================

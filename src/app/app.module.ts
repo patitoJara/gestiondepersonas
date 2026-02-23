@@ -7,7 +7,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 // 🔹 Interceptores funcionales modernos
 import { authInterceptor } from './core/interceptors/auth.interceptor';
-import { refreshInterceptor } from './core/interceptors/refresh.interceptor';
+//import { refreshInterceptor } from './core/interceptors/refresh.interceptor';
 
 // 📅 Angular Material — formato de fechas (Chile)
 import { MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
@@ -34,7 +34,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
 
     // 🌐 HTTP + interceptores funcionales
-    provideHttpClient(withInterceptors([authInterceptor, refreshInterceptor])),
+    //provideHttpClient(withInterceptors([authInterceptor, refreshInterceptor])),
 
     // 🌎 Configuración global de fechas (Chile)
     { provide: MAT_DATE_LOCALE, useValue: 'es-CL' },

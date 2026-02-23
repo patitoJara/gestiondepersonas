@@ -1,5 +1,6 @@
 // C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\core\interceptors\refresh.interceptor.ts
 
+/*
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -41,3 +42,4 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+*/

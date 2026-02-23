@@ -133,7 +133,7 @@ export class TemplateComponent implements OnInit {
     this.userFullName = profile.fullName || profile.firstName || 'Usuario';
 
     // =============================================
-    // 🟦 ROLES → prioridad: profile → tokenService → []
+    // 🟦 ROLES → prioridad: tokenService → profile → []
     // =============================================
     const rolesFromToken = this.tokenService.getUserRoles();
 
@@ -141,19 +141,18 @@ export class TemplateComponent implements OnInit {
       rolesFromToken.length > 0 ? rolesFromToken : (profile.roles ?? []);
 
     // =============================================
-    // 🟦 PROGRAMAS → prioridad: profile → tokenService → []
+    // 🟦 PROGRAMAS → prioridad: profile → tokenService
     // =============================================
-
     const rawPrograms =
       profile.programs && profile.programs.length > 0
-        ? profile.programs // del backend → objetos
-        : this.tokenService.getUserPrograms(); // del token → strings
+        ? profile.programs // objetos con id
+        : this.tokenService.getUserPrograms(); // strings del token
 
-    // 🔥 Normalizamos todo a strings
+    // Normalizamos a nombres (string)
     this.userPrograms = rawPrograms.map((p: any) => p.name ?? p);
 
     // =============================================
-    // 🟦 ACTIVO
+    // 🟦 ACTIVO (rol + programa)
     // =============================================
     this.activeRole =
       this.tokenService.getActiveRole() || this.userRoles[0] || null;
@@ -162,103 +161,53 @@ export class TemplateComponent implements OnInit {
       this.tokenService.getActiveProgram() || this.userPrograms[0] || null;
 
     // =============================================
-    // 🆕 GUARDAR ID DEL PROGRAMA ACTIVO (SIN ROMPER NADA)
+    // 🆕 SINCRONIZAR ID DEL PROGRAMA ACTIVO
     // =============================================
 
-    // =============================================
-    // 🆕 DEBUG — GUARDAR ID DEL PROGRAMA ACTIVO
-    // =============================================
+    console.log('🔎 DEBUG — profile.programs:', profile.programs);
+    console.log('🔎 DEBUG — activeProgram actual:', this.activeProgram);
 
-    console.log('🔎 DEBUG 1 — profile.programs:', profile.programs);
-    console.log('🔎 DEBUG 2 — activeProgram actual:', this.activeProgram);
-    /*
-    if (profile.programs?.length && this.activeProgram) {
+    if (profile?.programs?.length && this.activeProgram) {
       const selectedProgram = profile.programs.find(
         (p: any) => p.name === this.activeProgram,
       );
 
-      console.log('🔎 DEBUG 3 — selectedProgram encontrado:', selectedProgram);
-
       if (selectedProgram?.id) {
-        console.log('✅ DEBUG 4 — ID encontrado:', selectedProgram.id);
-
         this.tokenService.setActiveProgramId(selectedProgram.id);
 
         console.log(
-          '💾 DEBUG 5 — ID guardado en sessionStorage:',
+          '💾 ID sincronizado automáticamente:',
           this.tokenService.getActiveProgramId(),
         );
       } else {
-        console.warn('⚠️ DEBUG 6 — No se encontró el programa por nombre');
+        console.warn('⚠️ No se encontró ID, aplicando fallback');
 
-        // 🔥 fallback defensivo
         const firstProgram = profile.programs[0];
 
-        console.log('🔎 DEBUG 7 — fallback firstProgram:', firstProgram);
-
         if (firstProgram?.id) {
-          console.log('✅ DEBUG 8 — Fallback ID usado:', firstProgram.id);
-
           this.tokenService.setActiveProgramId(firstProgram.id);
           this.tokenService.setActiveProgram(firstProgram.name);
           this.activeProgram = firstProgram.name;
 
           console.log(
-            '💾 DEBUG 9 — ID guardado por fallback:',
+            '💾 ID guardado por fallback:',
             this.tokenService.getActiveProgramId(),
           );
         } else {
-          console.error(
-            '❌ DEBUG 10 — Ni siquiera el primer programa tiene ID',
-          );
+          console.error('❌ No existen programas válidos en profile');
         }
       }
-    } else {
-      console.warn('⚠️ DEBUG 11 — profile.programs vacío o activeProgram null');
-    }
-    
-*/
-
-    // 🔹 NUEVO: obtener programas también desde tokenService
-    const programsFromToken = this.tokenService.getUserPrograms();
-
-    // 🔹 Unificamos ambos orígenes (sin eliminar nada)
-    const allPrograms =
-      profile.programs?.length > 0 ? profile.programs : programsFromToken;
-
-    console.log('🔎 DEBUG 1 — profile.programs:', profile.programs);
-    console.log('🔎 DEBUG 2 — programsFromToken:', programsFromToken);
-    console.log('🔎 DEBUG 3 — activeProgram actual:', this.activeProgram);
-    console.log('🔎 DEBUG 4 — allPrograms usados:', allPrograms);
-
-    if (allPrograms?.length && this.activeProgram) {
-      const selectedProgram = allPrograms.find(
-        (p: any) => (p.name ?? p) === this.activeProgram,
-      );
-
-      console.log('🔎 DEBUG 5 — selectedProgram encontrado:', selectedProgram);
-
-      if (selectedProgram?.id) {
-        console.log('✅ DEBUG 6 — ID encontrado:', selectedProgram.id);
-
-        this.tokenService.setActiveProgramId(selectedProgram.id);
-
-        console.log(
-          '💾 DEBUG 7 — ID guardado:',
-          this.tokenService.getActiveProgramId(),
-        );
-      } else {
-        console.warn('⚠️ DEBUG 8 — No se encontró ID para el programa activo');
-      }
-    } else {
-      console.warn('⚠️ DEBUG 9 — No hay programas disponibles');
     }
 
+    // =============================================
+    // 🟦 CONTINUAR FLUJO NORMAL
+    // =============================================
     this.isSessionReady = true;
     this.restoreLastRoute();
 
     this.sessionService.startSessionFromToken();
     this.startRealExpirationTimer();
+
     this.cdr.detectChanges();
   }
 
@@ -321,41 +270,81 @@ export class TemplateComponent implements OnInit {
   }
 
   onContinue(): void {
-    if (this.isLoading) return;
+    console.log('================= 🚀 ON CONTINUE =================');
+
+    if (this.isLoading) {
+      console.log('⛔ Ya está cargando, se ignora click.');
+      return;
+    }
+
     this.isLoading = true;
 
-    if (this.userFullName.toLowerCase() !== 'admin') {
+    console.log('👤 Usuario:', this.userFullName);
+    console.log('🎭 Rol seleccionado:', this.activeRole);
+    console.log('🏥 Programa seleccionado:', this.activeProgram);
+
+    const profile = this.tokenService.getUserProfile();
+    const isSystemAdmin = profile?.email === 'admin@demo.com';
+
+    // ===================================================
+    // 💾 GUARDAR ROL Y PROGRAMA (NOMBRE PRIMERO)
+    // ===================================================
+    this.tokenService.setActiveRole(this.activeRole || '');
+    this.tokenService.setActiveProgram(this.activeProgram || '');
+
+    console.log('💾 Rol guardado:', this.tokenService.getActiveRole());
+    console.log('💾 Programa guardado:', this.tokenService.getActiveProgram());
+
+    // ===================================================
+    // 🔎 VALIDACIÓN + ASIGNACIÓN ID
+    // ===================================================
+    if (!isSystemAdmin) {
       if (!this.activeRole || !this.activeProgram) {
+        console.warn('⚠️ Falta rol o programa.');
         alert('⚠️ Debes seleccionar un rol y un programa para continuar.');
         this.isLoading = false;
         return;
       }
-    }
 
-    // 🔹 Guardamos lo que ya existía
-    this.tokenService.setActiveRole(this.activeRole || '');
-    this.tokenService.setActiveProgram(this.activeProgram || '');
+      const programs = this.tokenService.getUserPrograms();
 
-    // 🔹 🔥 NUEVO: Guardar también el ID
-    const profile = this.tokenService.getUserProfile();
-
-    if (profile?.programs?.length > 0 && this.activeProgram) {
-      const selectedProgram = profile.programs.find(
-        (p: any) => p.name === this.activeProgram,
+      const selectedProgram = programs.find(
+        (p) => p.name === this.activeProgram,
       );
 
       if (selectedProgram?.id) {
         this.tokenService.setActiveProgramId(selectedProgram.id);
-        console.log('🆔 Programa activo ID guardado:', selectedProgram.id);
+        console.log('🆔 ID guardado correctamente:', selectedProgram.id);
+      } else {
+        console.warn('⚠️ No se encontró ID para el programa.');
+        this.tokenService.setActiveProgramId(null);
       }
+    } else {
+      // 🔵 ADMIN ESTRUCTURAL
+      this.tokenService.setActiveProgramId(null);
+      console.log('👑 Admin estructural sin programa.');
     }
 
+    // ===================================================
+    // 🔍 VALIDACIÓN FINAL
+    // ===================================================
+    console.log(
+      '📦 activeProgramId final:',
+      this.tokenService.getActiveProgramId(),
+    );
+
+    console.log('================= ✅ CONTEXTO LISTO =================');
+
+    // ===================================================
+    // 🚀 CONTINUAR AL SISTEMA
+    // ===================================================
     this.buildMenu();
 
     setTimeout(() => {
       this.menuVisible = true;
       this.isLoading = false;
       this.cdr.detectChanges();
+      console.log('🎉 Menú visible, sesión inicializada correctamente.');
     }, 250);
   }
 
@@ -475,6 +464,7 @@ export class TemplateComponent implements OnInit {
       sexs: 'wc',
       about: 'info',
       manual: 'menu_book',
+      analytics: 'insights',
     };
     return icons[path] || 'chevron_right';
   }
@@ -502,6 +492,7 @@ export class TemplateComponent implements OnInit {
       'not-relevants': 'No relevantes',
       sexs: 'Género',
       about: 'Acerca del sistema',
+      analytics: 'Panel Estratégico',
     };
     return titles[path] || path.charAt(0).toUpperCase() + path.slice(1);
   }

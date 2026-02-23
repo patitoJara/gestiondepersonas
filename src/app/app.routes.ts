@@ -7,7 +7,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { pendingChangesGuard } from './core/guards/pending-changes.guard';
 
-
 export const routes: Routes = [
   // 🚀 La app siempre inicia en LOGIN
   //{ path: '', redirectTo: 'auth/login', pathMatch: 'full' },
@@ -26,6 +25,16 @@ export const routes: Routes = [
           import('./views/inicio/inicio.component').then(
             (m) => m.InicioComponent,
           ),
+      },
+
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./views/analytics/analytics.component').then(
+            (m) => m.AnalyticsComponent,
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'SUPERVISOR'] },
       },
 
       // 👤 PERFIL — cambio de clave interno (SIN rol)
@@ -65,7 +74,7 @@ export const routes: Routes = [
           ),
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'ADMINISTRATIVO'] },
-      },      
+      },
 
       {
         path: 'demand-list',
