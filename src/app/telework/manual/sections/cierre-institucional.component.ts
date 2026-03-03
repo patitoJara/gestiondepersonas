@@ -4,10 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-roles',
+  selector: 'app-cierreinstitucional',
   standalone: true,
-  //host: { id: 'roles' },
-  templateUrl: './roles.component.html',
+  //host: { id: 'mantenedores' },
+  templateUrl: './cierre-institucional.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [
     CommonModule,
@@ -15,4 +15,4 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule,
   ],
 })
-export class RolesComponent {}
+export class CierreInstitucionalComponent {}

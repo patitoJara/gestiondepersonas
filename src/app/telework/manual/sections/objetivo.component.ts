@@ -4,10 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-intro',
+  selector: 'app-objetivo',
   standalone: true,
   //host: { id: 'intro' },
-  templateUrl: './intro.component.html',
+  templateUrl: './objetivo.component.html',
   styleUrls: ['../manual.shared.scss'], 
   imports: [
     CommonModule,
@@ -15,4 +15,4 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule,
   ],
 })
-export class IntroComponent {}
+export class ObjetivoComponent {}

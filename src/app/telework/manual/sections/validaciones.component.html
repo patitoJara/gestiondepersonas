@@ -1,0 +1,40 @@
+<!-- 7. VALIDACIONES BACKEND OBLIGATORIAS -->
+<mat-card class="manual-section" id="validaciones">
+
+  <div class="section-header">
+    <mat-icon class="icon-primary">security</mat-icon>
+    <h2>7. Validaciones Backend Obligatorias</h2>
+  </div>
+
+  <p>
+    Todas las validaciones críticas del sistema son ejecutadas en el backend
+    institucional, garantizando integridad, trazabilidad y control.
+  </p>
+
+  <ul class="manual-list">
+    <li>El usuario debe encontrarse activo.</li>
+    <li>La suscripción debe estar vigente y activa.</li>
+    <li>La hora del evento es generada exclusivamente por el servidor.</li>
+    <li>Se utiliza zona horaria institucional oficial.</li>
+  </ul>
+
+  <div class="manual-box box-warning">
+    <mat-icon>gpp_bad</mat-icon>
+    <div>
+      No es posible modificar manualmente la fecha ni la hora
+      desde el cliente. La generación del evento es completamente
+      controlada por el backend.
+    </div>
+  </div>
+
+  <div class="manual-box box-rule">
+    <mat-icon>rule</mat-icon>
+    <div>
+      Las validaciones garantizan que el sistema funcione como
+      registro de eventos trazable y auditable,
+      sin permitir manipulación de datos.
+      Estas validaciones constituyen el núcleo de control del sistema y no pueden ser modificadas desde la capa cliente.
+    </div>
+  </div>
+
+</mat-card>

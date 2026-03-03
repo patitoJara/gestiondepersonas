@@ -4,13 +4,18 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 
-import { IntroComponent } from './sections/intro.component';
-import { DemandaComponent } from './sections/demanda.component';
-import { ListadoComponent } from './sections/listado.component';
-import { MantenedoresComponent } from './sections/mantenedores.component';
-import { RolesComponent } from './sections/roles.component';
-import { SeguridadComponent } from './sections/seguridad.component';
-import { TransferComponent } from './sections/transfer.component';
+import { ModeloComponent } from './sections/modelo.component';
+import { ObjetivoComponent } from './sections/objetivo.component';
+import { PrincipiosComponent } from './sections/principios.component';
+import { SuscripcionesComponent } from './sections/suscripciones.component';
+import { UsuariosComponent } from './sections/usuarios.component';
+import { ValidacionesComponent } from './sections/validaciones.component';
+import { VistaAdminComponent } from './sections/vista-admin.component';
+import { VistaFuncionarioComponent } from './sections/vista-funcionario.component';
+import { CierreInstitucionalComponent } from './sections/cierre-institucional.component';
+
+
+
 
 import { Component, ViewChild, ElementRef } from '@angular/core';
 
@@ -25,13 +30,15 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
     MatExpansionModule,
     MatListModule,
     MatIconModule,
-    IntroComponent,
-    DemandaComponent,
-    ListadoComponent,
-    MantenedoresComponent,
-    RolesComponent,
-    SeguridadComponent,
-    TransferComponent,
+    ModeloComponent,
+    ObjetivoComponent,
+    PrincipiosComponent,
+    SuscripcionesComponent,
+    UsuariosComponent,
+    ValidacionesComponent,
+    VistaAdminComponent,
+    VistaFuncionarioComponent,
+    CierreInstitucionalComponent,
   ],
 })
 export class ManualComponent {

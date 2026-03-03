@@ -1,5 +1,5 @@
 {
-  "name": "rda-sm",
+    "name": "telework-sm",
   "version": "0.0.1",
   "description": "Sistema RDA-SM (Registro de Demanda de Atención - Salud Mental) del Servicio de Salud Magallanes.",
   "private": true,

@@ -4,10 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-transfer',
+  selector: 'app-vista-funcionario',
   standalone: true,
   //host: { id: 'modulo-demandas' },
-  templateUrl: './transfer.component.html',
+  templateUrl: './vista-funcionario.component.html',
   styleUrls: ['../manual.shared.scss'],
   
   imports: [
@@ -16,4 +16,4 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule,
   ],
 })
-export class TransferComponent {}
+export class VistaFuncionarioComponent {}

@@ -1,0 +1,42 @@
+<!-- 8. MODELO DE DATOS -->
+<mat-card class="manual-section" id="modelo">
+
+  <div class="section-header">
+    <mat-icon class="icon-primary">schema</mat-icon>
+    <h2>8. Modelo de Datos</h2>
+  </div>
+
+  <p>
+    El sistema se compone de un modelo relacional orientado a trazabilidad
+    y control institucional de eventos.
+  </p>
+
+  <h3 class="subsection-title">Entidades Principales</h3>
+  <ul class="manual-list">
+    <li><strong>users</strong> – Registro de funcionarios y administradores.</li>
+    <li><strong>roles</strong> – Definición de perfiles de acceso.</li>
+    <li><strong>users_roles</strong> – Asociación entre usuarios y roles.</li>
+    <li><strong>subscribes</strong> – Períodos habilitados de teletrabajo.</li>
+    <li><strong>registers</strong> – Eventos originales generados por el funcionario.</li>
+    <li><strong>registers_modifieds</strong> – Eventos administrativos adicionales vinculados a un registro base.</li>
+  </ul>
+
+  <div class="manual-box box-rule">
+    <mat-icon>rule</mat-icon>
+    <div>
+      Los eventos administrativos no reemplazan ni eliminan registros
+      originales. Se almacenan como eventos adicionales con vínculo
+      al registro base correspondiente.
+    </div>
+  </div>
+
+  <div class="manual-box box-info">
+    <mat-icon>info</mat-icon>
+    <div>
+      Todas las entidades incorporan campos de auditoría
+      (<em>created_at</em>, <em>updated_at</em>, <em>deleted_at</em>),
+      asegurando trazabilidad completa.
+    </div>
+  </div>
+
+</mat-card>

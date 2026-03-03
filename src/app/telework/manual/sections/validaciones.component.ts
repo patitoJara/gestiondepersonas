@@ -4,10 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-mantenedores',
+  selector: 'app-validaciones',
   standalone: true,
   //host: { id: 'mantenedores' },
-  templateUrl: './mantenedores.component.html',
+  templateUrl: './validaciones.component.html',
   styleUrls: ['../manual.shared.scss'],
   imports: [
     CommonModule,
@@ -15,4 +15,4 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule,
   ],
 })
-export class MantenedoresComponent {}
+export class ValidacionesComponent {}

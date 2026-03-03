@@ -114,7 +114,7 @@ export class LoginComponent implements AfterViewInit {
         else localStorage.removeItem('last_email');
 
         const returnUrl =
-          this.route.snapshot.queryParamMap.get('returnUrl') || '/inicio';
+          this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
 
         console.log('[login] ⏳ Navegando y reiniciando sesión...');
 
