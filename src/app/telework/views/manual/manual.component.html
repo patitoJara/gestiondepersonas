@@ -1,0 +1,53 @@
+<div class="manual-container" #manualScroll (scroll)="onScroll()">
+
+<button
+  *ngIf="showIndexBtn"
+  class="btn-indice"
+  mat-fab
+  color="primary"
+  (click)="scrollToIndex()"
+>
+  <mat-icon>arrow_upward</mat-icon>
+</button>
+
+  <!-- CABECERA -->
+  <mat-card class="manual-header" id="manual-top">
+    <div class="header-row">
+      <mat-icon class="header-icon">menu_book</mat-icon>
+      <div>
+        <h1>Manual del Sistema</h1>
+        <p>Sistema de Registro de Eventos – Teletrabajo</p>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- ÍNDICE -->
+  <mat-card class="manual-section manual-index" id="indice">
+    <h3>Índice</h3>
+
+    <ul class="manual-list">
+      <li><a (click)="scrollTo('objetivo')">1️⃣ Objetivo del Sistema</a></li>
+      <li><a (click)="scrollTo('principios')">2️⃣ Principios de Funcionamiento</a></li>
+      <li><a (click)="scrollTo('vista-funcionario')">3️⃣ Vista Funcionario</a></li>
+      <li><a (click)="scrollTo('vista-admin')">4️⃣ Vista Administrador / RRHH</a></li>
+      <li><a (click)="scrollTo('usuarios')">5️⃣ Administración de Usuarios</a></li>
+      <li><a (click)="scrollTo('suscripciones')">6️⃣ Gestión de Suscripciones</a></li>
+      <li><a (click)="scrollTo('validaciones')">7️⃣ Validaciones Backend</a></li>
+      <li><a (click)="scrollTo('modelo')">8️⃣ Modelo de Datos</a></li>
+      <li><a (click)="scrollTo('vpn')">9️⃣ Configuración VPN (Acceso Remoto)</a></li>
+      <li><a (click)="scrollTo('consideraciones')">🔟 Consideraciones Finales</a></li>
+    </ul>
+  </mat-card>
+
+  <app-objetivo></app-objetivo>
+  <app-principios></app-principios>
+  <app-vista-funcionario></app-vista-funcionario>
+  <app-vista-admin></app-vista-admin>
+  <app-usuarios></app-usuarios>
+  <app-suscripciones></app-suscripciones>
+  <app-validaciones></app-validaciones>
+  <app-modelo></app-modelo> 
+  <app-manuales></app-manuales>
+  <app-cierreinstitucional></app-cierreinstitucional>
+
+</div>

@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './views/login/login.component';
+import { LoginComponent } from './telework/views/auth/login/login.component';
 import { TemplateComponent } from './layout/template/template.component';
-import { AboutPublicComponent } from './views/about/about-public/about-public.component';
+import { AboutPublicComponent } from './telework/views/public/about/about-public/about-public.component';
+import { TeleworkSubscribeComponent } from './telework/views/admin/subscribe/telework-subscribe.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-
   { path: 'auth/login', component: LoginComponent },
 
   { path: 'about-public', component: AboutPublicComponent },
@@ -15,19 +15,129 @@ export const routes: Routes = [
     component: TemplateComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'inicio', pathMatch: 'full' },
 
       {
-        path: 'dashboard',
+        path: 'inicio',
         loadComponent: () =>
-          import('./telework/dashboard/dashboard.component')
-            .then(m => m.DashboardComponent),
+          import('./telework/views/inicio/inicio.component').then(
+            (m) => m.InicioComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          title: 'Inicio',
+          icon: 'home',
+        },
       },
+
+      {
+        path: 'registro-jornada',
+        loadComponent: () =>
+          import('./telework/views/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          title: 'Registro de jornada',
+          icon: 'access_time',
+        },
+      },
+
       {
         path: 'manual',
         loadComponent: () =>
-          import('./telework/manual/manual.component')
-            .then(m => m.ManualComponent),
+          import('./telework/views/manual/manual.component').then(
+            (m) => m.ManualComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          title: 'Manual',
+          icon: 'menu_book',
+        },
+      },
+
+      {
+        path: 'about',
+        loadComponent: () =>
+          import('./telework/views/public/about/about-private/about-private.component').then(
+            (m) => m.AboutPrivateComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          title: 'Acerca del sistema',
+          icon: 'info',
+        },
+      },
+
+      /* TELEWORK */
+
+      {
+        path: 'telework',
+        children: [
+          {
+            path: 'subscribe',
+            component: TeleworkSubscribeComponent,
+            data: {
+              roles: ['SUPERVISOR'],
+              title: 'Suscripción Teletrabajo',
+              icon: 'assignment',
+            },
+          },
+        ],
+      },
+
+      /* ADMIN */
+
+      {
+        path: 'admin/roles',
+        loadComponent: () =>
+          import('./telework/views/admin/roles/roles.component').then(
+            (m) => m.RolesComponent,
+          ),
+        data: {
+          roles: ['ADMIN'],
+          title: 'Roles',
+          icon: 'security',
+        },
+      },
+
+      {
+        path: 'admin/usuarios',
+        loadComponent: () =>
+          import('./telework/views/admin/usuarios/users.component').then(
+            (m) => m.UsuariosComponent,
+          ),
+        data: {
+          roles: ['ADMIN'],
+          title: 'Usuarios',
+          icon: 'person',
+        },
+      },
+
+      {
+        path: 'admin/subscribe',
+        loadComponent: () =>
+          import('./telework/views/admin/subscribe/telework-subscribe.component').then(
+            (m) => m.TeleworkSubscribeComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR'],
+          title: 'Suscripciones',
+          icon: 'event',
+        },
+      },
+
+      {
+        path: 'admin/vpn',
+        loadComponent: () =>
+          import('./telework/views/admin/vpn/vpn.component').then(
+            (m) => m.VpnComponent,
+          ),
+        data: {
+          roles: ['ADMIN'],
+          title: 'VPN',
+          icon: 'vpn_key',
+        },
       },
     ],
   },

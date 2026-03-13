@@ -1,0 +1,264 @@
+// src\app\telework\views\dashboard\dashboard.component.scss
+
+/* =====================================
+   CENTRADO DEL COMPONENTE
+===================================== */
+
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background-color: #f7f9fc;
+}
+
+/* =====================================
+   TARJETA PRINCIPAL
+===================================== */
+
+.registro-wrapper {
+  width: 100%;
+  max-width: 700px;
+
+  margin: 0 auto;
+
+  padding: 32px 24px;
+
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  border: 1px solid #e3e8f0;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  text-align: center;
+}
+
+/* =====================================
+   TITULOS
+===================================== */
+
+.titulo-principal {
+  margin-bottom: 4px;
+}
+
+.subtitulo {
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+/* =====================================
+   RELOJ
+===================================== */
+
+.bloque-reloj {
+  margin-bottom: 30px;
+}
+
+.fecha {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.hora {
+  font-size: 64px;
+  font-weight: bold;
+}
+
+/* =====================================
+   BOTONES
+===================================== */
+
+.acciones-jornada {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 40px;
+
+  flex-wrap: wrap;
+
+  margin-bottom: 40px;
+}
+
+.acciones-jornada button {
+  width: 240px;
+
+  height: 64px;
+
+  font-size: 17px;
+
+  font-weight: 600;
+
+  border-radius: 40px;
+
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+
+  transition: all 0.25s ease;
+}
+
+.acciones-jornada button:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* COLORES */
+
+button.btn-ingreso {
+  background-color: #2e7d32;
+  color: #fff;
+}
+
+button.btn-salida {
+  background-color: #c62828;
+  color: #fff;
+}
+
+/* =====================================
+   EVENTOS
+===================================== */
+
+.eventos {
+  width: 100%;
+
+  max-width: 500px;
+
+  margin: auto;
+}
+
+.eventos table {
+  width: 100%;
+
+  margin-top: 15px;
+
+  border-collapse: collapse;
+}
+
+.eventos td {
+  padding: 6px 8px;
+
+  text-align: center;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 600px) {
+  .hora {
+    font-size: 48px;
+  }
+
+  .acciones-jornada button {
+    width: 100%;
+  }
+}
+
+/* =====================================
+   EVENTOS CON ICONO
+===================================== */
+
+.evento-tipo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ICONO */
+
+.evento-icon {
+  font-size: 18px;
+}
+
+/* INGRESO */
+
+.evento-ingreso {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.evento-icon.ingreso {
+  color: #2e7d32;
+}
+
+/* SALIDA */
+
+.evento-salida {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.evento-icon.salida {
+  color: #c62828;
+}
+
+/* =====================================
+   COLOR HORA EVENTOS
+===================================== */
+
+.hora-ingreso {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.hora-salida {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.usuario {
+  margin-top: 15px;
+
+  font-weight: 600;
+
+  color: #1565c0;
+}
+
+.panel-suscripciones {
+  margin-top: 25px;
+
+  border: 1px solid #e0e0e0;
+
+  border-radius: 10px;
+
+  padding: 10px;
+
+  background: #fafafa;
+}
+
+.panel-suscripciones table {
+  width: 100%;
+}
+
+.panel-suscripciones td {
+  padding: 6px;
+
+  text-align: center;
+}
+
+.sin-eventos,
+.sin-subs {
+  margin-top: 10px;
+
+  font-size: 13px;
+
+  color: #777;
+}
+
+/* Botones deshabilitados */
+
+.acciones-jornada button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* opcional: gris para que se note más */
+
+.acciones-jornada button:disabled.btn-ingreso,
+.acciones-jornada button:disabled.btn-salida {
+  background-color: #bdbdbd !important;
+  color: #ffffff !important;
+}

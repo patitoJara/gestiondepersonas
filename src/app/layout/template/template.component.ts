@@ -5,10 +5,19 @@ import {
   inject,
   ChangeDetectorRef,
 } from '@angular/core';
+
 import { Router, RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable, map, shareReplay, interval, Subscription } from 'rxjs';
+import {
+  Observable,
+  map,
+  shareReplay,
+  interval,
+  Subscription,
+  firstValueFrom,
+} from 'rxjs';
+
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
@@ -19,24 +28,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { TokenService } from '../../services/token.service';
-import { AuthLoginService } from '../../services/auth.login.service';
-import { routes } from '../../app.routes';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
-import { firstValueFrom } from 'rxjs';
-import { NavigationStateService } from '@app/core/services/navigation-state.service';
+import { OnDestroy } from '@angular/core';
+
+import { TokenService } from '@app/core/services/token.service';
+import { AuthLoginService } from '../../telework/services/auth.login.service';
 import { SessionService } from '@app/core/services/session.service';
-
-let globalReloadListenerAdded = false;
-
-function registerGlobalReloadListener(callback: (e: any) => void) {
-  if (!globalReloadListenerAdded) {
-    window.addEventListener('reloadSession', callback);
-    globalReloadListenerAdded = true;
-  }
-}
+import { TimeService } from '@app/core/services/time.service';
+import { routes } from '../../app.routes';
 
 @Component({
   selector: 'app-template',
@@ -47,6 +48,7 @@ function registerGlobalReloadListener(callback: (e: any) => void) {
     CommonModule,
     RouterOutlet,
     RouterLink,
+    FormsModule,
     MatSidenavModule,
     MatToolbarModule,
     MatListModule,
@@ -57,43 +59,44 @@ function registerGlobalReloadListener(callback: (e: any) => void) {
     MatFormFieldModule,
     MatSelectModule,
     MatSnackBarModule,
-    FormsModule,
   ],
 })
-export class TemplateComponent implements OnInit {
-  private dialog = inject(MatDialog);
+export class TemplateComponent implements OnInit, OnDestroy {
   @ViewChild('drawer') drawer!: MatSidenav;
-  mantenedoresOpen = true;
-  private navState = inject(NavigationStateService);
-  private restored = false;
-  constructor() {}
 
   private router = inject(Router);
   private breakpointObserver = inject(BreakpointObserver);
   private tokenService = inject(TokenService);
   private auth = inject(AuthLoginService);
   private snackBar = inject(MatSnackBar);
-  private cdr = inject(ChangeDetectorRef);
-  private isLoggingOut = false;
-  private expirationRetryCount = 0;
-  private readonly MAX_EXP_RETRIES = 5;
+  private dialog = inject(MatDialog);
   private sessionService = inject(SessionService);
+  private cdr = inject(ChangeDetectorRef);
+  private timeService = inject(TimeService);
 
-  userRoles: string[] = [];
-  userPrograms: string[] = [];
   userFullName: string = 'Usuario';
+  userUsername: string = '';
+  userEmail: string = '';
+  userRoles: string[] = [];
+  title: string = '';
+  icon: string = '';
+
   activeRole: string | null = null;
-  activeProgram: string | null = null;
+
+  decodedToken: any = null;
 
   menuItems: any[] = [];
-  mantenedorItems: any[] = []; // 👈 ESTA ES LA QUE FALTA
+  mantenedorItems: any[] = [];
+  mantenedoresOpen = true;
+
   menuVisible = false;
+
   isLoading = false;
 
-  remainingMinutes: number = 60;
-  private timerSub?: Subscription;
+  remainingMinutes: number = 0;
   showExtendButton = false;
   isRefreshing = false;
+  private timerSub?: Subscription;
 
   isHandset$: Observable<boolean> = this.breakpointObserver
     .observe([Breakpoints.Handset])
@@ -102,403 +105,215 @@ export class TemplateComponent implements OnInit {
       shareReplay(),
     );
 
-  isSessionReady: boolean = false;
-
   ngOnInit(): void {
-    // Listener global que jamás se duplicará
-    registerGlobalReloadListener((e: any) => {
-      console.log(
-        '[TemplateComponent] 🔄 reloadSession recibido desde:',
-        e.detail,
-      );
-      this.loadSessionData();
-    });
-
+    this.timeService.loadServerTime();
     this.loadSessionData();
   }
 
-  loadSessionData(): void {
+  ngOnDestroy(): void {
+    this.timerSub?.unsubscribe();
+  }
+
+  private loadSessionData(): void {
     const profile = this.tokenService.getUserProfile();
 
-    if (!profile) {
-      console.warn(
-        '[TemplateComponent] ⚠️ Perfil aún no cargado. Esperando login...',
-      );
-      return;
+    this.userFullName = profile?.fullName || profile?.firstName || 'Usuario';
+    this.userUsername = profile?.username || '';
+    this.userEmail = profile?.email || '';
+
+    // 🔹 Roles del usuario
+    const roles = this.tokenService.getUserRoles();
+
+    if (!roles) {
+      this.userRoles = [];
+    } else if (Array.isArray(roles)) {
+      this.userRoles = roles;
+    } else {
+      this.userRoles = [roles];
     }
 
-    // =============================================
-    // 🟦 PERFIL
-    // =============================================
-    this.userFullName = profile.fullName || profile.firstName || 'Usuario';
+    // 🔹 Decodificar token
+    const token = this.tokenService.getAccessToken();
 
-    // =============================================
-    // 🟦 ROLES → prioridad: tokenService → profile → []
-    // =============================================
-    const rolesFromToken = this.tokenService.getUserRoles();
-
-    this.userRoles =
-      rolesFromToken.length > 0 ? rolesFromToken : (profile.roles ?? []);
-
-    // =============================================
-    // 🟦 PROGRAMAS → prioridad: profile → tokenService
-    // =============================================
-    const rawPrograms =
-      profile.programs && profile.programs.length > 0
-        ? profile.programs // objetos con id
-        : this.tokenService.getUserPrograms(); // strings del token
-
-    // Normalizamos a nombres (string)
-    this.userPrograms = rawPrograms.map((p: any) => p.name ?? p);
-
-    // =============================================
-    // 🟦 ACTIVO (rol + programa)
-    // =============================================
-    this.activeRole =
-      this.tokenService.getActiveRole() || this.userRoles[0] || null;
-
-    this.activeProgram =
-      this.tokenService.getActiveProgram() || this.userPrograms[0] || null;
-
-    // =============================================
-    // 🆕 SINCRONIZAR ID DEL PROGRAMA ACTIVO
-    // =============================================
-
-    console.log('🔎 DEBUG — profile.programs 167:', this.tokenService.getActiveProgramId());
-    console.log('🔎 DEBUG — activeProgram actual:', this.activeProgram);
-
-    if (profile?.programs?.length && this.activeProgram) {
-      const selectedProgram = profile.programs.find(
-        (p: any) => p.name === this.activeProgram,
-      );
-
-      if (selectedProgram?.id) {
-        this.tokenService.setActiveProgramId(selectedProgram.id);
-
-        console.log(
-          '💾 ID sincronizado automáticamente:',
-          this.tokenService.getActiveProgramId(),
-        );
-      } else {
-        console.warn('⚠️ No se encontró ID, aplicando fallback');
-
-        const firstProgram = profile.programs[0];
-
-        if (firstProgram?.id) {
-          this.tokenService.setActiveProgramId(firstProgram.id);
-          this.tokenService.setActiveProgram(firstProgram.name);
-          this.activeProgram = firstProgram.name;
-
-          console.log(
-            '💾 ID guardado por fallback:',
-            this.tokenService.getActiveProgramId(),
-          );
-        } else {
-          console.error('❌ No existen programas válidos en profile');
-        }
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.decodedToken = payload;
+        console.log('🔎 Token decodificado:', payload);
+      } catch (e) {
+        console.error('Error decodificando token', e);
       }
     }
 
-    // =============================================
-    // 🟦 CONTINUAR FLUJO NORMAL
-    // =============================================
-    this.isSessionReady = true;
-    this.restoreLastRoute();
+    // 🔹 Recuperar rol activo guardado
+    const savedRole = sessionStorage.getItem('activeRole');
 
+    if (savedRole && this.userRoles.includes(savedRole)) {
+      this.activeRole = savedRole;
+    } else if (this.userRoles.length === 1) {
+      // ✔ si solo tiene un rol se asigna automático
+      this.activeRole = this.userRoles[0];
+    } else {
+      // ✔ más de un rol → esperar selección
+      this.activeRole = null;
+      this.menuVisible = false;
+    }
+
+    // 🔹 guardar rol activo si existe
+    if (this.activeRole) {
+      sessionStorage.setItem('activeRole', this.activeRole);
+      this.tokenService.setActiveRole(this.activeRole);
+
+      this.buildMenu();
+      this.menuVisible = true;
+    }
+
+    // 🔹 iniciar control de sesión
     this.sessionService.startSessionFromToken();
     this.startRealExpirationTimer();
 
-    this.cdr.detectChanges();
-  }
+    console.log('URL actual:', this.router.url);
 
-  startTimer(minutes: number): void {
-    this.remainingMinutes = minutes;
-    this.showExtendButton = false;
-
-    if (this.timerSub) this.timerSub.unsubscribe();
-
-    this.timerSub = interval(60000).subscribe(() => {
-      if (this.remainingMinutes > 0) {
-        this.remainingMinutes--;
-        this.showExtendButton = this.remainingMinutes <= 3;
-      }
-
-      if (this.remainingMinutes === 0) {
-        this.handleSessionTimeout();
-      }
-
-      this.cdr.detectChanges();
-    });
-  }
-
-  async extendSession(): Promise<void> {
-    if (this.isRefreshing) return;
-    this.isRefreshing = true;
-
-    try {
-      this.snackBar.open('🔄 Renovando sesión...', '', { duration: 2000 });
-
-      await firstValueFrom(this.auth.refresh());
-
-      // 🔥 1️⃣ Reiniciar timer central REAL
-      this.sessionService.startSessionFromToken();
-
-      // 🔥 2️⃣ Reiniciar contador visual
-      this.startRealExpirationTimer();
-
-      this.showExtendButton = false;
-
-      this.snackBar.open('✅ Sesión extendida correctamente', '', {
-        duration: 2000,
-      });
-    } catch {
-      // logout lo maneja AuthLoginService
-    } finally {
-      this.isRefreshing = false;
-      this.cdr.detectChanges();
+    if (this.router.url === '/') {
+      this.router.navigate(['inicio']);
     }
-  }
-
-  private handleSessionTimeout(): void {
-    this.snackBar.open('⏰ Sesión expirada. Cerrando...', '', {
-      duration: 3000,
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      panelClass: ['mat-mdc-snack-bar-error'],
-    });
-    this.logout();
   }
 
   onContinue(): void {
-    console.log('================= 🚀 ON CONTINUE =================');
+    if (this.userRoles.length === 1) {
+      this.activeRole = this.userRoles[0];
+    }
 
-    if (this.isLoading) {
-      console.log('⛔ Ya está cargando, se ignora click.');
+    if (!this.activeRole) {
+      alert('Debe seleccionar rol.');
       return;
     }
 
-    this.isLoading = true;
+    sessionStorage.setItem('activeRole', this.activeRole);
+    this.tokenService.setActiveRole(this.activeRole);
 
-    console.log('👤 Usuario:', this.userFullName);
-    console.log('🎭 Rol seleccionado:', this.activeRole);
-    console.log('🏥 Programa seleccionado:', this.activeProgram);
-
-    const profile = this.tokenService.getUserProfile();
-    const isSystemAdmin = profile?.email === 'admin@demo.com';
-
-    // ===================================================
-    // 💾 GUARDAR ROL Y PROGRAMA (NOMBRE PRIMERO)
-    // ===================================================
-    this.tokenService.setActiveRole(this.activeRole || '');
-    this.tokenService.setActiveProgram(this.activeProgram || '');
-
-    console.log('💾 Rol guardado:', this.tokenService.getActiveRole());
-    console.log('💾 Programa guardado:', this.tokenService.getActiveProgram());
-
-    // ===================================================
-    // 🔎 VALIDACIÓN + ASIGNACIÓN ID
-    // ===================================================
-    if (!isSystemAdmin) {
-      if (!this.activeRole || !this.activeProgram) {
-        console.warn('⚠️ Falta rol o programa.');
-        alert('⚠️ Debes seleccionar un rol y un programa para continuar.');
-        this.isLoading = false;
-        return;
-      }
-
-      const programs = this.tokenService.getUserPrograms();
-
-      const selectedProgram = programs.find(
-        (p) => p.name === this.activeProgram,
-      );
-
-      if (selectedProgram?.id) {
-        this.tokenService.setActiveProgramId(selectedProgram.id);
-        console.log('🆔 ID guardado correctamente:', selectedProgram.id);
-      } else {
-        console.warn('⚠️ No se encontró ID para el programa.');
-        this.tokenService.setActiveProgramId(null);
-      }
-    } else {
-      // 🔵 ADMIN ESTRUCTURAL
-      this.tokenService.setActiveProgramId(null);
-      console.log('👑 Admin estructural sin programa.');
-    }
-
-    // ===================================================
-    // 🔍 VALIDACIÓN FINAL
-    // ===================================================
-    console.log(
-      '📦 activeProgramId final:',
-      this.tokenService.getActiveProgramId(),
-    );
-
-    console.log('================= ✅ CONTEXTO LISTO =================');
-
-    // ===================================================
-    // 🚀 CONTINUAR AL SISTEMA
-    // ===================================================
     this.buildMenu();
+    this.menuVisible = true;
+  }
 
-    setTimeout(() => {
-      this.menuVisible = true;
-      this.isLoading = false;
-      this.cdr.detectChanges();
-      console.log('🎉 Menú visible, sesión inicializada correctamente.');
-    }, 250);
+  toggleDrawer(): void {
+    this.drawer.toggle();
   }
 
   buildMenu(): void {
     const role = (this.activeRole || '').toUpperCase();
 
-    // 🔹 Menú principal base
-    const baseMenu: any[] = [
-      { title: 'Inicio', icon: 'home', route: '/inicio' },
-    ];
+    const baseMenu: any[] = [];
+    const adminMenu: any[] = [];
 
-    // 🔹 Mantenedores
-    const mantenedores: any[] = [];
-
-    // 🔹 Obtener rutas hijas del layout principal
     const mainRoute = routes.find((r) => r.children);
     const childRoutes = mainRoute?.children ?? [];
 
-    for (const route of childRoutes) {
-      // ❌ Excluir rutas inválidas, base y ocultas
-      if (
-        !route.path ||
-        ['', '**', 'inicio'].includes(route.path) ||
-        this.HIDDEN_MENU_PATHS.includes(route.path)
-      ) {
-        continue;
-      }
+    const processRoute = (route: any, parentPath = '') => {
+      if (!route.path || route.redirectTo) return;
 
-      // 🔐 Validar roles
+      const fullPath = parentPath ? `${parentPath}/${route.path}` : route.path;
+
       const allowedRoles = route.data?.['roles'] ?? [];
       const visible = allowedRoles.length === 0 || allowedRoles.includes(role);
 
-      if (!visible) continue;
+      if (visible && !route.children) {
+        const item = {
+          title: route.data?.title || route.path,
+          icon: route.data?.icon || 'chevron_right',
+          route: '/' + fullPath,
+        };
 
-      // 📌 Item de menú
-      const item = {
-        title: this.getTitleFromPath(route.path),
-        icon: this.getIcon(route.path),
-        route: '/' + route.path,
-        path: route.path,
-      };
-
-      // 🛠️ Clasificar como mantenedor o menú principal
-      if (this.MANTENEDOR_PATHS.includes(route.path)) {
-        mantenedores.push(item);
-      } else {
-        baseMenu.push(item);
+        if (fullPath.startsWith('admin/')) {
+          adminMenu.push(item);
+        } else {
+          baseMenu.push(item);
+        }
       }
+
+      // 🔥 recorrer hijos
+      if (route.children) {
+        for (const child of route.children) {
+          processRoute(child, fullPath);
+        }
+      }
+    };
+
+    for (const route of childRoutes) {
+      processRoute(route);
     }
 
-    // 🔚 Asignar a la vista
     this.menuItems = baseMenu;
-    this.mantenedorItems = mantenedores;
+    this.mantenedorItems = adminMenu;
   }
 
-  private readonly HIDDEN_MENU_PATHS: string[] = ['profile'];
+  async extendSession(): Promise<void> {
+    if (this.isRefreshing) return;
 
-  private readonly MANTENEDOR_PATHS = [
-    'user',
-    'roles',
-    'commune',
-    'program',
-    'professions',
-    'substances',
-    'states',
-    'results',
-    'diverter',
-    'conv-prev',
-    'senders',
-    'typecontact',
-    'not-relevants',
-    'sexs',
-  ];
+    this.isRefreshing = true;
 
-  isMantenedor(route: string): boolean {
-    const mantenedores = [
-      '/user',
-      '/roles',
-      '/commune',
-      '/program',
-      '/professions',
-      '/substances',
-      '/states',
-      '/results',
-      '/diverter',
-      '/conv-prev',
-      '/senders',
-      '/typecontact',
-      '/not-relevants',
-      '/sexs',
-    ];
-    return mantenedores.includes(route);
+    try {
+      await firstValueFrom(this.auth.refresh());
+
+      console.log('🔄 Sesión renovada');
+
+      this.sessionService.startSessionFromToken();
+
+      // 🔥 reinicia timer correctamente
+      this.timerSub?.unsubscribe();
+      this.startRealExpirationTimer();
+
+      this.snackBar.open('Sesión extendida', '', {
+        duration: 2000,
+      });
+    } catch (error) {
+      console.warn('⚠️ Refresh falló, cerrando sesión');
+
+      this.timerSub?.unsubscribe();
+      this.tokenService.clear();
+
+      this.router.navigate(['/auth/login']);
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
-  hasMantenedores(): boolean {
-    return this.menuItems.some((item) => this.isMantenedor(item.route));
-  }
-  private getIcon(path: string): string {
-    const icons: any = {
-      user: 'group',
-      roles: 'admin_panel_settings',
-      program: 'apps',
-      commune: 'location_city',
-      demand: 'assignment_add',
-      transfer: 'swap_horiz',
-      substances: 'science',
-      states: 'fact_check',
-      professions: 'medication_liquid',
-      results: 'flag',
-      diverter: 'psychology',
-      IntPrevComponent: 'medical_information',
-      senders: 'diversity_3',
-      typecontact: 'support_agent',
-      'conv-prev': 'medical_services',
-      'not-relevants': 'block',
-      'demand-list': 'list_alt',
-      sexs: 'wc',
-      about: 'info',
-      manual: 'menu_book',
-      analytics: 'insights',
+  startRealExpirationTimer(): void {
+    if (this.timerSub) {
+      this.timerSub.unsubscribe();
+    }
+
+    const calculate = () => {
+      const exp = this.tokenService.getTokenExpiration();
+
+      if (!exp) return;
+
+      const remainingMs = exp - Date.now();
+
+      this.remainingMinutes = Math.max(0, Math.floor(remainingMs / 60000));
+
+      this.showExtendButton = this.remainingMinutes <= 5;
+
+      console.log('⏱ Minutos restantes:', this.remainingMinutes);
+
+      // 🔴 SI YA VENCIO
+      if (remainingMs <= 0) {
+        console.warn('⚠️ Token vencido');
+
+        this.timerSub?.unsubscribe();
+        this.tokenService.clear();
+
+        this.router.navigate(['/auth/login']);
+        return;
+      }
+      this.cdr.detectChanges();
     };
-    return icons[path] || 'chevron_right';
-  }
 
-  private getTitleFromPath(path: string): string {
-    const titles: Record<string, string> = {
-      inicio: 'Inicio',
-      manual: 'Manual',
-      demand: 'Demandas',
-      transfer: 'Transferir Demandante a otro Programa',
-      'demand-list': 'Listado de Demandas',
-      user: 'Usuarios',
-      roles: 'Roles',
-      commune: 'Comunas',
-      program: 'Programas',
-      professions: 'Profesionales',
-      substances: 'Sustancias',
-      states: 'Estado',
-      results: 'Resultado',
-      diverter: 'Quien Deriva',
-      IntPrevComponent: 'Sistema de Salud',
-      senders: 'Quien Solicita',
-      typecontact: 'Tipo de contacto',
-      'conv-prev': 'Covertura de Salud',
-      'not-relevants': 'No relevantes',
-      sexs: 'Género',
-      about: 'Acerca del sistema',
-      analytics: 'Panel Estratégico',
-    };
-    return titles[path] || path.charAt(0).toUpperCase() + path.slice(1);
-  }
+    calculate();
 
-  toggleDrawer(): void {
-    this.drawer.toggle();
+    this.timerSub = interval(60000).subscribe(() => {
+      calculate();
+    });
   }
 
   logout(): void {
@@ -508,7 +323,7 @@ export class TemplateComponent implements OnInit {
         disableClose: true,
         data: {
           title: 'Salir del Sistema',
-          message: 'Esta seguro que desea salir del Sistema ???...',
+          message: '¿Está seguro que desea salir?',
           confirmText: 'Salir',
           cancelText: 'Volver',
           icon: 'logout',
@@ -518,119 +333,14 @@ export class TemplateComponent implements OnInit {
       .afterClosed()
       .subscribe((ok) => {
         if (ok) {
-          if (this.isLoggingOut) return;
-          this.isLoggingOut = true;
-
-          if (this.timerSub) {
-            this.timerSub.unsubscribe();
-            this.timerSub = undefined;
-          }
-
+          this.timerSub?.unsubscribe();
           this.tokenService.clear();
           this.router.navigate(['/auth/login']);
-        } else {
-          // 🔥 CLAVE ABSOLUTA
-          console.log(
-            '[TemplateComponent] 🔁 Logout cancelado, reanudando sesión',
-          );
-          this.startRealExpirationTimer();
         }
       });
   }
 
-  startRealExpirationTimer(): void {
-    const exp = this.tokenService.getTokenExpiration();
-
-    if (!exp) {
-      console.warn('[TemplateComponent] ⏰ No hay expiración registrada');
-      return;
-    }
-
-    let remainingMs = exp - Date.now();
-
-    this.remainingMinutes = Math.max(0, Math.floor(remainingMs / 60000));
-    this.showExtendButton = this.remainingMinutes <= 5;
-
-    console.log(
-      `[TemplateComponent] ⏲ Sesión expira en ${this.remainingMinutes} minutos`,
-    );
-
-    if (this.timerSub) {
-      this.timerSub.unsubscribe();
-      this.timerSub = undefined;
-    }
-
-    this.timerSub = interval(60000).subscribe(() => {
-      remainingMs = exp - Date.now();
-      this.remainingMinutes = Math.max(0, Math.floor(remainingMs / 60000));
-
-      this.showExtendButton = this.remainingMinutes <= 5;
-
-      if (this.remainingMinutes <= 0) {
-        this.timerSub?.unsubscribe();
-        this.timerSub = undefined;
-        this.handleSessionTimeout();
-        return;
-      }
-
-      this.cdr.detectChanges();
-    });
-  }
-
-  toggleMantenedores(): void {
-    this.mantenedoresOpen = !this.mantenedoresOpen;
-  }
-
   goToProfile(): void {
     this.router.navigate(['/profile']);
-  }
-
-  private restoreLastRoute(): void {
-    if (this.restored) return;
-
-    const last = this.navState.getLastRoute();
-
-    // ⛔ Protecciones
-    if (!last || last === '/inicio' || last.startsWith('/auth')) {
-      return;
-    }
-
-    this.restored = true;
-
-    // ✅ MOSTRAR LAYOUT
-    this.menuVisible = true;
-
-    // ✅ RECONSTRUIR MENÚ (CLAVE)
-    this.buildMenu();
-
-    // ✅ NAVEGAR
-    this.router.navigateByUrl(last);
-  }
-
-  onProgramChange(programName: string): void {
-    console.log('🔄 Programa cambiado a:', programName);
-
-    this.activeProgram = programName;
-
-    // Guardar nombre
-    this.tokenService.setActiveProgram(programName);
-
-    // Obtener todos los programas (profile o token)
-    const profile = this.tokenService.getUserProfile();
-    const programsFromToken = this.tokenService.getUserPrograms();
-
-    const allPrograms =
-      profile?.programs?.length > 0 ? profile.programs : programsFromToken;
-
-    const selectedProgram = allPrograms.find(
-      (p: any) => p.name === programName,
-    );
-
-    if (selectedProgram?.id) {
-      this.tokenService.setActiveProgramId(selectedProgram.id);
-      console.log('🆔 Nuevo ID guardado:', selectedProgram.id);
-    } else {
-      console.warn('⚠️ No se pudo encontrar ID para el programa');
-    }
   }
 }

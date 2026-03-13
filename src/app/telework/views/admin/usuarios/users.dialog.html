@@ -1,0 +1,164 @@
+<!-- HEADER -->
+<div class="dialog-header">
+  {{ form.value.id ? 'EDITAR USUARIO' : 'NUEVO USUARIO' }}
+</div>
+
+<!-- CONTENT -->
+<div mat-dialog-content class="ficha-usuarios-modal">
+
+  <form [formGroup]="form" class="form-usuarios-modal">
+
+    <!-- FILA 1 -->
+    <div class="fila-1">
+      <div class="field-clinico-linea">
+        <label>RUT *</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="rut"
+            (input)="formatRut($event)"
+            (blur)="validarRutBlur()"
+            maxlength="12"
+          />
+
+          <mat-error *ngIf="form.get('rut')?.hasError('required')">
+            RUT es obligatorio
+          </mat-error>
+
+          <mat-error *ngIf="form.get('rut')?.hasError('rutInvalido')">
+            RUT no válido
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- FILA 2 -->
+    <div class="fila-2">
+      <div class="field-clinico-linea">
+        <label>Nombre *</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="firstName"
+            (blur)="generarUsername()"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="field-clinico-linea">
+        <label>Segundo Nombre</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="secondName"
+            (blur)="generarUsername()"
+          />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- FILA 3 -->
+    <div class="fila-2">
+      <div class="field-clinico-linea">
+        <label>Apellido Paterno *</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="firstLastName"
+            (blur)="generarUsername()"
+          />
+        </mat-form-field>
+      </div>
+
+      <div class="field-clinico-linea">
+        <label>Apellido Materno</label>
+
+        <mat-form-field appearance="fill">
+          <input matInput formControlName="secondLastName" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- FILA 4 -->
+    <div class="fila-2">
+      <div class="field-clinico-linea">
+        <label>Username *</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="username"
+            placeholder="Se genera automáticamente"
+          />
+
+          <mat-hint>
+            Se genera automáticamente desde el nombre
+          </mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="field-clinico-linea">
+        <label>Email *</label>
+
+        <mat-form-field appearance="fill">
+          <input
+            matInput
+            formControlName="email"
+            (blur)="completarCorreo()"
+            placeholder="usuario o usuario&#64;dominio.cl"
+          />
+
+          <mat-error *ngIf="form.get('email')?.hasError('email')">
+            Correo electrónico inválido
+          </mat-error>
+
+          <mat-hint>
+            Si no se ingresa dominio se asumirá &#64;redsalud.gob.cl
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- FILA 5 -->
+    <div class="fila-2">
+      <div class="field-clinico-linea">
+        <label>Password</label>
+
+        <mat-form-field appearance="fill">
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- ROLES -->
+    <div class="field-clinico-linea">
+      <label>Roles *</label>
+
+      <mat-selection-list formControlName="roles">
+        <mat-list-option *ngFor="let role of roles" [value]="role.id">
+          {{ role.name }}
+        </mat-list-option>
+      </mat-selection-list>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- ACTIONS -->
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="save()"
+    [disabled]="form.invalid"
+  >
+    Guardar
+  </button>
+</div>

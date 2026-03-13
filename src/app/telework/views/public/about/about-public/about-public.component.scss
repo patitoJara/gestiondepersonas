@@ -1,0 +1,117 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f4ff 0%, #ffffff 100%);
+}
+
+.about-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.about-card {
+  max-width: 640px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.logo-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-header img {
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+}
+
+.logo-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #0d47a1;
+}
+
+.logo-header .dept {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.form-title {
+  margin-top: 24px;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin-top: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.description {
+  font-size: 0.95rem;
+  color: #555;
+  margin-top: 12px;
+}
+
+.version-box {
+  margin-top: 18px;
+  padding: 12px;
+  background-color: #f1f8ff;
+  border-left: 4px solid #1565c0;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.credits {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 20px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  font-weight: 500;
+  color: #1565c0;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.footer-seal {
+  margin-top: 30px;
+  opacity: 0.85;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;   // 🔥 centra horizontalmente todo
+  justify-content: center;
+  text-align: center;
+}
+
+.footer-seal img {
+  width: 120px;
+  margin-bottom: 6px;
+  display: block;        // 🔥 evita comportamiento inline raro
+}
+
+.footer-seal span {
+  font-size: 0.8rem;
+  color: #666;
+}

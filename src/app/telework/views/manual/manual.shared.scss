@@ -1,0 +1,308 @@
+/* =====================================================
+   🎨 MANUAL DEL SISTEMA — ESTILO INSTITUCIONAL FINAL
+   Archivo compartido (NO layout, NO scroll, NO posición)
+===================================================== */
+
+/* =====================================================
+   🎨 PALETA INSTITUCIONAL
+===================================================== */
+$color-primary: #1976d2;
+$color-info: #0288d1;
+$color-success: #2e7d32;
+$color-warning: #ed6c02;
+$color-rule: #6a1b9a;
+
+$text-primary: #263238;
+$text-body: #455a64;
+$text-muted: #607d8b;
+
+$bg-soft: #f5f7fa;
+$bg-card: #fafafa;
+
+/* =====================================================
+   🧭 CABECERA DEL MANUAL
+===================================================== */
+.manual-header {
+  border-radius: 16px;
+  padding: 22px 28px;
+  background: $bg-card;
+  scroll-margin-top: 96px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  font-size: 38px;
+  color: $color-primary;
+  opacity: 0.9;
+}
+
+.manual-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.manual-header p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: $text-muted;
+}
+
+/* =====================================================
+   🧱 SECCIONES
+===================================================== */
+
+.manual-section {
+  position: relative;
+  border-radius: 16px;
+  padding: 32px 40px;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  scroll-margin-top: 96px;
+}
+
+/* Línea decorativa sutil */
+.manual-section::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  background: rgba($color-primary, 0.04);
+}
+
+/* =====================================================
+   📌 HEADER DE SECCIÓN
+===================================================== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.section-header mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =====================================================
+   📝 TEXTO
+===================================================== */
+
+.manual-section p {
+  margin: 0 0 12px;
+  color: $text-body;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.subsection-title {
+  margin-top: 26px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+/* Sangría ligera estructural */
+.manual-section > p,
+.manual-section > ul,
+.manual-section > .manual-box,
+.manual-section > h3 {
+  margin-left: 10px;
+}
+
+/* =====================================================
+   📋 LISTAS
+===================================================== */
+
+.manual-list {
+  padding-left: 30px;
+  margin: 10px 0 16px;
+}
+
+.manual-list li {
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: $text-body;
+}
+
+/* =====================================================
+   🧊 CAJAS DE ÉNFASIS
+===================================================== */
+
+.manual-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-top: 14px;
+  margin-left: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+
+  mat-icon {
+    font-size: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+}
+
+/* 🔵 Información */
+.box-info {
+  background: rgba($color-info, 0.06);
+  border-left: 4px solid $color-info;
+
+  mat-icon {
+    color: $color-info;
+  }
+}
+
+.btn-indice {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+
+/* 🟡 Advertencia */
+.box-warning {
+  background: rgba($color-warning, 0.1);
+  border-left: 4px solid $color-warning;
+
+  mat-icon {
+    color: $color-warning;
+  }
+}
+
+/* 🟣 Regla */
+.box-rule {
+  background: rgba($color-rule, 0.08);
+  border-left: 4px solid $color-rule;
+
+  mat-icon {
+    color: $color-rule;
+  }
+}
+
+/* 🟢 Confirmación */
+.box-success {
+  background: rgba($color-success, 0.08);
+  border-left: 4px solid $color-success;
+
+  mat-icon {
+    color: $color-success;
+  }
+}
+
+/* =====================================================
+   📌 ÍNDICE DEL MANUAL
+===================================================== */
+
+.manual-index {
+  position: relative;
+  padding: 28px 40px;
+}
+
+.manual-index ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.manual-index li {
+  margin-bottom: 6px;
+}
+
+.manual-index a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: $color-primary;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.manual-index a:hover {
+  background: rgba($color-primary, 0.08);
+  transform: translateX(4px);
+}
+
+.index-hint {
+  font-size: 13px;
+  color: $text-muted;
+  margin-bottom: 10px;
+}
+
+.manual-index::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  background: rgba($color-primary, 0.06);
+}
+
+
+/* =====================================================
+   🧩 UTILIDADES
+===================================================== */
+
+.icon-primary {
+  color: $color-primary;
+}
+
+
+.box-flow {
+  position: relative;
+  padding-left: 24px;
+}
+
+.box-flow::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 20px;
+  bottom: 20px;
+  width: 2px;
+  background: rgba($color-primary, 0.15);
+}
+
+.vpn-download{
+  display:inline-block;
+  margin-top:10px;
+  padding:10px 16px;
+  background:#1565c0;
+  color:white;
+  border-radius:6px;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.vpn-download:hover{
+  background:#0d47a1;
+}

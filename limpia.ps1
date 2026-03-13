@@ -1,1 +1,0 @@
-if (Test-Path .angular) { Remove-Item -Recurse -Force .angular }

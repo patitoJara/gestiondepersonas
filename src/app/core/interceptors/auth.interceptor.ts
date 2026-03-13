@@ -1,9 +1,6 @@
 // src/app/core/interceptors/auth.interceptor.ts
 
-import {
-  HttpInterceptorFn,
-  HttpErrorResponse,
-} from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import {
   catchError,
@@ -13,13 +10,15 @@ import {
   filter,
   take,
 } from 'rxjs';
-import { TokenService } from '../../services/token.service';
-import { AuthLoginService } from '../../services/auth.login.service';
+
+import { TokenService } from '../../core/services/token.service';
+import { AuthLoginService } from '../../telework/services/auth.login.service';
 
 let isRefreshing = false;
 let refreshSubject = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+
   const tokenService = inject(TokenService);
   const authService = inject(AuthLoginService);
 
@@ -36,58 +35,79 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const authReq = token
     ? req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` },
+        setHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
       })
     : req;
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+
       if (error.status !== 401) {
         return throwError(() => error);
       }
 
-      // 🚫 Si ya estamos refrescando, esperar
+      // 🔁 Si ya hay refresh en curso
       if (isRefreshing) {
         return refreshSubject.pipe(
-          filter((token) => token !== null),
+          filter((token): token is string => token !== null),
           take(1),
           switchMap((newToken) => {
+
             const retryReq = req.clone({
-              setHeaders: { Authorization: `Bearer ${newToken}` },
+              setHeaders: {
+                Authorization: `Bearer ${newToken}`,
+              },
             });
+
             return next(retryReq);
           }),
         );
       }
 
-      // 🔒 Iniciar refresh único
+      // 🔐 iniciar refresh
       isRefreshing = true;
       refreshSubject.next(null);
 
       return authService.refresh().pipe(
+
         switchMap((response: any) => {
+
           const newToken = response?.token;
+          const newRefreshToken = response?.refreshToken;
 
           if (!newToken) {
             tokenService.clear();
             return throwError(() => error);
           }
 
+          // guardar nuevos tokens
           tokenService.setAccessToken(newToken);
+
+          if (newRefreshToken) {
+            tokenService.setRefreshToken(newRefreshToken);
+          }
 
           isRefreshing = false;
           refreshSubject.next(newToken);
 
           const retryReq = req.clone({
-            setHeaders: { Authorization: `Bearer ${newToken}` },
+            setHeaders: {
+              Authorization: `Bearer ${newToken}`,
+            },
           });
 
           return next(retryReq);
         }),
+
         catchError((refreshError) => {
+
           isRefreshing = false;
           tokenService.clear();
+
           return throwError(() => refreshError);
+
         }),
       );
     }),

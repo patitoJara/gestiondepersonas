@@ -1,0 +1,406 @@
+<form [formGroup]="form">
+  <div class="transfer-container">
+    <!-- HEADER -->
+    <div class="transfer-header">
+      <mat-icon>event</mat-icon>
+      <span>Suscripción Teletrabajo</span>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="stepper" [style.--progress]="progress / 100">
+      <div
+        *ngFor="let step of steps"
+        class="step"
+        [class.active]="step.id === currentStep"
+        [class.completed]="step.completed"
+      >
+        <div class="circle">
+          <!-- número del paso -->
+          <span
+            *ngIf="!step.completed && !(step.id === 6 && currentStep === 6)"
+          >
+            {{ step.id }}
+          </span>
+
+          <!-- check -->
+          <mat-icon
+            *ngIf="step.completed || (step.id === 6 && currentStep === 6)"
+          >
+            check
+          </mat-icon>
+        </div>
+
+        <div class="label">
+          {{ step.title }}
+        </div>
+
+        <div
+          class="value"
+          *ngIf="step.completed || (step.id === 6 && currentStep === 6)"
+        >
+          <span *ngIf="step.id === 1">
+            {{ getUserName() }}
+          </span>
+
+          <span *ngIf="step.id === 2">
+            {{ form.value.begin | date: "dd/MM/yyyy" }}
+          </span>
+
+          <span *ngIf="step.id === 3">
+            {{ form.value.end | date: "dd/MM/yyyy" }}
+          </span>
+
+          <span *ngIf="step.id === 4">
+            Inicio: {{ form.value.begin | date: "dd/MM/yyyy" }}<br />
+            Término: {{ form.value.end | date: "dd/MM/yyyy" }}
+          </span>
+
+          <span *ngIf="step.id === 5">
+            <span *ngIf="fileName; else noDoc">
+              Documento: {{ fileName }}
+            </span>
+
+            <ng-template #noDoc> Documento: No adjunto </ng-template>
+          </span>
+
+          <span *ngIf="step.id === 6">
+            Usuario: {{ getUserName() }}<br />
+            Periodo: {{ form.value.begin | date: "dd/MM/yyyy" }} →
+            {{ form.value.end | date: "dd/MM/yyyy" }}
+          </span>
+
+          <span *ngIf="step.id === 7 && currentStep === 7">
+            Suscripción registrada
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 1 FUNCIONARIO -->
+
+    <!-- PASO 1 FUNCIONARIO -->
+
+    <div *ngIf="currentStep === 1">
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>person</mat-icon>
+          Seleccionar Funcionario
+        </div>
+
+        <!-- BUSCADOR -->
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Buscar funcionario</mat-label>
+
+          <input
+            matInput
+            type="text"
+            placeholder="Nombre o RUT"
+            [formControl]="userSearch"
+            [matAutocomplete]="auto"
+          />
+
+          <!-- BOTON LIMPIAR -->
+          <button
+            mat-icon-button
+            matSuffix
+            *ngIf="userSearch.value"
+            (click)="limpiarBusqueda()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- AUTOCOMPLETE -->
+
+        <mat-autocomplete
+          #auto="matAutocomplete"
+          [displayWith]="displayUser"
+          (optionSelected)="selectUser($event.option.value)"
+        >
+          <mat-option *ngFor="let u of filteredUsers" [value]="u">
+            <div class="user-option">
+              <div class="user-name">
+                {{ u.fullName }}
+              </div>
+
+              <div class="user-rut">RUT: {{ u.rut }}</div>
+            </div>
+          </mat-option>
+        </mat-autocomplete>
+
+        <!-- ACCIONES -->
+
+        <div class="acciones-center">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="form.get('userId')?.invalid"
+            (click)="nextStep()"
+          >
+            Continuar
+          </button>
+
+          <button mat-stroked-button color="warn" (click)="limpiarBusqueda()">
+            Limpiar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 2 FECHA INICIO -->
+
+    <div *ngIf="currentStep === 2">
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>calendar_today</mat-icon>
+          Fecha de Inicio
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Seleccione fecha de inicio</mat-label>
+
+          <input
+            matInput
+            [matDatepicker]="pickerBegin"
+            formControlName="begin"
+            readonly
+            (click)="pickerBegin.open()"
+            (dateChange)="checkOverlapDates()"
+          />
+
+          <mat-datepicker-toggle matSuffix [for]="pickerBegin">
+          </mat-datepicker-toggle>
+
+          <mat-datepicker #pickerBegin></mat-datepicker>
+        </mat-form-field>
+
+        <div class="acciones-center">
+          <button mat-stroked-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Volver
+          </button>
+
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!form.value.begin || hasDateConflict"
+            (click)="nextStep()"
+          >
+            Continuar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 3 FECHA TERMINO -->
+
+    <div *ngIf="currentStep === 3">
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>event</mat-icon>
+          Fecha de Término
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Seleccione fecha de término</mat-label>
+          <input
+            matInput
+            [matDatepicker]="pickerEnd"
+            formControlName="end"
+            readonly
+            (click)="pickerEnd.open()"
+            (dateChange)="checkOverlapDates()"
+          />
+          <mat-datepicker-toggle matSuffix [for]="pickerEnd">
+          </mat-datepicker-toggle>
+
+          <mat-datepicker #pickerEnd></mat-datepicker>
+        </mat-form-field>
+
+        <div class="acciones-center">
+          <button mat-stroked-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Volver
+          </button>
+
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="!form.value.begin || hasDateConflict"
+            (click)="validatePeriod()"
+          >
+            Validar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 4 VALIDACION -->
+
+    <div *ngIf="currentStep === 4" class="confirm-card">
+      <div class="confirm-title">
+        <mat-icon>rule</mat-icon>
+        Validación del Periodo
+      </div>
+
+      <div class="confirm-body">
+        Inicio:
+        <strong>
+          {{ form.value.begin | date: "dd/MM/yyyy" }}
+        </strong>
+      </div>
+
+      <div class="confirm-body">
+        Término:
+        <strong>
+          {{ form.value.end | date: "dd/MM/yyyy" }}
+        </strong>
+      </div>
+
+      <div class="confirm-actions">
+        <button mat-stroked-button (click)="previousStep()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver
+        </button>
+
+        <button mat-raised-button color="primary" (click)="nextStep()">
+          Continuar
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 5 DOCUMENTO -->
+
+    <div *ngIf="currentStep === 5">
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>upload_file</mat-icon>
+          Documento de Autorización
+        </div>
+
+        <p style="font-size: 13px; color: #616161">
+          Adjunte el documento de autorización de teletrabajo. (Opcional por
+          ahora)
+        </p>
+
+        <!-- INPUT FILE -->
+
+        <input
+          #fileInput
+          type="file"
+          accept="application/pdf"
+          (change)="onFileSelected($event)"
+        />
+
+        <!-- ARCHIVO SELECCIONADO -->
+
+        <div *ngIf="fileName" class="file-preview">
+          <mat-icon color="primary">description</mat-icon>
+
+          <span class="file-name">
+            {{ fileName }}
+          </span>
+
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="removeFile(fileInput)"
+            matTooltip="Eliminar documento"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+
+        <!-- BOTONES -->
+
+        <div class="acciones-center">
+          <button mat-stroked-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Volver
+          </button>
+
+          <button mat-raised-button color="primary" (click)="nextStep()">
+            Continuar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 6 CONFIRMACION -->
+
+    <div *ngIf="currentStep === 6" class="confirm-card">
+      <div class="confirm-title">
+        <mat-icon>verified</mat-icon>
+        Confirmar Suscripción
+      </div>
+
+      <div class="confirm-body">
+        Usuario:
+        <strong>
+          {{ getUserName() }}
+        </strong>
+      </div>
+
+      <div class="confirm-body">
+        Periodo:
+        <strong>
+          {{ form.value.begin | date: "dd/MM/yyyy" }}
+          →
+          {{ form.value.end | date: "dd/MM/yyyy" }}
+        </strong>
+      </div>
+
+      <div class="confirm-actions">
+        <button mat-stroked-button (click)="previousStep()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver
+        </button>
+
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="createSubscription()"
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 7 REGISTRO -->
+
+    <div *ngIf="currentStep === 7" class="success-card">
+      <mat-icon class="ticket-icon">confirmation_number</mat-icon>
+
+      <h2>Suscripción registrada</h2>
+
+      <button mat-raised-button color="primary" (click)="reset()">
+        Nueva Suscripción
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+
+  <div *ngIf="subscriptions.length > 0" class="history-box">
+    -
+    <div class="history-title">
+      <mat-icon>history</mat-icon>
+      Suscripciones anteriores
+    </div>
+
+    <div
+      *ngFor="let s of subscriptions"
+      class="history-item"
+      [class.active-sub]="isActive(s)"
+    >
+      <div class="history-dates">
+        {{ s.begin | date: "dd/MM/yyyy" }}
+        →
+        {{ s.end | date: "dd/MM/yyyy" }}
+      </div>
+
+      <div *ngIf="isActive(s)" class="active-label">ACTIVA</div>
+    </div>
+  </div>
+</form>

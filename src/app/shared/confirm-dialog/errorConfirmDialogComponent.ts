@@ -29,10 +29,10 @@ export interface ErrorConfirmData {
         class="dialog-icon"
         color="warn"
       >
-        {{ data.icon || 'error' }}
+        {{ data.icon || 'ERROR' }}
       </mat-icon>
 
-      {{ data.title || 'Error' }}
+      {{ data.title || 'ERROR' }}
     </h2>
 
     <mat-dialog-content [style.padding.px]="data.dense ? 8 : 16">
@@ -75,6 +75,7 @@ export interface ErrorConfirmData {
         margin: 0;
         white-space: pre-wrap;
         font-weight: 500;
+        text-align: center;
       }
     `,
   ],
@@ -89,30 +90,3 @@ export class ErrorConfirmDialogComponent {
     this.ref.close(true);
   }
 }
-
-
-/* ejemplo para usar
-
-
-import { MatDialog } from '@angular/material/dialog';
-import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
-
-
-    this.dialog.open(DangerConfirmDialogComponent, {
-    width: '460px',
-    disableClose: true,
-    data: {
-        title: 'Eliminar definitivamente',
-        message:
-        '⚠️ Esta acción es irreversible.\n\nEl registro será eliminado de forma permanente.',
-        confirmText: 'Eliminar definitivamente',
-        cancelText: 'Cancelar',
-        icon: 'delete_forever',
-    },
-    }).afterClosed().subscribe(ok => {
-    if (ok) {
-        // 🔥 acción irreversible aquí
-    }
-    });
-
-*/

@@ -111,7 +111,6 @@ export class ConfirmDialogOkComponent {
     this.ref.close(true);
   }
 }
-
 /* ejemplo de uso 
 
 import { MatDialog } from '@angular/material/dialog';

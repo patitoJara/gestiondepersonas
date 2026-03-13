@@ -1,0 +1,110 @@
+<!-- ======================================
+   SELECCIÓN DE ROL
+====================================== -->
+
+<div *ngIf="selectingRole" class="role-selector">
+  <mat-card class="role-card">
+    <h2>Seleccione un Rol</h2>
+
+    <div class="role-list">
+      <button
+        mat-raised-button
+        color="primary"
+        *ngFor="let r of roles"
+        (click)="selectRole(r)"
+      >
+        {{ r }}
+      </button>
+    </div>
+  </mat-card>
+</div>
+
+<!-- ======================================
+   DASHBOARD NORMAL
+====================================== -->
+
+<mat-card *ngIf="!selectingRole" class="welcome-card">
+  <!-- 🧭 Encabezado -->
+  <div class="welcome-header">
+    <div class="avatar">
+      <mat-icon>account_circle</mat-icon>
+    </div>
+
+    <h2>
+      Bienvenido,
+      <span class="username">{{ fullName }}</span>
+    </h2>
+  </div>
+
+  <!-- 🧱 CONTENEDOR PRINCIPAL -->
+
+  <div class="main-grid">
+    <div class="left-column">
+      <!-- Roles -->
+
+      <div class="info-box">
+        <mat-icon>security</mat-icon>
+
+        <div>
+          <span class="label">
+            {{ roles.length > 1 ? "Roles disponibles" : "Rol del usuario" }}
+          </span>
+
+          <ul *ngIf="roles.length > 1" class="program-list">
+            <li *ngFor="let r of roles" class="program-item">
+              <mat-icon *ngIf="r === activeRole" class="check">
+                check_circle
+              </mat-icon>
+
+              <span [class.active]="r === activeRole">
+                {{ r }}
+              </span>
+            </li>
+          </ul>
+
+          <span *ngIf="roles.length === 1" class="single-role">
+            {{ roles[0] }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Nombre -->
+
+      <div class="info-box">
+        <mat-icon>person</mat-icon>
+
+        <div>
+          <span class="label">Nombre completo</span>
+
+          <span class="value">
+            {{ fullName || "Sin nombre" }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Fecha -->
+
+      <div class="info-box">
+        <mat-icon>calendar_today</mat-icon>
+
+        <div>
+          <span class="label">Fecha y hora actual</span>
+
+          <span class="value">
+            {{ currentDate | date: "fullDate" }}
+            —
+            {{ currentDate | date: "shortTime" }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+
+  <div class="footer-msg">
+    <mat-icon>info</mat-icon>
+
+    <span> Seleccione una opción en el menú lateral para comenzar. </span>
+  </div>
+</mat-card>

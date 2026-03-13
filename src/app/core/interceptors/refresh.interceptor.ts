@@ -6,7 +6,7 @@ import { inject } from '@angular/core';
 import { catchError, switchMap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { AuthLoginService } from '../../services/auth.login.service';
-import { TokenService } from '../../services/token.service';
+import { TokenService } from '../../core/services/token.service';
 
 export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthLoginService);

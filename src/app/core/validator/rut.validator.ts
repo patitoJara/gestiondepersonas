@@ -1,4 +1,3 @@
-// C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\core\validator\rut.validator.ts
 // Validador personalizado para RUT chileno rut.validator.ts
 
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';

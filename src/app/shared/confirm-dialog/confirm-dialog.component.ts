@@ -17,10 +17,10 @@ import { MatIconModule } from '@angular/material/icon';
 export interface ConfirmDialogData {
   title?: string;
   message: string;
-  confirmText?: string;               // default: 'Aceptar'
-  cancelText?: string;                // default: 'Cancelar'
+  confirmText?: string; // default: 'Aceptar'
+  cancelText?: string; // default: 'Cancelar'
   color?: 'primary' | 'accent' | 'warn';
-  icon?: string;                      // ej: 'delete', 'warning', 'info'
+  icon?: string; // ej: 'delete', 'warning', 'info'
   dense?: boolean;
 }
 
@@ -34,11 +34,7 @@ export interface ConfirmDialogData {
       class="dialog-title"
       [ngClass]="'dialog-title-' + effectiveColor"
     >
-      <mat-icon
-        *ngIf="data.icon"
-        class="dialog-icon"
-        [color]="effectiveColor"
-      >
+      <mat-icon *ngIf="data.icon" class="dialog-icon" [color]="effectiveColor">
         {{ data.icon }}
       </mat-icon>
 
@@ -52,11 +48,7 @@ export interface ConfirmDialogData {
     </mat-dialog-content>
 
     <mat-dialog-actions align="end" [style.padding.px]="data.dense ? 8 : 16">
-      <button
-        mat-stroked-button
-        type="button"
-        (click)="onCancel()"
-      >
+      <button mat-stroked-button type="button" (click)="onCancel()">
         {{ data.cancelText || 'Cancelar' }}
       </button>
 
@@ -109,7 +101,7 @@ export interface ConfirmDialogData {
 export class ConfirmDialogComponent {
   constructor(
     private ref: MatDialogRef<ConfirmDialogComponent, boolean>,
-    @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData
+    @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData,
   ) {}
 
   get effectiveColor(): 'primary' | 'accent' | 'warn' {
@@ -123,32 +115,5 @@ export class ConfirmDialogComponent {
   onCancel(): void {
     this.ref.close(false);
   }
+
 }
-
-/* ejemplo de Uso
-
-
-import { MatDialog } from '@angular/material/dialog';
-import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
-
-
-  this.dialog.open(ConfirmDialogComponent, {
-    width: '420px',
-    disableClose: true,
-    data: {
-      title: 'Eliminar registro',
-      message: '¿Está seguro que desea eliminar este registro?',
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      icon: 'delete',
-      color: 'warn',
-    },
-  }).afterClosed().subscribe(ok => {
-    if (ok) {
-      // acción confirmada
-    }
-  });
-
-
-
-*/

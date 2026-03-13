@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -12,6 +12,7 @@ import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 import { provideMomentDateAdapter } from '@angular/material-moment-adapter';
 import { MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 
+
 export const MY_FORMATS = {
   parse: { dateInput: 'DD/MM/YYYY' },
   display: {
@@ -24,6 +25,11 @@ export const MY_FORMATS = {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+
+    // 🌎 Locale español global
+    { provide: LOCALE_ID, useValue: 'es-CL' },
+    
+    
     // 🔑 CLAVE ABSOLUTA PARA EL MANUAL
     provideRouter(
       routes,

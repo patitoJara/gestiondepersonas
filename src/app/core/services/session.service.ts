@@ -2,7 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, Subject, timer } from 'rxjs';
-import { TokenService } from '../../services/token.service';
+import { TokenService } from '../../core/services/token.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService implements OnDestroy {
