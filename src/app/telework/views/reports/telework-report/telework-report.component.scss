@@ -1,0 +1,252 @@
+/* ==================================
+   PANEL FILTROS
+================================== */
+
+.report-container {
+  margin-bottom: 20px;
+  padding: 16px;
+
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ==================================
+   TITULO
+================================== */
+
+mat-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+/* ==================================
+   FILTROS
+================================== */
+
+.filters {
+  display: grid;
+
+  grid-template-columns:
+    220px
+    140px
+    120px
+    160px
+    160px
+    auto;
+
+  gap: 12px;
+  align-items: center;
+}
+
+/* inputs más limpios */
+
+mat-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  background: #ffffff;
+  border-radius: 6px;
+}
+
+/* ==================================
+   BOTONES
+================================== */
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons button:first-child {
+  background: #1976d2;
+  color: white;
+  font-weight: 500;
+}
+
+.buttons button:first-child:hover {
+  background: #1565c0;
+}
+
+.buttons button:last-child {
+  background: #eceff1;
+}
+
+/* ==================================
+   GRID TABLAS
+================================== */
+
+.tables-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.2fr;
+  gap: 18px;
+  margin-top: 20px;
+
+  animation: fadeIn 0.25s ease;
+}
+
+/* ==================================
+   TARJETAS
+================================== */
+
+.users-table,
+.registers-table,
+.subscriptions-table {
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+
+  border-radius: 8px;
+}
+
+/* ==================================
+   SCROLL TABLAS
+================================== */
+
+.table-scroll {
+  overflow: auto;
+  flex: 1;
+}
+
+/* ==================================
+   TABLAS
+================================== */
+
+table {
+  width: 100%;
+  font-size: 12px;
+}
+
+th {
+  font-weight: 600;
+  font-size: 11px;
+  background: #f1f5f9;
+}
+
+td {
+  padding: 6px 8px;
+}
+
+/* ==================================
+   FILAS
+================================== */
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.clickable-row:hover {
+  background: #f3f7fb;
+}
+
+.selected-row {
+  background: #e3f2fd !important;
+  font-weight: 600;
+}
+
+/* ==================================
+   BADGES
+================================== */
+
+.badge {
+  background: #1976d2;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.state-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.active {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.inactive {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* ==================================
+   CONTADORES
+================================== */
+
+.counter {
+  font-size: 11px;
+  margin-left: 8px;
+  background: #eceff1;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* ==================================
+   ALERTAS
+================================== */
+
+.zero-marks {
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* ==================================
+   ANIMACION
+================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================================
+   RESPONSIVE
+================================== */
+
+@media (max-width: 1200px) {
+
+  .tables-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
+
+.rut-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+  border-color: #d32f2f !important;
+}
+
+.rut-field input.ng-invalid.ng-touched {
+  border-bottom: 2px solid #d32f2f;
+}
+.rut-invalid {
+  border-bottom: 2px solid #d32f2f !important;
+}
+
+.rut-error-msg {
+  font-size: 11px;
+  color: #d32f2f;
+  margin-top: 2px;
+  margin-left: 4px;
+  height: 16px; /* espacio reservado siempre */
+}

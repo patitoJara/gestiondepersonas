@@ -1,0 +1,262 @@
+<mat-card class="report-container">
+  <mat-card-title>Reporte Telework</mat-card-title>
+
+  <!-- FILTROS -->
+
+  <div class="filters mat-elevation-z1">
+    <mat-form-field appearance="outline" class="rut-field">
+      <mat-label>RUT trabajador</mat-label>
+      <input
+        matInput
+        [(ngModel)]="rut"
+        #rutModel="ngModel"
+        (input)="formatRut($event)"
+        (blur)="validarRut()"
+        placeholder="11.111.111-1"
+        maxlength="12"
+        [class.rut-invalid]="rutInvalido"
+      />
+      <mat-error *ngIf="rutInvalido"> RUT no válido </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Mes</mat-label>
+
+      <mat-select [(ngModel)]="month" (selectionChange)="onMonthYearChange()">
+        <mat-option *ngFor="let m of months" [value]="m.value">
+          {{ m.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Año</mat-label>
+
+      <mat-select [(ngModel)]="year" (selectionChange)="onMonthYearChange()">
+        <mat-option *ngFor="let y of years" [value]="y">
+          {{ y }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerFrom"
+        [(ngModel)]="dateFrom"
+        (dateChange)="onDateChange()"
+        readonly
+        (click)="pickerFrom.open()"
+      />
+
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFrom"
+      ></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerFrom></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+
+      <input
+        matInput
+        [matDatepicker]="pickerTo"
+        [(ngModel)]="dateTo"
+        (dateChange)="onDateChange()"
+        readonly
+        (click)="pickerTo.open()"
+      />
+
+      <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+
+      <mat-datepicker #pickerTo></mat-datepicker>
+    </mat-form-field>
+
+    <div class="buttons">
+      <button mat-raised-button color="primary" (click)="search()">
+        Buscar
+      </button>
+
+      <button mat-raised-button color="warn" (click)="clearFilters()">
+        Limpiar
+      </button>
+    </div>
+  </div>
+</mat-card>
+
+<!-- =========================
+     TABLAS PRINCIPALES
+========================== -->
+
+<div class="tables-row" *ngIf="users.length > 0">
+  <!-- USUARIOS -->
+
+  <mat-card class="users-table">
+    <mat-card-title>
+      Usuarios encontrados
+      <span class="counter">{{ users.length }}</span>
+    </mat-card-title>
+
+    <div class="table-scroll">
+      <table mat-table [dataSource]="users" class="mat-elevation-z2">
+        <ng-container matColumnDef="fullName">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let u">
+            {{ u.fullName }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="rut">
+          <th mat-header-cell *matHeaderCellDef>RUT</th>
+          <td mat-cell *matCellDef="let u">
+            {{ u.rut }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="marks">
+          <th mat-header-cell *matHeaderCellDef>Marcas</th>
+
+          <td mat-cell *matCellDef="let u" [class.zero-marks]="u.marks === 0">
+            <span class="badge">
+              {{ u.marks }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedUsersColumns"></tr>
+
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedUsersColumns"
+          (click)="selectUser(row)"
+          class="clickable-row"
+          [class.selected-row]="selectedUser?.id === row.id"
+        ></tr>
+      </table>
+    </div>
+  </mat-card>
+
+  <!-- REGISTROS -->
+
+  <mat-card *ngIf="selectedUser" class="registers-table">
+    <mat-card-title>
+      Detalle de marcas
+
+      <span class="counter">
+        {{ registers.length }}
+      </span>
+    </mat-card-title>
+
+    <div class="table-scroll">
+      <table mat-table [dataSource]="registers" class="mat-elevation-z2">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+
+          <td mat-cell *matCellDef="let r">
+            {{ formatDateCL(r.register_datetime) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="day">
+          <th mat-header-cell *matHeaderCellDef>Día</th>
+
+          <td mat-cell *matCellDef="let r">
+            {{ getDayOfWeek(r.register_datetime) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hour">
+          <th mat-header-cell *matHeaderCellDef>Hora</th>
+
+          <td mat-cell *matCellDef="let r">
+            {{ r.register_datetime | date: "HH:mm" }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="state">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+          <td mat-cell *matCellDef="let s">
+            <span
+              class="state-badge"
+              [class.active]="s.active"
+              [class.inactive]="!s.active"
+            >
+              {{ s.active ? "Activo" : "Inactivo" }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="observation">
+          <th mat-header-cell *matHeaderCellDef>Observación</th>
+
+          <td mat-cell *matCellDef="let r">
+            {{ r.observation }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedRegistersColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedRegistersColumns"
+        ></tr>
+      </table>
+    </div>
+  </mat-card>
+
+  <!-- SUSCRIPCIONES -->
+
+  <mat-card *ngIf="selectedUser" class="subscriptions-table">
+    <mat-card-title>
+      Suscripciones
+      <span class="counter">{{ subscriptions.length }}</span>
+    </mat-card-title>
+
+    <div class="table-scroll">
+      <table mat-table [dataSource]="subscriptions" class="mat-elevation-z2">
+        <ng-container matColumnDef="start">
+          <th mat-header-cell *matHeaderCellDef>Inicio</th>
+
+          <td mat-cell *matCellDef="let s">
+            {{ formatDateCL(s.begin) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="end">
+          <th mat-header-cell *matHeaderCellDef>Fin</th>
+
+          <td mat-cell *matCellDef="let s">
+            {{ formatDateCL(s.end) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="state">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+          <td mat-cell *matCellDef="let s">
+            <span
+              class="state-badge"
+              [class.active]="s.active"
+              [class.inactive]="!s.active"
+            >
+              {{ s.active ? "Activo" : "Inactivo" }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr
+          mat-header-row
+          *matHeaderRowDef="displayedSubscriptionsColumns"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedSubscriptionsColumns"
+        ></tr>
+      </table>
+    </div>
+  </mat-card>
+</div>

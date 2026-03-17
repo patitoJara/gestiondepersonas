@@ -44,6 +44,19 @@ export const routes: Routes = [
       },
 
       {
+        path: 'report',
+        loadComponent: () =>
+          import('./telework/views/reports/telework-report/telework-report.component').then(
+            (m) => m.TeleworkReportComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR'],
+          title: 'Reporte Telework',
+          icon: 'assessment',
+        },
+      },
+
+      {
         path: 'manual',
         loadComponent: () =>
           import('./telework/views/manual/manual.component').then(
@@ -67,23 +80,6 @@ export const routes: Routes = [
           title: 'Acerca del sistema',
           icon: 'info',
         },
-      },
-
-      /* TELEWORK */
-
-      {
-        path: 'telework',
-        children: [
-          {
-            path: 'subscribe',
-            component: TeleworkSubscribeComponent,
-            data: {
-              roles: ['SUPERVISOR'],
-              title: 'Suscripción Teletrabajo',
-              icon: 'assignment',
-            },
-          },
-        ],
       },
 
       /* ADMIN */
