@@ -1,0 +1,174 @@
+<mat-card class="report-container">
+  <mat-card-title>Mi Control de TeleTrabajo</mat-card-title>
+
+  <!-- 👤 INFO USUARIO -->
+  <div class="user-info">
+    <div class="user-name">
+      <mat-icon>person</mat-icon>
+      {{ userName }} - {{ rut }}
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filters mat-elevation-z1">
+    <mat-form-field appearance="outline">
+      <mat-label>Mes</mat-label>
+      <mat-select [(ngModel)]="month" (selectionChange)="onMonthYearChange()">
+        <mat-option *ngFor="let m of months" [value]="m.value">
+          {{ m.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Año</mat-label>
+      <mat-select [(ngModel)]="year" (selectionChange)="onMonthYearChange()">
+        <mat-option *ngFor="let y of years" [value]="y">
+          {{ y }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerFrom"
+        [(ngModel)]="dateFrom"
+        (dateChange)="onDateChange()"
+        readonly
+        (click)="pickerFrom.open()"
+      />
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFrom"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #pickerFrom></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerTo"
+        [(ngModel)]="dateTo"
+        (dateChange)="onDateChange()"
+        readonly
+        (click)="pickerTo.open()"
+      />
+      <mat-datepicker-toggle matSuffix [for]="pickerTo">
+      </mat-datepicker-toggle>
+      <mat-datepicker #pickerTo></mat-datepicker>
+    </mat-form-field>
+
+    <div class="buttons">
+      <button mat-raised-button color="primary" (click)="search()">
+        Buscar
+      </button>
+      <button mat-raised-button color="warn" (click)="clearFilters()">
+        Limpiar
+      </button>
+    </div>
+  </div>
+</mat-card>
+
+<div class="tables-row">
+  <!-- 🔥 REGISTROS DIRECTO -->
+  <mat-card class="registers-table" *ngIf="registers && registers.length">
+    <mat-card-title>
+      Mis marcas
+      <span class="counter">{{ registers.length }}</span>
+    </mat-card-title>
+
+    <table mat-table [dataSource]="registers">
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let r">
+          {{ formatDateCL(r.register_datetime) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="day">
+        <th mat-header-cell *matHeaderCellDef>Día</th>
+        <td mat-cell *matCellDef="let r">
+          {{ getDayOfWeek(r.register_datetime) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="hour">
+        <th mat-header-cell *matHeaderCellDef>Hora</th>
+        <td mat-cell *matCellDef="let r">
+          {{ formatTimeCL(r.register_datetime, r.isVirtual) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let r">
+          {{ r.type === "ING" ? "Ingreso" : "Salida" }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedRegistersColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedRegistersColumns"></tr>
+    </table>
+  </mat-card>
+
+  <!-- SUSCRIPCIONES -->
+
+  <mat-card *ngIf="subscriptions && subscriptions.length" class="subscriptions-table">
+    <mat-card-title>
+      Mis Suscripciones
+      <span class="counter">{{ subscriptions.length }}</span>
+    </mat-card-title>
+
+    <div class="table-scroll">
+      <table mat-table [dataSource]="subscriptions" class="mat-elevation-z2">
+        <ng-container matColumnDef="start">
+          <th mat-header-cell *matHeaderCellDef>Inicio</th>
+          <td mat-cell *matCellDef="let s">
+            {{ formatDateCL(s.begin) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="end">
+          <th mat-header-cell *matHeaderCellDef>Fin</th>
+          <td mat-cell *matCellDef="let s">
+            {{ formatDateCL(s.end) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="duration">
+          <th mat-header-cell *matHeaderCellDef>Días</th>
+          <td mat-cell *matCellDef="let s">
+            {{ getDurationDays(s) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="state">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let s">
+            <span class="estado-badge" [ngClass]="getEstado(s)">
+              {{
+                getEstado(s) === "vigente"
+                  ? "Vigente"
+                  : getEstado(s) === "pendiente"
+                    ? "Pendiente"
+                    : "Vencido"
+              }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr
+          mat-header-row
+          *matHeaderRowDef="displayedSubscriptionsColumns"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedSubscriptionsColumns"
+        ></tr>
+      </table>
+    </div>
+  </mat-card>
+</div>

@@ -262,3 +262,62 @@ button.btn-salida {
   background-color: #bdbdbd !important;
   color: #ffffff !important;
 }
+.evento-card {
+  padding: 8px 12px;              // 👈 antes 16px → más compacto
+  border-bottom: 1px solid #e0e6ed;
+  transition: all 0.2s ease;
+}
+
+/* 🔥 HOVER PRO */
+.evento-card:hover {
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+/* 🔥 FILA HORIZONTAL */
+.evento-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;               // 👈 antes 60px → más apretado
+}
+
+/* IZQUIERDA */
+.evento-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+/* ICONO */
+.evento-icon {
+  font-size: 18px;
+}
+
+/* DERECHA (HORA + FECHA EN UNA LÍNEA) */
+.evento-tiempo {
+  font-size: 15px;       // 👈 tamaño equilibrado
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;   // 👈 evita salto de línea
+}
+
+/* COLORES (SE MANTIENEN) */
+.hora-ingreso {
+  color: #2e7d32;
+}
+
+.hora-salida {
+  color: #c62828;
+}
+
+.evento-card.active {
+  background: #eef3f8;
+  border-radius: 8px;
+}
+
+.evento-info span {
+  font-size: 14px;
+  font-weight: 600;
+}

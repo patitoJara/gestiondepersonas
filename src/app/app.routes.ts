@@ -71,6 +71,32 @@ export const routes: Routes = [
       },
 
       {
+        path: 'mi-reporte',
+        loadComponent: () =>
+          import('./telework/views/reports/telework-report-user/telework-report-user.component').then(
+            (m) => m.TeleworkReportUserComponent,
+          ),
+        data: {
+          roles: ['ADMINISTRATIVO'],
+          title: 'Mi Control de Teletrabajo',
+          icon: 'assignment_ind',
+        },
+      },
+
+      {
+        path: 'mis-suscripciones',
+        loadComponent: () =>
+          import('./telework/views/reports/telework-subscriptions/telework-subscriptions.component').then(
+            (m) => m.TeleworkUserSubscriptionsComponent,
+          ),
+        data: {
+          roles: ['ADMINISTRATIVO'],
+          title: 'Mis Suscripciones',
+          icon: 'event',
+        },
+      },
+
+      {
         path: 'report',
         loadComponent: () =>
           import('./telework/views/reports/telework-report/telework-report.component').then(
@@ -78,7 +104,7 @@ export const routes: Routes = [
           ),
         data: {
           roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Reporte Telework',
+          title: 'Reporte TeleTrabajo',
           icon: 'assessment',
         },
       },

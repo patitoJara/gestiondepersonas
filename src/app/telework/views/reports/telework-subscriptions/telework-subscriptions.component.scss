@@ -1,0 +1,354 @@
+/* ==================================
+   PANEL FILTROS
+================================== */
+
+.report-container {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ==================================
+   TITULO
+================================== */
+
+.report-container mat-card-title {
+  background: #1565c0;
+  color: white;
+  padding: 10px 16px;
+  margin: -16px -16px 12px -16px;
+  border-radius: 10px 10px 0 0;
+}
+
+/* ==================================
+   FILTROS
+================================== */
+
+mat-form-field {
+  width: 100%;
+}
+
+/* INPUT MATERIAL */
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper:hover {
+  border-color: #1565c0;
+}
+
+/* ==================================
+   BOTONES
+================================== */
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons button:first-child {
+  background: #1565c0;
+  color: white;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+.buttons button:first-child:hover {
+  background: #0d47a1;
+}
+
+.buttons button:last-child {
+  background: #e2e8f0;
+  border-radius: 20px;
+}
+
+/* ==================================
+   GRID TABLAS
+================================== */
+
+.tables-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  margin-top: 20px;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ==================================
+   TARJETAS
+================================== */
+
+.registers-table,
+.subscriptions-table {
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+}
+
+/* ==================================
+   SCROLL TABLAS
+================================== */
+
+.table-scroll {
+  overflow: auto;
+  flex: 1;
+}
+
+/* ==================================
+   TABLAS
+================================== */
+
+table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+th {
+  background: #1565c0; // 🔥 azul fuerte institucional
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+td {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+tbody tr:nth-child(even) {
+  background: #f4f7fb; // 🔥 leve contraste
+}
+
+tbody tr:hover {
+  background: #e3f2fd; // 🔥 hover elegante
+}
+
+.mat-mdc-header-row {
+  background: #1565c0 !important;
+}
+
+.mat-mdc-header-cell {
+  color: #ffffff !important;
+  font-weight: 600;
+
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 11px;  
+}
+/* ==================================
+   ICONOS Y TIPOS
+================================== */
+
+.tipo-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.evento-icon {
+  font-size: 18px;
+}
+
+.ingreso {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.salida {
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* ==================================
+   BADGES
+================================== */
+
+.badge {
+  background: #1976d2;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.vencido {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.pendiente {
+  background: #fff3cd;
+  color: #f57c00;
+}
+
+/* ==================================
+   CONTADORES
+================================== */
+
+.counter {
+  font-size: 14px;
+  margin-left: 6px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* ==================================
+   FILAS ESPECIALES
+================================== */
+
+.virtual {
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-left: 4px solid #adb5bd;
+}
+
+.hora-pendiente {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+/* ==================================
+   ERRORES RUT
+================================== */
+
+.rut-invalid {
+  border-bottom: 2px solid #d32f2f !important;
+}
+
+/* ==================================
+   ANIMACION
+================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================================
+   FILTROS PRO (FIX FINAL)
+================================== */
+
+.filters {
+  display: grid;
+  grid-template-columns: 140px 120px 150px 150px auto;
+  gap: 10px;
+  align-items: center;
+
+  background: #ffffff;
+  padding: 10px 12px; // 🔥 menos alto
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+/* inputs */
+.filters mat-form-field {
+  width: 100%;
+}
+
+/* botones alineados abajo */
+.buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* botón buscar */
+.buttons button:first-child {
+  background: #1565c0;
+  color: white;
+  font-weight: 600;
+  border-radius: 20px;
+  height: 42px;
+}
+
+/* botón limpiar */
+.buttons button:last-child {
+  background: #e2e8f0;
+  border-radius: 20px;
+  height: 42px;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .buttons {
+    grid-column: span 2;
+    justify-content: flex-end;
+  }
+}
+
+.rango-fechas {
+  display: flex;
+  gap: 10px;
+}
+
+.rango-fechas mat-form-field {
+  flex: 1;
+}
+
+// solo datos del usuario
+
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  padding: 8px 12px;
+  margin-bottom: 12px;
+
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.user-rut {
+  font-size: 12px;
+  color: #475569;
+}
+
+/* ==================================
+   AJUSTE PARA SUSCRIPCIONES
+================================== */
+
+:host-context(.subscriptions-view) .tables-row {
+  grid-template-columns: 1fr;
+}

@@ -16,73 +16,73 @@
   </div>
 
   <div class="acciones-jornada">
-    <button mat-raised-button class="btn-ingreso" (click)="mark('ING')"  [disabled]="!canMarkToday">
+    <button
+      mat-raised-button
+      class="btn-ingreso"
+      (click)="mark('ING')"
+      [disabled]="!canMarkToday"
+    >
       MARCAR INGRESO
     </button>
 
-    <button mat-raised-button class="btn-salida" (click)="mark('SAL')" [disabled]="!canMarkToday">
+    <button
+      mat-raised-button
+      class="btn-salida"
+      (click)="mark('SAL')"
+      [disabled]="!canMarkToday"
+    >
       MARCAR SALIDA
     </button>
   </div>
 
   <!-- 👤 NOMBRE DEL USUARIO -->
-  <div class="usuario">
-    Usuario: {{ userName  }}
-  </div>
+  <div class="usuario">Usuario: {{ userName }}</div>
 
-  <div class="eventos">
-    <h3>Eventos de Hoy</h3>
+  <div class="evento-card" *ngFor="let e of todayEvents">
+    <div class="evento-row">
+      <!-- IZQUIERDA -->
+      <div class="evento-info">
+        <mat-icon
+          class="evento-icon"
+          [ngClass]="e.type === 'ING' ? 'ingreso' : 'salida'"
+        >
+          {{ e.type === "ING" ? "login" : "logout" }}
+        </mat-icon>
 
-    <table *ngIf="todayEvents.length">
-      <tr *ngFor="let e of todayEvents">
-        <td class="evento-tipo">
-          <mat-icon
-            class="evento-icon"
-            [ngClass]="e.type === 'ING' ? 'ingreso' : 'salida'"
-          >
-            {{ e.type === "ING" ? "login" : "logout" }}
-          </mat-icon>
+        <span [ngClass]="e.type === 'ING' ? 'evento-ingreso' : 'evento-salida'">
+          {{ e.type === "ING" ? "Ingreso" : "Salida" }}
+        </span>
+      </div>
 
-          <span
-            [ngClass]="e.type === 'ING' ? 'evento-ingreso' : 'evento-salida'"
-          >
-            {{ e.type === "ING" ? "Ingreso" : "Salida" }}
-          </span>
-        </td>
-
-        <td [ngClass]="e.type === 'ING' ? 'hora-ingreso' : 'hora-salida'">
-          {{ e.datetime | date: "HH:mm:ss" }}
-        </td>
-      </tr>
-    </table>
+      <!-- DERECHA (COMPACTO 🔥) -->
+      <div
+        class="evento-tiempo"
+        [ngClass]="e.type === 'ING' ? 'hora-ingreso' : 'hora-salida'"
+      >
+        {{ e.datetime | date: "HH:mm:ss" }} •
+        {{ e.datetime | date: "dd/MM/yyyy" }}
+      </div>
+    </div>
   </div>
 
   <!-- SUSCRIPCIONES -->
   <div class="panel-suscripciones">
-
     <h3>Suscripciones</h3>
 
     <table *ngIf="subscriptions.length">
-
       <tr *ngFor="let s of subscriptions">
-
         <td>
-          {{ s.begin | date:'dd-MM-yyyy' }}
+          {{ s.begin | date: "dd-MM-yyyy" }}
         </td>
+        <td>al</td>
         <td>
-          al
-        </td>        
-        <td>
-          {{ s.end | date:'dd-MM-yyyy' }}
+          {{ s.end | date: "dd-MM-yyyy" }}
         </td>
-
       </tr>
-
     </table>
 
     <div *ngIf="!subscriptions.length" class="sin-subs">
       No posee suscripciones registradas
     </div>
-
-  </div>  
+  </div>
 </div>
