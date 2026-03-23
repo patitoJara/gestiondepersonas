@@ -108,6 +108,14 @@ export class TemplateComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.timeService.loadServerTime();
     this.loadSessionData();
+
+    this.router.events.subscribe(async () => {
+      const isMobile = await firstValueFrom(this.isHandset$);
+
+      if (isMobile && this.drawer?.opened) {
+        this.drawer.close();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -200,6 +208,16 @@ export class TemplateComponent implements OnInit, OnDestroy {
     this.drawer.toggle();
   }
 
+  async navigate(route: string): Promise<void> {
+    const isMobile = await firstValueFrom(this.isHandset$);
+
+    if (isMobile) {
+      await this.drawer.close();
+    }
+
+    await this.router.navigate([route]);
+  }
+
   buildMenu(): void {
     const role = (this.activeRole || '').toUpperCase();
 
@@ -217,7 +235,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
       const allowedRoles = route.data?.['roles'] ?? [];
       const visible = allowedRoles.length === 0 || allowedRoles.includes(role);
 
-      if (visible && !route.children) {
+      if (visible && !route.children && !route.data?.hidden) {
         const item = {
           title: route.data?.title || route.path,
           icon: route.data?.icon || 'chevron_right',
@@ -253,13 +271,20 @@ export class TemplateComponent implements OnInit, OnDestroy {
     this.isRefreshing = true;
 
     try {
-      await firstValueFrom(this.auth.refresh());
+      const response: any = await firstValueFrom(this.auth.refresh());
 
-      console.log('🔄 Sesión renovada');
+      console.log('🔄 Sesión renovada', response);
 
+      // 💥 GUARDAR TOKENS CORRECTOS
+      this.tokenService.setAccessToken(response.token);
+      this.tokenService.setRefreshToken(response.refreshToken);
+
+      // 💥 ACTUALIZAR EXPIRACIÓN
+      this.tokenService.setExpirationFromToken(response.token);
+
+      // reiniciar sesión
       this.sessionService.startSessionFromToken();
 
-      // 🔥 reinicia timer correctamente
       this.timerSub?.unsubscribe();
       this.startRealExpirationTimer();
 

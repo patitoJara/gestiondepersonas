@@ -10,6 +10,17 @@ export class UsersService {
 
   constructor(private http: HttpClient) {}
 
+  changePassword(
+    userId: number,
+    data: {
+      currentPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+    },
+  ) {
+    return this.http.patch(`${this.api}/${userId}/change-password`, data);
+  }
+
   getAllPaginated(page: number, size: number) {
     return this.http.get(
       `${this.api}/getAllPaginated?page=${page}&size=${size}`,

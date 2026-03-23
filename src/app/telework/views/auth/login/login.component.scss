@@ -14,7 +14,7 @@ html, body {
 
 /* 🌐 Estructura general */
 .login-wrapper {
-  height: 100vh;
+  min-height: 100dvh;
   width: 100vw;
   display: flex;
   align-items: center;
@@ -104,17 +104,6 @@ mat-form-field.full {
 }
 
 /* 🔘 Botón principal */
-.login-btn {
-  width: 100%;
-  height: 46px;
-  font-weight: 600;
-  border-radius: 6px;
-  background-color: #1565c0 !important;
-  color: #fff !important;
-  margin-top: 8px;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-}
 
 .login-btn:hover {
   background-color: #0d47a1 !important;

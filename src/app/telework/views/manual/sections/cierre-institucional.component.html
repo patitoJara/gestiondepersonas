@@ -1,22 +1,41 @@
-<!-- 9. CONSIDERACIONES FINALES -->
-<mat-card class="manual-section" id="consideraciones">
+<!-- 10. Gestión de Sesión de Usuario -->
+<mat-card class="manual-section" id="gusuario">
 
   <div class="section-header">
-    <mat-icon class="icon-primary">verified</mat-icon>
-    <h2>10. Consideraciones Finales</h2>
+    <mat-icon class="icon-primary">schedule</mat-icon>
+    <h2>10. Gestión de Sesión de Usuario</h2>
   </div>
 
   <div class="manual-box box-rule">
-    <mat-icon>gavel</mat-icon>
+    <mat-icon>timer</mat-icon>
     <div>
-      El Sistema de Registro de Eventos – Teletrabajo constituye una herramienta 
-      institucional orientada exclusivamente al registro histórico trazable de eventos.
+      El sistema incorpora un mecanismo de control de sesión activa con el objetivo de mantener la seguridad, trazabilidad y continuidad operativa del sistema.
       <br><br>
-      No reemplaza mecanismos formales de control de jornada definidos por la 
-      normativa vigente.
+
+      <strong>Visualización en Interfaz:</strong><br>
+      El estado de la sesión se presenta en la barra superior del sistema (Topbar), permitiendo al usuario visualizar en tiempo real su estado de conexión.
       <br><br>
-      Su finalidad es mantener un registro auditable, transparente y verificable 
-      de las acciones realizadas por funcionarios autorizados bajo modalidad de teletrabajo.
+
+      <strong>Características:</strong><br>
+      - El sistema mantiene una sesión activa por usuario autenticado.<br>
+      - Se visualiza un temporizador de sesión en la interfaz superior.<br>
+      - El temporizador indica el tiempo restante antes del cierre automático de sesión.<br>
+      - El sistema presenta estados visuales de advertencia y criticidad según el tiempo restante.<br><br>
+
+      <strong>Estados del temporizador:</strong><br>
+      - Normal: funcionamiento regular.<br>
+      - Advertencia: cuando el tiempo restante es reducido.<br>
+      - Crítico: cuando la sesión está próxima a expirar.<br><br>
+
+      <strong>Extensión de sesión:</strong><br>
+      - El usuario puede extender manualmente su sesión mediante el botón "Extender".<br>
+      - La extensión se encuentra sujeta a validaciones del backend.<br><br>
+
+      <strong>Cierre de sesión:</strong><br>
+      - Si la sesión expira, el sistema cerrará automáticamente la sesión del usuario.<br>
+      - El usuario deberá autenticarse nuevamente para continuar utilizando el sistema.<br><br>
+
+      Este mecanismo permite reducir riesgos de uso indeb en sesiones prolongadas o desatendidas.
     </div>
   </div>
 

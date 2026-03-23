@@ -8,6 +8,7 @@ import { TokenService } from '../../../core/services/token.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
 
+
 import { SubscribesService } from '../../../telework/services/admin/subscribes.service';
 import { RegistersService } from '../../../telework/services/registers.service';
 
@@ -27,6 +28,7 @@ interface TeleworkEvent {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
+  
 
   now: Date = new Date();
   private timer: any;
@@ -214,4 +216,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ? '🟢 Teletrabajo habilitado hoy'
       : '🔴 Sin suscripción activa hoy';
   }
+
+
 }

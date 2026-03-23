@@ -8,6 +8,21 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   { path: 'auth/login', component: LoginComponent },
 
+  {
+    path: 'auth/recover',
+    loadComponent: () =>
+      import('./telework/views/auth/recover/recover.component').then(
+        (m) => m.RecoverComponent,
+      ),
+  },
+
+  {
+    path: 'auth/change-password',
+    loadComponent: () =>
+      import('./telework/views/auth/change-password/change-password.component').then(
+        (m) => m.ChangePasswordComponent,
+      ),
+  },
   { path: 'about-public', component: AboutPublicComponent },
 
   {
@@ -27,6 +42,18 @@ export const routes: Routes = [
           roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
           title: 'Inicio',
           icon: 'home',
+        },
+      },
+
+      // 👤 PERFIL
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./telework/views/profile/profile.component').then(
+            (m) => m.ProfileComponent,
+          ),
+        data: {
+          hidden: true, // 👈 🔥 CLAVE
         },
       },
 
@@ -120,19 +147,6 @@ export const routes: Routes = [
           roles: ['ADMIN', 'SUPERVISOR'],
           title: 'Suscripciones',
           icon: 'event',
-        },
-      },
-
-      {
-        path: 'admin/vpn',
-        loadComponent: () =>
-          import('./telework/views/admin/vpn/vpn.component').then(
-            (m) => m.VpnComponent,
-          ),
-        data: {
-          roles: ['ADMIN'],
-          title: 'VPN',
-          icon: 'vpn_key',
         },
       },
     ],

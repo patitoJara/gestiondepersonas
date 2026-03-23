@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,7 +14,7 @@ import { TimeService } from '@app/core/services/time.service';
   styleUrls: ['./inicio.component.scss'],
   imports: [CommonModule, MatCardModule, MatIconModule, MatDividerModule],
 })
-export class InicioComponent implements OnInit, AfterViewInit {
+export class InicioComponent implements OnInit {
   private tokenService = inject(TokenService);
   private timeService = inject(TimeService);
 
@@ -29,7 +29,9 @@ export class InicioComponent implements OnInit, AfterViewInit {
   currentDate: Date = new Date();
 
   ngOnInit(): void {
-    // hora del servidor
+    this.loadData();
+
+    // ⏰ hora servidor
     this.currentDate = this.timeService.getServerTime();
 
     setInterval(() => {
@@ -37,11 +39,7 @@ export class InicioComponent implements OnInit, AfterViewInit {
     }, 60000);
   }
 
-  ngAfterViewInit(): void {
-    this.afterLoadData();
-  }
-
-  afterLoadData(): void {
+  private loadData(): void {
     const profile = this.tokenService.getUserProfile();
 
     if (!profile) {
@@ -49,24 +47,24 @@ export class InicioComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // 🟦 datos usuario
     this.fullName = profile.fullName || 'Usuario';
     this.userUsername = profile.username || '';
     this.userEmail = profile.email || '';
 
-    this.roles = this.tokenService.getUserRoles();
+    // 🟦 roles
+    this.roles = this.tokenService.getUserRoles() || [];
 
     const savedRole = this.tokenService.getActiveRole();
 
     if (savedRole && this.roles.includes(savedRole)) {
       this.activeRole = savedRole;
     } else {
-      // 👇 si tiene un solo rol lo asigna
       if (this.roles.length === 1) {
         this.activeRole = this.roles[0];
         this.tokenService.setActiveRole(this.activeRole);
       }
 
-      // 👇 si tiene más de uno debe elegir
       if (this.roles.length > 1) {
         this.selectingRole = true;
       }
@@ -75,9 +73,7 @@ export class InicioComponent implements OnInit, AfterViewInit {
 
   selectRole(role: string): void {
     this.activeRole = role;
-
     this.tokenService.setActiveRole(role);
-
     this.selectingRole = false;
   }
 
@@ -85,7 +81,7 @@ export class InicioComponent implements OnInit, AfterViewInit {
     if (!this.roles.length) return;
 
     const selected = prompt(
-      `Seleccione rol:\n\n${this.roles.map((r, i) => `${i + 1}. ${r}`).join('\n')}`,
+      `Seleccione rol:\n\n${this.roles.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
     );
 
     if (!selected) return;
@@ -95,7 +91,6 @@ export class InicioComponent implements OnInit, AfterViewInit {
     if (Number.isNaN(index) || !this.roles[index]) return;
 
     this.activeRole = this.roles[index];
-
     this.tokenService.setActiveRole(this.activeRole);
 
     window.location.reload();

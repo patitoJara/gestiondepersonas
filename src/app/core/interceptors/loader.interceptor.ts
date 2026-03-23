@@ -1,4 +1,3 @@
-// src/app/core/interceptors/loader.interceptor.ts
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { finalize } from 'rxjs/operators';
@@ -9,12 +8,11 @@ export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
 
   let showLoader = true;
 
-  // ⏱️ Delay inteligente
   const timeout = setTimeout(() => {
     if (showLoader) {
       loader.show();
     }
-  }, 300); // 👈 AJUSTABLE (200–400ms ideal)
+  }, 300);
 
   return next(req).pipe(
     finalize(() => {

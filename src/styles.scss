@@ -80,7 +80,7 @@ body {
   background: var(--ssm-surface);
   font-family: var(--ssm-font);
   color: #212121;
-  overflow-x: hidden;
+  overflow-x: auto;;
 }
 
 /* ============================
@@ -376,19 +376,20 @@ mat-radio-button {
    ================================ */
 
 .mat-drawer-inner-container {
-  overflow-x: hidden !important;
   max-width: 100% !important;
+  overflow-x: hidden !important; // ok mantener aquí
 }
 
 .mat-drawer,
 .mat-sidenav,
 mat-sidenav {
-  overflow-x: hidden !important;
+  overflow-x: hidden !important; // ok mantener menú limpio
 }
 
+/* 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE */
 .mat-drawer-content,
 .mat-sidenav-content {
-  overflow-x: hidden !important;
+  overflow-x: auto !important; // 🔥 PERMITE scroll horizontal
 }
 
 /* ============================

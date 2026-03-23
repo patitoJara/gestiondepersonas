@@ -14,11 +14,7 @@ import { VistaAdminComponent } from './sections/vista-admin.component';
 import { VistaFuncionarioComponent } from './sections/vista-funcionario.component';
 import { CierreInstitucionalComponent } from './sections/cierre-institucional.component';
 import { ManualesComponent } from './sections/manuales.component';
-
-
-
-
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-manual',
@@ -44,6 +40,8 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
   ],
 })
 export class ManualComponent {
+  // 👇 ESCUCHA SCROLL GLOBAL (CLAVE)
+
   @ViewChild('manualScroll') manualScroll!: ElementRef<HTMLDivElement>;
 
   showIndexBtn = false;

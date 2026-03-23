@@ -14,6 +14,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
 import { TeleworkReportService } from '@app/telework/services/telework-report.service';
 import { firstValueFrom } from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { TeleworkReportPrintService } from '@app/telework/services/reports/telework-report-print.service';
+import { LoaderService } from '@app/core/services/loader.service';
 
 @Component({
   selector: 'app-telework-report',
@@ -31,11 +36,14 @@ import { firstValueFrom } from 'rxjs';
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatIconModule,
   ],
 })
 export class TeleworkReportComponent {
   private dialog = inject(MatDialog);
   private reportService = inject(TeleworkReportService);
+  private teleworkReport = inject(TeleworkReportPrintService);
+  private loader = inject(LoaderService);
 
   // ===============================
   // FILTROS
@@ -43,6 +51,7 @@ export class TeleworkReportComponent {
 
   rut: string = '';
   rutInvalido = false;
+  loading = false;
 
   month: number | null = null;
   year: number | null = null;
@@ -85,18 +94,17 @@ export class TeleworkReportComponent {
   // COLUMNAS TABLAS
   // ===============================
 
-  displayedUsersColumns: string[] = ['fullName', 'rut', 'marks'];
+  displayedUsersColumns: string[] = ['fullName', 'rut', 'marks', 'actions'];
   displayedWarningColumns: string[] = ['fullName', 'rut', 'marks'];
 
-  displayedRegistersColumns: string[] = [
+  displayedRegistersColumns = [
     'date',
     'day',
     'hour',
-    'state',
-    'observation',
+    'type', // 👈 nueva
   ];
 
-  displayedSubscriptionsColumns = ['start', 'end', 'state'];
+  displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
 
   ngOnInit() {
     const currentYear = new Date().getFullYear();
@@ -133,61 +141,40 @@ export class TeleworkReportComponent {
     }
 
     try {
-      const users = await firstValueFrom(this.reportService.getUsers());
-      const registers = await firstValueFrom(this.reportService.getRegisters());
-      const subscribes = await firstValueFrom(
-        this.reportService.getSubscribes(),
-      );
+      this.loading = true; // 🔥 spinner global ON
+
+      // 💥 TODO EN PARALELO
+      const [users, registers, subscribes] = await Promise.all([
+        firstValueFrom(this.reportService.getUsers()),
+        firstValueFrom(this.reportService.getRegisters()),
+        firstValueFrom(this.reportService.getSubscribes()),
+      ]);
 
       let filteredRegisters = [...registers];
-
-      // ============================
-      // FILTRO MES / AÑO
-      // ============================
 
       if (this.month && this.year) {
         filteredRegisters = filteredRegisters.filter((r: any) => {
           const d = new Date(r.register_datetime);
-
           return (
             d.getMonth() + 1 === this.month && d.getFullYear() === this.year
           );
         });
       }
 
-      // ============================
-      // FILTRO RANGO FECHAS
-      // ============================
-
       if (this.dateFrom && this.dateTo) {
         filteredRegisters = filteredRegisters.filter((r: any) => {
           const d = new Date(r.register_datetime);
-
           return d >= this.dateFrom! && d <= this.dateTo!;
         });
       }
-
-      // ============================
-      // AGRUPAR REGISTROS POR USUARIO
-      // ============================
 
       const userMap: any = {};
 
       filteredRegisters.forEach((r: any) => {
         const uid = r.user?.id;
-
         if (!uid) return;
-
-        if (!userMap[uid]) {
-          userMap[uid] = 0;
-        }
-
-        userMap[uid]++;
+        userMap[uid] = (userMap[uid] || 0) + 1;
       });
-
-      // ============================
-      // CONSTRUIR TABLA USUARIOS
-      // ============================
 
       this.users = users
         .map((u: any) => {
@@ -212,26 +199,16 @@ export class TeleworkReportComponent {
         .filter((u: any) => {
           if (u.marks > 0) return true;
 
-          const hasSubscription = subscribes.some(
+          return subscribes.some(
             (s: any) => (s.user?.id === u.id || s.userId === u.id) && s.active,
           );
-
-          return hasSubscription;
         });
-
-      // ============================
-      // GUARDAR DATA COMPLETA
-      // ============================
 
       this.allRegisters = filteredRegisters;
       this.registers = [];
 
       this.allSubscriptions = subscribes;
       this.subscriptions = [];
-
-      // ============================
-      // ALERTA SUSCRIPCIONES SIN MARCAS
-      // ============================
 
       const alerts = this.checkSubscriptionsWithoutMarks();
 
@@ -252,6 +229,8 @@ export class TeleworkReportComponent {
     } catch (err) {
       console.error(err);
       this.showWarning('Error consultando información');
+    } finally {
+      this.loading = false; // 🔥 spinner OFF
     }
   }
 
@@ -261,8 +240,7 @@ export class TeleworkReportComponent {
 
   clearFilters(): void {
     this.rut = '';
-    this.month = null;
-    this.year = null;
+    this.setCurrentMonthYear();
     this.dateFrom = null;
     this.dateTo = null;
 
@@ -270,13 +248,21 @@ export class TeleworkReportComponent {
     this.registers = [];
     this.subscriptions = [];
     this.selectedUser = null;
+
+    this.search(); // 💥 UX inmediata
+  }
+
+  setCurrentMonthYear() {
+    const today = new Date();
+    this.month = today.getMonth() + 1;
+    this.year = today.getFullYear();
   }
 
   // ===============================
   // DÍA DE LA SEMANA
   // ===============================
 
-  getDayOfWeek(date: string): string {
+  getDayOfWeek(date: any): string {
     const days = [
       'Domingo',
       'Lunes',
@@ -287,24 +273,42 @@ export class TeleworkReportComponent {
       'Sábado',
     ];
 
-    return days[new Date(date).getDay()];
+    const d = this.toLocalDate(date);
+
+    return days[d.getDay()];
   }
 
   selectUser(user: any): void {
     this.selectedUser = user;
 
-    // limpiar tablas
     this.registers = [];
     this.subscriptions = [];
 
-    // marcas del usuario
-    this.registers = this.allRegisters.filter(
-      (r: any) => r.user?.id === user.id || r.userId === user.id,
-    );
+    // 🔹 obtener registros reales
+    let userRegisters = this.allRegisters
+      .filter((r: any) => r.user?.id === user.id || r.userId === user.id)
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.register_datetime).getTime() -
+          new Date(b.register_datetime).getTime(),
+      );
 
-    // suscripciones del usuario
+    // 🔥 si NO viene tipo desde backend → lo generamos
+    userRegisters = userRegisters.map((r: any, index: number) => ({
+      ...r,
+      type: r.type || (index % 2 === 0 ? 'ING' : 'SAL'),
+      isVirtual: false,
+    }));
+
+    // 🔹 suscripciones
     this.subscriptions = this.allSubscriptions.filter(
       (s: any) => s.user?.id === user.id || s.userId === user.id,
+    );
+
+    // 💥 AQUÍ LA MAGIA
+    this.registers = this.generateFullRegisters(
+      this.subscriptions,
+      userRegisters,
     );
   }
 
@@ -381,7 +385,7 @@ export class TeleworkReportComponent {
   }
 
   formatDateCL(date: any): string {
-    const d = this.normalizeDate(date);
+    const d = this.toLocalDate(date);
 
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -393,32 +397,24 @@ export class TeleworkReportComponent {
   parseDateCL(date: any): Date {
     if (!date) return new Date();
 
-    // ya es Date (datepicker)
-    if (date instanceof Date) {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-
-    // viene del backend ISO
+    // 🔥 ISO del backend → cortar directo
     if (typeof date === 'string' && date.includes('T')) {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      return d;
+      const [y, m, d] = date.split('T')[0].split('-');
+      return new Date(+y, +m - 1, +d);
     }
 
-    // formato dd/mm/yyyy
+    // dd/mm/yyyy
     if (typeof date === 'string' && date.includes('/')) {
       const parts = date.split('/');
-      const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-      d.setHours(0, 0, 0, 0);
-      return d;
+      return new Date(+parts[2], +parts[1] - 1, +parts[0]);
     }
 
-    // fallback
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    // datepicker
+    if (date instanceof Date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    return new Date(date);
   }
 
   showMessage(title: string, message: string) {
@@ -486,5 +482,239 @@ export class TeleworkReportComponent {
 
     // último día del mes
     this.dateTo = new Date(this.year, this.month, 0);
+  }
+
+  getDurationDays(s: any): number {
+    const start = new Date(s.begin);
+    const end = new Date(s.end);
+
+    const diff = end.getTime() - start.getTime();
+
+    return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  isCurrentlyActive(s: any): boolean {
+    const today = this.parseDateCL(this.getToday());
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(s.begin);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(s.end);
+    end.setHours(0, 0, 0, 0);
+
+    return today >= start && today <= end;
+  }
+
+  getEstado(s: any): 'pendiente' | 'vigente' | 'vencido' {
+    const today = this.parseDateCL(this.getToday());
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(s.begin);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(s.end);
+    end.setHours(0, 0, 0, 0);
+
+    if (today < start) return 'pendiente';
+    if (today > end) return 'vencido';
+    return 'vigente';
+  }
+
+  async generateReport(user: any, mode: 'print' | 'preview' = 'print') {
+    try {
+      this.loader.show();
+
+      this.selectUser(user);
+
+      const data = this.registers.map((r: any) => ({
+        fecha: this.formatDateCL(r.register_datetime),
+        dia: this.getDayOfWeek(r.register_datetime),
+        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+      }));
+
+      const html = this.teleworkReport.generateReport({
+        userName: user.fullName,
+        rut: user.rut,
+        registers: data,
+      });
+
+      if (mode === 'print') {
+        this.teleworkReport.printPdf(html);
+      }
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+
+  getToday(): Date {
+    return new Date();
+  }
+
+  exportUser(user: any) {
+    this.selectUser(user);
+
+    const data = this.generateFullRegisters(
+      this.subscriptions,
+      this.allRegisters.filter(
+        (r) => r.user?.id === user.id || r.userId === user.id,
+      ),
+    ).map((r: any) => ({
+      Fecha: this.formatDateCL(r.register_datetime),
+      Día: this.getDayOfWeek(r.register_datetime),
+      Hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+      Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Marcas');
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: 'application/octet-stream',
+    });
+
+    saveAs(blob, `reporte_${user.fullName}.xlsx`);
+  }
+
+  generateFullRegisters(subscriptions: any[], registers: any[]) {
+    const result = [...registers];
+
+    const today = this.parseDateCL(this.getToday());
+
+    subscriptions.forEach((sub) => {
+      const start = this.parseDateCL(sub.begin);
+      const endOriginal = this.parseDateCL(sub.end);
+
+      // 🔥 usar el mismo today
+      const end = this.isCurrentlyActive(sub) ? today : endOriginal;
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const current = this.parseDateCL(d);
+
+        // 🚫 NO FUTURO
+        if (current > today) continue;
+
+        const dateStr = this.formatDateCL(d);
+
+        const ingreso = result.find(
+          (r) =>
+            this.formatDateCL(r.register_datetime) === dateStr &&
+            r.type === 'ING',
+        );
+
+        const salida = result.find(
+          (r) =>
+            this.formatDateCL(r.register_datetime) === dateStr &&
+            r.type === 'SAL',
+        );
+
+        if (!ingreso) {
+          const dIng = new Date(d);
+          dIng.setHours(0, 0, 0);
+
+          result.push({
+            register_datetime: dIng,
+            type: 'ING',
+            isVirtual: true,
+          });
+        }
+
+        if (!salida) {
+          const dSal = new Date(d);
+          dSal.setHours(0, 0, 0);
+
+          result.push({
+            register_datetime: dSal,
+            type: 'SAL',
+            isVirtual: true,
+          });
+        }
+      }
+    });
+
+    return result.sort(
+      (a, b) =>
+        new Date(a.register_datetime).getTime() -
+        new Date(b.register_datetime).getTime(),
+    );
+  }
+
+  formatTimeCL(date: any, isVirtual?: boolean): string {
+    if (isVirtual) return '00:00';
+
+    const d = new Date(date); // aquí sí, porque hora real
+
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+
+    return `${h}:${m}`;
+  }
+
+  formatDateTimeCL(date: any) {
+    const d = new Date(date);
+
+    return {
+      fecha: d.toLocaleDateString('es-CL'),
+      hora: d.toLocaleTimeString('es-CL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
+    };
+  }
+
+  toLocalDate(date: any): Date {
+    if (!date) return new Date();
+
+    // 🔥 si viene ISO (backend)
+    if (typeof date === 'string' && date.includes('T')) {
+      const [y, m, d] = date.split('T')[0].split('-');
+      return new Date(+y, +m - 1, +d);
+    }
+
+    return new Date(date);
+  }
+
+  trackByFn(index: number, item: any) {
+    return item.register_datetime + '_' + item.type;
+  }
+
+  printUser(user: any) {
+    try {
+      this.loader.show();
+
+      this.selectUser(user);
+
+      const data = this.registers.map((r: any) => ({
+        fecha: this.formatDateCL(r.register_datetime),
+        dia: this.getDayOfWeek(r.register_datetime),
+        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+      }));
+
+      const html = this.teleworkReport.generateReport({
+        userName: user.fullName,
+        rut: user.rut,
+        registers: data,
+      });
+
+      this.teleworkReport.printPdf(html);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
   }
 }

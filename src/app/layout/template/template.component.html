@@ -74,7 +74,7 @@
         <a
           *ngFor="let item of menuItems"
           mat-list-item
-          [routerLink]="item.route"
+          (click)="navigate(item.route)"
           routerLinkActive="active"
         >
           <mat-icon>{{ item.icon }}</mat-icon>
@@ -102,7 +102,7 @@
             *ngFor="let item of mantenedorItems"
             mat-list-item
             class="submenu-item"
-            [routerLink]="item.route"
+            (click)="navigate(item.route)"
             routerLinkActive="active"
           >
             <mat-icon>{{ item.icon }}</mat-icon>
@@ -121,22 +121,29 @@
     <!-- 🔹 CONTENIDO -->
     <mat-sidenav-content>
       <!-- TOPBAR -->
+      <!-- TOPBAR -->
       <mat-toolbar class="topbar">
+        <!-- ☰ MENU -->
         <button mat-icon-button (click)="toggleDrawer()">
           <mat-icon>menu</mat-icon>
         </button>
 
-        <span class="spacer"> TELETRABAJO </span>
+        <!-- 🏷️ TÍTULO -->
+        <span class="title">TELETRABAJO</span>
 
-        <span class="user-info">
-          <mat-icon>badge</mat-icon>
-          {{ userUsername }}
+        <span class="spacer"></span>
 
-          <mat-icon>security</mat-icon>
-          {{ activeRole }}
-        </span>
+        <!-- 👤 USUARIO (PRINCIPAL) -->
+        <div class="user-main">
+          <mat-icon>account_circle</mat-icon>
 
-        <!-- ⏱️ Timer -->
+          <div class="user-text">
+            <div class="name">{{ userFullName }}</div>
+            <div class="meta">{{ userUsername }} · {{ activeRole }}</div>
+          </div>
+        </div>
+
+        <!-- ⏱️ SESIÓN -->
         <div class="session-box">
           <span
             class="session-timer"
@@ -161,21 +168,23 @@
           </button>
         </div>
 
-        <!-- 👤 Usuario -->
-        <span class="welcome-badge">
-          <mat-icon>verified_user</mat-icon>
-          {{ userFullName }}
-        </span>
+        <!-- ⚙️ ACCIONES -->
+        <div class="user-actions">
+          <!-- Perfil -->
+          <button
+            mat-icon-button
+            matTooltip="Mi Perfil"
+            (click)="goToProfile()"
+          >
+            <mat-icon>manage_accounts</mat-icon>
+          </button>
 
-        <button mat-icon-button matTooltip="Mi Perfil" (click)="goToProfile()">
-          <mat-icon>manage_accounts</mat-icon>
-        </button>
-
-        <!-- Logout -->
-        <button mat-stroked-button class="logout-btn" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          Salir
-        </button>
+          <!-- Logout -->
+          <button mat-stroked-button class="logout-btn" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Salir
+          </button>
+        </div>
       </mat-toolbar>
 
       <!-- CONTENIDO DINÁMICO -->

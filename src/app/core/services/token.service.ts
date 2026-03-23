@@ -31,6 +31,9 @@ export class TokenService {
 
   setAccessToken(token: string): void {
     sessionStorage.setItem(this.TOKEN_KEY, token);
+
+    // 💥 SIEMPRE recalcular exp
+    this.setExpirationFromToken(token);
   }
 
   setRefreshToken(refreshToken: string): void {
@@ -58,22 +61,33 @@ export class TokenService {
   // EXPIRACIÓN JWT
   // =====================================================
 
-  setExpirationFromToken(token: string): void {
+  setExpirationFromToken(token: string, expiresIn?: number): void {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      let expiresAtMs: number | null = null;
 
-      const expSeconds = payload.exp;
+      // 🔹 PRIORIDAD 1 → expiresIn (más preciso)
+      if (expiresIn) {
+        expiresAtMs = Date.now() + expiresIn;
+        console.log('[TokenService] Expiración desde expiresIn');
+      } else {
+        // 🔹 PRIORIDAD 2 → JWT exp
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const expSeconds = payload.exp;
 
-      if (!expSeconds) return;
+        if (!expSeconds) return;
 
-      const expiresAtMs = expSeconds * 1000;
+        expiresAtMs = expSeconds * 1000;
+        console.log('[TokenService] Expiración desde JWT');
+      }
 
       sessionStorage.setItem(this.EXPIRES_AT_KEY, expiresAtMs.toString());
+
+      console.log('[TokenService] Expira en:', new Date(expiresAtMs));
     } catch (e) {
       console.error('Error leyendo expiración del token', e);
     }
   }
-
+  
   getTokenExpiration(): number | null {
     const v = sessionStorage.getItem(this.EXPIRES_AT_KEY);
 

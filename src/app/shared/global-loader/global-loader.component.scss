@@ -15,8 +15,10 @@
   justify-content: center;
   align-items: center;
 
-  pointer-events: auto; /* 🔥 BLOQUEA interacción */
+  pointer-events: auto;
   cursor: wait;
+
+  animation: fadeIn 0.2s ease;
 }
 
 /* ===============================

@@ -13,7 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
-
+import { UsersService } from '../../../services/admin/users.service';
 
 @Component({
   standalone: true,
@@ -36,6 +36,7 @@ export class ChangePasswordComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private usersService = inject(UsersService);
 
   hideOld = true;
   hideNew = true;
@@ -59,6 +60,8 @@ export class ChangePasswordComponent {
 
   /** 🔐 Acción principal */
   changePassword(): void {
+    if (this.loading) return;
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -72,25 +75,79 @@ export class ChangePasswordComponent {
       return;
     }
 
-    this.loading = true;
     const { currentPassword, newPassword } = this.form.value;
 
-    console.log('[ChangePassword] Datos enviados:', { currentPassword, newPassword });
+    // 🔥 obtener usuario actual desde session
+    const profile = JSON.parse(sessionStorage.getItem('profile') || '{}');
+    const userId = profile.id;
 
-    // Simulación de cambio en backend
-    setTimeout(() => {
-      this.loading = false;
-      this.snackBar.open('✅ Contraseña actualizada correctamente.', 'OK', {
+    if (!userId) {
+      this.snackBar.open('No se pudo identificar al usuario.', 'Cerrar', {
         duration: 3000,
-        panelClass: ['warn-snackbar'],
+        panelClass: ['error-snackbar'],
       });
+      return;
+    }
 
-      // Limpia formulario
-      this.form.reset();
+    this.loading = true;
 
-      // Regreso al login
-      setTimeout(() => this.router.navigate(['/auth/login']), 1500);
-    }, 2000);
+    // 🔥 1. obtener usuario
+    this.usersService.getById(userId).subscribe({
+      next: (user: any) => {
+        const updatedUser = {
+          id: user.id,
+          firstName: user.firstName,
+          secondName: user.secondName,
+          firstLastName: user.firstLastName,
+          secondLastName: user.secondLastName,
+          email: user.email,
+          username: user.username,
+          rut: user.rut,
+
+          // 🔥 cambio real
+          password: newPassword,
+        };
+
+        // 🔥 2. actualizar
+        this.usersService.updateUser(userId, updatedUser).subscribe({
+          next: () => {
+            this.loading = false;
+
+            this.snackBar.open(
+              '✅ Contraseña actualizada correctamente.',
+              'OK',
+              {
+                duration: 3000,
+                panelClass: ['warn-snackbar'],
+              },
+            );
+
+            this.form.reset();
+
+            setTimeout(() => this.router.navigate(['/auth/login']), 1500);
+          },
+          error: (err) => {
+            this.loading = false;
+
+            console.error(err);
+
+            this.snackBar.open('Error al actualizar la contraseña.', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['error-snackbar'],
+            });
+          },
+        });
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error(err);
+
+        this.snackBar.open('Error al obtener usuario.', 'Cerrar', {
+          duration: 3000,
+          panelClass: ['error-snackbar'],
+        });
+      },
+    });
   }
 
   back(): void {

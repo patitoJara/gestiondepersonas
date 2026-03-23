@@ -5,9 +5,7 @@
 
 <!-- CONTENT -->
 <div mat-dialog-content class="ficha-usuarios-modal">
-
-  <form [formGroup]="form" class="form-usuarios-modal">
-
+  <form [formGroup]="form" class="form-usuarios-modal" autocomplete="off">
     <!-- FILA 1 -->
     <div class="fila-1">
       <div class="field-clinico-linea">
@@ -42,7 +40,7 @@
           <input
             matInput
             formControlName="firstName"
-            (blur)="generarUsername()"
+            (blur)="onBlurNombre('firstName')"
           />
         </mat-form-field>
       </div>
@@ -54,7 +52,7 @@
           <input
             matInput
             formControlName="secondName"
-            (blur)="generarUsername()"
+            (blur)="onBlurNombre('secondName')"
           />
         </mat-form-field>
       </div>
@@ -69,7 +67,7 @@
           <input
             matInput
             formControlName="firstLastName"
-            (blur)="generarUsername()"
+            (blur)="onBlurNombre('firstLastName')"
           />
         </mat-form-field>
       </div>
@@ -78,7 +76,11 @@
         <label>Apellido Materno</label>
 
         <mat-form-field appearance="fill">
-          <input matInput formControlName="secondLastName" />
+          <input
+            matInput
+            formControlName="secondLastName"
+            (blur)="onBlurNombre('secondLastName')"
+          />
         </mat-form-field>
       </div>
     </div>
@@ -95,9 +97,7 @@
             placeholder="Se genera automáticamente"
           />
 
-          <mat-hint>
-            Se genera automáticamente desde el nombre
-          </mat-hint>
+          <mat-hint> Se genera automáticamente desde el nombre </mat-hint>
         </mat-form-field>
       </div>
 
@@ -108,8 +108,8 @@
           <input
             matInput
             formControlName="email"
+            autocomplete="off"
             (blur)="completarCorreo()"
-            placeholder="usuario o usuario&#64;dominio.cl"
           />
 
           <mat-error *ngIf="form.get('email')?.hasError('email')">
@@ -124,15 +124,55 @@
     </div>
 
     <!-- FILA 5 -->
-    <div class="fila-2">
-      <div class="field-clinico-linea">
-        <label>Password</label>
+    <mat-form-field appearance="fill">
+      <!-- inputs ocultos -->
+      <input type="text" style="display: none" />
+      <input type="password" style="display: none" />
 
-        <mat-form-field appearance="fill">
-          <input matInput type="password" formControlName="password" />
-        </mat-form-field>
+      <!-- input principal -->
+      <input
+        matInput
+        [type]="hide ? 'password' : 'text'"
+        formControlName="password"
+        autocomplete="new-password"
+        name="new-password"
+      />
+
+      <mat-hint *ngIf="form.value.id">
+        Dejar en blanco para mantener la contraseña actual
+      </mat-hint>
+
+      <!-- 🔥 CONTENEDOR PRO -->
+      <div matSuffix class="password-actions">
+        <!-- 👁️ -->
+        <button type="button" mat-icon-button (click)="hide = !hide">
+          <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
+        </button>
+
+        <!-- 🔐 -->
+        <button
+          type="button"
+          mat-icon-button
+          (click)="generarClave()"
+          matTooltip="Generar contraseña"
+          class="btn-generate"
+        >
+          <mat-icon>vpn_key</mat-icon>
+        </button>
+
+        <!-- 📋 -->
+        <button
+          *ngIf="passwordGenerada"
+          type="button"
+          mat-icon-button
+          (click)="copiarClave()"
+          matTooltip="Copiar contraseña"
+          class="btn-copy"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
       </div>
-    </div>
+    </mat-form-field>
 
     <!-- ROLES -->
     <div class="field-clinico-linea">
@@ -144,9 +184,7 @@
         </mat-list-option>
       </mat-selection-list>
     </div>
-
   </form>
-
 </div>
 
 <!-- ACTIONS -->

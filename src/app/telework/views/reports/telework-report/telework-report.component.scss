@@ -17,11 +17,12 @@
    TITULO
 ================================== */
 
-mat-card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 10px;
+.report-container mat-card-title {
+  background: #1565c0;
+  color: white;
+  padding: 10px 16px;
+  margin: -16px -16px 12px -16px; /* rompe padding del card */
+  border-radius: 10px 10px 0 0;
 }
 
 /* ==================================
@@ -43,6 +44,13 @@ mat-card-title {
   align-items: center;
 }
 
+.filters {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
 /* inputs más limpios */
 
 mat-form-field {
@@ -52,6 +60,11 @@ mat-form-field {
 ::ng-deep .mat-mdc-text-field-wrapper {
   background: #ffffff;
   border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper:hover {
+  border-color: #1565c0;
 }
 
 /* ==================================
@@ -64,17 +77,19 @@ mat-form-field {
 }
 
 .buttons button:first-child {
-  background: #1976d2;
+  background: #1565c0;
   color: white;
-  font-weight: 500;
+  font-weight: 600;
+  border-radius: 20px;
 }
 
 .buttons button:first-child:hover {
-  background: #1565c0;
+  background: #0d47a1;
 }
 
 .buttons button:last-child {
-  background: #eceff1;
+  background: #e2e8f0;
+  border-radius: 20px;
 }
 
 /* ==================================
@@ -184,11 +199,13 @@ td {
 ================================== */
 
 .counter {
-  font-size: 11px;
+  font-size: 18px;
   margin-left: 8px;
   background: #eceff1;
   padding: 2px 8px;
   border-radius: 10px;
+  color: #098d4b;
+  font-weight: bold;
 }
 
 /* ==================================
@@ -221,17 +238,15 @@ td {
 ================================== */
 
 @media (max-width: 1200px) {
-
   .tables-row {
     grid-template-columns: 1fr;
   }
 
   .filters {
     grid-template-columns: 1fr 1fr;
+    align-items: end;
   }
-
 }
-
 .rut-field.mat-form-field-invalid .mat-mdc-text-field-wrapper {
   border-color: #d32f2f !important;
 }
@@ -249,4 +264,185 @@ td {
   margin-top: 2px;
   margin-left: 4px;
   height: 16px; /* espacio reservado siempre */
+}
+
+.tipo-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.evento-icon {
+  font-size: 20px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.ingreso {
+  color: #2e7d32;
+}
+
+.salida {
+  color: #c62828;
+}
+
+.tipo-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ingreso {
+  color: #2e7d32; // verde pro
+  font-weight: 600;
+}
+
+.salida {
+  color: #c62828; // rojo pro
+  font-weight: 600;
+}
+
+.evento-icon {
+  font-size: 18px;
+}
+
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.activo {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.inactivo {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.activa-hoy {
+  background-color: #e8f5e9 !important;
+}
+
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.vencido {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.pendiente {
+  background: #fff3cd;
+  color: #f57c00;
+}
+
+button[mat-icon-button] {
+  margin-right: 4px;
+}
+
+mat-icon {
+  font-size: 20px;
+}
+
+.virtual {
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-left: 4px solid #adb5bd;
+}
+
+.virtual-row {
+  background: #fff3f3;
+}
+
+.virtual-row .ingreso {
+  color: #2e7d32;
+}
+
+.virtual-row .salida {
+  color: #c62828;
+}
+
+.hora-pendiente {
+  color: #d32f2f; // rojo institucional
+  font-weight: bold;
+}
+
+#print-container {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-container, #print-container * {
+    visibility: visible;
+  }
+
+  #print-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: block;
+  }
+}
+
+h2 {
+  text-align: center;
+  font-size: 16px;
+  margin: 10px 0;
+  color: #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th {
+  background: #1565c0;
+  color: white;
+  font-size: 12px;
+}
+
+td {
+  font-size: 11px;
+}
+
+tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
+
+.mat-mdc-header-row {
+  background: #1565c0 !important;
+}
+
+.mat-mdc-header-cell {
+  color: white !important;
+  font-weight: 600;
+}
+
+.mat-mdc-cell {
+  color: #212529;
+}
+
+.selected-row {
+  background: #e3f2fd !important;
 }

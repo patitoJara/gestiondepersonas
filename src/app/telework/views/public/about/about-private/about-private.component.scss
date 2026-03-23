@@ -20,18 +20,19 @@
 }
 
 .info-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 140px 1fr;
   gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.95rem;
+  align-items: start;
 }
 
 .label {
-  font-weight: 600;
-  color: #444;
-  min-width: 130px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .value {
   color: #666;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

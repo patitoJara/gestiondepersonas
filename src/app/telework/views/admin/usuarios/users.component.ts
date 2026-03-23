@@ -227,6 +227,7 @@ export class UsuariosComponent implements AfterViewInit {
         panelClass: 'usuarios-dialog',
         backdropClass: 'app-backdrop',
         data: row ?? null,
+        disableClose: true,
       });
 
       ref.afterClosed().subscribe((result?: User) => {
