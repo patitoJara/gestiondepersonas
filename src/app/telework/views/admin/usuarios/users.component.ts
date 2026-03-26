@@ -22,7 +22,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
-import { merge } from 'rxjs';
+import { merge ,firstValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
@@ -55,11 +55,11 @@ import { UsuariosDialogComponent } from './users.dialog';
 export class UsuariosComponent implements AfterViewInit {
   displayedColumns = [
     'id',
-    'username',
-    'email',
+    'fullName',
     'rut',
-    'createdAt',
-    'estado',
+    'email',
+    'username',
+    'roles',
     'acciones',
   ];
 
@@ -100,14 +100,21 @@ export class UsuariosComponent implements AfterViewInit {
     switch (active) {
       case 'id':
         return 'id';
-      case 'username':
-        return 'username';
-      case 'email':
-        return 'email';
+
+      case 'fullName':
+        return 'fullName';
+
       case 'rut':
         return 'rut';
-      case 'createdAt':
-        return 'createdAt';
+
+      case 'email':
+        return 'email';
+
+      case 'username':
+        return 'username';
+
+      case 'roles':
+        return 'roles';
 
       default:
         return 'id';
@@ -115,7 +122,7 @@ export class UsuariosComponent implements AfterViewInit {
   }
 
   /** Cargar usuarios */
-  load(): void {
+  async load(): Promise<void> {
     this.loading = true;
 
     const page = this.paginator?.pageIndex ?? 0;
@@ -125,80 +132,151 @@ export class UsuariosComponent implements AfterViewInit {
     const direction = (this.sort?.direction as '' | 'asc' | 'desc') || 'asc';
     const sortField = this.mapSortField(active);
 
-    this.api
-      .getAllPaginated(page, size)
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: (res: any) => {
-          const allRows: User[] = Array.isArray(res)
-            ? res
-            : (res?.content ?? []);
+    try {
+      const res: any = await firstValueFrom(
+        this.api.getAllPaginated(page, size),
+      );
 
-          let filtered = allRows;
+      const rawRows = Array.isArray(res) ? res : (res?.content ?? []);
 
-          if (this.filterState === 'active') {
-            filtered = allRows.filter((r) => !r.deletedAt);
-          } else if (this.filterState === 'deleted') {
-            filtered = allRows.filter((r) => !!r.deletedAt);
-          }
+      let filtered = rawRows;
 
-          const term = (this.q || '').toLowerCase();
+      // 🔹 estado
+      if (this.filterState === 'active') {
+        filtered = rawRows.filter((r: any) => !r.deletedAt);
+      } else if (this.filterState === 'deleted') {
+        filtered = rawRows.filter((r: any) => !!r.deletedAt);
+      }
 
-          if (term) {
-            filtered = filtered.filter(
-              (r) =>
-                (r.username ?? '').toLowerCase().includes(term) ||
-                (r.email ?? '').toLowerCase().includes(term) ||
-                (r.rut ?? '').toLowerCase().includes(term),
-            );
-          }
+      // 🔹 búsqueda
+      const term = (this.q || '').toLowerCase();
 
-          filtered.sort((a, b) => {
-            const va = this.getFieldValue(a, sortField);
-            const vb = this.getFieldValue(b, sortField);
+      if (term) {
+        filtered = filtered.filter(
+          (r: any) =>
+            (r.username ?? '').toLowerCase().includes(term) ||
+            (r.email ?? '').toLowerCase().includes(term) ||
+            (r.rut ?? '').toLowerCase().includes(term),
+        );
+      }
 
-            let cmp = 0;
+      // 🔹 orden
+      filtered.sort((a: any, b: any) => {
+        const va = this.getFieldValue(a, sortField);
+        const vb = this.getFieldValue(b, sortField);
 
-            if (va == null && vb != null) cmp = -1;
-            else if (va != null && vb == null) cmp = 1;
-            else if (typeof va === 'number' && typeof vb === 'number')
-              cmp = va - vb;
-            else
-              cmp = String(va ?? '').localeCompare(String(vb ?? ''), 'es', {
-                numeric: true,
-                sensitivity: 'base',
-              });
+        let cmp = 0;
 
-            return direction === 'asc' ? cmp : -cmp;
+        if (va == null && vb != null) cmp = -1;
+        else if (va != null && vb == null) cmp = 1;
+        else if (typeof va === 'number' && typeof vb === 'number')
+          cmp = va - vb;
+        else
+          cmp = String(va ?? '').localeCompare(String(vb ?? ''), 'es', {
+            numeric: true,
+            sensitivity: 'base',
           });
 
-          const start = page * size;
-          const slice = filtered.slice(start, start + size);
-
-          this.dataSource.data = slice;
-          this.total = filtered.length;
-        },
-
-        error: (err) => console.error('Error cargando usuarios:', err),
+        return direction === 'asc' ? cmp : -cmp;
       });
+
+      // 🔹 paginación
+      const start = page * size;
+      const slice = filtered.slice(start, start + size);
+
+      // =========================================
+      // 🔥 AQUÍ CARGAS LOS ROLES (CORRECTO)
+      // =========================================
+
+      const usersWithRoles = await Promise.all(
+        slice.map(async (u: any) => {
+          try {
+            const resRoles: any = await firstValueFrom(
+              this.api.getUserRoles(u.id),
+            );
+
+            const roles = (resRoles || [])
+              .filter((r: any) => !r.deletedAt)
+              .map((r: any) => r.role?.name)
+              .filter(Boolean);
+
+            return {
+              ...u,
+              roles: roles.map((name: string) => ({ name })),
+            };
+          } catch {
+            return {
+              ...u,
+              roles: [],
+            };
+          }
+        }),
+      );
+
+      this.dataSource.data = usersWithRoles;
+      this.total = filtered.length;
+    } catch (err) {
+      console.error('Error cargando usuarios:', err);
+    } finally {
+      this.loading = false;
+    }
   }
 
   private getFieldValue(row: User, field: string): any {
     switch (field) {
       case 'id':
         return row.id;
+
       case 'username':
         return row.username;
+
       case 'email':
         return row.email;
+
       case 'rut':
         return row.rut;
-      case 'createdAt':
-        return row.createdAt;
+
+      // 🔥 nombre completo
+      case 'fullName':
+        return [
+          row.firstLastName,
+          row.secondLastName,
+          row.firstName,
+          row.secondName,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+      // 🔥 roles
+      case 'roles':
+        return (row.roles || [])
+          .map((r: any) => r.name)
+          .filter(Boolean)
+          .join(', ');
 
       default:
         return row.id;
     }
+  }
+
+  getFullName(row: User): string {
+    return [
+      row.firstName,
+      row.secondName,
+      row.firstLastName,
+      row.secondLastName,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  getRoles(row: User): string {
+    return (
+      (row.roles || [])
+        .map((r: any) => r?.name)
+        .filter(Boolean)
+        .join(', ') || '—'
+    );
   }
 
   applyFilter(term: string): void {

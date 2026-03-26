@@ -219,7 +219,9 @@ export class TemplateComponent implements OnInit, OnDestroy {
   }
 
   buildMenu(): void {
-    const role = (this.activeRole || '').toUpperCase();
+    const normalize = (r: string) => r?.trim().toUpperCase();
+
+    const role = normalize(this.activeRole || '');
 
     const baseMenu: any[] = [];
     const adminMenu: any[] = [];
@@ -233,7 +235,10 @@ export class TemplateComponent implements OnInit, OnDestroy {
       const fullPath = parentPath ? `${parentPath}/${route.path}` : route.path;
 
       const allowedRoles = route.data?.['roles'] ?? [];
-      const visible = allowedRoles.length === 0 || allowedRoles.includes(role);
+
+      const visible =
+        allowedRoles.length === 0 ||
+        allowedRoles.some((r: string) => normalize(r) === role);
 
       if (visible && !route.children && !route.data?.hidden) {
         const item = {

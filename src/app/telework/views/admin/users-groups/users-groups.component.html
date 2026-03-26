@@ -1,0 +1,40 @@
+<h2 class="title">
+  <mat-icon>groups</mat-icon>
+  Gestión de Grupos
+</h2>
+
+<div class="layout-3">
+
+  <!-- 🟦 GRUPOS -->
+  <div class="col">
+    <h3>Grupos</h3>
+
+    <div
+      class="item"
+      *ngFor="let g of groups"
+      (click)="selectGroup(g)"
+      [class.active]="selectedGroup?.id === g.id"
+    >
+      {{ g.name }}
+    </div>
+  </div>
+
+  <!-- 🟩 USUARIOS DEL GRUPO -->
+  <div class="col">
+    <h3>Usuarios del Grupo</h3>
+
+    <div class="item" *ngFor="let u of usersInGroup">
+      {{ u.fullName || (u.firstName + ' ' + u.firstLastName) }}
+    </div>
+  </div>
+
+  <!-- 🟨 USUARIOS SIN GRUPO -->
+  <div class="col">
+    <h3>Usuarios sin Grupo</h3>
+
+    <div class="item" *ngFor="let u of usersWithoutGroup">
+      {{ u.fullName || (u.firstName + ' ' + u.firstLastName) }}
+    </div>
+  </div>
+
+</div>

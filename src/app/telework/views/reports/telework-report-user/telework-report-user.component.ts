@@ -18,6 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { TeleworkReportPrintService } from '@app/telework/services/reports/telework-report-print.service';
+import { RegistersService } from '@app/telework/services/registers.service';
 import { LoaderService } from '@app/core/services/loader.service';
 import { TokenService } from '@app/core/services/token.service';
 
@@ -46,6 +47,7 @@ export class TeleworkReportUserComponent {
   private teleworkReport = inject(TeleworkReportPrintService);
   private loader = inject(LoaderService);
   private tokenService = inject(TokenService);
+  private registersService = inject(RegistersService);
 
   // ===============================
   // FILTROS
@@ -189,23 +191,36 @@ export class TeleworkReportUserComponent {
     try {
       this.loading = true;
 
-      const [registers, subscribes] = await Promise.all([
-        firstValueFrom(this.reportService.getRegisters()),
-        firstValueFrom(this.reportService.getSubscribes()),
-      ]);
+      console.log('👉 userId:', this.userId);
+
+      const registersResponse: any = await firstValueFrom(
+        this.registersService.getRegistersByUser(this.userId),
+      );
+
+      console.log('✅ REGISTERS OK', registersResponse);
+
+      const subscribes = await firstValueFrom(
+        this.reportService.getSubscribes(),
+      );
+
+      console.log('✅ SUBSCRIBES OK', subscribes);
+
+      // 🔥 EXTRAER ARRAY REAL (CLAVE)
+      const registers = registersResponse.content || [];
+
+      // 🔥 guardar respaldo (PRO)
+      this.allRegisters = registers;
+      this.allSubscriptions = subscribes;
 
       // =========================================
       // 🔥 REGISTROS DEL USUARIO
       // =========================================
 
-      let filteredRegisters = registers
-        .filter(
-          (r: any) => r.user?.id === this.userId || r.userId === this.userId,
-        )
-        .map((r: any) => ({
-          ...r,
-          type: r.state,
-        }));
+      let filteredRegisters = registers.map((r: any) => ({
+        ...r,
+        type: r.type || r.state,
+        isVirtual: false,
+      }));
 
       // =========================================
       // 🔥 PRIORIDAD: FECHA > MES/AÑO
@@ -300,7 +315,7 @@ export class TeleworkReportUserComponent {
       }
 
       // =========================================
-      // 🔥 MENSAJE SIN RESULTADOS (AQUÍ VA)
+      // 🔥 MENSAJE SIN RESULTADOS
       // =========================================
 
       if (!this.registers.length && !this.subscriptions.length) {
@@ -316,7 +331,7 @@ export class TeleworkReportUserComponent {
       this.loading = false;
     }
   }
-
+  
   // ===============================
   // LIMPIAR FILTROS
   // ===============================
@@ -326,9 +341,10 @@ export class TeleworkReportUserComponent {
     this.setCurrentMonthYear();
     this.onMonthYearChange();
 
+    this.registers = [];
+    this.subscriptions = [];
+
     this.users = [];
-    this.registers = null as any;
-    this.subscriptions = null as any;
     this.selectedUser = null;
 
     //this.search(); // 💥 UX inmediata
@@ -363,8 +379,8 @@ export class TeleworkReportUserComponent {
   selectUser(user: any): void {
     this.selectedUser = user;
 
-    this.registers = null as any;
-    this.subscriptions = null as any;
+    this.registers = [];
+    this.subscriptions = [];
 
     // 🔹 obtener registros reales
     let userRegisters = this.allRegisters
@@ -555,8 +571,8 @@ export class TeleworkReportUserComponent {
   }
 
   clearResults(): void {
-    this.registers = null as any;
-    this.subscriptions = null as any;
+    this.registers = [];
+    this.subscriptions = [];
   }
 
   onMonthYearChange(): void {
@@ -622,70 +638,8 @@ export class TeleworkReportUserComponent {
     return 'vigente';
   }
 
-  async generateReport(user: any, mode: 'print' | 'preview' = 'print') {
-    try {
-      this.loader.show();
-
-      this.selectUser(user);
-
-      const data = this.registers.map((r: any) => ({
-        fecha: this.formatDateCL(r.register_datetime),
-        dia: this.getDayOfWeek(r.register_datetime),
-        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
-        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-      }));
-
-      const html = this.teleworkReport.generateReport({
-        userName: user.fullName,
-        rut: user.rut,
-        registers: data,
-      });
-
-      if (mode === 'print') {
-        this.teleworkReport.printPdf(html);
-      }
-    } catch (error) {
-      console.error(error);
-      this.showWarning('Error generando reporte');
-    } finally {
-      this.loader.hide();
-    }
-  }
-
   getToday(): Date {
     return new Date();
-  }
-
-  exportUser(user: any) {
-    this.selectUser(user);
-
-    const data = this.generateFullRegisters(
-      this.subscriptions,
-      this.allRegisters.filter(
-        (r) => r.user?.id === user.id || r.userId === user.id,
-      ),
-    ).map((r: any) => ({
-      Fecha: this.formatDateCL(r.register_datetime),
-      Día: this.getDayOfWeek(r.register_datetime),
-      Hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
-      Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Marcas');
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type: 'application/octet-stream',
-    });
-
-    saveAs(blob, `reporte_${user.fullName}.xlsx`);
   }
 
   generateFullRegisters(subscriptions: any[], registers: any[]) {
@@ -838,6 +792,75 @@ export class TeleworkReportUserComponent {
     } catch (error) {
       console.error(error);
       this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+  generateReport() {
+    try {
+      this.loader.show();
+
+      if (!this.registers?.length) {
+        this.showWarning('No hay datos para imprimir');
+        return;
+      }
+
+      const data = this.registers.map((r: any) => ({
+        fecha: this.formatDateCL(r.register_datetime),
+        dia: this.getDayOfWeek(r.register_datetime),
+        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+      }));
+
+      const html = this.teleworkReport.generateReport({
+        userName: this.userName,
+        rut: this.rut,
+        registers: data,
+      });
+
+      this.teleworkReport.printPdf(html);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+
+  exportUser() {
+    try {
+      this.loader.show();
+
+      if (!this.registers?.length) {
+        this.showWarning('No hay datos para exportar');
+        return;
+      }
+
+      const data = this.registers.map((r: any) => ({
+        Fecha: this.formatDateCL(r.register_datetime),
+        Día: this.getDayOfWeek(r.register_datetime),
+        Hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+        Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Telework');
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: 'application/octet-stream',
+      });
+
+      saveAs(blob, `telework_${this.userName}.xlsx`);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error exportando Excel');
     } finally {
       this.loader.hide();
     }

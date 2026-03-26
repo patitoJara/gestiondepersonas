@@ -77,8 +77,11 @@
           (click)="navigate(item.route)"
           routerLinkActive="active"
         >
-          <mat-icon>{{ item.icon }}</mat-icon>
-          {{ item.title }}
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+
+          <span matListItemTitle>
+            {{ item.title }}
+          </span>
         </a>
       </mat-nav-list>
       <!-- MANTENEDORES -->

@@ -35,8 +35,20 @@ export class RegistersService {
   restore(id: number) {
     return this.http.post(`${this.api}/${id}/restore`, {});
   }
-  
+
   getAll() {
     return this.http.get<any[]>(`${this.api}/all`);
+  }
+
+  // 👤 Usuario logueado (si aún lo usas)
+  getMyRegisters() {
+    return this.http.get<any[]>(`${this.api}/user`);
+  }
+
+  // 🧑‍💼 Admin - por usuario específico 🔥
+  getRegistersByUser(userId: number) {
+    return this.http.get<any[]>(`${this.api}/user`, {
+      params: { userId },
+    });
   }
 }

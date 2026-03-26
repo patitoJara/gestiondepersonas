@@ -179,7 +179,11 @@
       <label>Roles *</label>
 
       <mat-selection-list formControlName="roles">
-        <mat-list-option *ngFor="let role of roles" [value]="role.id">
+        <mat-list-option
+          *ngFor="let role of roles"
+          [value]="role.id"
+          [disabled]="isSelfEdit && role.name.toUpperCase() === activeRole"
+        >
           {{ role.name }}
         </mat-list-option>
       </mat-selection-list>

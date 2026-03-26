@@ -273,3 +273,47 @@
 .mat-sidenav-content {
   overflow-x: hidden !important;
 }
+.user-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+/* 🔥 HOVER (CLAVE) */
+.user-option:hover {
+  background: rgba(21, 101, 192, 0.06); // tu azul institucional suave
+}
+
+/* 🧠 CONTENIDO */
+.user-left {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔥 NOMBRE DESTACA */
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0d47a1; // azul más fuerte
+}
+
+/* 🔹 RUT MÁS SUAVE PERO LEGIBLE */
+.user-rut {
+  font-size: 12px;
+  color: #546e7a;
+}
+
+/* 🔥 ICONO MÁS VIVO */
+.user-icon {
+  font-size: 18px;
+  color: #1565c0;
+  opacity: 0.7;
+}
+
+/* 🔥 OPCIONAL: separación entre items */
+mat-option {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}

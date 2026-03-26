@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './telework/views/auth/login/login.component';
 import { TemplateComponent } from './layout/template/template.component';
 import { AboutPublicComponent } from './telework/views/public/about/about-public/about-public.component';
-import { TeleworkSubscribeComponent } from './telework/views/admin/subscribe/telework-subscribe.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -39,7 +38,7 @@ export const routes: Routes = [
             (m) => m.InicioComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
           title: 'Inicio',
           icon: 'home',
         },
@@ -64,7 +63,8 @@ export const routes: Routes = [
             (m) => m.DashboardComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
           title: 'Registro de jornada',
           icon: 'access_time',
         },
@@ -110,13 +110,52 @@ export const routes: Routes = [
       },
 
       {
+        path: 'users-groups',
+        loadComponent: () =>
+          import('./telework/views/admin/users-groups/users-groups.component').then(
+            (m) => m.UsersGroupsComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR'],
+          title: 'Panel de Usuarios y Grupos',
+          icon: 'dashboard',
+        },
+      },
+
+      {
+        path: 'mis-funcionarios',
+        loadComponent: () =>
+          import('./telework/views/admin/jefaturas/jefatura-usuarios.component').then(
+            (m) => m.JefaturaUsuariosComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'JEFATURA'],
+          title: 'Mis Funcionarios',
+          icon: 'groups',
+        },
+      },
+
+      {
+        path: 'mi-reporte-jefatura',
+        loadComponent: () =>
+          import('./telework/views/reports/telework-report-jefatura/telework-report-jefatura.component').then(
+            (m) => m.TeleworkReportJefaturaComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'JEFATURA'],
+          title: 'Mi Reporte',
+          icon: 'assessment',
+        },
+      },
+
+      {
         path: 'manual',
         loadComponent: () =>
           import('./telework/views/manual/manual.component').then(
             (m) => m.ManualComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
           title: 'Manual',
           icon: 'menu_book',
         },
@@ -129,7 +168,7 @@ export const routes: Routes = [
             (m) => m.AboutPrivateComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
           title: 'Acerca del sistema',
           icon: 'info',
         },
@@ -157,9 +196,22 @@ export const routes: Routes = [
             (m) => m.UsuariosComponent,
           ),
         data: {
-          roles: ['ADMIN'],
+          roles: ['ADMIN', 'SUPERVISOR'],
           title: 'Usuarios',
           icon: 'person',
+        },
+      },
+
+      {
+        path: 'admin/jefaturas',
+        loadComponent: () =>
+          import('./telework/views/admin/jefaturas/jefatura-usuarios.component').then(
+            (m) => m.JefaturaUsuariosComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'JEFATURA'],
+          title: 'Jefaturas',
+          icon: 'groups',
         },
       },
 

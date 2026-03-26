@@ -33,6 +33,7 @@ import { formatearNombre } from '@app/shared/utils/name.util';
 
 import { rutValidator } from '../../../../shared/utils/rut.validator';
 import { ErrorConfirmDialogComponent } from '../../../../shared/confirm-dialog/errorConfirmDialogComponent';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -58,8 +59,10 @@ export class UsuariosDialogComponent implements OnInit {
 
   form!: FormGroup;
   roles: Role[] = [];
+  activeRole: string = '';
 
   passwordGenerada: string = '';
+  isSelfEdit: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -81,7 +84,7 @@ export class UsuariosDialogComponent implements OnInit {
       secondName: [this.data?.secondName ?? ''],
       firstLastName: [this.data?.firstLastName ?? '', Validators.required],
       secondLastName: [this.data?.secondLastName ?? ''],
-      password: [''], // 🔥 siempre vacío
+      password: [''],
       roles: [[], Validators.required],
     });
 
@@ -97,6 +100,23 @@ export class UsuariosDialogComponent implements OnInit {
     if (isEdit) {
       this.loadUserRoles(this.data!.id);
     }
+
+    // =========================================
+    // 🔥 CONTEXTO DE SESIÓN
+    // =========================================
+    const currentUser = JSON.parse(sessionStorage.getItem('profile') || '{}');
+
+    const currentUserId = currentUser?.id;
+
+    this.activeRole = (
+      sessionStorage.getItem('activeRole') || ''
+    ).toUpperCase();
+
+    this.isSelfEdit = this.data?.id === currentUserId;
+
+    // =========================================
+    // 🔥 LIMPIAR PASSWORD
+    // =========================================
     setTimeout(() => {
       this.form.get('password')?.setValue('');
     }, 0);
@@ -125,7 +145,7 @@ export class UsuariosDialogComponent implements OnInit {
     });
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (this.form.invalid) return;
 
     const v = this.form.getRawValue();
@@ -133,32 +153,127 @@ export class UsuariosDialogComponent implements OnInit {
     const userPayload: any = { ...v };
     delete userPayload.roles;
 
-    // 🔥 NO sobreescribir password si viene vacío
     if (!userPayload.password) {
       delete userPayload.password;
     }
 
-    const request$ = v.id
-      ? this.usersService.updateUser(v.id, userPayload)
-      : this.usersService.createUser(userPayload);
+    try {
+      // =========================================
+      // 🔹 CREAR / ACTUALIZAR USUARIO
+      // =========================================
+      const savedUser: any = await firstValueFrom(
+        v.id
+          ? this.usersService.updateUser(v.id, userPayload)
+          : this.usersService.createUser(userPayload),
+      );
 
-    request$.subscribe({
-      next: (savedUser: any) => {
-        const userId = savedUser.id ?? v.id;
+      const userId = savedUser.id ?? v.id;
 
-        this.usersService.deleteUserRoles(userId).subscribe(() => {
-          const requests = v.roles.map((roleId: number) =>
-            this.usersService.addUserRole(userId, roleId),
-          );
+      const currentUser = JSON.parse(sessionStorage.getItem('profile') || '{}');
+      const currentUserId = currentUser?.id;
 
-          forkJoin(requests).subscribe({
-            next: () => this.ref.close(true),
-            error: (err) => console.error(err),
+      // =========================================
+      // 🔥 VALIDAR SELF EDIT (NO PERDER ROL ACTIVO)
+      // =========================================
+      if (userId === currentUserId) {
+        const activeRole = (
+          sessionStorage.getItem('activeRole') || ''
+        ).toUpperCase();
+
+        const newRoles = this.roles
+          .filter((r) => v.roles.includes(r.id))
+          .map((r) => r.name.toUpperCase());
+
+        if (!newRoles.includes(activeRole)) {
+          this.dialog.open(ErrorConfirmDialogComponent, {
+            width: '420px',
+            data: {
+              title: 'Acción no permitida',
+              message: 'No puedes quitarte el rol con el que ingresaste.',
+              confirmText: 'Aceptar',
+              icon: 'warning',
+            },
           });
+          return;
+        }
+      }
+
+      // =========================================
+      // 🔥 SINCRONIZAR ROLES (CLAVE)
+      // =========================================
+
+      // 🔹 obtener roles actuales
+      const currentRolesRes: any[] = await firstValueFrom(
+        this.usersService.getUserRoles(userId),
+      );
+
+      const currentRoleIds = currentRolesRes
+        .filter((r: any) => !r.deletedAt)
+        .map((r: any) => r.role?.id);
+
+      const newRoleIds: number[] = v.roles || [];
+
+      // 🔥 diferencias
+      const rolesToAdd = newRoleIds.filter(
+        (id) => !currentRoleIds.includes(id),
+      );
+
+      const rolesToRemove = currentRoleIds.filter(
+        (id) => !newRoleIds.includes(id),
+      );
+
+      // ➕ AGREGAR
+      for (const roleId of rolesToAdd) {
+        await firstValueFrom(this.usersService.addUserRole(userId, roleId));
+      }
+
+      // ➖ ELIMINAR
+      for (const roleId of rolesToRemove) {
+        await firstValueFrom(this.usersService.deleteUserRole(userId, roleId));
+      }
+
+      console.log('✅ Roles sincronizados correctamente');
+
+      // =========================================
+      // 🔥 SELF EDIT → RELOGIN
+      // =========================================
+      if (userId === currentUserId) {
+        this.dialog.open(ErrorConfirmDialogComponent, {
+          width: '420px',
+          disableClose: true,
+          data: {
+            title: 'Sesión actualizada',
+            message: 'Debes iniciar sesión nuevamente.',
+            confirmText: 'Aceptar',
+            icon: 'warning',
+          },
         });
-      },
-      error: (err) => console.error(err),
-    });
+
+        setTimeout(() => {
+          sessionStorage.clear();
+          window.location.href = '/auth/login';
+        }, 1200);
+
+        return;
+      }
+
+      // =========================================
+      // ✅ CIERRE NORMAL
+      // =========================================
+      this.ref.close(true);
+    } catch (err) {
+      console.error('❌ ERROR', err);
+
+      this.dialog.open(ErrorConfirmDialogComponent, {
+        width: '420px',
+        data: {
+          title: 'Error',
+          message: 'No se pudieron guardar los cambios',
+          confirmText: 'Aceptar',
+          icon: 'error',
+        },
+      });
+    }
   }
 
   cancel(): void {

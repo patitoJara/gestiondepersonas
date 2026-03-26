@@ -1,0 +1,43 @@
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #1565c0;
+}
+
+.layout-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.col {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  min-height: 400px;
+}
+
+.col h3 {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.item:hover {
+  background: #f5f7fa;
+}
+
+.item.active {
+  background: #1565c0;
+  color: white;
+  font-weight: 500;
+}

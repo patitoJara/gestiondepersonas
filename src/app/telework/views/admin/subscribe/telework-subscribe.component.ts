@@ -144,32 +144,38 @@ export class TeleworkSubscribeComponent implements OnInit {
       this.usersService.getAllUsersRoles(),
     );
 
-    const adminUsers = res
-      .filter((r: any) => r.role?.name === 'ADMINISTRATIVO')
-      .map((r: any) => {
-        const u = r.user;
+    // 🔥 AGRUPAR POR USUARIO (CLAVE)
+    const usersMap: any = {};
 
-        return {
-          id: u.id,
-          fullName:
-            `${u.firstName} ${u.secondName || ''} ${u.firstLastName || ''} ${u.secondLastName || ''}`
-              .replace(/\s+/g, ' ')
-              .trim(),
-          rut: u.rut || '',
-          email: u.email,
-        };
+    res
+      .filter((r: any) => !r.deletedAt) // 🔥 ESTE ES EL FIX
+      .forEach((r: any) => {
+        const u = r.user;
+        const roleName = r.role?.name?.toUpperCase();
+
+        if (!usersMap[u.id]) {
+          usersMap[u.id] = {
+            id: u.id,
+            fullName:
+              `${u.firstName} ${u.secondName || ''} ${u.firstLastName || ''} ${u.secondLastName || ''}`
+                .replace(/\s+/g, ' ')
+                .trim(),
+            rut: u.rut || '',
+            email: u.email,
+            roles: [],
+          };
+        }
+
+        usersMap[u.id].roles.push(roleName);
       });
 
-    // 🔹 eliminar duplicados
-    const uniqueUsers = Object.values(
-      adminUsers.reduce((acc: any, u: any) => {
-        acc[u.id] = u;
-        return acc;
-      }, {}),
+    // 🔥 FILTRAR SOLO ADMINISTRATIVOS
+    const users = Object.values(usersMap).filter((u: any) =>
+      u.roles.includes('ADMINISTRATIVO'),
     );
 
-    this.users = uniqueUsers;
-    this.filteredUsers = uniqueUsers;
+    this.users = users;
+    this.filteredUsers = users;
   }
 
   async loadSubscriptions(userId: number) {
@@ -488,5 +494,4 @@ export class TeleworkSubscribeComponent implements OnInit {
     d.setHours(0, 0, 0, 0);
     return d;
   }
-
 }

@@ -39,7 +39,10 @@
         readonly
         (click)="pickerFrom.open()"
       />
-      <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="pickerFrom"
+      ></mat-datepicker-toggle>
       <mat-datepicker #pickerFrom></mat-datepicker>
     </mat-form-field>
 
@@ -65,20 +68,33 @@
         Limpiar
       </button>
     </div>
+    <div class="acciones" *ngIf="registers.length">
+      <button mat-raised-button color="primary" (click)="generateReport()">
+        <mat-icon>print</mat-icon>
+        Imprimir
+      </button>
+
+      <button mat-raised-button color="accent" (click)="exportUser()">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+    </div>
   </div>
 </mat-card>
 
 <!-- 🟦 SOLO SUSCRIPCIONES -->
 <div class="tables-row subscriptions-view">
-  <mat-card *ngIf="subscriptions && subscriptions.length" class="subscriptions-table">
+  <mat-card
+    *ngIf="subscriptions && subscriptions.length"
+    class="subscriptions-table"
+  >
     <mat-card-title>
-      Periodos de Teletrabajo
+      Suscripciones de Teletrabajo
       <span class="counter">{{ subscriptions.length }}</span>
     </mat-card-title>
 
     <div class="table-scroll">
       <table mat-table [dataSource]="subscriptions" class="mat-elevation-z2">
-
         <!-- INICIO -->
         <ng-container matColumnDef="start">
           <th mat-header-cell *matHeaderCellDef>Inicio</th>
@@ -119,9 +135,14 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedSubscriptionsColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedSubscriptionsColumns"></tr>
-
+        <tr
+          mat-header-row
+          *matHeaderRowDef="displayedSubscriptionsColumns"
+        ></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedSubscriptionsColumns"
+        ></tr>
       </table>
     </div>
   </mat-card>

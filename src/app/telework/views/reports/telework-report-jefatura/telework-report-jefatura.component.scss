@@ -1,0 +1,237 @@
+/* 🟦 CONTENEDOR GENERAL */
+.jefatura-wrapper,
+.tables-row,
+.users-table,
+.registers-table,
+.subscriptions-table {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 🟦 CARD */
+.jefatura-wrapper {
+  padding: 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+/* 🟦 HEADER */
+.jefatura-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+/* 🟦 AVATAR */
+.jefe-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    color: #1565c0;
+    font-size: 28px;
+  }
+}
+
+/* 🟦 DATA */
+.jefe-data {
+  flex: 1;
+}
+
+.label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.jefatura-nombre {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+.jefe-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+/* 🟦 FILTROS PRO */
+/* 🟦 FILTROS HORIZONTAL PRO */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* inputs tamaño controlado */
+.filters mat-form-field {
+  flex: 0 0 180px; // 🔥 clave: no crece, tamaño fijo elegante
+  max-width: 180px;
+}
+
+/* 🟦 BOTONES A LA DERECHA */
+.filters .buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+/* botones */
+.filters .buttons button {
+  height: 44px;
+  min-width: 110px;
+  border-radius: 10px;
+}
+
+/* hover */
+.filters .buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* 🟦 TABLAS */
+.tables-row {
+  margin-top: 20px;
+}
+
+/* 🟦 LISTAS (si las usas) */
+.list-box {
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  background: #ffffff;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.list-box:hover {
+  transform: translateY(-2px);
+}
+
+.list-box h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* 🟦 CONTENIDO */
+.list-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* 🟦 BOTONES DUAL */
+.dual-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 🟦 EMPTY */
+.empty-list {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  margin-top: 40px;
+
+  mat-icon {
+    font-size: 40px;
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 6px;
+  }
+}
+
+/* 🟦 HOVER LIST */
+mat-list-option {
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: all 0.15s ease;
+}
+
+mat-list-option:hover {
+  background: rgba(21, 101, 192, 0.1);
+}
+
+.mat-mdc-list-option.mdc-list-item--selected {
+  background: rgba(21, 101, 192, 0.18);
+}
+
+/* 🟦 RESPONSIVE */
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters .buttons {
+    justify-content: center;
+  }
+
+  .dual-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.dashboard-3col {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+/* columnas */
+.col {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* scroll tablas */
+.table-scroll {
+  max-height: 400px;
+  overflow: auto;
+}
+
+/* fila seleccionada */
+.selected {
+  background: rgba(21, 101, 192, 0.15);
+  cursor: pointer;
+}
+
+mat-row {
+  cursor: pointer;
+}
+
+/* 📱 responsive */
+@media (max-width: 900px) {
+  .dashboard-3col {
+    grid-template-columns: 1fr;
+  }
+}

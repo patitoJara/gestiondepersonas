@@ -14,7 +14,11 @@ import { VistaAdminComponent } from './sections/vista-admin.component';
 import { VistaFuncionarioComponent } from './sections/vista-funcionario.component';
 import { CierreInstitucionalComponent } from './sections/cierre-institucional.component';
 import { ManualesComponent } from './sections/manuales.component';
-import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { ReportesComponent } from './sections/reportes.component';
+import { RolesUsuariosComponent } from './sections/roles-usuarios.component';
+
+
+import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 
 @Component({
   selector: 'app-manual',
@@ -37,20 +41,27 @@ import { Component, ViewChild, ElementRef, HostListener } from '@angular/core';
     VistaFuncionarioComponent,
     CierreInstitucionalComponent,
     ManualesComponent,
+    ReportesComponent,
+    RolesUsuariosComponent
   ],
 })
-export class ManualComponent {
-  // 👇 ESCUCHA SCROLL GLOBAL (CLAVE)
+export class ManualComponent implements AfterViewInit {
 
   @ViewChild('manualScroll') manualScroll!: ElementRef<HTMLDivElement>;
 
   showIndexBtn = false;
 
+  ngAfterViewInit(): void {
+    // seguridad por si necesitas lógica futura
+  }
+
+  // 🔥 SCROLL DEL CONTENEDOR
   onScroll(): void {
     const scrollTop = this.manualScroll.nativeElement.scrollTop;
     this.showIndexBtn = scrollTop > 300;
   }
 
+  // 🔝 VOLVER ARRIBA
   scrollToIndex(): void {
     this.manualScroll.nativeElement.scrollTo({
       top: 0,
@@ -58,13 +69,37 @@ export class ManualComponent {
     });
   }
 
+  // 🎯 SCROLL PRO REAL
   scrollTo(id: string): void {
-    const target = document.getElementById(id);
+    const container = this.manualScroll.nativeElement;
+    const target = container.querySelector(`#${id}`) as HTMLElement;
+
     if (!target) return;
 
-    target.scrollIntoView({
+    const containerTop = container.getBoundingClientRect().top;
+    const targetTop = target.getBoundingClientRect().top;
+
+    const offset = targetTop - containerTop + container.scrollTop - 10;
+
+    container.scrollTo({
+      top: offset,
       behavior: 'smooth',
-      block: 'start',
     });
   }
+
+  // 🔥 (OPCIONAL) ÍNDICE DINÁMICO
+  sections = [
+    { id: 'objetivo', label: '1  Objetivo del Sistema' },
+    { id: 'principios', label: '2  Principios de Funcionamiento' },
+    { id: 'rolesusuarios', label: '3 Modelo de Roles y Asignación de Usuarios' },
+    { id: 'vista-funcionario', label: '4  Vista Funcionario' },
+    { id: 'vista-admin', label: '5  Vista Administrador / RRHH' },
+    { id: 'usuarios', label: '6  Administración de Usuarios' },
+    { id: 'suscripciones', label: '7  Gestión de Suscripciones' },
+    { id: 'reportes', label: '8  Módulo de Reportes' },      
+    { id: 'validaciones', label: '9  Validaciones Backend' },
+    { id: 'modelo', label: '10  Modelo de Datos' },
+    { id: 'vpn', label: '11  Configuración VPN (Acceso Remoto)' },
+    { id: 'gusuario', label: '12  Gestión de Sesión de Usuario' }
+  ];
 }

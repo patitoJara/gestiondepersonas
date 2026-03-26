@@ -68,7 +68,23 @@
       <button mat-raised-button color="warn" (click)="clearFilters()">
         Limpiar
       </button>
+
+
     </div>
+
+    <div class="acciones" *ngIf="registers.length">
+      <button mat-raised-button color="primary" (click)="generateReport()">
+        <mat-icon>print</mat-icon>
+        Imprimir
+      </button>
+
+      <button mat-raised-button color="accent" (click)="exportUser()">
+        <mat-icon>download</mat-icon>
+        Exportar
+      </button>
+    </div>
+
+
   </div>
 </mat-card>
 
@@ -116,7 +132,10 @@
 
   <!-- SUSCRIPCIONES -->
 
-  <mat-card *ngIf="subscriptions && subscriptions.length" class="subscriptions-table">
+  <mat-card
+    *ngIf="subscriptions && subscriptions.length"
+    class="subscriptions-table"
+  >
     <mat-card-title>
       Mis Suscripciones
       <span class="counter">{{ subscriptions.length }}</span>

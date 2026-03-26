@@ -17,7 +17,7 @@ import { firstValueFrom } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { TeleworkReportPrintService } from '@app/telework/services/reports/telework-report-print.service';
+import { TeleworkReportPrintSubscriptionService } from '@app/telework/services/reports/telework-report-subscription.service';
 import { LoaderService } from '@app/core/services/loader.service';
 import { TokenService } from '@app/core/services/token.service';
 
@@ -43,7 +43,7 @@ import { TokenService } from '@app/core/services/token.service';
 export class TeleworkUserSubscriptionsComponent {
   private dialog = inject(MatDialog);
   private reportService = inject(TeleworkReportService);
-  private teleworkReport = inject(TeleworkReportPrintService);
+  private teleworkReport = inject(TeleworkReportPrintSubscriptionService);
   private loader = inject(LoaderService);
   private tokenService = inject(TokenService);
 
@@ -327,8 +327,8 @@ export class TeleworkUserSubscriptionsComponent {
     this.onMonthYearChange();
 
     this.users = [];
-    this.registers = null as any;
-    this.subscriptions = null as any;
+    this.registers = [];
+    this.subscriptions = [];
     this.selectedUser = null;
 
     //this.search(); // 💥 UX inmediata
@@ -362,9 +362,8 @@ export class TeleworkUserSubscriptionsComponent {
 
   selectUser(user: any): void {
     this.selectedUser = user;
-
-    this.registers = null as any;
-    this.subscriptions = null as any;
+    this.registers = [];
+    this.subscriptions = [];
 
     // 🔹 obtener registros reales
     let userRegisters = this.allRegisters
@@ -555,8 +554,8 @@ export class TeleworkUserSubscriptionsComponent {
   }
 
   clearResults(): void {
-    this.registers = null as any;
-    this.subscriptions = null as any;
+    this.registers = [];
+    this.subscriptions = [];
   }
 
   onMonthYearChange(): void {
@@ -622,70 +621,8 @@ export class TeleworkUserSubscriptionsComponent {
     return 'vigente';
   }
 
-  async generateReport(user: any, mode: 'print' | 'preview' = 'print') {
-    try {
-      this.loader.show();
-
-      this.selectUser(user);
-
-      const data = this.registers.map((r: any) => ({
-        fecha: this.formatDateCL(r.register_datetime),
-        dia: this.getDayOfWeek(r.register_datetime),
-        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
-        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-      }));
-
-      const html = this.teleworkReport.generateReport({
-        userName: user.fullName,
-        rut: user.rut,
-        registers: data,
-      });
-
-      if (mode === 'print') {
-        this.teleworkReport.printPdf(html);
-      }
-    } catch (error) {
-      console.error(error);
-      this.showWarning('Error generando reporte');
-    } finally {
-      this.loader.hide();
-    }
-  }
-
   getToday(): Date {
     return new Date();
-  }
-
-  exportUser(user: any) {
-    this.selectUser(user);
-
-    const data = this.generateFullRegisters(
-      this.subscriptions,
-      this.allRegisters.filter(
-        (r) => r.user?.id === user.id || r.userId === user.id,
-      ),
-    ).map((r: any) => ({
-      Fecha: this.formatDateCL(r.register_datetime),
-      Día: this.getDayOfWeek(r.register_datetime),
-      Hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
-      Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Marcas');
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type: 'application/octet-stream',
-    });
-
-    saveAs(blob, `reporte_${user.fullName}.xlsx`);
   }
 
   generateFullRegisters(subscriptions: any[], registers: any[]) {
@@ -828,16 +765,85 @@ export class TeleworkUserSubscriptionsComponent {
         tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
       }));
 
-      const html = this.teleworkReport.generateReport({
-        userName: user.fullName,
-        rut: user.rut,
-        registers: data,
+      const html = this.teleworkReport.generateReportSubscriptions({
+        userName: this.userName,
+        rut: this.rut,
+        subscriptions: data,
       });
 
       this.teleworkReport.printPdf(html);
     } catch (error) {
       console.error(error);
       this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+  generateReport() {
+    try {
+      this.loader.show();
+
+      if (!this.subscriptions.length) {
+        this.showWarning('No hay suscripciones para imprimir');
+        return;
+      }
+
+      const data = this.subscriptions.map((s: any) => ({
+        inicio: this.formatDateCL(s.begin),
+        fin: this.formatDateCL(s.end),
+        dias: this.getDurationDays(s),
+        estado: this.getEstado(s),
+      }));
+
+      const html = this.teleworkReport.generateReportSubscriptions({
+        userName: this.userName,
+        rut: this.rut,
+        subscriptions: data,
+      });
+
+      this.teleworkReport.printPdf(html);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+
+  exportUser() {
+    try {
+      this.loader.show();
+
+      if (!this.subscriptions.length) {
+        this.showWarning('No hay suscripciones para exportar');
+        return;
+      }
+
+      const data = this.subscriptions.map((s: any) => ({
+        Inicio: this.formatDateCL(s.begin),
+        Fin: this.formatDateCL(s.end),
+        Días: this.getDurationDays(s),
+        Estado: this.getEstado(s),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Suscripciones');
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: 'application/octet-stream',
+      });
+
+      saveAs(blob, `suscripciones_${this.userName}.xlsx`);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error exportando Excel');
     } finally {
       this.loader.hide();
     }

@@ -120,11 +120,12 @@
         >
           <mat-option *ngFor="let u of filteredUsers" [value]="u">
             <div class="user-option">
-              <div class="user-name">
-                {{ u.fullName }}
+              <div class="user-left">
+                <span class="user-name">{{ u.fullName }}</span>
+                <span class="user-rut">RUT: {{ u.rut }}</span>
               </div>
 
-              <div class="user-rut">RUT: {{ u.rut }}</div>
+              <mat-icon class="user-icon">person</mat-icon>
             </div>
           </mat-option>
         </mat-autocomplete>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
-
+import { forkJoin, map, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -46,6 +46,48 @@ export class TeleworkReportService {
 
   getRegisterById(id: number) {
     return this.http.get(`${this.apiRegisters}/${id}`);
+  }
+
+  // ============================================
+  // 🔥 NUEVO → REGISTROS POR MÚLTIPLES USUARIOS (JEFATURA)
+  // ============================================
+
+  getRegistersByUsers(userIds: number[]) {
+    if (!userIds || userIds.length === 0) {
+      return of([]); // 👈 limpio y rxjs-friendly
+    }
+
+    const requests = userIds.map((id) =>
+      this.getRegistersByUser(id)
+    );
+
+    return forkJoin(requests).pipe(
+      map((results) => results.flat())
+    );
+  }
+
+  // ============================================
+  // 🔥 OPCIONAL PRO → CON FILTRO POR FECHA
+  // ============================================
+
+  getRegistersByUsersAndRange(
+    userIds: number[],
+    dateFrom: string,
+    dateTo: string
+  ) {
+    if (!userIds || userIds.length === 0) {
+      return of([]);
+    }
+
+    const requests = userIds.map((id) =>
+      this.http.get<any[]>(
+        `${this.apiRegisters}/user/${id}/range?from=${dateFrom}&to=${dateTo}`
+      )
+    );
+
+    return forkJoin(requests).pipe(
+      map((results) => results.flat())
+    );
   }
 
   // ============================================

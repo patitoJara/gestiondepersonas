@@ -1,5 +1,9 @@
-export interface User {
+export interface Role {
+  id: number;
+  name: string;
+}
 
+export interface User {
   id: number;
 
   firstName: string;
@@ -17,4 +21,5 @@ export interface User {
   updatedAt?: string;
   deletedAt?: string;
 
+  roles?: Role[]; // 🔥 AQUÍ ESTÁ LA MAGIA
 }

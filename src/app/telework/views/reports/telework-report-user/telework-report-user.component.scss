@@ -259,16 +259,24 @@ tbody tr:hover {
 ================================== */
 
 .filters {
+
   display: grid;
-  grid-template-columns: 140px 120px 150px 150px auto;
+  grid-template-columns: 140px 120px 150px 150px auto 1fr auto;
   gap: 10px;
   align-items: center;
-
   background: #ffffff;
   padding: 10px 12px; // 🔥 menos alto
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
+
+.acciones {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 
 /* inputs */
 .filters mat-form-field {

@@ -64,11 +64,24 @@ export class UsersService {
     });
   }
 
-  deleteUserRoles(userId: number) {
-    return this.http.delete(`${environment.apiUrl}/users_roles/user/${userId}`);
-  }
-
   getAllUsersRoles() {
     return this.http.get<any[]>(`${environment.apiUrl}/users_roles/all`);
+  }
+
+  updateUserRoles(userId: number, roles: number[]) {
+    return this.http.put(
+      `${this.api}/users_roles/${userId}`,
+      roles.map((id) => ({ roleId: id })),
+    );
+  }
+
+  deleteUserRole(userId: number, roleId: number) {
+    return this.http.delete(
+      `${environment.apiUrl}/users_roles/user/${userId}/role/${roleId}`,
+    );
+  }
+
+  getAll() {
+    return this.http.get<any[]>(`${this.api}/all`);
   }
 }

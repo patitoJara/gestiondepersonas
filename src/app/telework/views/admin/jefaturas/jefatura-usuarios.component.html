@@ -1,0 +1,112 @@
+<mat-card class="jefatura-wrapper">
+  <!-- 🟦 HEADER PRO -->
+  <div class="jefatura-header">
+    <div class="jefe-avatar">
+      <mat-icon>badge</mat-icon>
+    </div>
+
+    <div class="jefe-data">
+      <span class="label">Jefatura</span>
+      <h2 class="jefatura-nombre">{{ grupo.name || "Sin nombre" }}</h2>
+
+      <div class="jefe-sub">
+        <mat-icon>person</mat-icon>
+        <span>{{ jefe?.fullName }}</span>
+      </div>
+    </div>
+
+    <div class="jefatura-actions">
+      <button mat-raised-button color="primary" (click)="guardar()">
+        <mat-icon>save</mat-icon>
+        Guardar
+      </button>
+    </div>
+
+    <div class="jefatura-actions">
+      <button mat-raised-button color="secundary" (click)="cancel()">
+        <mat-icon>logout</mat-icon>
+        Salir
+      </button>
+    </div>
+
+  </div>
+
+  <!-- 🟦 FORM -->
+  <div class="jefatura-form">
+    <div class="input-group">
+      <label>Nombre de Jefatura</label>
+      <input
+        type="text"
+        [(ngModel)]="grupo.name"
+        placeholder="Ingrese nombre"
+      />
+    </div>
+
+    <div class="input-group">
+      <label>Descripción</label>
+      <input
+        type="text"
+        [(ngModel)]="grupo.description"
+        placeholder="Ingrese descripción"
+      />
+    </div>
+  </div>
+
+  <!-- 🔄 DUAL LIST -->
+  <div class="dual-container">
+    <!-- DISPONIBLES -->
+    <div class="list-box">
+      <h4>Disponibles ({{ usuariosDisponibles.length }})</h4>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar</mat-label>
+        <input matInput [(ngModel)]="filtroDisponible" />
+      </mat-form-field>
+
+      <div class="list-content">
+        <div *ngIf="!usuariosDisponibles.length" class="empty-list">
+          <mat-icon>group_off</mat-icon>
+          <span>Sin usuarios disponibles</span>
+        </div>
+
+        <mat-selection-list [(ngModel)]="selectedDisponibles">
+          <mat-list-option
+            *ngFor="let u of usuariosDisponiblesFiltrados()"
+            [value]="u"
+          >
+            {{ u.fullName }}
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="dual-actions">
+      <button mat-fab color="primary" (click)="agregar()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <button mat-fab color="warn" (click)="quitar()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+    </div>
+
+    <!-- ASIGNADOS -->
+    <div class="list-box">
+      <h4>Asignados ({{ usuariosAsignados.length }})</h4>
+
+      <div class="list-content">
+        <div *ngIf="!usuariosAsignados.length" class="empty-list">
+          <mat-icon>person_off</mat-icon>
+          <span>Sin usuarios asignados</span>
+        </div>
+
+        <mat-selection-list [(ngModel)]="selectedAsignados">
+          <mat-list-option *ngFor="let u of usuariosAsignados" [value]="u">
+            {{ u.fullName }}
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
+    </div>
+  </div>
+</mat-card>
