@@ -252,3 +252,54 @@ mat-form-field.full {
 .login-button {
   background-color: #0066cc;
 }
+
+/* =====================================================
+   🔥 SIRUS LOGIN ENHANCEMENT (NO ROMPE NADA)
+===================================================== */
+
+/* INPUTS MÁS PRO */
+.login-wrapper .mat-mdc-text-field-wrapper {
+  background: #ffffff !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* HOVER */
+.login-wrapper .mat-mdc-text-field-wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.2);
+}
+
+/* FOCUS */
+.login-wrapper .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.25);
+}
+
+/* TEXTO */
+.login-wrapper .mat-mdc-input-element {
+  caret-color: #1565c0;
+}
+
+/* ICONO PASSWORD */
+.login-wrapper .mat-mdc-form-field-icon-suffix mat-icon {
+  color: #607d8b;
+  transition: 0.2s;
+}
+
+.login-wrapper .mat-mdc-form-field-icon-suffix button:hover mat-icon {
+  color: #1565c0;
+}
+
+/* BOTÓN PRO */
+.login-btn {
+  min-width: 160px;
+  height: 44px;
+  border-radius: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+}

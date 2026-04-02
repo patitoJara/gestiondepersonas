@@ -1,5 +1,3 @@
-// src/app/core/interceptors/auth.interceptor.ts
-
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import {
@@ -18,7 +16,6 @@ let isRefreshing = false;
 let refreshSubject = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-
   const tokenService = inject(TokenService);
   const authService = inject(AuthLoginService);
 
@@ -31,68 +28,70 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  // 🔥 TOKEN REAL
   const token = tokenService.getAccessToken();
 
-  const authReq = token
-    ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-    : req;
+  if (!token) {
+    console.warn('🚨 NO HAY TOKEN');
+    return next(req); // 👈 SOLO ESTO
+  }
+
+  // 🔐 REQUEST CON TOKEN
+  const authReq = req.clone({
+    setHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-
       if (error.status !== 401) {
         return throwError(() => error);
       }
 
-      // 🔁 Si ya hay refresh en curso
+      console.warn('⚠️ 401 → intentando refresh');
+
+      // 🔁 SI YA HAY REFRESH EN CURSO
       if (isRefreshing) {
         return refreshSubject.pipe(
-          filter((token): token is string => token !== null),
+          filter((t): t is string => t !== null),
           take(1),
           switchMap((newToken) => {
-
-            const retryReq = req.clone({
+            const retryReq = authReq.clone({
               setHeaders: {
                 Authorization: `Bearer ${newToken}`,
               },
             });
-
             return next(retryReq);
           }),
         );
       }
 
-      // 🔐 iniciar refresh
+      // 🔄 INICIAR REFRESH
       isRefreshing = true;
       refreshSubject.next(null);
 
       return authService.refresh().pipe(
-
         switchMap((response: any) => {
-
           const newToken = response?.token;
           const newRefreshToken = response?.refreshToken;
 
           if (!newToken) {
+            console.error('❌ Refresh inválido');
             tokenService.clear();
+            window.location.href = '/auth/login';
             return throwError(() => error);
           }
 
-          // guardar nuevos tokens
-          tokenService.setAccessToken(newToken);
+          console.log('🔄 TOKEN REFRESCADO OK');
 
-          if (newRefreshToken) {
-            tokenService.setRefreshToken(newRefreshToken);
-          }
+          tokenService.setTokens(newToken, newRefreshToken);
 
           isRefreshing = false;
           refreshSubject.next(newToken);
 
-          const retryReq = req.clone({
+          // 🔥 ESTE ES EL FIX REAL
+          const retryReq = authReq.clone({
             setHeaders: {
               Authorization: `Bearer ${newToken}`,
             },
@@ -102,12 +101,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
 
         catchError((refreshError) => {
+          console.error('❌ ERROR EN REFRESH');
 
           isRefreshing = false;
           tokenService.clear();
+          window.location.href = '/auth/login';
 
           return throwError(() => refreshError);
-
         }),
       );
     }),

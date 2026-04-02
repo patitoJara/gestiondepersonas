@@ -1,0 +1,113 @@
+/* WRAPPER */
+.sirus-field {
+  border-radius: 12px;
+  background: #f5f7fa; /* 👈 más suave que gris */
+  padding: 10px;
+  border: 1px solid #e3e7ed; /* 👈 borde sutil */
+  transition: 0.2s;
+  margin-top: 4px; /* 👈 separa del header */
+}
+
+.sirus-field:hover {
+  border-color: rgba(21, 101, 192, 0.3);
+}
+
+.sirus-field:focus-within {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.15);
+  border-color: rgba(21, 101, 192, 0.4);
+}
+
+/* MATERIAL FIX */
+.sirus-field .mat-mdc-text-field-wrapper {
+  background: transparent !important;
+}
+/* TEXTAREA */
+.sirus-field textarea {
+  padding: 10px !important;
+}
+
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+mat-dialog-content {
+  padding: 16px 20px 20px 20px !important; /* 👈 top más chico */
+  background: #fafafa;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* 👈 más aire */
+
+  max-height: 300px;
+  overflow: auto;
+}
+mat-dialog-actions {
+  padding: 16px 20px !important;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+/* TEXTAREA PRO */
+textarea.mat-mdc-input-element {
+  padding: 12px 10px !important;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sirus-dialog .mdc-dialog__surface {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* FIX MATERIAL PARA TEXTAREA */
+
+.sirus-field .mat-mdc-text-field-wrapper {
+  background: #f8fafc;
+}
+
+.sirus-dialog .mat-mdc-text-field-wrapper {
+  min-height: 56px;
+  height: auto;
+}
+
+textarea.mat-mdc-input-element {
+  height: auto !important;
+  line-height: 1.4 !important;
+  padding: 10px 0 !important;
+}
+
+.mat-mdc-form-field textarea {
+  margin-top: 6px;
+}
+
+.sirus-dialog .sirus-field .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 16px 20px;
+  background: #91ad6e;
+  color: rgb(12, 17, 19);
+}
+
+.dialog-header mat-icon {
+  color: #bbdefb;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+

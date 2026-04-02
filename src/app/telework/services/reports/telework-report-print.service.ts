@@ -23,10 +23,21 @@ export class TeleworkReportPrintService {
         font-size: 12px;
       }
 
-      th, td {
+      th {
         border: 1px solid #ccc;
         padding: 5px;
+        background: #1565c0;
+        color: white;
+        font-weight: 600;
         text-align: center;
+      }
+
+      td {
+        border: 1px solid #ccc;
+        margin: 0;
+        padding: 0;
+        font-size: 11px;
+        vertical-align: top; /* 🔥 CLAVE */
       }
 
       th {
@@ -65,7 +76,7 @@ export class TeleworkReportPrintService {
     // (html2pdf() as any).set(opt).from(element).save();
 
     // solo abrir
-    
+
     (html2pdf() as any)
       .set(opt)
       .from(element)
@@ -73,7 +84,6 @@ export class TeleworkReportPrintService {
       .then((url: string) => {
         window.open(url);
       });
-      
 
     // control total - ambos
     /*(html2pdf() as any)
@@ -90,6 +100,116 @@ export class TeleworkReportPrintService {
         a.download = 'reporte-telework.pdf';
         a.click();
       });      */
+  }
+
+  generateWorksReport(payload: {
+    userName: string;
+    rut: string;
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+    works: any[];
+  }): string {
+    const now = new Date();
+    const fechaImp = now.toLocaleDateString('es-CL');
+    const horaImp = now.toLocaleTimeString('es-CL', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const { userName, rut, works, dateFrom, dateTo } = payload;
+
+    const logoUrl = `${window.location.origin}/assets/logoSSM.png`;
+
+    const periodo =
+      dateFrom && dateTo
+        ? `${dateFrom.toLocaleDateString('es-CL')} - ${dateTo.toLocaleDateString('es-CL')}`
+        : 'Todos los registros';
+
+    // 🔥 FILAS LIMPIAS (SIN ESPACIOS FANTASMAS)
+    
+const rows = works.map(w => `
+<div style="display:grid; grid-template-columns:90px 70px 1fr; border-bottom:1px solid #ccc; font-size:11px; align-items:center;">
+
+<div style="padding:4px 6px;">${w.fecha}</div>
+
+<div style="padding:4px 6px;">${w.hora}</div>
+
+<div style="padding:4px 6px; text-align:left; white-space:pre-wrap; word-break:break-word; line-height:1.2;">
+${w.actividad?.trim() || ''}
+</div>
+
+</div>
+`).join('');
+
+    return `
+<div style="font-family:Arial; font-size:11px; margin:0; padding:0;">
+
+  <!-- HEADER -->
+  <div style="display:flex; align-items:center; gap:10px;">
+    <img src="${logoUrl}" style="height:65px;" />
+
+    <div style="font-size:12px;">
+      <strong>Servicio de Salud Magallanes</strong><br>
+      Sistema de Teletrabajo
+    </div>
+  </div>
+
+  <!-- TITULO -->
+  <h3 style="
+    text-align:center;
+    color:#1565c0;
+    border-top:1px solid #1565c0;
+    border-bottom:1px solid #1565c0;
+    padding:5px;
+    margin:10px 0;
+    font-size:14px;
+  ">
+    REPORTE DE ACTIVIDADES DE TELETRABAJO
+  </h3>
+
+  <!-- INFO -->
+  <div style="font-size:12px; margin-bottom:10px;">
+    <div><strong>Nombre:</strong> ${userName}</div>
+    <div><strong>RUT:</strong> ${rut}</div>
+    <div><strong>Período:</strong> ${periodo}</div>
+  </div>
+
+  <!-- HEADER COLUMNAS -->
+    <div style="
+      display:grid;
+      grid-template-columns: 90px 70px 1fr;
+      background:#1565c0;
+      color:white;
+      font-weight:600;
+      font-size:12px;
+    ">
+
+      <div style="padding:4px 6px;">Fecha</div>
+
+      <div style="padding:4px 6px;">Hora</div>
+
+      <div style="padding:4px 6px; text-align:center;">
+        Actividad
+      </div>
+
+    </div>
+  <!-- CONTENIDO -->
+  <div>
+    ${rows}
+  </div>
+
+  <!-- FOOTER -->
+  <div style="
+    margin-top:10px;
+    font-size:10px;
+    text-align:right;
+    color:#555;
+  ">
+    Impreso el ${fechaImp} a las ${horaImp}
+  </div>
+
+</div>
+`;
   }
 
   // 🔥 GENERA HTML DEL REPORTE

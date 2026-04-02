@@ -1,275 +1,520 @@
-/* =========================================
-   MODAL GENERAL
-========================================= */
+// src\app\telework\views\admin\usuarios\users.dialog.scss
 
-.usuarios-dialog .mat-mdc-dialog-container {
-  padding: 0 !important;
-  background: #ffffff !important;
-  border-radius: 6px !important;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18) !important;
-  overflow: hidden !important;
-  max-height: 92vh;
+/* =====================================================
+   🧠 SIRUS UI SYSTEM v1.1 (FINAL ESTABLE)
+   =====================================================
+
+   🎯 PROPÓSITO
+   Sistema UI compacto, consistente y escalable para SSM.
+
+   =====================================================
+
+   📦 ÍNDICE DE COMPONENTES
+
+   🔹 BASE
+   🔹 TITULOS
+   🔹 LAYOUT
+   🔹 CARDS
+   🔹 HEADERS
+   🔹 COLORES
+   🔹 LISTAS
+   🔹 USER
+   🔹 TAGS
+   🔹 EMPTY STATE
+   🔹 ICONOS
+   🔹 TOOLBAR
+   🔹 RESPONSIVE
+   🔹 DIALOG HEADER
+   🔹 FORM GRID
+   🔹 FORM FIELDS
+   🔹 PASSWORD
+   🔹 MATERIAL FIX
+   🔹 RESPONSIVE FORM
+   🔹 ROLES
+
+   =====================================================
+🔹 🧩 FORMULARIOS PRO
+   - .form-layout
+   - .form-field
+   - .col-1 .col-2 .col-3 .col-4
+
+   ⚠️ DEPRECADO
+   - .form-grid
+   - .form-row
+
+   =====================================================
+
+   🎨 REGLAS VISUALES
+
+   ✔ Usar colores del sistema (blue, green, orange, purple)
+   ✔ No usar negro puro (#000)
+   ✔ UI compacta (gap 6–10px)
+   ✔ Inputs altura fija (32px)
+   ✔ Iconos siempre con color
+
+   ❌ No crear layouts paralelos
+   ❌ No usar spacing arbitrario
+   ❌ No romper Angular Material
+
+===================================================== */
+
+/* =====================================================
+   🔹 BLOQUE 01 — BASE
+===================================================== */
+:host {
+  font-size: 13px;
+  color: #263238;
 }
 
-/* superficie interna */
-
-.usuarios-dialog .mdc-dialog__surface {
-  border-radius: 6px !important;
-  overflow: hidden !important;
-}
-
-/* eliminar scroll interno */
-
-.usuarios-dialog .mat-mdc-dialog-content {
-  max-height: none !important;
-  overflow: visible !important;
-  padding: 4px 8px !important;
-}
-
-/* =========================================
-   HEADER
-========================================= */
-
-.dialog-header {
-  background: #4907e2;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-/* =========================================
-   FORM
-========================================= */
-
-.form-usuarios-modal {
-  padding: 8px;
+/* =====================================================
+   🔹 BLOQUE 02 — TÍTULOS
+===================================================== */
+.title {
   display: flex;
-  flex-direction: column;
-  gap: 0px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #1565c0;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-/* =========================================
-   GRID
-========================================= */
-
-.fila-2 {
+/* =====================================================
+   🔹 BLOQUE 03 — LAYOUT
+===================================================== */
+.layout-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.layout-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.layout-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.layout-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* =====================================================
+   🔹 BLOQUE 04 — CARD
+===================================================== */
+.card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid #e0e6ed;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* =====================================================
+   🔹 BLOQUE 05 — HEADER
+===================================================== */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* =====================================================
+   🔹 BLOQUE 06 — COLORES
+===================================================== */
+.blue {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+.green {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+.orange {
+  background: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+}
+.purple {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+/* =====================================================
+   🔹 BLOQUE 07 — LIST ITEMS
+===================================================== */
+.list-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.list-item:hover {
+  background: rgba(21, 101, 192, 0.08);
+  box-shadow:
+    inset 3px 0 0 #1565c0,
+    0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.list-item.active {
+  background: #1565c0;
+  color: white;
+  box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+.list-item.active mat-icon {
+  color: #bbdefb;
+}
+
+/* =====================================================
+   🔹 BLOQUE 08 — USER
+===================================================== */
+.user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* =====================================================
+   🔹 BLOQUE 09 — TAGS
+===================================================== */
+.tag {
+  background: rgba(96, 125, 139, 0.1);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+}
+
+.tag-admin {
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+}
+.tag-supervisor {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+.tag-administrativo {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+.tag-jefatura {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+/* =====================================================
+   🔹 BLOQUE 10 — EMPTY STATE
+===================================================== */
+.empty-state {
+  text-align: center;
+  opacity: 0.6;
+  margin-top: 30px;
+  font-size: 12px;
+}
+
+.empty-state mat-icon {
+  font-size: 28px;
+  color: #90a4ae;
+}
+
+/* =====================================================
+   🔹 BLOQUE 11 — ICONOS (LOCAL LIMPIO)
+===================================================== */
+
+/* Base (gris institucional) */
+mat-icon {
+  font-size: 20px;
+  color: #607d8b;
+}
+
+/* Header (override local) */
+.dialog-header mat-icon {
+  color: #bbdefb;
+}
+
+/* Botón primario */
+.btn-blue mat-icon {
+  color: #ffffff;
+}
+
+
+/* =====================================================
+   🔹 BLOQUE 12 — TOOLBAR
+===================================================== */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Botones base */
+.toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+
+/* Botón primario */
+.btn-blue {
+  background: #1565c0;
+  color: #ffffff;
+}
+
+.btn-blue mat-icon {
+  color: #ffffff;
+}
+
+.btn-blue:hover {
+  background: #0d47a1;
+}
+
+/* Botón secundario (material) */
+.toolbar button[mat-button] {
+  color: #455a64;
+}
+
+/* FIX: iconos heredan color del botón */
+.toolbar button mat-icon {
+  color: inherit;
+}
+
+/* =====================================================
+   🔹 BLOQUE 13 — RESPONSIVE
+===================================================== */
+@media (max-width: 1024px) {
+  .layout-4,
+  .layout-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .layout-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================================
+   🔹 BLOQUE 14 — DIALOG HEADER
+===================================================== */
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #1565c0;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px 6px 0 0;
+}
+
+.dialog-header mat-icon {
+  color: #bbdefb;
+}
+
+/* =====================================================
+   🔹 BLOQUE 15 — FORM GRID
+===================================================== */
+.form-layout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
-/* =========================================
-   CAMPOS
-========================================= */
+.form-layout > * {
+  min-width: 0;
+}
 
-.field-clinico-linea {
+/* =====================================================
+   🔹 BLOQUE 16 — FORM FIELDS
+===================================================== */
+.form-field {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.field-clinico-linea label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #37474f;
-}
-
-/* =========================================
-   MATERIAL COMPACTO
-========================================= */
-
-::ng-deep .field-clinico-linea .mat-mdc-form-field {
-  width: 100%;
-}
-
-/* quitar caja */
-
-::ng-deep .field-clinico-linea .mdc-notched-outline {
-  display: none;
-}
-
-/* eliminar padding */
-
-::ng-deep .field-clinico-linea .mat-mdc-form-field-flex {
-  padding: 0 !important;
-  background: transparent !important;
-  align-items: center;
-}
-
-/* altura */
-
-::ng-deep .field-clinico-linea .mat-mdc-form-field-infix {
-  padding: 1px 0 !important;
-  min-height: 30px !important;
-}
-
-/* subscript */
-
-::ng-deep .field-clinico-linea .mat-mdc-form-field-subscript-wrapper {
-  min-height: 14px;
+.form-field label {
   font-size: 11px;
+  font-weight: 600;
+  color: #455a64;
 }
 
-/* input */
-
-::ng-deep .field-clinico-linea input {
-  font-size: 13px;
-  font-weight: 500;
-  background: transparent;
+.col-1 {
+  grid-column: span 1;
+}
+.col-2 {
+  grid-column: span 2;
+}
+.col-3 {
+  grid-column: span 3;
+}
+.col-4 {
+  grid-column: span 4;
 }
 
-/* línea base */
-
-::ng-deep .field-clinico-linea .mdc-line-ripple {
-  height: 1px;
-  background-color: #90a4ae;
+/* =====================================================
+   🔹 BLOQUE 17 — PASSWORD
+===================================================== */
+.password-actions {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9fbfd;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border-left: 1px solid #e0e6ed;
 }
 
-/* altura wrapper */
-
-::ng-deep .field-clinico-linea .mat-mdc-text-field-wrapper {
-  height: 32px !important;
+.password-actions button {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
 }
 
-/* foco */
-
-::ng-deep
-  .field-clinico-linea
-  .mat-mdc-form-field.mat-focused
-  .mdc-line-ripple {
-  height: 2px;
-  background-color: #1565c0;
+.password-actions button:hover {
+  background: rgba(21, 101, 192, 0.08);
 }
 
-/* =========================================
-   ROLES
-========================================= */
-
-mat-selection-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0px 8px;
-  padding: 4px;
-  background: #ffffff;
-  border: 1px solid #d6dde6;
-  border-radius: 4px;
+.password-actions mat-icon {
+  color: #607d8b !important;
 }
 
-mat-list-option {
-  min-height: 22px;
-  height: 22px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #263238;
+.password-actions button:hover mat-icon {
+  color: #1565c0 !important;
+}
+/* =====================================================
+   🔹 BLOQUE 18 — MATERIAL FIX (CONTROLADO)
+===================================================== */
+
+/* Wrapper general del input */
+:host ::ng-deep .mat-mdc-text-field-wrapper {
+  background: #f9fbfd;
+  border-radius: 6px !important;
+  box-shadow: none;
+
+  height: 36px;
   display: flex;
   align-items: center;
 }
 
-/* checkbox pequeño */
+/* Contenedor interno */
+::ng-deep .mat-mdc-form-field-infix {
+  min-height: 32px;
 
-::ng-deep mat-list-option .mdc-checkbox {
-  transform: scale(0.85);
-}
-
-/* texto */
-
-::ng-deep mat-list-option .mdc-list-item__primary-text {
-  font-size: 12px;
-  font-weight: 500;
-  color: #263238;
-}
-
-::ng-deep mat-list-option .mdc-list-item__content {
-  padding-top: 1px;
-  padding-bottom: 1px;
-}
-
-/* =========================================
-   BOTONES
-========================================= */
-
-.mat-mdc-dialog-actions {
-  border-top: 1px solid #e0e6ed;
-  padding: 10px 14px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
-/* =========================================
-   FORMULARIO INTERNO
-========================================= */
-
-.ficha-usuarios-modal {
-  background: #f7f9fc;
-  border: 1px solid #e0e6ed;
-  border-radius: 4px;
+/* Input real */
+::ng-deep .mat-mdc-input-element {
+  height: 100%;
+  line-height: 32px;
+  padding: 0 !important;
 }
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+/* Prefix / Suffix (iconos, botones password, etc) */
+::ng-deep .mat-mdc-form-field-icon-prefix,
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
 
+/* Dialog content */
+::ng-deep .mat-mdc-dialog-content {
+  overflow: auto;
+}
+
+/* =====================================================
+   🔹 BLOQUE 19 — RESPONSIVE FORM
+===================================================== */
 @media (max-width: 600px) {
-  .fila-2 {
+  .form-layout {
     grid-template-columns: 1fr;
   }
 }
 
-/* =========================================
-   PASSWORD ACTIONS (🔥 PRO)
-========================================= */
-
-.password-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 4px;
-
-  button {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    opacity: 0.8;
-
-    mat-icon {
-      font-size: 18px;
-    }
-
-    &:hover {
-      transform: scale(1.1);
-      opacity: 1;
-    }
-  }
-
-  /* 👁️ */
-  button:nth-child(1) {
-    color: #607d8b;
-  }
-
-  /* 🔐 */
-  .btn-generate {
-    color: #1565c0;
-    background: rgba(21, 101, 192, 0.12);
-
-    &:hover {
-      background: rgba(21, 101, 192, 0.2);
-    }
-  }
-
-  /* 📋 */
-  .btn-copy {
-    color: #2e7d32;
-  }
+/* =====================================================
+   🔹 BLOQUE 20 — ROLES
+===================================================== */
+.roles-box {
+  border-radius: 6px;
+  border: 1px solid #e0e6ed;
+  padding: 8px;
+  background: linear-gradient(180deg, #ffffff, #fafbfc);
 }
 
-/* 🔒 SOLO password (no global) */
-
-::ng-deep .password-actions .mat-mdc-icon-button {
+/* Item */
+.role-option {
+  border-radius: 8px;
+  margin-bottom: 4px;
+  padding: 6px 8px;
   transition: all 0.2s ease;
+}
+
+/* Hover */
+.role-option:hover {
+  background: rgba(21, 101, 192, 0.08);
+  box-shadow: inset 3px 0 0 #1565c0;
+}
+
+/* Contenido interno */
+.role-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Lado izquierdo (icono + texto) */
+.role-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Nombre */
+.role-name {
+  font-weight: 500;
+  color: #263238;
+}
+
+/* 🔥 IMPORTANTE: NO forzar color aquí */
+/* los iconos toman color desde .blue .green etc */
+.role-option mat-icon {
+  font-size: 20px;
+}
+
+:host ::ng-deep .mat-mdc-dialog-content {
+  padding: 16px !important;
 }

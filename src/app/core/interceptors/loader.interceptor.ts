@@ -12,7 +12,7 @@ export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
     if (showLoader) {
       loader.show();
     }
-  }, 300);
+  }, 150);
 
   return next(req).pipe(
     finalize(() => {

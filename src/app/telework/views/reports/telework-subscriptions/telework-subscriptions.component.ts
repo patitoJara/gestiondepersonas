@@ -55,6 +55,8 @@ export class TeleworkUserSubscriptionsComponent {
   userName: string = '';
   rut: string = '';
 
+  private systemUserIds: number[] = [1, 2, 3, 4];
+
   rutInvalido = false;
   loading = false;
 
@@ -112,44 +114,25 @@ export class TeleworkUserSubscriptionsComponent {
   displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
 
   ngOnInit() {
-    const profile = this.tokenService.getUserProfile();
+    this.userId = this.tokenService.getUserId()!;
+    this.userName = this.tokenService.getUserFullName() || 'Usuario';
 
-    console.log('PROFILE 👉', profile);
-
-    // 🔥 1. obtener userId primero
-    this.userId = profile?.id || profile?.userId || profile?.sub;
-
-    this.userName =
-      profile?.fullName ||
-      [
-        profile?.firstName,
-        profile?.secondName,
-        profile?.firstLastName,
-        profile?.secondLastName,
-      ]
-        .filter(Boolean)
-        .join(' ') ||
-      'Usuario';
-
-    if (!this.userId) {
-      this.showWarning('No se pudo obtener usuario desde sesión');
-      return;
-    }
-
-    // 🔥 2. ahora sí cargar datos reales (incluye rut)
     this.loadUserData();
 
-    // 🔥 3. inicializar filtros
-    const currentYear = new Date().getFullYear();
+    const today = new Date();
+
+    // 🔥 CLAVE
+    this.month = today.getMonth() + 1;
+    this.year = today.getFullYear();
+
+    const currentYear = today.getFullYear();
 
     for (let i = currentYear; i <= currentYear + 10; i++) {
       this.years.push(i);
     }
 
-    this.month = new Date().getMonth() + 1;
-    this.year = new Date().getFullYear();
-
-    this.onMonthYearChange();
+    // 🔥 NO cargar datos automáticamente
+    this.clearResults();
   }
 
   async loadUserData() {
@@ -189,10 +172,36 @@ export class TeleworkUserSubscriptionsComponent {
     try {
       this.loading = true;
 
-      const [registers, subscribes] = await Promise.all([
+      // =========================================
+      // 🔥 1. TRAER DATOS CRUDOS
+      // =========================================
+
+      const [registersRaw, subscribesRaw] = await Promise.all([
         firstValueFrom(this.reportService.getRegisters()),
         firstValueFrom(this.reportService.getSubscribes()),
       ]);
+
+      // =========================================
+      // 🔥 2. FILTRAR BORRADOS (CLAVE)
+      // =========================================
+
+      const registers = registersRaw.filter(
+        (r: any) =>
+          !r.deletedAt &&
+          !r.user?.deletedAt &&
+          !this.systemUserIds.includes(r.user?.id),
+      );
+
+      const subscribes = subscribesRaw.filter(
+        (s: any) =>
+          !s.deletedAt &&
+          !s.user?.deletedAt &&
+          !this.systemUserIds.includes(s.user?.id),
+      );
+
+      // 🔥 guardar limpio (IMPORTANTE para selectUser)
+      this.allRegisters = registers;
+      this.allSubscriptions = subscribes;
 
       // =========================================
       // 🔥 REGISTROS DEL USUARIO
@@ -300,7 +309,7 @@ export class TeleworkUserSubscriptionsComponent {
       }
 
       // =========================================
-      // 🔥 MENSAJE SIN RESULTADOS (AQUÍ VA)
+      // 🔥 MENSAJE SIN RESULTADOS
       // =========================================
 
       if (!this.registers.length && !this.subscriptions.length) {
@@ -315,23 +324,6 @@ export class TeleworkUserSubscriptionsComponent {
     } finally {
       this.loading = false;
     }
-  }
-
-  // ===============================
-  // LIMPIAR FILTROS
-  // ===============================
-
-  clearFilters(): void {
-    this.rut = '';
-    this.setCurrentMonthYear();
-    this.onMonthYearChange();
-
-    this.users = [];
-    this.registers = [];
-    this.subscriptions = [];
-    this.selectedUser = null;
-
-    //this.search(); // 💥 UX inmediata
   }
 
   setCurrentMonthYear() {
@@ -546,42 +538,20 @@ export class TeleworkUserSubscriptionsComponent {
     return alerts;
   }
 
-  onDateChange(): void {
-    this.month = null;
-    this.year = null;
-
-    this.clearResults();
-  }
-
   clearResults(): void {
     this.registers = [];
     this.subscriptions = [];
   }
 
-  onMonthYearChange(): void {
-    if (!this.month || !this.year) {
-      this.dateFrom = null;
-      this.dateTo = null;
-      this.clearResults();
-      return;
-    }
+  clearFilters(): void {
+    this.rut = '';
+    this.setCurrentMonthYear();
+    this.onMonthYearChange();
 
-    // 🔥 romper referencia primero
-    this.dateFrom = null as any;
-    this.dateTo = null as any;
+    this.selectedUser = null;
 
-    setTimeout(() => {
-      const from = new Date(this.year!, this.month! - 1, 1);
-      from.setHours(0, 0, 0, 0);
-
-      const to = new Date(this.year!, this.month!, 0);
-      to.setHours(23, 59, 59, 999);
-
-      this.dateFrom = from;
-      this.dateTo = to;
-    });
-
-    this.clearResults();
+    this.registers = [];
+    this.subscriptions = [];
   }
 
   getDurationDays(s: any): number {
@@ -750,6 +720,56 @@ export class TeleworkUserSubscriptionsComponent {
 
   trackByFn(index: number, item: any) {
     return item.register_datetime + '_' + item.type;
+  }
+
+  onMonthFocus(): void {
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  onDateChange(): void {
+    // 🔥 si hay al menos una fecha, trabaja
+    if (this.dateFrom) {
+      const from = new Date(this.dateFrom);
+
+      this.month = from.getMonth() + 1;
+      this.year = from.getFullYear();
+
+      from.setHours(0, 0, 0, 0);
+      this.dateFrom = from;
+    }
+
+    if (this.dateTo) {
+      const to = new Date(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+      this.dateTo = to;
+
+      // 🔥 SI SOLO CAMBIA HASTA → también sincroniza mes/año
+      if (!this.dateFrom) {
+        this.month = to.getMonth() + 1;
+        this.year = to.getFullYear();
+      }
+    }
+
+    this.clearResults();
+  }
+
+  onMonthYearChange(): void {
+    if (!this.month || !this.year) {
+      return; // 👈 dejamos pasar, pero no rompemos estado
+    }
+
+    setTimeout(() => {
+      const from = new Date(this.year!, this.month! - 1, 1);
+      from.setHours(0, 0, 0, 0);
+
+      const to = new Date(this.year!, this.month!, 0);
+      to.setHours(23, 59, 59, 999);
+
+      this.dateFrom = from;
+      this.dateTo = to;
+    });
   }
 
   printUser(user: any) {

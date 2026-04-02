@@ -1,13 +1,53 @@
-<h2 class="title">
+<div class="title">
   <mat-icon>groups</mat-icon>
-  Gestión de Grupos
-</h2>
 
-<div class="layout-3">
+  <div>
+    <div class="title-main">Auditoría de Grupos</div>
+    <div class="title-sub">
+      Visualización de jefaturas y asignación de usuarios
+    </div>
+  </div>
+</div>
 
+<div class="toolbar">
+  <button class="btn-blue" (click)="exportGrupo()">
+    <mat-icon>download</mat-icon>
+    Grupo
+  </button>
+
+  <button class="btn-orange" (click)="exportSinGrupo()">
+    <mat-icon>person_off</mat-icon>
+    Sin grupo
+  </button>
+
+  <button class="btn-purple" (click)="exportTodos()">
+    <mat-icon>groups</mat-icon>
+    Todos
+  </button>
+
+  <button class="btn btn-green big" (click)="printGrupo()">
+    <mat-icon>picture_as_pdf</mat-icon>
+    PDF Grupo
+  </button>
+
+  <button class="btn btn-green" (click)="printSinGrupo()">
+    <mat-icon>picture_as_pdf</mat-icon>
+    PDF Sin grupo
+  </button>
+
+  <button class="btn btn-green" (click)="printTodos()">
+    <mat-icon>picture_as_pdf</mat-icon>
+    PDF Todos
+  </button>
+</div>
+
+<div class="layout-4">
   <!-- 🟦 GRUPOS -->
   <div class="col">
-    <h3>Grupos</h3>
+    <div class="card-header blue">
+      <mat-icon>groups</mat-icon>
+      <span>Grupos</span>
+    </div>
 
     <div
       class="item"
@@ -15,26 +55,99 @@
       (click)="selectGroup(g)"
       [class.active]="selectedGroup?.id === g.id"
     >
+      <mat-icon>folder</mat-icon>
       {{ g.name }}
     </div>
   </div>
 
   <!-- 🟩 USUARIOS DEL GRUPO -->
   <div class="col">
-    <h3>Usuarios del Grupo</h3>
+    <div class="card-header green">
+      <mat-icon>group</mat-icon>
+      <span>
+        Usuarios del Grupo
+        <small *ngIf="selectedGroup">- {{ selectedGroup.name }}</small>
+      </span>
+    </div>
 
-    <div class="item" *ngFor="let u of usersInGroup">
-      {{ u.fullName || (u.firstName + ' ' + u.firstLastName) }}
+    <div *ngIf="!usersInGroup.length" class="empty">
+      <mat-icon>info</mat-icon>
+      <span>
+        {{
+          selectedGroup
+            ? "No hay usuarios en este grupo"
+            : "Seleccione un grupo"
+        }}</span
+      >
+    </div>
+
+    <div class="item user" *ngFor="let u of usersInGroup">
+      <div class="user-left">
+        <mat-icon>person</mat-icon>
+        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
+      </div>
+      <div class="roles">
+        <span
+          class="badge"
+          [ngClass]="'badge-' + r.name?.toLowerCase()"
+          *ngFor="let r of u.roles"
+        >
+          {{ r.name }}
+        </span>
+      </div>
     </div>
   </div>
 
   <!-- 🟨 USUARIOS SIN GRUPO -->
   <div class="col">
-    <h3>Usuarios sin Grupo</h3>
+    <div class="card-header orange">
+      <mat-icon>person_add</mat-icon>
+      <span>Usuarios sin Grupo</span>
+    </div>
 
-    <div class="item" *ngFor="let u of usersWithoutGroup">
-      {{ u.fullName || (u.firstName + ' ' + u.firstLastName) }}
+    <div *ngIf="!usersWithoutGroup.length" class="empty">
+      <mat-icon>info</mat-icon>
+      <span>No hay usuarios disponibles</span>
+    </div>
+
+    <div class="item user" *ngFor="let u of usersWithoutGroup">
+      <div class="user-left">
+        <mat-icon>person_outline</mat-icon>
+        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
+      </div>
+      <div class="roles">
+        <span
+          class="badge"
+          [ngClass]="'badge-' + r.name?.toLowerCase()"
+          *ngFor="let r of u.roles"
+        >
+          {{ r.name }}
+        </span>
+      </div>
     </div>
   </div>
 
+  <!-- 🟪 TODOS LOS USUARIOS -->
+  <div class="col">
+    <div class="card-header purple">
+      <mat-icon>badge</mat-icon>
+      <span>Todos los Usuarios</span>
+    </div>
+
+    <div class="item user" *ngFor="let u of allUsers">
+      <div class="user-left">
+        <mat-icon>person</mat-icon>
+        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
+      </div>
+      <div class="roles">
+        <span
+          class="badge"
+          [ngClass]="'badge-' + r.name?.toLowerCase()"
+          *ngFor="let r of u.roles"
+        >
+          {{ r.name }}
+        </span>
+      </div>
+    </div>
+  </div>
 </div>

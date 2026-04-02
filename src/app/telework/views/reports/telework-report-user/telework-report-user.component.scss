@@ -1,162 +1,254 @@
-/* ==================================
-   PANEL FILTROS
-================================== */
+/* =====================================================
+   🧠 SIRUS UI - TELEWORK REPORT (LIMPIO FINAL)
+   ===================================================== */
 
+/* ============================
+   🟦 CONTENEDOR
+============================ */
 .report-container {
   margin-bottom: 20px;
-  padding: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  padding: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f8fd 100%);
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* ==================================
-   TITULO
-================================== */
-
-.report-container mat-card-title {
-  background: #1565c0;
-  color: white;
-  padding: 10px 16px;
-  margin: -16px -16px 12px -16px;
-  border-radius: 10px 10px 0 0;
+/* ============================
+   🟦 TITLE
+============================ */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e6ed;
+  padding-bottom: 6px;
 }
 
-/* ==================================
-   FILTROS
-================================== */
-
-mat-form-field {
-  width: 100%;
+.title mat-icon {
+  font-size: 28px;
+  color: #1565c0;
 }
 
-/* INPUT MATERIAL */
+.title-main {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.title-sub {
+  font-size: 13px;
+  color: #607d8b;
+}
+
+/* ============================
+   🟦 HINT
+============================ */
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #78909c;
+  margin-bottom: 8px;
+}
+
+/* ============================
+   🟦 FILTROS (🔥 FIX REAL)
+============================ */
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filters-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filters-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
+/* SELECT */
+.filters-left select.input {
+  height: 40px;
+  width: 120px;
+}
+
+/* ============================
+   🟦 MATERIAL FIX (ÚNICO)
+============================ */
+::ng-deep .mat-mdc-form-field {
+  margin: 0 !important;
+  height: 40px;
+}
 
 ::ng-deep .mat-mdc-text-field-wrapper {
-  background: #ffffff;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-}
-
-::ng-deep .mat-mdc-text-field-wrapper:hover {
-  border-color: #1565c0;
-}
-
-/* ==================================
-   BOTONES
-================================== */
-
-.buttons {
+  height: 40px !important;
+  border-radius: 8px !important;
+  border: 1px solid #cbd5e1 !important;
   display: flex;
-  gap: 10px;
+  align-items: center;
 }
 
-.buttons button:first-child {
-  background: #1565c0;
-  color: white;
-  font-weight: 600;
-  border-radius: 20px;
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none !important;
 }
 
-.buttons button:first-child:hover {
-  background: #0d47a1;
+::ng-deep .mat-mdc-form-field-infix {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 !important;
 }
 
-.buttons button:last-child {
-  background: #e2e8f0;
-  border-radius: 20px;
+/* ICONO DATE */
+::ng-deep .mat-mdc-icon-button {
+  transform: scale(0.85);
 }
 
-/* ==================================
-   GRID TABLAS
-================================== */
+/* ============================
+   🟦 BOTONES
+============================ */
+.btn-sirus {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sirus.primary {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.btn-sirus.ghost {
+  background: #f1f5f9;
+  color: #455a64;
+}
+
+/* ============================
+   🟦 INPUTS
+============================ */
+.input {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+}
+
+/* ============================
+   🟦 GRID
+============================ */
 .tables-row {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 18px;
   margin-top: 20px;
-  animation: fadeIn 0.25s ease;
 }
 
-/* ==================================
-   TARJETAS
-================================== */
-
-.registers-table,
-.subscriptions-table {
-  height: 520px;
+/* ============================
+   🟦 CARDS
+============================ */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e3e8ef;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  height: 520px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* ==================================
-   SCROLL TABLAS
-================================== */
+/* ============================
+   🟦 HEADER
+============================ */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
 
+.card-header.green {
+  background: rgba(46, 125, 50, 0.06);
+  color: #2e7d32;
+}
+
+.card-header.orange {
+  background: rgba(0, 137, 123, 0.08);
+  color: #00897b;
+}
+
+.card-header.purple {
+  background: rgba(123, 31, 162, 0.06);
+  color: #7b1fa2;
+}
+
+.card-header .counter {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+/* ============================
+   🟦 TABLAS
+============================ */
 .table-scroll {
-  overflow: auto;
   flex: 1;
+  padding: 10px;
+  overflow-y: auto;
 }
-
-/* ==================================
-   TABLAS
-================================== */
 
 table {
   width: 100%;
   font-size: 12px;
-  border-collapse: collapse;
 }
 
 th {
-  background: #1565c0; // 🔥 azul fuerte institucional
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
+  background: #f1f5f9;
+  font-size: 11px;
 }
 
 td {
   padding: 6px 8px;
-  font-size: 12px;
 }
 
-tbody tr:nth-child(even) {
-  background: #f4f7fb; // 🔥 leve contraste
+/* ============================
+   🟦 SELECCIÓN
+============================ */
+.clickable-row {
+  cursor: pointer;
 }
 
-tbody tr:hover {
-  background: #e3f2fd; // 🔥 hover elegante
+.selected-row {
+  background: #f1f7ff;
+  border-left: 4px solid #1565c0;
 }
 
-.mat-mdc-header-row {
-  background: #1565c0 !important;
-}
-
-.mat-mdc-header-cell {
-  color: #ffffff !important;
-  font-weight: 600;
-
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  font-size: 11px;  
-}
-/* ==================================
-   ICONOS Y TIPOS
-================================== */
-
-.tipo-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.evento-icon {
-  font-size: 18px;
-}
-
+/* ============================
+   🟦 ESTADOS
+============================ */
 .ingreso {
   color: #2e7d32;
   font-weight: 600;
@@ -167,188 +259,73 @@ tbody tr:hover {
   font-weight: 600;
 }
 
-/* ==================================
-   BADGES
-================================== */
-
-.badge {
-  background: #1976d2;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.estado-badge {
-  padding: 4px 10px;
-  border-radius: 12px;
+/* ============================
+   🟦 EMPTY STATE
+============================ */
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
   font-size: 12px;
-  font-weight: 600;
+  color: #78909c;
+  border-left: 3px solid #00897b;
+  background: #f4fbfa;
+  border-radius: 6px;
 }
 
-.vigente {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.vencido {
-  background: #fdecea;
-  color: #c62828;
-}
-
-.pendiente {
-  background: #fff3cd;
-  color: #f57c00;
-}
-
-/* ==================================
-   CONTADORES
-================================== */
-
-.counter {
-  font-size: 14px;
-  margin-left: 6px;
-  background: #e8f5e9;
-  color: #2e7d32;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-/* ==================================
-   FILAS ESPECIALES
-================================== */
-
-.virtual {
-  color: #6c757d;
-  font-style: italic;
-  background: #f8f9fa;
-  border-left: 4px solid #adb5bd;
-}
-
-.hora-pendiente {
-  color: #d32f2f;
-  font-weight: bold;
-}
-
-/* ==================================
-   ERRORES RUT
-================================== */
-
-.rut-invalid {
-  border-bottom: 2px solid #d32f2f !important;
-}
-
-/* ==================================
-   ANIMACION
-================================== */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ==================================
-   FILTROS PRO (FIX FINAL)
-================================== */
-
-.filters {
-
-  display: grid;
-  grid-template-columns: 140px 120px 150px 150px auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-  background: #ffffff;
-  padding: 10px 12px; // 🔥 menos alto
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.acciones {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-
-/* inputs */
-.filters mat-form-field {
-  width: 100%;
-}
-
-/* botones alineados abajo */
-.buttons {
+/* ============================
+   🟦 DATE RANGE (FIJO 🔥)
+============================ */
+.date-range {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-/* botón buscar */
-.buttons button:first-child {
-  background: #1565c0;
-  color: white;
-  font-weight: 600;
-  border-radius: 20px;
-  height: 42px;
+.date-field {
+  width: 150px;
 }
 
-/* botón limpiar */
-.buttons button:last-child {
-  background: #e2e8f0;
-  border-radius: 20px;
-  height: 42px;
-}
-
-@media (max-width: 900px) {
+/* ============================
+   📱 RESPONSIVE
+============================ */
+@media (max-width: 600px) {
   .filters {
-    grid-template-columns: 1fr 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .buttons {
-    grid-column: span 2;
-    justify-content: flex-end;
+  .filters-actions {
+    justify-content: space-between;
   }
-}
 
-.rango-fechas {
+  .date-range {
   display: flex;
   gap: 10px;
+  align-items: center;
+  }
+
+  .date-field {
+    width: 150px;
+  }
 }
 
-.rango-fechas mat-form-field {
-  flex: 1;
+/* ============================
+   🔥 FIX BORDE NEGRO MATERIAL
+============================ */
+
+/* borde normal */
+::ng-deep .mdc-notched-outline {
+  border-color: #cbd5e1 !important;
 }
 
-// solo datos del usuario
-
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  padding: 8px 12px;
-  margin-bottom: 12px;
-
-  background: #f1f5f9;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+/* hover */
+::ng-deep .mat-mdc-form-field:hover .mdc-notched-outline {
+  border-color: #90caf9 !important;
 }
 
-.user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.user-rut {
-  font-size: 12px;
-  color: #475569;
+/* focus */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline {
+  border-color: #1565c0 !important;
 }

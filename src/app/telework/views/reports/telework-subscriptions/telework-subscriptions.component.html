@@ -13,7 +13,11 @@
   <div class="filters mat-elevation-z1">
     <mat-form-field appearance="outline">
       <mat-label>Mes</mat-label>
-      <mat-select [(ngModel)]="month" (selectionChange)="onMonthYearChange()">
+      <mat-select
+        [(ngModel)]="month"
+        (ngModelChange)="onMonthYearChange()"
+        (focus)="onMonthFocus()"
+      >
         <mat-option *ngFor="let m of months" [value]="m.value">
           {{ m.name }}
         </mat-option>
@@ -22,7 +26,11 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Año</mat-label>
-      <mat-select [(ngModel)]="year" (selectionChange)="onMonthYearChange()">
+      <mat-select
+        [(ngModel)]="year"
+        (ngModelChange)="onMonthYearChange()"
+        (focus)="onMonthFocus()"
+      >
         <mat-option *ngFor="let y of years" [value]="y">
           {{ y }}
         </mat-option>
@@ -35,7 +43,7 @@
         matInput
         [matDatepicker]="pickerFrom"
         [(ngModel)]="dateFrom"
-        (dateChange)="onDateChange()"
+        (dateInput)="onDateChange()"
         readonly
         (click)="pickerFrom.open()"
       />
@@ -52,9 +60,9 @@
         matInput
         [matDatepicker]="pickerTo"
         [(ngModel)]="dateTo"
-        (dateChange)="onDateChange()"
+        (dateInput)="onDateChange()"
         readonly
-        (click)="pickerTo.open()"
+        (click)="pickerFrom.open()"
       />
       <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
       <mat-datepicker #pickerTo></mat-datepicker>

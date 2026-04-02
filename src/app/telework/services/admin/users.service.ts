@@ -84,4 +84,8 @@ export class UsersService {
   getAll() {
     return this.http.get<any[]>(`${this.api}/all`);
   }
+
+  existeRut(rut: string) {
+    return this.http.get<boolean>(`${this.api}/exists-rut/${rut}`);
+  }
 }

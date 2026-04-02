@@ -20,6 +20,8 @@ import { TeleworkReportService } from '@app/telework/services/telework-report.se
 import { TeleworkReportPrintService } from '@app/telework/services/reports/telework-report-print.service';
 import { UsersGroupService } from '@app/telework/services/admin/users-group.service';
 import { GroupService } from '@app/telework/services/admin/group.service';
+import { WorkService } from '@app/telework/services/work.service';
+import { Work } from '@app/telework/models/work.model';
 
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
 import { LoaderService } from '@app/core/services/loader.service';
@@ -50,6 +52,7 @@ export class TeleworkReportJefaturaComponent {
   private usersGroupService = inject(UsersGroupService);
   private loader = inject(LoaderService);
   private groupService = inject(GroupService);
+  private workService = inject(WorkService);
   constructor() {}
 
   startDate: Date | null = null;
@@ -73,6 +76,11 @@ export class TeleworkReportJefaturaComponent {
     name: '',
     description: '',
   };
+
+  allWorks: any[] = [];
+  works: any[] = [];
+  days: any[] = [];
+  selectedDay: Date | null = null;
 
   // ===============================
   // FILTROS
@@ -141,9 +149,9 @@ export class TeleworkReportJefaturaComponent {
     this.year = new Date().getFullYear();
 
     this.onMonthYearChange();
-    // 🔥 AQUÍ LO QUE TE FALTABA
+
     await this.cargarGrupo();
-    await this.search();
+    //await this.search(); // ❌ AQUÍ ESTÁ EL PROBLEMA
   }
 
   // ===============================
@@ -171,36 +179,36 @@ export class TeleworkReportJefaturaComponent {
   }
 
   // ===============================
-  // 🔍 SEARCH
+  // 🔍 SEARCH (MODIFICADO)
   // ===============================
   async search() {
     this.loader.lock();
 
-    // 🔥 LIMPIAR TODO (evita arrastre de meses)
-    this.users = [];
-    this.registers = [];
-    this.subscriptions = [];
-    this.allRegisters = [];
-    this.allSubscriptions = [];
-    this.selectedUser = null;
-    this.showDetail = false;
+    // 🔥 LIMPIEZA CENTRALIZADA
+    this.clearResults();
 
     try {
-      const [users, registers, subscribes, relaciones] = await Promise.all([
-        firstValueFrom(this.reportService.getUsers()),
-        firstValueFrom(this.reportService.getRegisters()),
-        firstValueFrom(this.reportService.getSubscribes()),
-        firstValueFrom(this.usersGroupService.getAll()),
-      ]);
+      const [users, registers, subscribes, relaciones, works] =
+        (await Promise.all([
+          firstValueFrom(this.reportService.getUsers()),
+          firstValueFrom(this.reportService.getRegisters()),
+          firstValueFrom(this.reportService.getSubscribes()),
+          firstValueFrom(this.usersGroupService.getAll()),
+          firstValueFrom(this.workService.getAll()),
+        ])) as any;
 
-      // 🔥 usuarios de la jefatura
+      // ===============================
+      // 🔥 IDS JEFATURA
+      // ===============================
       const idsJefatura = relaciones
         .filter((r: any) => r.group?.user?.id === this.jefe.id && !r.deletedAt)
         .map((r: any) => r.user?.id);
 
+      // ===============================
+      // 🔥 FILTRO REGISTROS
+      // ===============================
       let filteredRegisters = [...registers];
 
-      // 🔥 FILTRO REAL POR FECHA (clave del sistema)
       if (this.dateFrom && this.dateTo) {
         const from = new Date(this.dateFrom);
         const to = new Date(this.dateTo);
@@ -214,7 +222,9 @@ export class TeleworkReportJefaturaComponent {
         });
       }
 
-      // 🔥 conteo de marcas por usuario
+      // ===============================
+      // 🔥 CONTEO MARCAS
+      // ===============================
       const userMap: any = {};
 
       filteredRegisters.forEach((r: any) => {
@@ -223,9 +233,23 @@ export class TeleworkReportJefaturaComponent {
         userMap[uid] = (userMap[uid] || 0) + 1;
       });
 
-      // 🔥 usuarios visibles (solo jefatura)
+      // ===============================
+      // 🔥 USERS VISIBLES
+      // ===============================
       this.users = users
-        .filter((u: any) => idsJefatura.includes(u.id))
+        .filter((u: any) => {
+          if (!idsJefatura.includes(u.id)) return false;
+
+          // 🔥 solo usuarios con registros en el rango
+          const hasRegisters = filteredRegisters.some(
+            (r: any) => r.user?.id === u.id,
+          );
+
+          // 🔥 o con works en el rango
+          const hasWorks = this.allWorks.some((w: any) => w.user?.id === u.id);
+
+          return hasRegisters || hasWorks;
+        })
         .map((u: any) => {
           const marks = userMap[u.id] || 0;
 
@@ -246,13 +270,47 @@ export class TeleworkReportJefaturaComponent {
           };
         });
 
-      // 🔥 guardar datos filtrados
+      // ===============================
+      // 🔥 DATASETS BASE
+      // ===============================
       this.allRegisters = filteredRegisters;
 
-      // 🚨 IMPORTANTE: también filtrar suscripciones por usuario de jefatura
       this.allSubscriptions = subscribes.filter((s: any) =>
         idsJefatura.includes(s.user?.id),
       );
+
+      // ===============================
+      // 🔥 WORKS
+      // ===============================
+      const safeWorks: Work[] = Array.isArray(works)
+        ? works
+        : works?.content || works?.data || [];
+
+      this.allWorks = safeWorks.filter((w: any) => {
+        if (w.deletedAt) return false;
+
+        const isUser =
+          idsJefatura.includes(w.user?.id) || idsJefatura.includes(w.userId);
+
+        if (!isUser) return false;
+
+        if (this.dateFrom && this.dateTo) {
+          const from = new Date(this.dateFrom);
+          const to = new Date(this.dateTo);
+
+          from.setHours(0, 0, 0, 0);
+          to.setHours(23, 59, 59, 999);
+
+          const rawDate = w.createdAt || w.created_at;
+          if (!rawDate) return false;
+
+          const d = new Date(rawDate);
+
+          return d >= from && d <= to;
+        }
+
+        return true;
+      });
     } catch (error) {
       console.error(error);
       this.showWarning('Error al cargar reporte');
@@ -262,12 +320,12 @@ export class TeleworkReportJefaturaComponent {
   }
 
   // ===============================
-  // 👤 SELECT USER
+  // 👤 SELECT USER (MODIFICADO)
   // ===============================
   selectUser(user: any): void {
     this.selectedUser = user;
 
-    const userRegisters = this.allRegisters
+    let userRegisters = this.allRegisters
       .filter((r: any) => r.user?.id === user.id)
       .map((r: any, index: number) => ({
         ...r,
@@ -275,25 +333,175 @@ export class TeleworkReportJefaturaComponent {
         isVirtual: r.isVirtual ?? false,
       }));
 
-    this.subscriptions = this.allSubscriptions.filter(
+    // 🔥 FILTRO REAL POR RANGO (LA CLAVE)
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+
+      userRegisters = userRegisters.filter((r: any) => {
+        const d = new Date(r.register_datetime);
+        return d >= from && d <= to;
+      });
+    }
+
+    let userSubscriptions = this.allSubscriptions.filter(
       (s: any) => s.user?.id === user.id,
     );
+
+    // 🔥 FILTRO POR RANGO (CLAVE)
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+
+      userSubscriptions = userSubscriptions
+        .filter((s: any) => {
+          const start = new Date(s.begin);
+          const end = new Date(s.end);
+
+          return start <= to && end >= from;
+        })
+        .map((s: any) => {
+          const start = new Date(s.begin);
+          const end = new Date(s.end);
+
+          return {
+            ...s,
+            begin: start < from ? from : start,
+            end: end > to ? to : end,
+          };
+        });
+    }
+
+    this.subscriptions = userSubscriptions;
+
+    this.works = this.allWorks.filter((w: any) => w.user?.id === user.id);
 
     this.registers = this.generateFullRegisters(
       this.subscriptions,
       userRegisters,
     );
 
-    // 🔥 CONTROL VISUAL
-    if (!this.registers.length && !this.subscriptions.length) {
-      this.showDetail = false; // 👈 OCULTA TODO
+    // 🔥 AGRUPACIÓN POR DÍA
+    this.days = this.groupByDay(this.registers, this.works);
+
+    if (!this.days.length) {
+      this.showDetail = false;
 
       this.showWarning(
-        'El usuario no posee registros ni suscripciones en el período seleccionado.',
+        'El usuario no posee información en el período seleccionado.',
       );
     } else {
-      this.showDetail = true; // 👈 MUESTRA TODO
+      this.showDetail = true;
     }
+  }
+
+  selectRegisterDay(register: any) {
+    const targetDate = new Date(register.register_datetime);
+    targetDate.setHours(0, 0, 0, 0);
+
+    this.selectedDay = targetDate;
+
+    this.works = this.allWorks
+      .filter((w: any) => {
+        const rawDate = w.createdAt || w.created_at;
+        if (!rawDate) return false;
+
+        const d = new Date(rawDate);
+        d.setHours(0, 0, 0, 0);
+
+        return d.getTime() === targetDate.getTime();
+      })
+      .sort((a: any, b: any) => {
+        return (
+          new Date(a.createdAt || a.created_at).getTime() -
+          new Date(b.createdAt || b.created_at).getTime()
+        );
+      });
+
+    this.showDetail = true;
+  }
+
+  groupByDay(registers: any[], works: any[]) {
+    const map: any = {};
+
+    // 🔵 REGISTROS
+    registers.forEach((r) => {
+      const d = new Date(r.register_datetime);
+      d.setHours(0, 0, 0, 0); // 🔥 IGUAL QUE WORKS
+
+      const date = this.formatDateCL(d);
+
+      if (!map[date]) {
+        map[date] = {
+          date,
+          registros: [],
+          actividades: [],
+        };
+      }
+
+      map[date].registros.push(r);
+    });
+
+    // 🟣 ACTIVIDADES
+    works.forEach((w) => {
+      const rawDate = w.createdAt || w.created_at;
+
+      if (!rawDate) return;
+
+      const d = new Date(rawDate);
+
+      if (isNaN(d.getTime())) return; // 🔥 evita fechas inválidas
+
+      d.setHours(0, 0, 0, 0); // 🔥 CLAVE → mismo criterio que registros
+
+      const date = this.formatDateCL(d);
+
+      if (!map[date]) {
+        map[date] = {
+          date,
+          registros: [],
+          actividades: [],
+        };
+      }
+
+      map[date].actividades.push(w);
+    });
+
+    // 🔥 PROCESAR CADA DÍA
+    Object.values(map).forEach((day: any) => {
+      // ordenar actividades por hora
+      day.actividades.sort((a: any, b: any) => {
+        const da = new Date(a.createdAt || a.created_at || 0).getTime();
+        const db = new Date(b.createdAt || b.created_at || 0).getTime();
+        return da - db;
+      });
+
+      // 🔥 METADATOS
+      day.totalActividades = day.actividades.length;
+      day.tieneActividad = day.totalActividades > 0;
+      day.totalRegistros = day.registros.length;
+
+      // 🔥 ESTADO DEL DÍA
+      day.estado = day.tieneActividad ? 'ok' : 'sin-actividad';
+    });
+
+    // 🔥 ORDEN FINAL POR FECHA
+    return Object.values(map).sort((a: any, b: any) => {
+      return (
+        this.parseDateCL(a.date).getTime() - this.parseDateCL(b.date).getTime()
+      );
+    });
+  }
+
+  parseDateCL(dateStr: string): Date {
+    const [d, m, y] = dateStr.split('/').map(Number);
+    return new Date(y, m - 1, d);
   }
 
   // ===============================
@@ -397,18 +605,70 @@ export class TeleworkReportJefaturaComponent {
   }
 
   onDateChange(): void {
-    // aquí puedes recargar filtros o datos
-    console.log('Fecha cambiada');
+    if (!this.dateFrom && !this.dateTo) return;
+
+    // 🔥 CASO 1: hay dateFrom → manda
+    if (this.dateFrom) {
+      const from = new Date(this.dateFrom);
+
+      this.month = from.getMonth() + 1;
+      this.year = from.getFullYear();
+
+      from.setHours(0, 0, 0, 0);
+      this.dateFrom = from;
+    }
+
+    // 🔥 CASO 2: SOLO hay dateTo (🔥 ESTE TE FALTABA)
+    else if (this.dateTo) {
+      const to = new Date(this.dateTo);
+
+      this.month = to.getMonth() + 1;
+      this.year = to.getFullYear();
+    }
+
+    // 🔥 normalización dateTo
+    if (this.dateTo) {
+      const to = new Date(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+      this.dateTo = to;
+    }
+
+    this.clearResults();
   }
 
   clearFilters(): void {
+    // 🔹 usuario
     this.selectedUser = null;
+
+    // 🔹 fechas
     this.startDate = null;
     this.endDate = null;
+    this.dateFrom = null;
+    this.dateTo = null;
 
+    // 🔹 filtros UI
+    this.rut = '';
+    this.rutInvalido = false;
+
+    // 🔹 tablas
     this.filteredUsers = [];
     this.selectedUserRegisters = [];
     this.selectedUserSubscriptions = [];
+
+    this.users = [];
+    this.registers = [];
+    this.subscriptions = [];
+
+    // 🔹 data interna
+    this.allRegisters = [];
+    this.allSubscriptions = [];
+    this.allWorks = [];
+
+    // 🔹 detalle día (🔥 LO QUE TE FALTABA)
+    this.works = [];
+    this.days = [];
+    this.selectedDay = null;
+    this.showDetail = false;
   }
 
   printUser(user: any): void {
@@ -522,15 +782,18 @@ export class TeleworkReportJefaturaComponent {
       return;
     }
 
-    this.dateFrom = new Date(this.year, this.month - 1, 1, 0, 0, 0, 0);
-    this.dateTo = new Date(this.year, this.month, 0, 23, 59, 59, 999);
+    const from = new Date(this.year, this.month - 1, 1);
+    from.setHours(0, 0, 0, 0);
 
-    // 🔥 CRÍTICO
-    this.selectedUser = null;
-    this.registers = [];
-    this.subscriptions = [];
-    this.showDetail = false;
+    const to = new Date(this.year, this.month, 0);
+    to.setHours(23, 59, 59, 999);
+
+    this.dateFrom = from;
+    this.dateTo = to;
+
+    this.clearResults();
   }
+
   exportUser(user: any): void {
     const data = this.registers.map((r: any) => ({
       Fecha: this.formatDateCL(r.register_datetime),
@@ -556,5 +819,35 @@ export class TeleworkReportJefaturaComponent {
     const fileName = `Reporte_${user.fullName}.xlsx`;
 
     saveAs(blob, fileName);
+  }
+
+  onMonthFocus(): void {
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.clearResults();
+  }
+
+  onDateFocus(): void {
+    //this.month = null;
+    //this.year = null;
+    this.clearResults();
+  }
+
+  clearResults(): void {
+    this.selectedUser = null;
+
+    this.users = [];
+    this.registers = [];
+    this.subscriptions = [];
+
+    this.works = [];
+    this.days = [];
+    this.selectedDay = null;
+
+    this.allRegisters = [];
+    this.allSubscriptions = [];
+    this.allWorks = [];
+
+    this.showDetail = false;
   }
 }

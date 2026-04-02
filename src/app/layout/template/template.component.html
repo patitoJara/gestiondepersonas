@@ -74,7 +74,7 @@
         <a
           *ngFor="let item of menuItems"
           mat-list-item
-          (click)="navigate(item.route)"
+          (click)="navigate(item.route, drawer)"
           routerLinkActive="active"
         >
           <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
@@ -105,7 +105,7 @@
             *ngFor="let item of mantenedorItems"
             mat-list-item
             class="submenu-item"
-            (click)="navigate(item.route)"
+            (click)="navigate(item.route, drawer)"
             routerLinkActive="active"
           >
             <mat-icon>{{ item.icon }}</mat-icon>

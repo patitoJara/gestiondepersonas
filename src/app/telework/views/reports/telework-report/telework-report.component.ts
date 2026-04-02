@@ -12,6 +12,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
+
 import { TeleworkReportService } from '@app/telework/services/telework-report.service';
 import { firstValueFrom } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,6 +21,8 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { TeleworkReportPrintService } from '@app/telework/services/reports/telework-report-print.service';
 import { LoaderService } from '@app/core/services/loader.service';
+import { WorkService } from '@app/telework/services/work.service';
+import { UsersGroupService } from '@app/telework/services/admin/users-group.service';
 
 @Component({
   selector: 'app-telework-report',
@@ -44,10 +48,14 @@ export class TeleworkReportComponent {
   private reportService = inject(TeleworkReportService);
   private teleworkReport = inject(TeleworkReportPrintService);
   private loader = inject(LoaderService);
+  private workService = inject(WorkService);
+  private usersGroupService = inject(UsersGroupService);
 
   // ===============================
   // FILTROS
   // ===============================
+
+  hasSearched: boolean = false;
 
   rut: string = '';
   rutInvalido = false;
@@ -55,6 +63,16 @@ export class TeleworkReportComponent {
 
   month: number | null = null;
   year: number | null = null;
+
+  groups: any[] = [];
+  allGroups: any[] = [];
+  selectedGroup: any = null;
+
+  displayedGroupsColumns = ['name', 'jefatura', 'count'];
+
+  allWorks: any[] = [];
+  works: any[] = [];
+  selectedDay: Date | null = null;
 
   months = [
     { value: 1, name: 'Enero' },
@@ -79,6 +97,7 @@ export class TeleworkReportComponent {
   // ===============================
 
   users: any[] = [];
+  allUsers: any[] = [];
   selectedUser: any = null;
 
   registers: any[] = [];
@@ -94,7 +113,7 @@ export class TeleworkReportComponent {
   // COLUMNAS TABLAS
   // ===============================
 
-  displayedUsersColumns: string[] = ['fullName', 'rut', 'marks', 'actions'];
+  displayedUsersColumns: string[] = ['fullName', 'rut', 'activity'];
   displayedWarningColumns: string[] = ['fullName', 'rut', 'marks'];
 
   displayedRegistersColumns = [
@@ -115,6 +134,8 @@ export class TeleworkReportComponent {
 
     this.month = new Date().getMonth() + 1;
     this.year = new Date().getFullYear();
+
+    this.clearResults(); // 🔥 IMPORTANTE
   }
 
   // ===============================
@@ -122,11 +143,29 @@ export class TeleworkReportComponent {
   // ===============================
 
   async search() {
+    this.hasSearched = false;
+    this.users = [];
+    this.registers = [];
+    this.subscriptions = [];
+    this.selectedUser = null;
+    this.allWorks = [];
+    this.works = [];
+
     this.validarRut();
 
     if (this.rutInvalido) {
       this.showWarning('El RUT ingresado no es válido');
       return;
+    }
+
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      if (from > to) {
+        this.showWarning('La fecha "Desde" no puede ser mayor que "Hasta"');
+        return;
+      }
     }
 
     if (
@@ -141,16 +180,47 @@ export class TeleworkReportComponent {
     }
 
     try {
-      this.loading = true; // 🔥 spinner global ON
+      this.loading = true;
+      this.hasSearched = true; // al inicio
 
-      // 💥 TODO EN PARALELO
-      const [users, registers, subscribes] = await Promise.all([
-        firstValueFrom(this.reportService.getUsers()),
-        firstValueFrom(this.reportService.getRegisters()),
-        firstValueFrom(this.reportService.getSubscribes()),
-      ]);
+      const [users, registers, subscribes, works, usersGroups] =
+        await Promise.all([
+          firstValueFrom(this.reportService.getUsers()),
+          firstValueFrom(this.reportService.getRegisters()),
+          firstValueFrom(this.reportService.getSubscribes()),
+          firstValueFrom(this.workService.getAll()),
+          firstValueFrom(this.usersGroupService.getAll()),
+        ]);
 
-      let filteredRegisters = [...registers];
+      const rutFiltro = this.rut
+        ?.replace(/\./g, '')
+        .replace('-', '')
+        .toLowerCase();
+
+      // ===============================
+      // 🔥 LIMPIAR DATOS
+      // ===============================
+      const cleanRegisters = registers.filter(
+        (r: any) => !r.deletedAt && !r.user?.deletedAt,
+      );
+
+      const cleanSubscribes = subscribes.filter(
+        (s: any) => !s.deletedAt && !s.user?.deletedAt,
+      );
+
+      const cleanWorks = works.filter((w: any) => {
+        if (w.deletedAt) return false;
+        if (w.status === 'DRAFT') return false;
+        if (w.state === 'BORRADOR') return false;
+        if (w.isDraft === true) return false;
+        return true;
+      });
+
+      // ===============================
+      // 🔥 FILTROS
+      // ===============================
+      let filteredRegisters = [...cleanRegisters];
+      let filteredSubscribes = [...cleanSubscribes];
 
       if (this.month && this.year) {
         filteredRegisters = filteredRegisters.filter((r: any) => {
@@ -162,23 +232,83 @@ export class TeleworkReportComponent {
       }
 
       if (this.dateFrom && this.dateTo) {
+        const from = new Date(this.dateFrom);
+        from.setHours(0, 0, 0, 0);
+
+        const to = new Date(this.dateTo);
+        to.setHours(23, 59, 59, 999);
+
         filteredRegisters = filteredRegisters.filter((r: any) => {
           const d = new Date(r.register_datetime);
-          return d >= this.dateFrom! && d <= this.dateTo!;
+          return d >= from && d <= to;
+        });
+
+        filteredSubscribes = filteredSubscribes.filter((s: any) => {
+          const start = new Date(s.begin);
+          const end = new Date(s.end);
+          return start <= to && end >= from;
         });
       }
 
-      const userMap: any = {};
+      this.allRegisters = filteredRegisters;
+      this.allSubscriptions = filteredSubscribes;
+      this.allWorks = cleanWorks;
+
+      // ===============================
+      // 🔥 MAPA USER → GROUP
+      // ===============================
+      const userGroupMap = new Map<number, any>();
+
+      usersGroups.forEach((ug: any) => {
+        if (ug.deletedAt) return;
+        if (!ug.user || !ug.group) return;
+
+        const jefe = ug.group.user
+          ? [ug.group.user.firstName, ug.group.user.firstLastName]
+              .filter(Boolean)
+              .join(' ')
+          : null;
+
+        userGroupMap.set(ug.user.id, {
+          groupId: ug.group.id,
+          groupName: ug.group.name,
+          jefatura: jefe,
+        });
+      });
+
+      // ===============================
+      // 🔥 CONTAR MARCAS
+      // ===============================
+      const userMap = new Map<number, number>();
 
       filteredRegisters.forEach((r: any) => {
         const uid = r.user?.id;
         if (!uid) return;
-        userMap[uid] = (userMap[uid] || 0) + 1;
+        userMap.set(uid, (userMap.get(uid) || 0) + 1);
       });
 
-      this.users = users
+      // ===============================
+      // 🔥 FILTRAR USUARIOS
+      // ===============================
+      let filteredUsers = [...users];
+
+      if (rutFiltro) {
+        filteredUsers = filteredUsers.filter((u: any) => {
+          const rutUser = (u.rut || '')
+            .replace(/\./g, '')
+            .replace('-', '')
+            .toLowerCase();
+
+          return rutUser === rutFiltro;
+        });
+      }
+
+      // ===============================
+      // 🔥 ARMAR USUARIOS (UNA SOLA VEZ 🔥)
+      // ===============================
+      this.users = filteredUsers
         .map((u: any) => {
-          const marks = userMap[u.id] || 0;
+          const marks = userMap.get(u.id) || 0;
 
           const fullName = [
             u.firstName,
@@ -189,49 +319,101 @@ export class TeleworkReportComponent {
             .filter(Boolean)
             .join(' ');
 
+          const groupData = userGroupMap.get(u.id);
+
           return {
             id: u.id,
             fullName,
             rut: u.rut,
             marks,
+            groupId: groupData?.groupId || null,
+            group: groupData
+              ? {
+                  name: groupData.groupName,
+                  jefatura: groupData.jefatura,
+                }
+              : null,
           };
         })
         .filter((u: any) => {
-          if (u.marks > 0) return true;
-
-          return subscribes.some(
-            (s: any) => (s.user?.id === u.id || s.userId === u.id) && s.active,
+          return filteredSubscribes.some(
+            (s: any) => s.user?.id === u.id || s.userId === u.id,
           );
         });
 
-      this.allRegisters = filteredRegisters;
-      this.registers = [];
+      // ===============================
+      // 🔥 BASE
+      // ===============================
+      this.allUsers = [...this.users];
+      this.users = []; // 🔥 NO mostrar hasta seleccionar grupo
+      this.selectedGroup = null;
 
-      this.allSubscriptions = subscribes;
-      this.subscriptions = [];
+      // =========================================
+      // 🔥 ARMAR GRUPOS (CON "SIN GRUPO")
+      // =========================================
+      const groupMap = new Map<number, any>();
 
-      const alerts = this.checkSubscriptionsWithoutMarks();
+      this.allUsers.forEach((u: any) => {
+        const groupId = u.groupId || -1; // 👈 clave
 
-      if (alerts.length > 0) {
-        this.dialog.open(ConfirmDialogComponent, {
-          width: '480px',
-          disableClose: true,
-          data: {
-            title: 'Alerta Teletrabajo',
-            message: `Se detectaron ${alerts.length} suscripciones activas sin registros de marcas.`,
-            confirmText: 'Aceptar',
-            cancelText: '',
-            icon: 'warning',
-            color: 'warn',
-          },
-        });
-      }
+        if (!groupMap.has(groupId)) {
+          groupMap.set(groupId, {
+            id: groupId,
+            name: u.group?.name || 'Sin grupo',
+            jefatura: u.group?.jefatura || null,
+            count: 0,
+          });
+        }
+
+        groupMap.get(groupId).count++;
+      });
+
+      // =========================================
+      // 🔥 ARMAR GRUPOS (ORDENADOS)
+      // =========================================
+      this.groups = Array.from(groupMap.values()).sort((a: any, b: any) => {
+        // 🔥 "Sin grupo" siempre arriba
+        if (a.id === -1) return -1;
+        if (b.id === -1) return 1;
+
+        // 🔥 luego por cantidad (mayor a menor)
+        return b.count - a.count;
+      });
+
+      this.allGroups = [...this.groups];
     } catch (err) {
       console.error(err);
       this.showWarning('Error consultando información');
     } finally {
-      this.loading = false; // 🔥 spinner OFF
+      this.loading = false;
     }
+  }
+
+  selectGroup(group: any) {
+    this.selectedGroup = group;
+
+    if (group.id === -1) {
+      // 🔥 SIN GRUPO
+      this.users = this.allUsers.filter((u: any) => !u.groupId);
+    } else {
+      // 🔥 CON GRUPO
+      this.users = this.allUsers.filter((u: any) => u.groupId === group.id);
+    }
+
+    this.selectedUser = null;
+    this.registers = [];
+    this.subscriptions = [];
+    this.works = [];
+    this.selectedDay = null;
+  }
+
+  isWorkValid(w: any): boolean {
+    if (w.deletedAt) return false;
+    if (w.status === 'DRAFT') return false;
+    if (w.state === 'BORRADOR') return false;
+    if (w.isDraft === true) return false;
+
+    return true;
   }
 
   // ===============================
@@ -248,8 +430,6 @@ export class TeleworkReportComponent {
     this.registers = [];
     this.subscriptions = [];
     this.selectedUser = null;
-
-    this.search(); // 💥 UX inmediata
   }
 
   setCurrentMonthYear() {
@@ -258,33 +438,19 @@ export class TeleworkReportComponent {
     this.year = today.getFullYear();
   }
 
-  // ===============================
-  // DÍA DE LA SEMANA
-  // ===============================
-
-  getDayOfWeek(date: any): string {
-    const days = [
-      'Domingo',
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-    ];
-
-    const d = this.toLocalDate(date);
-
-    return days[d.getDay()];
-  }
-
   selectUser(user: any): void {
     this.selectedUser = user;
 
     this.registers = [];
     this.subscriptions = [];
 
-    // 🔹 obtener registros reales
+    // 🔥 CLAVE: limpiar works y día seleccionado
+    this.works = [];
+    this.selectedDay = null;
+
+    // ===============================
+    // 🔹 REGISTROS
+    // ===============================
     let userRegisters = this.allRegisters
       .filter((r: any) => r.user?.id === user.id || r.userId === user.id)
       .sort(
@@ -293,23 +459,92 @@ export class TeleworkReportComponent {
           new Date(b.register_datetime).getTime(),
       );
 
-    // 🔥 si NO viene tipo desde backend → lo generamos
     userRegisters = userRegisters.map((r: any, index: number) => ({
       ...r,
       type: r.type || (index % 2 === 0 ? 'ING' : 'SAL'),
       isVirtual: false,
     }));
 
-    // 🔹 suscripciones
-    this.subscriptions = this.allSubscriptions.filter(
-      (s: any) => s.user?.id === user.id || s.userId === user.id,
-    );
+    // ===============================
+    // 🔥 RANGO
+    // ===============================
+    let from: Date | null = null;
+    let to: Date | null = null;
 
-    // 💥 AQUÍ LA MAGIA
+    if (this.dateFrom && this.dateTo) {
+      from = this.parseDateCL(this.dateFrom);
+      from.setHours(0, 0, 0, 0);
+
+      to = this.parseDateCL(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+    } else if (this.month && this.year) {
+      from = new Date(this.year, this.month - 1, 1);
+      to = new Date(this.year, this.month, 0);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+    }
+
+    // ===============================
+    // 🔹 SUSCRIPCIONES
+    // ===============================
+    this.subscriptions = this.allSubscriptions.filter((s: any) => {
+      const isUser = s.user?.id === user.id || s.userId === user.id;
+
+      if (!isUser) return false;
+      if (!from || !to) return true;
+
+      const start = new Date(s.begin);
+      const end = new Date(s.end);
+
+      return start <= to && end >= from;
+    });
+
+    // ===============================
+    // 🔹 REGISTROS COMPLETOS
+    // ===============================
     this.registers = this.generateFullRegisters(
       this.subscriptions,
       userRegisters,
     );
+
+    // 🚫 NO TOCAR WORKS AQUÍ
+  }
+
+  selectDay(date: any): void {
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+
+    this.selectedDay = targetDate;
+
+    this.works = this.allWorks
+      .filter((w: any) => {
+        const d = new Date(w.createdAt || w.created_at);
+        d.setHours(0, 0, 0, 0);
+
+        const isUser =
+          w.user?.id === this.selectedUser?.id ||
+          w.userId === this.selectedUser?.id;
+
+        return isUser && d.getTime() === targetDate.getTime();
+      })
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.createdAt || a.created_at).getTime() -
+          new Date(b.createdAt || b.created_at).getTime(),
+      );
+  }
+
+  isSameDay(date1: any, date2: any): boolean {
+    if (!date1 || !date2) return false;
+
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+
+    d1.setHours(0, 0, 0, 0);
+    d2.setHours(0, 0, 0, 0);
+
+    return d1.getTime() === d2.getTime();
   }
 
   validarRut() {
@@ -362,6 +597,7 @@ export class TeleworkReportComponent {
   }
 
   formatRut(event: any) {
+    this.hasSearched = false;
     let value = event.target.value.replace(/[^0-9kK]/g, '');
 
     if (value.length < 2) {
@@ -433,7 +669,7 @@ export class TeleworkReportComponent {
   }
 
   showWarning(message: string) {
-    this.dialog.open(ConfirmDialogComponent, {
+    this.dialog.open(ConfirmDialogOkComponent, {
       width: '420px',
       disableClose: true,
       data: {
@@ -453,24 +689,43 @@ export class TeleworkReportComponent {
     this.allSubscriptions.forEach((s: any) => {
       if (!s.active) return;
 
-      const hasRegisters = this.allRegisters.some(
-        (r: any) => r.user?.id === s.user?.id || r.userId === s.userId,
-      );
+      const start = new Date(s.begin);
+      const end = new Date(s.end);
 
-      if (!hasRegisters) {
-        alerts.push(s);
+      const missingDays: string[] = [];
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const current = new Date(d);
+        current.setHours(0, 0, 0, 0);
+
+        const hasMark = this.allRegisters.some((r: any) => {
+          const rd = new Date(r.register_datetime);
+          rd.setHours(0, 0, 0, 0);
+
+          return (
+            (r.user?.id === s.user?.id || r.userId === s.userId) &&
+            rd.getTime() === current.getTime()
+          );
+        });
+
+        if (!hasMark) {
+          missingDays.push(this.formatDateCL(current));
+        }
+      }
+
+      if (missingDays.length > 0) {
+        alerts.push({
+          user: s.user,
+          days: missingDays,
+        });
       }
     });
 
     return alerts;
   }
 
-  onDateChange() {
-    this.month = null;
-    this.year = null;
-  }
-
   onMonthYearChange(): void {
+    this.hasSearched = false; // 🔥 CLAVE
     if (!this.month || !this.year) {
       this.dateFrom = null;
       this.dateTo = null;
@@ -557,6 +812,8 @@ export class TeleworkReportComponent {
 
   exportUser(user: any) {
     this.selectUser(user);
+    this.works = [];
+    this.selectedDay = null;
 
     const data = this.generateFullRegisters(
       this.subscriptions,
@@ -592,20 +849,39 @@ export class TeleworkReportComponent {
 
     const today = this.parseDateCL(this.getToday());
 
-    subscriptions.forEach((sub) => {
-      const start = this.parseDateCL(sub.begin);
-      const endOriginal = this.parseDateCL(sub.end);
+    // 🔥 rango activo SIEMPRE
+    let from: Date | null = null;
+    let to: Date | null = null;
 
-      // 🔥 usar el mismo today
+    if (this.dateFrom && this.dateTo) {
+      from = this.parseDateCL(this.dateFrom);
+      to = this.parseDateCL(this.dateTo);
+    } else if (this.month && this.year) {
+      from = new Date(this.year, this.month - 1, 1);
+      to = new Date(this.year, this.month, 0);
+    }
+
+    subscriptions.forEach((sub) => {
+      let start = this.parseDateCL(sub.begin);
+      let endOriginal = this.parseDateCL(sub.end);
+
+      // 🔥 recorte por filtro
+      if (from && start < from) start = from;
+      if (to && endOriginal > to) endOriginal = to;
+
       const end = this.isCurrentlyActive(sub) ? today : endOriginal;
 
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const current = this.parseDateCL(d);
 
-        // 🚫 NO FUTURO
+        // 🚫 fuera de rango
+        if (from && current < from) continue;
+        if (to && current > to) continue;
+
+        // 🚫 futuro
         if (current > today) continue;
 
-        const dateStr = this.formatDateCL(d);
+        const dateStr = this.formatDateCL(current);
 
         const ingreso = result.find(
           (r) =>
@@ -620,7 +896,7 @@ export class TeleworkReportComponent {
         );
 
         if (!ingreso) {
-          const dIng = new Date(d);
+          const dIng = new Date(current);
           dIng.setHours(0, 0, 0);
 
           result.push({
@@ -631,7 +907,7 @@ export class TeleworkReportComponent {
         }
 
         if (!salida) {
-          const dSal = new Date(d);
+          const dSal = new Date(current);
           dSal.setHours(0, 0, 0);
 
           result.push({
@@ -643,11 +919,21 @@ export class TeleworkReportComponent {
       }
     });
 
-    return result.sort(
-      (a, b) =>
-        new Date(a.register_datetime).getTime() -
-        new Date(b.register_datetime).getTime(),
-    );
+    // 🔥 filtro final (doble seguridad)
+    return result
+      .filter((r) => {
+        const d = this.parseDateCL(r.register_datetime);
+
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.register_datetime).getTime() -
+          new Date(b.register_datetime).getTime(),
+      );
   }
 
   formatTimeCL(date: any, isVirtual?: boolean): string {
@@ -716,5 +1002,81 @@ export class TeleworkReportComponent {
     } finally {
       this.loader.hide();
     }
+  }
+
+  onMonthFocus(): void {
+    this.hasSearched = false; // 🔥 AGREGAR
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  onDateChange(): void {
+    this.hasSearched = false; // 🔥 CLAVE
+    if (!this.dateFrom && !this.dateTo) return;
+
+    if (this.dateFrom) {
+      const from = new Date(this.dateFrom);
+
+      this.month = from.getMonth() + 1;
+      this.year = from.getFullYear();
+
+      from.setHours(0, 0, 0, 0);
+      this.dateFrom = from;
+    }
+
+    if (this.dateTo) {
+      const to = new Date(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+      this.dateTo = to;
+    }
+
+    this.clearResults();
+  }
+
+  clearResults(): void {
+    this.selectedUser = null;
+    this.selectedGroup = null;
+
+    this.selectedUser = null;
+
+    this.users = [];
+    this.registers = [];
+    this.subscriptions = [];
+
+    this.works = [];
+    this.selectedDay = null;
+
+    this.allRegisters = [];
+    this.allSubscriptions = [];
+    this.allWorks = [];
+  }
+
+  // ===============================
+  // DÍA DE LA SEMANA
+  // ===============================
+
+  getDayOfWeek(date: any, mode: 'short' | 'long' = 'long'): string {
+    const short = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const long = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
+
+    const d = this.toLocalDate(date);
+
+    return mode === 'short' ? short[d.getDay()] : long[d.getDay()];
+  }
+
+  getDayShort(date: any): string {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    const d = this.toLocalDate(date);
+    return days[d.getDay()];
   }
 }

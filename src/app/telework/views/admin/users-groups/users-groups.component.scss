@@ -1,43 +1,418 @@
+/* ============================
+   🟦 TITULO
+============================ */
 .title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: #1565c0;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  .title-main {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1565c0;
+  }
+
+  .title-sub {
+    font-size: 13px;
+    color: #607d8b;
+  }
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #1565c0;
+  }
 }
 
-.layout-3 {
+/* ============================
+   🟦 LAYOUT
+============================ */
+.layout-4 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
+@media (max-width: 1024px) {
+  .layout-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .layout-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================
+   🟦 CARDS
+============================ */
 .col {
   background: #fff;
   border-radius: 12px;
   padding: 12px;
   border: 1px solid #e0e0e0;
   min-height: 400px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
 }
 
-.col h3 {
-  margin-bottom: 10px;
+.col:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================
+   🟦 HEADERS
+============================ */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
 }
 
+.card-header small {
+  font-weight: 400;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.blue {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+.green {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+.orange {
+  background: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+}
+.purple {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+/* ============================
+   🟦 ITEMS
+============================ */
 .item {
   padding: 10px;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  justify-content: flex-start;
 }
 
 .item:hover {
-  background: #f5f7fa;
+  background: rgba(21, 101, 192, 0.08);
+  transform: translateX(4px);
 }
 
 .item.active {
   background: #1565c0;
   color: white;
   font-weight: 500;
+}
+
+.item.user {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+/* ============================
+   🟦 USUARIOS
+============================ */
+.user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  text-align: left;
+}
+
+/* ============================
+   🟦 EMPTY STATE
+============================ */
+.empty {
+  text-align: center;
+  opacity: 0.6;
+  margin-top: 40px;
+  font-size: 13px;
+}
+
+.empty mat-icon {
+  font-size: 30px;
+  color: #90a4ae;
+}
+
+/* 🎯 ICONOS GENERALES */
+mat-icon {
+  color: #546e7a;
+  transition: all 0.2s ease;
+}
+
+/* 🔵 GRUPOS */
+.blue mat-icon {
+  color: #1565c0;
+}
+
+/* 🟢 USUARIOS DEL GRUPO */
+.green mat-icon {
+  color: #2e7d32;
+}
+
+/* 🟠 SIN GRUPO */
+.orange mat-icon {
+  color: #f57c00;
+}
+
+/* 🟣 TODOS */
+.purple mat-icon {
+  color: #7b1fa2;
+}
+
+.item:hover mat-icon {
+  transform: scale(1.15);
+}
+
+/* ============================
+   🟦 ROLES
+============================ */
+.roles {
+  display: flex;
+  gap: 4px;
+}
+
+.badge {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.badge {
+  font-size: 11px;
+}
+
+.badge:contains("ADMIN") {
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+}
+
+.badge-admin {
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+}
+
+.badge-supervisor {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+.badge-administrativo {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+
+.badge-jefatura {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+/* ============================
+   🟦 opciones de exportar e imprimir
+============================ */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* BASE */
+.toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* 🔵 GRUPO */
+.btn-blue {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+
+.btn-blue:hover {
+  background: rgba(21, 101, 192, 0.2);
+}
+
+/* 🟣 TODOS */
+.btn-purple {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+.btn-purple:hover {
+  background: rgba(123, 31, 162, 0.2);
+}
+
+/* 🟢 PDF */
+.btn-green {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+.btn-green:hover {
+  background: rgba(46, 125, 50, 0.2);
+}
+
+/* 🟠 SIN GRUPO */
+.btn-orange {
+  background: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+}
+
+.btn-orange:hover {
+  background: rgba(245, 124, 0, 0.2);
+}
+
+
+
+/* ============================
+   📱 RESPONSIVE MOBILE
+============================ */
+@media (max-width: 600px) {
+
+  .title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+
+    mat-icon {
+      font-size: 24px;
+    }
+
+    .title-main {
+      font-size: 18px;
+    }
+
+    .title-sub {
+      font-size: 12px;
+    }
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .toolbar button {
+    flex: 1 1 100%;
+    justify-content: center;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .col {
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .item {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .item:hover {
+    transform: none;
+  }
+
+  .user {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .roles {
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #607d8b;
+  margin-right: 6px;
+}
+
+/* BOTONES BASE */
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+/* MÁS IMPORTANTE */
+.btn.big {
+  font-weight: 600;
+  transform: scale(1.05);
+}
+
+/* COLORES */
+.btn-blue { background: rgba(21,101,192,0.1); color: #1565c0; }
+.btn-orange { background: rgba(245,124,0,0.1); color: #f57c00; }
+.btn-purple { background: rgba(123,31,162,0.1); color: #7b1fa2; }
+.btn-green { background: rgba(46,125,50,0.1); color: #2e7d32; }
+
+/* HOVER */
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
 }

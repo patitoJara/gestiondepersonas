@@ -64,6 +64,13 @@ export class UsuariosDialogComponent implements OnInit {
   passwordGenerada: string = '';
   isSelfEdit: boolean = false;
 
+  roleConfig: any = {
+    ADMIN: { icon: 'admin_panel_settings', color: 'role-admin' },
+    SUPERVISOR: { icon: 'supervisor_account', color: 'role-supervisor' },
+    JEFATURA: { icon: 'badge', color: 'role-jefatura' },
+    ADMINISTRATIVO: { icon: 'person', color: 'role-administrativo' },
+  };
+
   constructor(
     private fb: FormBuilder,
     private usersService: UsersService,
@@ -353,15 +360,17 @@ export class UsuariosDialogComponent implements OnInit {
    * VALIDAR RUT AL PERDER FOCO
    ================================= */
 
-  validarRutBlur(): void {
+  async validarRutBlur(): Promise<void> {
     const control = this.form.get('rut');
-
     if (!control) return;
 
     control.markAsTouched();
     control.updateValueAndValidity();
 
-    if (control.hasError('rutInvalido') && control.value?.length > 7) {
+    const rut = control.value;
+
+    // 🔴 validar formato primero
+    if (control.hasError('rutInvalido') && rut?.length > 7) {
       this.dialog.open(ErrorConfirmDialogComponent, {
         width: '420px',
         disableClose: true,
@@ -374,6 +383,44 @@ export class UsuariosDialogComponent implements OnInit {
           dense: true,
         },
       });
+      return;
+    }
+
+    // 🔥 SOLO si es usuario NUEVO
+    if (this.data?.id) return;
+
+    if (!rut) return;
+
+    try {
+      const existe = await this.existeRutLocal(rut);
+
+      if (existe) {
+        control.setErrors({ ...control.errors, duplicado: true });
+
+        this.dialog.open(ErrorConfirmDialogComponent, {
+          width: '420px',
+          data: {
+            title: 'RUT ya registrado',
+            message: 'Este RUT ya existe en el sistema.',
+            confirmText: 'Aceptar',
+            icon: 'warning',
+          },
+        });
+      } else {
+        // 🔥 limpiar solo error duplicado
+        const errors = control.errors;
+        if (errors) {
+          delete errors['duplicado'];
+
+          if (Object.keys(errors).length === 0) {
+            control.setErrors(null);
+          } else {
+            control.setErrors(errors);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error validando RUT', err);
     }
   }
 
@@ -431,5 +478,21 @@ export class UsuariosDialogComponent implements OnInit {
     const username = firstInitial + secondInitial + last;
 
     userControl.setValue(username);
+  }
+
+  async existeRutLocal(rut: string): Promise<boolean> {
+    const users = await firstValueFrom(this.usersService.getAll());
+
+    const normalizado = this.normalizarRut(rut);
+
+    return users.some((u: any) => this.normalizarRut(u.rut) === normalizado);
+  }
+
+  normalizarRut(rut: string): string {
+    return (rut || '')
+      .replace(/\./g, '')
+      .replace(/-/g, '')
+      .toUpperCase()
+      .trim();
   }
 }

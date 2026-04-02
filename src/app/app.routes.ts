@@ -70,6 +70,7 @@ export const routes: Routes = [
         },
       },
 
+
       {
         path: 'mi-reporte',
         loadComponent: () =>
@@ -77,7 +78,7 @@ export const routes: Routes = [
             (m) => m.TeleworkReportUserComponent,
           ),
         data: {
-          roles: ['ADMINISTRATIVO'],
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
           title: 'Mi Control de Teletrabajo',
           icon: 'assignment_ind',
         },
@@ -90,22 +91,9 @@ export const routes: Routes = [
             (m) => m.TeleworkUserSubscriptionsComponent,
           ),
         data: {
-          roles: ['ADMINISTRATIVO'],
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
           title: 'Mis Suscripciones',
           icon: 'event',
-        },
-      },
-
-      {
-        path: 'report',
-        loadComponent: () =>
-          import('./telework/views/reports/telework-report/telework-report.component').then(
-            (m) => m.TeleworkReportComponent,
-          ),
-        data: {
-          roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Reporte TeleTrabajo',
-          icon: 'assessment',
         },
       },
 
@@ -117,8 +105,21 @@ export const routes: Routes = [
           ),
         data: {
           roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Panel de Usuarios y Grupos',
+          title: 'Auditoría de Grupos',
           icon: 'dashboard',
+        },
+      },
+
+      {
+        path: 'report',
+        loadComponent: () =>
+          import('./telework/views/reports/telework-report/telework-report.component').then(
+            (m) => m.TeleworkReportComponent,
+          ),
+        data: {
+          roles: ['ADMIN', 'SUPERVISOR'],
+          title: 'Auditoría TeleTrabajo',
+          icon: 'assessment',
         },
       },
 
@@ -130,10 +131,11 @@ export const routes: Routes = [
           ),
         data: {
           roles: ['ADMIN', 'JEFATURA'],
-          title: 'Mis Funcionarios',
+          title: 'Funcionarios por Jefatura',
           icon: 'groups',
         },
       },
+
 
       {
         path: 'mi-reporte-jefatura',
@@ -143,10 +145,10 @@ export const routes: Routes = [
           ),
         data: {
           roles: ['ADMIN', 'JEFATURA'],
-          title: 'Mi Reporte',
+          title: 'Reporte Jefatura',
           icon: 'assessment',
         },
-      },
+      },      
 
       {
         path: 'manual',
@@ -201,7 +203,7 @@ export const routes: Routes = [
           icon: 'person',
         },
       },
-
+/*
       {
         path: 'admin/jefaturas',
         loadComponent: () =>
@@ -209,12 +211,12 @@ export const routes: Routes = [
             (m) => m.JefaturaUsuariosComponent,
           ),
         data: {
-          roles: ['ADMIN', 'JEFATURA'],
+          roles: ['ADMIN'],
           title: 'Jefaturas',
           icon: 'groups',
         },
       },
-
+*/
       {
         path: 'admin/subscribe',
         loadComponent: () =>

@@ -208,14 +208,16 @@ export class TemplateComponent implements OnInit, OnDestroy {
     this.drawer.toggle();
   }
 
-  async navigate(route: string): Promise<void> {
-    const isMobile = await firstValueFrom(this.isHandset$);
-
-    if (isMobile) {
-      await this.drawer.close();
-    }
-
+  async navigate(route: string, drawer?: MatSidenav) {
     await this.router.navigate([route]);
+
+    if (drawer && window.innerWidth < 768) {
+      drawer.close();
+    }
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth < 768;
   }
 
   buildMenu(): void {

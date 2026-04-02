@@ -1,206 +1,166 @@
 <!-- HEADER -->
 <div class="dialog-header">
-  {{ form.value.id ? 'EDITAR USUARIO' : 'NUEVO USUARIO' }}
+  <mat-icon>person</mat-icon>
+  {{ form.value.id ? 'Editar Usuario' : 'Nuevo Usuario' }}
 </div>
 
 <!-- CONTENT -->
-<div mat-dialog-content class="ficha-usuarios-modal">
-  <form [formGroup]="form" class="form-usuarios-modal" autocomplete="off">
-    <!-- FILA 1 -->
-    <div class="fila-1">
-      <div class="field-clinico-linea">
-        <label>RUT *</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="rut"
-            (input)="formatRut($event)"
-            (blur)="validarRutBlur()"
-            maxlength="12"
-          />
-
-          <mat-error *ngIf="form.get('rut')?.hasError('required')">
-            RUT es obligatorio
-          </mat-error>
-
-          <mat-error *ngIf="form.get('rut')?.hasError('rutInvalido')">
-            RUT no válido
-          </mat-error>
-        </mat-form-field>
-      </div>
+<div mat-dialog-content class="card form-card">
+  <form [formGroup]="form" class="form-layout" autocomplete="off">
+    <!-- RUT -->
+    <div class="form-field col-1">
+      <label>RUT *</label>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="rut"
+          (input)="formatRut($event)"
+          (blur)="validarRutBlur()"
+        />
+        <mat-error *ngIf="form.get('rut')?.hasError('duplicado')"> </mat-error>
+      </mat-form-field>
     </div>
 
-    <!-- FILA 2 -->
-    <div class="fila-2">
-      <div class="field-clinico-linea">
-        <label>Nombre *</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="firstName"
-            (blur)="onBlurNombre('firstName')"
-          />
-        </mat-form-field>
-      </div>
-
-      <div class="field-clinico-linea">
-        <label>Segundo Nombre</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="secondName"
-            (blur)="onBlurNombre('secondName')"
-          />
-        </mat-form-field>
-      </div>
+    <!-- NOMBRE -->
+    <div class="form-field col-1">
+      <label>Nombre *</label>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="firstName"
+          (blur)="onBlurNombre('firstName')"
+        />
+      </mat-form-field>
     </div>
 
-    <!-- FILA 3 -->
-    <div class="fila-2">
-      <div class="field-clinico-linea">
-        <label>Apellido Paterno *</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="firstLastName"
-            (blur)="onBlurNombre('firstLastName')"
-          />
-        </mat-form-field>
-      </div>
-
-      <div class="field-clinico-linea">
-        <label>Apellido Materno</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="secondLastName"
-            (blur)="onBlurNombre('secondLastName')"
-          />
-        </mat-form-field>
-      </div>
+    <!-- SEGUNDO NOMBRE -->
+    <div class="form-field col-1">
+      <label>Segundo Nombre</label>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="secondName"
+          (blur)="onBlurNombre('secondName')"
+        />
+      </mat-form-field>
     </div>
 
-    <!-- FILA 4 -->
-    <div class="fila-2">
-      <div class="field-clinico-linea">
-        <label>Username *</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="username"
-            placeholder="Se genera automáticamente"
-          />
-
-          <mat-hint> Se genera automáticamente desde el nombre </mat-hint>
-        </mat-form-field>
-      </div>
-
-      <div class="field-clinico-linea">
-        <label>Email *</label>
-
-        <mat-form-field appearance="fill">
-          <input
-            matInput
-            formControlName="email"
-            autocomplete="off"
-            (blur)="completarCorreo()"
-          />
-
-          <mat-error *ngIf="form.get('email')?.hasError('email')">
-            Correo electrónico inválido
-          </mat-error>
-
-          <mat-hint>
-            Si no se ingresa dominio se asumirá &#64;redsalud.gob.cl
-          </mat-hint>
-        </mat-form-field>
-      </div>
+    <!-- APELLIDO PATERNO -->
+    <div class="form-field col-1">
+      <label>Apellido Paterno *</label>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="firstLastName"
+          (blur)="onBlurNombre('firstLastName')"
+        />
+      </mat-form-field>
     </div>
 
-    <!-- FILA 5 -->
-    <mat-form-field appearance="fill">
-      <!-- inputs ocultos -->
-      <input type="text" style="display: none" />
-      <input type="password" style="display: none" />
+    <!-- APELLIDO MATERNO -->
+    <div class="form-field col-1">
+      <label>Apellido Materno</label>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="secondLastName"
+          (blur)="onBlurNombre('secondLastName')"
+        />
+      </mat-form-field>
+    </div>
 
-      <!-- input principal -->
-      <input
-        matInput
-        [type]="hide ? 'password' : 'text'"
-        formControlName="password"
-        autocomplete="new-password"
-        name="new-password"
-      />
+    <!-- USERNAME -->
+    <div class="form-field col-2">
+      <label>Username *</label>
+      <mat-form-field appearance="outline">
+        <input matInput formControlName="username" />
+      </mat-form-field>
+    </div>
 
-      <mat-hint *ngIf="form.value.id">
-        Dejar en blanco para mantener la contraseña actual
-      </mat-hint>
+    <!-- EMAIL -->
+    <div class="form-field col-2">
+      <label>Email *</label>
+      <mat-form-field appearance="outline">
+        <input matInput formControlName="email" (blur)="completarCorreo()" />
+      </mat-form-field>
+    </div>
 
-      <!-- 🔥 CONTENEDOR PRO -->
-      <div matSuffix class="password-actions">
-        <!-- 👁️ -->
-        <button type="button" mat-icon-button (click)="hide = !hide">
-          <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
-        </button>
+    <!-- PASSWORD -->
+    <div class="form-field col-2">
+      <label>Password</label>
 
-        <!-- 🔐 -->
-        <button
-          type="button"
-          mat-icon-button
-          (click)="generarClave()"
-          matTooltip="Generar contraseña"
-          class="btn-generate"
-        >
-          <mat-icon>vpn_key</mat-icon>
-        </button>
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          [type]="hide ? 'password' : 'text'"
+          formControlName="password"
+        />
 
-        <!-- 📋 -->
-        <button
-          *ngIf="passwordGenerada"
-          type="button"
-          mat-icon-button
-          (click)="copiarClave()"
-          matTooltip="Copiar contraseña"
-          class="btn-copy"
-        >
-          <mat-icon>content_copy</mat-icon>
-        </button>
-      </div>
-    </mat-form-field>
+        <div matSuffix class="password-actions">
+          <button type="button" mat-icon-button (click)="hide = !hide">
+            <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+
+          <button
+            type="button"
+            mat-icon-button
+            class="btn-generate"
+            (click)="generarClave()"
+          >
+            <mat-icon>vpn_key</mat-icon>
+          </button>
+
+          <button
+            *ngIf="passwordGenerada"
+            type="button"
+            mat-icon-button
+            (click)="copiarClave()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+      </mat-form-field>
+    </div>
 
     <!-- ROLES -->
-    <div class="field-clinico-linea">
+    <div class="form-field col-4">
       <label>Roles *</label>
 
-      <mat-selection-list formControlName="roles">
-        <mat-list-option
-          *ngFor="let role of roles"
-          [value]="role.id"
-          [disabled]="isSelfEdit && role.name.toUpperCase() === activeRole"
-        >
-          {{ role.name }}
-        </mat-list-option>
-      </mat-selection-list>
+      <div class="card roles-box">
+        <mat-selection-list formControlName="roles">
+          <mat-list-option
+            *ngFor="let role of roles"
+            [value]="role.id"
+            class="role-option"
+            [ngClass]="roleConfig[role.name]?.color"
+          >
+            <div class="role-content">
+              <div class="role-left">
+                <mat-icon [ngClass]="roleConfig[role.name]?.color">
+                  {{ roleConfig[role.name]?.icon || 'person' }}
+                </mat-icon>
+
+                <span
+                  class="role-name"
+                  [ngClass]="roleConfig[role.name]?.color"
+                >
+                  {{ role.name }}
+                </span>
+              </div>
+            </div>
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
     </div>
   </form>
 </div>
 
 <!-- ACTIONS -->
-<div mat-dialog-actions align="end">
+<div mat-dialog-actions class="toolbar">
   <button mat-button (click)="cancel()">Cancelar</button>
 
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="save()"
-    [disabled]="form.invalid"
-  >
+  <button class="btn-blue" (click)="save()" [disabled]="form.invalid">
+    <mat-icon>save</mat-icon>
     Guardar
   </button>
 </div>

@@ -299,10 +299,11 @@ export class UsuariosComponent implements AfterViewInit {
   openDialog(row?: User): void {
     setTimeout(() => {
       const ref = this.dialog.open(UsuariosDialogComponent, {
+        panelClass: 'sirus-dialog',
         width: '680px',
         maxWidth: '95vw',
         height: 'auto',
-        panelClass: 'usuarios-dialog',
+        //panelClass: 'usuarios-dialog',
         backdropClass: 'app-backdrop',
         data: row ?? null,
         disableClose: true,

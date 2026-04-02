@@ -79,6 +79,8 @@ export class LoginComponent implements AfterViewInit {
     return this.form.controls;
   }
 
+  // src/app/telework/views/auth/login/login.component.ts
+
   login(): void {
     (document.activeElement as HTMLElement)?.blur();
     this.error = '';
@@ -104,42 +106,49 @@ export class LoginComponent implements AfterViewInit {
         }
 
         // =========================
-        // GUARDAR TOKEN
+        // 🔐 TOKENS (CORRECTO)
         // =========================
         this.tokenService.setTokens(res.token, res.refreshToken);
 
-        // 🔹 guardar perfil
+        // =========================
+        // 👤 PERFIL (CORRECTO)
+        // =========================
         if (res.profile) {
-          sessionStorage.setItem('profile', JSON.stringify(res.profile));
+          this.tokenService.setUserProfile(res.profile);
         }
 
-        // 🔹 guardar roles
+        // =========================
+        // 🎭 ROLES (CORRECTO)
+        // =========================
         if (res.roles) {
-          const roleNames = res.roles.map((r: any) => r.name);
-          sessionStorage.setItem('roles', JSON.stringify(roleNames));
+          this.tokenService.setUserRoles(res.roles);
         }
 
-        console.log('[login] Token, perfil y roles guardados correctamente');
+        console.log('[login] ✅ Token, perfil y roles guardados correctamente');
 
-        // Guardar email si corresponde
-        if (remember) localStorage.setItem('last_email', email);
-        else localStorage.removeItem('last_email');
+        // =========================
+        // 💾 RECORDAR EMAIL
+        // =========================
+        if (remember) {
+          localStorage.setItem('last_email', email);
+        } else {
+          localStorage.removeItem('last_email');
+        }
 
         const returnUrl =
           this.route.snapshot.queryParamMap.get('returnUrl') || '/';
-        //this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
 
         console.log('[login] ⏳ Navegando y reiniciando sesión...');
 
         // =========================
-        // NAVEGACIÓN + SESIÓN
+        // 🚀 NAVEGACIÓN + SESIÓN
         // =========================
         this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
-          // 🔑 AQUÍ SE REINICIA LA SESIÓN (mata timers viejos)
           this.sessionService.startSession('login');
           this.loading = false;
         });
       },
+
       error: (err) => {
         console.error('[login] ❌ Error de autenticación:', err);
         this.loading = false;
