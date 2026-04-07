@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 import { MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +14,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { TeleworkReportService } from '@app/telework/services/telework-report.service';
 import { firstValueFrom } from 'rxjs';
@@ -23,6 +26,7 @@ import { TeleworkReportPrintService } from '@app/telework/services/reports/telew
 import { LoaderService } from '@app/core/services/loader.service';
 import { WorkService } from '@app/telework/services/work.service';
 import { UsersGroupService } from '@app/telework/services/admin/users-group.service';
+import { filterByRutOrName } from '@app/shared/utils/filter.util';
 
 @Component({
   selector: 'app-telework-report',
@@ -41,6 +45,8 @@ import { UsersGroupService } from '@app/telework/services/admin/users-group.serv
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
+    ReactiveFormsModule,
+    MatAutocompleteModule,
   ],
 })
 export class TeleworkReportComponent {
@@ -56,6 +62,9 @@ export class TeleworkReportComponent {
   // ===============================
 
   hasSearched: boolean = false;
+
+  userSearch = new FormControl('');
+  filteredUsers: any[] = [];
 
   rut: string = '';
   rutInvalido = false;
@@ -125,7 +134,9 @@ export class TeleworkReportComponent {
 
   displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
 
-  ngOnInit() {
+  async ngOnInit() {
+    this.setupUserFilter();
+
     const currentYear = new Date().getFullYear();
 
     for (let i = currentYear; i <= currentYear + 10; i++) {
@@ -135,7 +146,24 @@ export class TeleworkReportComponent {
     this.month = new Date().getMonth() + 1;
     this.year = new Date().getFullYear();
 
-    this.clearResults(); // 🔥 IMPORTANTE
+    // 🔥 CARGAR USUARIOS SOLO PARA AUTOCOMPLETE
+    try {
+      const users = await firstValueFrom(this.reportService.getUsers());
+
+      this.allUsers = users.map((u: any) => ({
+        id: u.id,
+        fullName: [u.firstName, u.secondName, u.firstLastName, u.secondLastName]
+          .filter(Boolean)
+          .join(' '),
+        rut: u.rut,
+      }));
+
+      this.filteredUsers = []; // 🔥 importante
+    } catch (e) {
+      console.error('Error cargando usuarios', e);
+    }
+
+    this.clearResults();
   }
 
   // ===============================
@@ -144,10 +172,10 @@ export class TeleworkReportComponent {
 
   async search() {
     this.hasSearched = false;
+
     this.users = [];
     this.registers = [];
     this.subscriptions = [];
-    this.selectedUser = null;
     this.allWorks = [];
     this.works = [];
 
@@ -168,12 +196,19 @@ export class TeleworkReportComponent {
       }
     }
 
+    const rutFiltro = this.rut
+      ?.replace(/\./g, '')
+      .replace('-', '')
+      .toLowerCase();
+
+      
     if (
       !this.month &&
       !this.year &&
       !this.dateFrom &&
       !this.dateTo &&
-      !this.rut
+      !this.rut &&
+      !this.selectedUser // 🔥 CLAVE
     ) {
       this.showWarning('Debe ingresar al menos un filtro');
       return;
@@ -181,7 +216,7 @@ export class TeleworkReportComponent {
 
     try {
       this.loading = true;
-      this.hasSearched = true; // al inicio
+      this.hasSearched = true;
 
       const [users, registers, subscribes, works, usersGroups] =
         await Promise.all([
@@ -192,10 +227,7 @@ export class TeleworkReportComponent {
           firstValueFrom(this.usersGroupService.getAll()),
         ]);
 
-      const rutFiltro = this.rut
-        ?.replace(/\./g, '')
-        .replace('-', '')
-        .toLowerCase();
+      const selectedUserId = this.selectedUser?.id || null;
 
       // ===============================
       // 🔥 LIMPIAR DATOS
@@ -216,12 +248,12 @@ export class TeleworkReportComponent {
         return true;
       });
 
-      // ===============================
-      // 🔥 FILTROS
-      // ===============================
       let filteredRegisters = [...cleanRegisters];
       let filteredSubscribes = [...cleanSubscribes];
 
+      // ===============================
+      // 🔥 FILTRO FECHA
+      // ===============================
       if (this.month && this.year) {
         filteredRegisters = filteredRegisters.filter((r: any) => {
           const d = new Date(r.register_datetime);
@@ -248,6 +280,21 @@ export class TeleworkReportComponent {
           const end = new Date(s.end);
           return start <= to && end >= from;
         });
+      }
+
+      // ===============================
+      // 🔥 FILTRO POR USUARIO (PRO)
+      // ===============================
+      if (selectedUserId) {
+        filteredRegisters = filteredRegisters.filter(
+          (r: any) =>
+            r.user?.id === selectedUserId || r.userId === selectedUserId,
+        );
+
+        filteredSubscribes = filteredSubscribes.filter(
+          (s: any) =>
+            s.user?.id === selectedUserId || s.userId === selectedUserId,
+        );
       }
 
       this.allRegisters = filteredRegisters;
@@ -292,19 +339,18 @@ export class TeleworkReportComponent {
       // ===============================
       let filteredUsers = [...users];
 
-      if (rutFiltro) {
-        filteredUsers = filteredUsers.filter((u: any) => {
-          const rutUser = (u.rut || '')
-            .replace(/\./g, '')
+      if (this.rut) {
+        filteredUsers = filteredUsers.filter((u: any) =>
+          u.rut
+            ?.replace(/\./g, '')
             .replace('-', '')
-            .toLowerCase();
-
-          return rutUser === rutFiltro;
-        });
+            .toLowerCase()
+            .includes(rutFiltro),
+        );
       }
 
       // ===============================
-      // 🔥 ARMAR USUARIOS (UNA SOLA VEZ 🔥)
+      // 🔥 ARMAR USUARIOS
       // ===============================
       this.users = filteredUsers
         .map((u: any) => {
@@ -341,20 +387,17 @@ export class TeleworkReportComponent {
           );
         });
 
-      // ===============================
-      // 🔥 BASE
-      // ===============================
       this.allUsers = [...this.users];
-      this.users = []; // 🔥 NO mostrar hasta seleccionar grupo
+      this.users = [];
       this.selectedGroup = null;
 
-      // =========================================
-      // 🔥 ARMAR GRUPOS (CON "SIN GRUPO")
-      // =========================================
+      // ===============================
+      // 🔥 GRUPOS
+      // ===============================
       const groupMap = new Map<number, any>();
 
       this.allUsers.forEach((u: any) => {
-        const groupId = u.groupId || -1; // 👈 clave
+        const groupId = u.groupId || -1;
 
         if (!groupMap.has(groupId)) {
           groupMap.set(groupId, {
@@ -368,15 +411,9 @@ export class TeleworkReportComponent {
         groupMap.get(groupId).count++;
       });
 
-      // =========================================
-      // 🔥 ARMAR GRUPOS (ORDENADOS)
-      // =========================================
       this.groups = Array.from(groupMap.values()).sort((a: any, b: any) => {
-        // 🔥 "Sin grupo" siempre arriba
         if (a.id === -1) return -1;
         if (b.id === -1) return 1;
-
-        // 🔥 luego por cantidad (mayor a menor)
         return b.count - a.count;
       });
 
@@ -389,15 +426,43 @@ export class TeleworkReportComponent {
     }
   }
 
+  private rebuildGroups(users: any[]) {
+    const groupMap = new Map<number, any>();
+
+    users.forEach((u: any) => {
+      const groupId = u.groupId || -1;
+
+      if (!groupMap.has(groupId)) {
+        groupMap.set(groupId, {
+          id: groupId,
+          name: u.group?.name || 'Sin grupo',
+          jefatura: u.group?.jefatura || null,
+          count: 0,
+        });
+      }
+
+      groupMap.get(groupId).count++;
+    });
+
+    this.groups = Array.from(groupMap.values())
+      .filter((g: any) => g.count > 0) // 🔥 evita vacíos
+      .sort((a: any, b: any) => {
+        if (a.id === -1) return -1;
+        if (b.id === -1) return 1;
+        return b.count - a.count;
+      });
+  }
+
   selectGroup(group: any) {
     this.selectedGroup = group;
 
+    // 🔥 usa base correcta según búsqueda
+    const base = this.userSearch.value ? this.filteredUsers : this.allUsers;
+
     if (group.id === -1) {
-      // 🔥 SIN GRUPO
-      this.users = this.allUsers.filter((u: any) => !u.groupId);
+      this.users = base.filter((u: any) => !u.groupId);
     } else {
-      // 🔥 CON GRUPO
-      this.users = this.allUsers.filter((u: any) => u.groupId === group.id);
+      this.users = base.filter((u: any) => u.groupId === group.id);
     }
 
     this.selectedUser = null;
@@ -421,15 +486,37 @@ export class TeleworkReportComponent {
   // ===============================
 
   clearFilters(): void {
+    this.hasSearched = false;
+
     this.rut = '';
     this.setCurrentMonthYear();
     this.dateFrom = null;
     this.dateTo = null;
 
     this.users = [];
+    this.filteredUsers = [];  // 🔥 importante
+    this.groups = [...this.allGroups]; // 🔥 restaurar grupos
+
+    this.userSearch.setValue('');
+
     this.registers = [];
     this.subscriptions = [];
     this.selectedUser = null;
+
+    this.works = [];
+    this.selectedDay = null;
+  }
+
+  onSearchFocus(): void {
+    this.filteredUsers = [...this.allUsers]; // 🔥 mostrar todo
+
+    this.selectedGroup = null;
+    this.selectedUser = null;
+
+    this.registers = [];
+    this.subscriptions = [];
+    this.works = [];
+    this.selectedDay = null;
   }
 
   setCurrentMonthYear() {
@@ -1078,5 +1165,73 @@ export class TeleworkReportComponent {
 
     const d = this.toLocalDate(date);
     return days[d.getDay()];
+  }
+
+  formatRutInput(value: string): string {
+    let limpio = value.replace(/[^0-9kK]/g, '');
+
+    if (limpio.length < 2) return limpio;
+
+    let cuerpo = limpio.slice(0, -1);
+    let dv = limpio.slice(-1);
+
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    return cuerpo + '-' + dv.toUpperCase();
+  }
+
+ private setupUserFilter() {
+  this.userSearch.valueChanges
+    .pipe(debounceTime(200), distinctUntilChanged())
+    .subscribe((value: any) => {
+      const term = (value || '').toString().trim();
+
+      // 🔥 SIN TEXTO → NO MOSTRAR NADA
+      if (!term) {
+        this.filteredUsers = [];
+        this.users = [];
+        this.groups = [...this.allGroups];
+        return;
+      }
+
+      const result = filterByRutOrName(this.allUsers, term, {
+        nameKey: 'fullName',
+        rutKey: 'rut',
+      });
+
+      this.filteredUsers = result;
+
+      // 🔥 SOLO PREPARA, NO MUESTRA EN TABLA
+      this.users = [];
+      this.selectedGroup = null;
+
+      this.rebuildGroups(result);
+    });
+}
+
+  selectUserFromSearch(user: any) {
+    if (!user) return;
+    this.selectedUser = user;
+    this.registers = [];
+    this.subscriptions = [];
+    this.works = [];
+    this.selectedDay = null;
+  }
+
+  limpiarBusqueda() {
+    this.userSearch.setValue('');
+
+    this.filteredUsers = [...this.allUsers];
+
+    this.selectedUser = null;
+
+    this.registers = [];
+    this.subscriptions = [];
+    this.works = [];
+    this.selectedDay = null;
+  }
+
+  displayUser(user: any): string {
+    return user ? user.fullName : '';
   }
 }

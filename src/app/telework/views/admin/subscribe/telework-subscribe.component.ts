@@ -9,22 +9,35 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { SubscribesService } from '../../../services/admin/subscribes.service';
-import { TokenService } from '../../../../core/services/token.service';
 import { UsersService } from '../../../services/admin/users.service';
 import { TimeService } from '@app/core/services/time.service';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
+import { filterByRutOrName } from '@app/shared/utils/filter.util';
 
 interface Step {
   id: number;
   title: string;
   completed: boolean;
+}
+
+interface User {
+  id: number;
+  fullName: string;
+  rut: string;
+  email: string;
+  roles: string[];
+}
+
+interface UserRoleResponse {
+  user: any;
+  role: { name: string };
+  deletedAt?: any;
 }
 
 @Component({
@@ -49,17 +62,19 @@ interface Step {
 export class TeleworkSubscribeComponent implements OnInit {
   private fb = inject(FormBuilder);
   private subscribeService = inject(SubscribesService);
-  private tokenService = inject(TokenService);
   private usersService = inject(UsersService);
   private dialog = inject(MatDialog);
   private overlapWarningShown = false;
+  private timeService = inject(TimeService);
 
-  users: any[] = [];
-  filteredUsers: any[] = [];
-  selectedUser: any;
+  users: User[] = [];
+  filteredUsers: User[] = [];
+  selectedUser: User | null = null;
   hasDateConflict = false;
 
-  userSearch = this.fb.control<string | any>('');
+  userSearch = this.fb.control<
+    string | { id: number; fullName: string } | null
+  >(null);
 
   subscriptions: any[] = [];
   today = new Date();
@@ -84,24 +99,9 @@ export class TeleworkSubscribeComponent implements OnInit {
     end: [null, Validators.required],
   });
 
-  constructor(private timeService: TimeService) {}
-
   ngOnInit() {
+    this.setupUserFilter();
     this.loadUsers();
-    this.userSearch.valueChanges.subscribe((value: any) => {
-      const search =
-        typeof value === 'string'
-          ? value.toLowerCase()
-          : (value?.fullName || '').toLowerCase();
-
-      this.filteredUsers = this.users.filter((u: any) => {
-        const name = (u.fullName || '').toLowerCase();
-        const rut = (u.rut || '').toLowerCase();
-
-        return name.includes(search) || rut.includes(search);
-      });
-    });
-
     this.form.get('begin')?.valueChanges.subscribe((begin) => {
       this.checkOverlapDates();
     });
@@ -116,16 +116,14 @@ export class TeleworkSubscribeComponent implements OnInit {
   }
 
   async selectUser(user: any) {
-    console.log('==============================');
-    console.log('USUARIO SELECCIONADO');
-    console.log('Objeto completo:', user);
-    console.log('ID:', user.id);
-    console.log('Nombre:', user.fullName);
-
+    this.overlapWarningShown = false;
+    this.hasDateConflict = false;
     this.selectedUser = user;
 
     this.form.patchValue({
       userId: user.id,
+      begin: null,
+      end: null,
     });
 
     // limpiar historial anterior inmediatamente
@@ -140,15 +138,12 @@ export class TeleworkSubscribeComponent implements OnInit {
   }
 
   async loadUsers() {
-    const res: any[] = await firstValueFrom(
-      this.usersService.getAllUsersRoles(),
-    );
+    const res = await firstValueFrom(this.usersService.getAllUsersRoles());
 
-    // 🔥 AGRUPAR POR USUARIO (CLAVE)
-    const usersMap: any = {};
+    const usersMap: Record<number, User> = {};
 
     res
-      .filter((r: any) => !r.deletedAt) // 🔥 ESTE ES EL FIX
+      .filter((r: any) => !r.deletedAt)
       .forEach((r: any) => {
         const u = r.user;
         const roleName = r.role?.name?.toUpperCase();
@@ -156,26 +151,30 @@ export class TeleworkSubscribeComponent implements OnInit {
         if (!usersMap[u.id]) {
           usersMap[u.id] = {
             id: u.id,
-            fullName:
-              `${u.firstName} ${u.secondName || ''} ${u.firstLastName || ''} ${u.secondLastName || ''}`
-                .replace(/\s+/g, ' ')
-                .trim(),
+            fullName: this.buildFullName(u),
             rut: u.rut || '',
             email: u.email,
             roles: [],
           };
         }
 
-        usersMap[u.id].roles.push(roleName);
+        if (roleName && !usersMap[u.id].roles.includes(roleName)) {
+          usersMap[u.id].roles.push(roleName);
+        }
       });
 
-    // 🔥 FILTRAR SOLO ADMINISTRATIVOS
-    const users = Object.values(usersMap).filter((u: any) =>
+    const users = Object.values(usersMap).filter((u) =>
       u.roles.includes('ADMINISTRATIVO'),
     );
 
     this.users = users;
     this.filteredUsers = users;
+  }
+
+  private buildFullName(u: any): string {
+    return `${u.firstName} ${u.secondName || ''} ${u.firstLastName || ''} ${u.secondLastName || ''}`
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   async loadSubscriptions(userId: number) {
@@ -253,7 +252,6 @@ export class TeleworkSubscribeComponent implements OnInit {
   reset() {
     this.form.reset();
     this.limpiarBusqueda();
-    this.userSearch.setValue('');
     this.selectedUser = null;
 
     this.steps.forEach((s) => (s.completed = false));
@@ -306,7 +304,7 @@ export class TeleworkSubscribeComponent implements OnInit {
     if (!file) return;
 
     if (file.type !== 'application/pdf') {
-      alert('Solo se permiten archivos PDF');
+      this.showWarning('Solo se permiten archivos PDF');
       return;
     }
 
@@ -315,20 +313,20 @@ export class TeleworkSubscribeComponent implements OnInit {
   }
 
   validateOverlap(begin: Date, end: Date): any {
-    const beginDate = this.normalizeDate(begin);
-    const endDate = this.normalizeDate(end);
+    const beginDate = this.parseDateCL(begin);
+    const endDate = this.parseDateCL(end);
 
     return this.subscriptions.find((s: any) => {
-      const histBegin = this.normalizeDate(s.begin);
-      const histEnd = this.normalizeDate(s.end);
+      const histBegin = this.parseDateCL(s.begin);
+      const histEnd = this.parseDateCL(s.end);
 
       return beginDate <= histEnd && endDate >= histBegin;
     });
   }
 
   validatePeriod() {
-    const begin = this.normalizeDate(this.form.value.begin);
-    const end = this.normalizeDate(this.form.value.end);
+    const begin = this.parseDateCL(this.form.value.begin);
+    const end = this.parseDateCL(this.form.value.end);
 
     if (begin > end) {
       this.showWarning(
@@ -357,65 +355,32 @@ export class TeleworkSubscribeComponent implements OnInit {
 
     if (!begin) return;
 
-    const beginDate = this.normalizeDate(begin);
-    const endDate = end ? this.normalizeDate(end) : null;
+    const beginDate = this.parseDateCL(begin);
+    const endDate = end ? this.parseDateCL(end) : null;
 
     const beginTime = beginDate.getTime();
     const endTime = endDate ? endDate.getTime() : null;
 
-    console.log('---------------------------');
-    console.log('FECHA SELECCIONADA RAW:', begin);
-    console.log('FECHA SELECCIONADA NORMALIZADA:', beginDate);
-    console.log('TIMESTAMP BEGIN:', beginTime);
-
-    if (endDate) {
-      console.log('FECHA FIN NORMALIZADA:', endDate);
-      console.log('TIMESTAMP END:', endTime);
-    }
-
     const conflict = this.subscriptions.find((s: any) => {
-      const histBeginDate = this.normalizeDate(s.begin);
-      const histEndDate = this.normalizeDate(s.end);
+      const histBeginDate = this.parseDateCL(s.begin);
+      const histEndDate = this.parseDateCL(s.end);
 
       const histBegin = histBeginDate.getTime();
       const histEnd = histEndDate.getTime();
 
-      console.log('------ HISTORICO ------');
-      console.log('Hist begin raw:', s.begin);
-      console.log('Hist end raw:', s.end);
-
-      console.log('Hist begin normalizado:', histBeginDate);
-      console.log('Hist end normalizado:', histEndDate);
-
-      console.log('Hist begin timestamp:', histBegin);
-      console.log('Hist end timestamp:', histEnd);
-
-      console.log(
-        'Comparación inicio dentro rango:',
-        beginTime >= histBegin && beginTime <= histEnd,
-      );
-
       if (beginTime >= histBegin && beginTime <= histEnd) {
-        console.log('✔ CONFLICTO POR FECHA INICIO');
         return true;
       }
 
       if (endTime !== null && endTime >= histBegin && endTime <= histEnd) {
-        console.log('✔ CONFLICTO POR FECHA FIN');
         return true;
       }
 
       if (endTime !== null && beginTime <= histEnd && endTime >= histBegin) {
-        console.log('✔ CONFLICTO POR RANGO');
         return true;
       }
-
-      console.log('❌ NO HAY CONFLICTO CON ESTE PERIODO');
-
       return false;
     });
-
-    console.log('RESULTADO FINAL CONFLICTO:', conflict);
 
     if (conflict) {
       this.hasDateConflict = true;
@@ -450,12 +415,8 @@ export class TeleworkSubscribeComponent implements OnInit {
     });
   }
 
-  normalizeDate(date: any): Date {
-    return this.parseDateCL(date);
-  }
-
   formatDateCL(date: any): string {
-    const d = this.normalizeDate(date);
+    const d = this.parseDateCL(date);
 
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -493,5 +454,18 @@ export class TeleworkSubscribeComponent implements OnInit {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     return d;
+  }
+
+  private setupUserFilter() {
+    this.userSearch.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged())
+      .subscribe((value: any) => {
+        const term = typeof value === 'string' ? value : value?.fullName;
+
+        this.filteredUsers = filterByRutOrName(this.users, term, {
+          nameKey: 'fullName',
+          rutKey: 'rut',
+        });
+      });
   }
 }

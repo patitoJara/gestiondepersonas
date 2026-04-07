@@ -89,27 +89,44 @@
 
         <!-- BUSCADOR -->
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Buscar funcionario</mat-label>
+        <div class="sirus-field full-width">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Buscar funcionario</mat-label>
 
-          <input
-            matInput
-            type="text"
-            placeholder="Nombre o RUT"
-            [formControl]="userSearch"
-            [matAutocomplete]="auto"
-          />
+            <input
+              matInput
+              type="text"
+              placeholder="Nombre o RUT"
+              [formControl]="userSearch"
+              [matAutocomplete]="auto"
+              autocomplete="off"
+            />
 
-          <!-- BOTON LIMPIAR -->
-          <button
-            mat-icon-button
-            matSuffix
-            *ngIf="userSearch.value"
-            (click)="limpiarBusqueda()"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        </mat-form-field>
+            <!-- 🔍 ICONO BUSCAR -->
+            <mat-icon matPrefix>search</mat-icon>
+
+            <!-- ❌ LIMPIAR -->
+            <button
+              mat-icon-button
+              matSuffix
+              *ngIf="userSearch.value"
+              (click)="limpiarBusqueda()"
+              matTooltip="Limpiar búsqueda"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+
+        <!-- AUTOCOMPLETE -->
+        <mat-autocomplete #auto="matAutocomplete" autoActiveFirstOption>
+          <mat-option *ngFor="let u of filteredUsers" [value]="u.fullName">
+            <div class="option-user">
+              <span class="name">{{ u.fullName }}</span>
+              <span class="rut">{{ u.rut }}</span>
+            </div>
+          </mat-option>
+        </mat-autocomplete>
 
         <!-- AUTOCOMPLETE -->
 

@@ -2,7 +2,7 @@
   <mat-icon>bar_chart</mat-icon>
 
   <div>
-    <div class="title-main">Auditoria Teletrabajo</div>
+    <div class="title-main">Auditoría Teletrabajo</div>
     <div class="title-sub">Visualización de marcajes y suscripciones</div>
   </div>
 </div>
@@ -16,14 +16,30 @@
   <!-- IZQUIERDA -->
   <div class="filters-left">
     <!-- RUT -->
-    <input
-      class="input"
-      type="text"
-      placeholder="RUT trabajador"
-      [(ngModel)]="rut"
-      (input)="formatRut($event)"
-      [class.input-error]="rutInvalido"
-    />
+    <mat-form-field appearance="outline" class="full-width" floatLabel="always">
+      <input
+        matInput
+        type="text"
+        placeholder="Nombre o RUT"
+        [formControl]="userSearch"
+        [matAutocomplete]="auto"
+        autocomplete="off"
+        (focus)="onSearchFocus()"  
+      />
+    </mat-form-field>
+
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      [displayWith]="displayUser"
+      (optionSelected)="selectUserFromSearch($event.option.value)"
+    >
+      <mat-option *ngFor="let u of filteredUsers" [value]="u">
+        <div class="user-option">
+          <span class="name">{{ u.fullName }}</span>
+          <span class="rut">{{ u.rut }}</span>
+        </div>
+      </mat-option>
+    </mat-autocomplete>
 
     <!-- Mes -->
     <select
@@ -169,7 +185,10 @@
         <mat-icon>info</mat-icon>
         <span>Haz clic en un usuario para ver detalle</span>
       </div>
-      <table mat-table [dataSource]="users">
+      <table
+        mat-table
+        [dataSource]="filteredUsers.length ? filteredUsers : users"
+      >
         <!-- Usuario -->
         <ng-container matColumnDef="fullName">
           <th mat-header-cell *matHeaderCellDef>Usuario</th>

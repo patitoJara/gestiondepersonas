@@ -225,7 +225,7 @@ export const routes: Routes = [
           ),
         data: {
           roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Suscripciones',
+          title: 'Suscripcion a TeleTrabajo',
           icon: 'event',
         },
       },

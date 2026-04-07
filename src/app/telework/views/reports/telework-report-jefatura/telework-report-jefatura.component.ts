@@ -63,6 +63,7 @@ export class TeleworkReportJefaturaComponent {
   selectedUserSubscriptions: any[] = [];
 
   showDetail = false;
+  hasSearched: boolean = false;
 
   // ===============================
   // 🟦 JEFATURA
@@ -182,12 +183,13 @@ export class TeleworkReportJefaturaComponent {
   // 🔍 SEARCH (MODIFICADO)
   // ===============================
   async search() {
+    this.hasSearched = false;
     this.loader.lock();
-
     // 🔥 LIMPIEZA CENTRALIZADA
     this.clearResults();
 
     try {
+      this.hasSearched = true;
       const [users, registers, subscribes, relaciones, works] =
         (await Promise.all([
           firstValueFrom(this.reportService.getUsers()),
@@ -637,65 +639,53 @@ export class TeleworkReportJefaturaComponent {
   }
 
   clearFilters(): void {
+    const now = new Date();
+
     // 🔹 usuario
     this.selectedUser = null;
 
-    // 🔹 fechas
-    this.startDate = null;
-    this.endDate = null;
-    this.dateFrom = null;
-    this.dateTo = null;
+    // 🔥 DEJAR RANGO VÁLIDO (CLAVE)
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    from.setHours(0, 0, 0, 0);
+
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    to.setHours(23, 59, 59, 999);
+
+    this.dateFrom = from;
+    this.dateTo = to;
+
+    // 🔹 sincronizar UI
+    this.month = from.getMonth() + 1;
+    this.year = from.getFullYear();
 
     // 🔹 filtros UI
     this.rut = '';
     this.rutInvalido = false;
 
-    // 🔹 tablas
-    this.filteredUsers = [];
-    this.selectedUserRegisters = [];
-    this.selectedUserSubscriptions = [];
-
-    this.users = [];
-    this.registers = [];
-    this.subscriptions = [];
-
-    // 🔹 data interna
-    this.allRegisters = [];
-    this.allSubscriptions = [];
-    this.allWorks = [];
-
-    // 🔹 detalle día (🔥 LO QUE TE FALTABA)
-    this.works = [];
-    this.days = [];
-    this.selectedDay = null;
-    this.showDetail = false;
+    // 🔹 limpiar resultados (NO datos base del filtro)
+    this.clearResults();
   }
 
-  printUser(user: any): void {
-    if (!this.selectedUser || this.registers.length === 0) {
-      this.showWarning('Seleccione un usuario con registros');
-      return;
-    }
-
-    const data = this.registers.map((r: any) => ({
-      fecha: this.formatDateCL(r.register_datetime),
-      dia: this.getDayOfWeek(r.register_datetime),
-      hora: this.formatTimeCL(r.register_datetime),
-      tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-    }));
-
-    const html = this.teleworkReport.generateReport({
-      userName: user.fullName,
-      rut: user.rut,
-      registers: data,
-    });
-
-    this.teleworkReport.printPdf(html);
+  get usersCount(): number {
+    return this.users?.length || 0;
   }
 
-  getDayOfWeek(date: string | Date): string {
+  getDayOfWeek(date: string | Date, format: 'short' | 'long' = 'long'): string {
     const d = new Date(date);
-    return d.toLocaleDateString('es-CL', { weekday: 'long' });
+
+    return d.toLocaleDateString('es-CL', { weekday: format }).replace('.', ''); // 🔥 evita "lun."
+  }
+
+  isSameDay(date1: string | Date, date2: string | Date | null): boolean {
+    if (!date1 || !date2) return false;
+
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+
+    d1.setHours(0, 0, 0, 0);
+    d2.setHours(0, 0, 0, 0);
+
+    return d1.getTime() === d2.getTime();
   }
 
   formatTimeCL(date: string | Date): string {
@@ -708,6 +698,7 @@ export class TeleworkReportJefaturaComponent {
   }
 
   formatRut(event: any) {
+    this.hasSearched = false;
     let value = event.target.value.replace(/[^0-9kK]/g, '');
 
     if (value.length < 2) {
@@ -776,6 +767,7 @@ export class TeleworkReportJefaturaComponent {
   }
 
   onMonthYearChange(): void {
+    this.hasSearched = false;
     if (!this.month || !this.year) {
       this.dateFrom = null;
       this.dateTo = null;
@@ -794,36 +786,8 @@ export class TeleworkReportJefaturaComponent {
     this.clearResults();
   }
 
-  exportUser(user: any): void {
-    const data = this.registers.map((r: any) => ({
-      Fecha: this.formatDateCL(r.register_datetime),
-      Día: this.getDayOfWeek(r.register_datetime),
-      Hora: this.formatTimeCL(r.register_datetime),
-      Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type: 'application/octet-stream',
-    });
-
-    const fileName = `Reporte_${user.fullName}.xlsx`;
-
-    saveAs(blob, fileName);
-  }
-
   onMonthFocus(): void {
-    this.dateFrom = null;
-    this.dateTo = null;
+    this.hasSearched = false;
     this.clearResults();
   }
 
@@ -849,5 +813,99 @@ export class TeleworkReportJefaturaComponent {
     this.allWorks = [];
 
     this.showDetail = false;
+  }
+
+  printUser(user: any): void {
+    // 🔥 1. obtener registros del usuario
+    let userRegisters = this.allRegisters.filter(
+      (r: any) => r.user?.id === user.id,
+    );
+
+    // 🔥 2. FILTRO POR RANGO (AQUÍ VA 👇)
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+
+      userRegisters = userRegisters.filter((r: any) => {
+        const d = new Date(r.register_datetime);
+        return d >= from && d <= to;
+      });
+    }
+
+    // 🔥 3. validación
+    if (!userRegisters.length) {
+      this.showWarning('El usuario no tiene registros en el período');
+      return;
+    }
+
+    // 🔥 4. armar data
+    const data = userRegisters.map((r: any) => ({
+      fecha: this.formatDateCL(r.register_datetime),
+      dia: this.getDayOfWeek(r.register_datetime),
+      hora: this.formatTimeCL(r.register_datetime),
+      tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+    }));
+
+    const html = this.teleworkReport.generateReport({
+      userName: user.fullName,
+      rut: user.rut,
+      registers: data,
+    });
+
+    this.teleworkReport.printPdf(html);
+  }
+
+  exportUser(user: any): void {
+    // 🔥 1. obtener registros
+    let userRegisters = this.allRegisters.filter(
+      (r: any) => r.user?.id === user.id,
+    );
+
+    // 🔥 2. FILTRO POR RANGO (AQUÍ TAMBIÉN 👇)
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+
+      userRegisters = userRegisters.filter((r: any) => {
+        const d = new Date(r.register_datetime);
+        return d >= from && d <= to;
+      });
+    }
+
+    // 🔥 3. validación
+    if (!userRegisters.length) {
+      this.showWarning('El usuario no tiene registros en el período');
+      return;
+    }
+
+    // 🔥 4. armar excel
+    const data = userRegisters.map((r: any) => ({
+      Fecha: this.formatDateCL(r.register_datetime),
+      Día: this.getDayOfWeek(r.register_datetime),
+      Hora: this.formatTimeCL(r.register_datetime),
+      Tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: 'application/octet-stream',
+    });
+
+    saveAs(blob, `Reporte_${user.fullName}.xlsx`);
   }
 }

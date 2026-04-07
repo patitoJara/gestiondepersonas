@@ -1,10 +1,11 @@
 /* =====================================================
-   🧠 SIRUS UI - TELEWORK REPORT FINAL CLEAN (FIXED)
+   🧠 SIRUS UI - TELEWORK REPORT FINAL CLEAN (PRO)
    ===================================================== */
 
-/* ============================
-   🟦 CONTENEDOR
-============================ */
+
+/* =====================================================
+   🟦 01. CONTENEDOR GENERAL
+   ===================================================== */
 .report-container {
   margin-bottom: 20px;
   padding: 14px;
@@ -14,9 +15,10 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* ============================
-   🟦 TITLE
-============================ */
+
+/* =====================================================
+   🟦 02. HEADER / TITLE
+   ===================================================== */
 .title {
   display: flex;
   align-items: center;
@@ -42,9 +44,10 @@
   color: #607d8b;
 }
 
-/* ============================
-   🟦 HINT
-============================ */
+
+/* =====================================================
+   🟦 03. HINT / MENSAJES
+   ===================================================== */
 .hint {
   display: flex;
   align-items: center;
@@ -63,25 +66,27 @@
   margin: 0 14px 6px 14px;
 }
 
-/* ============================
-   🟦 TEXTOS
-============================ */
+
+/* =====================================================
+   🟦 04. TEXTOS GENERALES
+   ===================================================== */
 .nombre {
   font-size: 12px;
   font-weight: 600;
   color: #455a64;
 }
 
-/* ============================
-   🟦 EMPTY
-============================ */
+
+/* =====================================================
+   🟦 05. EMPTY STATES
+   ===================================================== */
 .empty-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 10px;
-  color: #78909c;
   font-size: 12px;
+  color: #78909c;
 }
 
 .empty-text .title {
@@ -94,26 +99,10 @@
   color: #90a4ae;
 }
 
-/* ============================
-   🟦 ACTIVIDADES
-============================ */
-.activity-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
-.activity-header .date {
-  font-size: 11px;
-  color: #00897b;
-  background: rgba(0, 137, 123, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-/* ============================
-   🟦 FILTROS (SIRUS PRO REAL)
-============================ */
+/* =====================================================
+   🟦 06. FILTROS (CORE UX)
+   ===================================================== */
 .filters {
   display: flex;
   justify-content: space-between;
@@ -130,15 +119,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* IZQUIERDA */
-.filters-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* DERECHA */
+.filters-left,
 .filters-actions {
   display: flex;
   align-items: center;
@@ -146,7 +127,10 @@
   flex-wrap: wrap;
 }
 
-/* INPUT RUT */
+
+/* =====================================================
+   🟦 07. INPUTS / SELECTS
+   ===================================================== */
 .input {
   height: 40px;
   padding: 0 8px;
@@ -159,14 +143,14 @@
   max-width: 260px;
 }
 
-/* SELECT */
 .filters-left select.input {
   width: 120px;
 }
 
-/* ============================
-   🟦 FECHAS
-============================ */
+
+/* =====================================================
+   🟦 08. DATEPICKERS
+   ===================================================== */
 .date-range {
   display: flex;
   gap: 10px;
@@ -177,16 +161,22 @@
   width: 150px;
 }
 
-/* ============================
-   🟦 MATERIAL FIX (CLAVE 🔥)
-============================ */
+
+/* =====================================================
+   🟦 09. MATERIAL FIX (FORM)
+   ===================================================== */
 ::ng-deep .mat-mdc-form-field {
-  margin: 0 !important;
-  height: 40px;
+  font-size: 12px !important;
+  min-width: 220px;
+}
+
+::ng-deep .mat-mdc-floating-label {
+  font-size: 12px !important;
 }
 
 ::ng-deep .mat-mdc-text-field-wrapper {
-  height: 40px !important;
+  height: 38px !important;
+  padding: 0 8px !important;
   border-radius: 8px !important;
   border: 1px solid #cbd5e1 !important;
   display: flex;
@@ -204,18 +194,73 @@
   display: none !important;
 }
 
-/* ICONO CALENDARIO */
-::ng-deep .mat-mdc-icon-button {
-  transform: scale(0.85);
+
+/* =====================================================
+   🟦 10. AUTOCOMPLETE PANEL
+   ===================================================== */
+::ng-deep .cdk-overlay-pane {
+  z-index: 99999 !important;
 }
 
-/* ============================
-   🟦 BOTONES (PRO)
-============================ */
+::ng-deep .mat-mdc-autocomplete-panel {
+  background: #ffffff !important;
+  border: 1px solid #dbe5f1;
+  border-radius: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+
+/* =====================================================
+   🟦 11. AUTOCOMPLETE OPTIONS
+   ===================================================== */
+::ng-deep .mat-mdc-option {
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 2px 10px !important;
+  font-size: 12px !important;
+}
+
+::ng-deep .mat-mdc-option:hover {
+  background: #e3f2fd;
+}
+
+
+/* =====================================================
+   🟦 12. AUTOCOMPLETE ITEM (FIX FINAL)
+   ===================================================== */
+.user-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-option .name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: #37474f;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-option .rut {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #90a4ae;
+  white-space: nowrap; /* 🔥 nunca se corta */
+}
+
+
+/* =====================================================
+   🟦 13. BOTONES
+   ===================================================== */
 .btn-sirus {
   height: 40px;
   padding: 0 16px;
-
   border-radius: 10px;
   border: 1px solid #cbd5e1;
 
@@ -227,115 +272,61 @@
   transition: all 0.2s ease;
 }
 
-/* 🔵 BUSCAR */
 .btn-sirus.primary {
   background: #e3f2fd;
   color: #1565c0;
 }
 
-/* ⚪ LIMPIAR */
 .btn-sirus.ghost {
   background: #f1f5f9;
   color: #455a64;
 }
 
-/* ============================
-   📱 RESPONSIVE
-============================ */
-@media (max-width: 600px) {
-  .filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
 
-  .filters-actions {
-    justify-content: space-between;
-  }
-
-  .filters-left {
-    flex-wrap: wrap;
-  }
-}
-
-/* ============================
-   🟦 GRID (CARDS)
-============================ */
+/* =====================================================
+   🟦 14. GRID / CARDS
+   ===================================================== */
 .tables-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   margin-top: 20px;
+  gap: 6px;
 }
 
-/* ============================
-   🟦 CARDS
-============================ */
 .card {
   background: #fff;
   border-radius: 14px;
   border: 1px solid #e3e8ef;
-
   display: flex;
   flex-direction: column;
-
   height: 520px;
-  min-width: 0;
-  overflow: hidden;
-
+  overflow: visible;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-.card .selected-row {
-  background: #e3f2fd;
-  border-left: 4px solid #1565c0;
-}
 
-.sin-grupo {
-  color: #9e9e9e;
-  font-style: italic;
-}
-
-.sin-grupo::before {
-  content: "⚠ ";
-}
-
-/* ============================
-   🟦 HEADERS
-============================ */
+/* =====================================================
+   🟦 15. HEADERS
+   ===================================================== */
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 42px;
-
   padding: 10px 14px;
-  border-radius: 14px 14px 0 0;
-
   font-size: 12px;
   font-weight: 600;
 }
 
-.card-header.blue {
-  background: rgba(21, 101, 192, 0.06);
-  color: #1565c0;
-}
+.card-header.blue { background: rgba(21, 101, 192, 0.06); color: #1565c0; }
+.card-header.green { background: rgba(46, 125, 50, 0.06); color: #2e7d32; }
+.card-header.orange { background: rgba(0, 137, 123, 0.08); color: #00897b; }
+.card-header.purple { background: rgba(123, 31, 162, 0.06); color: #7b1fa2; }
 
-.card-header.green {
-  background: rgba(46, 125, 50, 0.06);
-  color: #2e7d32;
-}
 
-.card-header.orange {
-  background: rgba(0, 137, 123, 0.08);
-  color: #00897b;
-}
-
-.card-header.purple {
-  background: rgba(123, 31, 162, 0.06);
-  color: #7b1fa2;
-}
-/* ============================
-   🟦 TABLAS
-============================ */
+/* =====================================================
+   🟦 16. TABLAS
+   ===================================================== */
 .table-scroll {
   flex: 1;
   padding: 10px;
@@ -356,14 +347,9 @@ th {
   color: #546e7a;
 }
 
-/* 🔥 BASE */
 td {
   padding: 6px;
   font-size: 11px;
-  line-height: 1.2;
-  word-break: break-word;
-  color: #37474f;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -372,114 +358,48 @@ td {
 tbody tr:hover {
   background: #f1f7ff;
 }
-/* ============================
-   🔥 FIX COLUMNA ACTIVITY (FINAL ESTABLE)
-============================ */
 
-/* Angular Material */
-::ng-deep .mat-mdc-cell.mat-column-activity {
-  overflow: visible !important;
-}
 
-/* ancho controlado */
-td.mat-column-activity,
-th.mat-column-activity {
-  min-width: 120px;
-}
-
-/* ============================
-   🟦 CONTENIDO ACTIVIDAD
-============================ */
-
+/* =====================================================
+   🟦 17. ACTIVIDADES
+   ===================================================== */
 .activity-cell {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-
-  justify-content: flex-start; // 🔥 importante
 }
 
-/* badge */
-.activity-cell .badge {
-  flex-shrink: 0;
-}
-
-/* acciones */
 .actions {
   display: flex !important;
-  flex-direction: column !important; // 💣 fuerza vertical
+  flex-direction: column !important;
   align-items: center;
   gap: 2px;
   margin-left: auto;
 }
 
-/* botones */
 .activity-cell button {
-  width: 26px;
-  height: 26px;
-
-  transform: scale(0.85); // 🔥 subimos un poco
+  width: 22px;
+  height: 22px;
+  transform: scale(0.85);
 }
 
-/* hover */
 .activity-cell button:hover {
   transform: scale(1);
 }
 
-/* sin marcas */
-.zero-marks {
-  background: #eceff1;
-  color: #90a4ae;
-}
 
-/* ============================
-   🟦 BADGES
-============================ */
+/* =====================================================
+   🟦 18. BADGES / ESTADOS
+   ===================================================== */
 .badge {
   min-width: 20px;
   height: 18px;
-
   padding: 0 6px;
   font-size: 10px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 10px;
-
-  background: linear-gradient(135deg, #1565c0, #42a5f5);
-  color: white;
-}
-/* ============================
-   🟦 SELECCIÓN
-============================ */
-.clickable-row {
-  cursor: pointer;
-}
-
-.selected-row {
-  background: rgba(21, 101, 192, 0.08);
-  border-left: 2px solid #1565c0;
-}
-
-/* ============================
-   🟦 BADGES
-============================ */
-.badge {
-  min-width: 20px; // 🔥 antes 28px
-  height: 18px;
-
-  padding: 0 6px; // 🔥 mucho más chico
-  font-size: 10px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px; // 🔥 menos “pastilla inflada”
-
   background: linear-gradient(135deg, #1565c0, #42a5f5);
   color: white;
 }
@@ -491,58 +411,112 @@ th.mat-column-activity {
   font-weight: 600;
 }
 
-.vigente {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
+.vigente { background: #e8f5e9; color: #2e7d32; }
+.vencido { background: #fdecea; color: #c62828; }
+.pendiente { background: #fff3cd; color: #f57c00; }
 
-.vencido {
-  background: #fdecea;
-  color: #c62828;
-}
 
-.pendiente {
-  background: #fff3cd;
-  color: #f57c00;
-}
-
-/* ============================
-   🟦 ICONOS DE ENTRADA Y SALIDA
-============================ */
-
+/* =====================================================
+   🟦 19. TIPO INGRESO / SALIDA
+   ===================================================== */
 .tipo-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-
   padding: 2px 8px;
   border-radius: 12px;
-
   font-size: 10.5px;
   font-weight: 600;
 }
 
-/* INGRESO */
-.tipo-badge.ing {
-  background: rgba(46, 125, 50, 0.1);
-  color: #2e7d32;
-}
+.tipo-badge.ing { background: rgba(46, 125, 50, 0.1); color: #2e7d32; }
+.tipo-badge.sal { background: rgba(245, 124, 0, 0.1); color: #f57c00; }
 
-/* SALIDA */
-.tipo-badge.sal {
-  background: rgba(245, 124, 0, 0.1);
-  color: #f57c00;
-}
 
-.tipo-badge mat-icon {
-  font-size: 14px;
-}
-
-/* ============================
-   🟦 RESPONSIVE
-============================ */
+/* =====================================================
+   🟦 20. RESPONSIVE
+   ===================================================== */
 @media (max-width: 900px) {
   .tables-row {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 600px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-actions {
+    justify-content: space-between;
+  }
+}
+
+.full-width {
+  width: 260px; /* o 240px si quieres más compacto */
+}
+
+.actions-wrapper {
+  display: flex;
+  margin-left: auto;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #90a4ae;
+}
+
+/* =====================================================
+   🔥 FIX FINAL INPUT MATERIAL (SIN ESPACIO FANTASMA)
+   ===================================================== */
+
+/* 🔥 contenedor interno real */
+::ng-deep .mat-mdc-form-field-flex {
+  align-items: center !important;
+  height: 36px !important;
+}
+
+/* 🔥 elimina espacio vertical interno */
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: unset !important;
+}
+
+/* 🔥 input real */
+::ng-deep .mat-mdc-input-element {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+}
+
+/* 🔥 cuando flota */
+::ng-deep .mat-mdc-form-field-should-float .mat-mdc-floating-label,
+::ng-deep .mdc-text-field--focused .mat-mdc-floating-label {
+  transform: translateY(-130%) scale(0.85) !important;
+}
+
+/* 🔥 elimina altura extra del wrapper MDC */
+::ng-deep .mdc-text-field {
+  padding: 0 !important;
+  height: 36px !important;
+  align-items: center !important;
+}
+
+::ng-deep .mat-mdc-form-field-should-float .mat-mdc-floating-label,
+::ng-deep .mdc-text-field--focused .mat-mdc-floating-label {
+  transform: translateY(-120%) scale(0.85) !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-mdc-form-field-should-float .mat-mdc-floating-label,
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  transform: translateY(-120%) scale(0.85) !important;
+}
+
+::ng-deep .mat-mdc-floating-label {
+  transition: transform 0.2s ease !important;
 }
