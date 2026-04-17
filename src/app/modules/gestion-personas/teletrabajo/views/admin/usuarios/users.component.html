@@ -1,0 +1,217 @@
+<!-- src/app/views/admin/usuarios/usuarios.component.html -->
+
+<h3 class="titulo-genero">
+  <mat-icon>people</mat-icon>
+  <span>Usuarios</span>
+</h3>
+
+<!-- Toolbar -->
+<div class="list-toolbar">
+  <div class="filters">
+    <input
+      #search
+      type="text"
+      placeholder="Buscar Usuario..."
+      [value]="q"
+      (keyup)="onSearchChange(search.value)"
+      (keyup.enter)="applyFilter(search.value)"
+    />
+
+    <button
+      [class.active]="filterState === 'active'"
+      (click)="setState('active')"
+    >
+      Activos
+    </button>
+
+    <button
+      [class.active]="filterState === 'deleted'"
+      (click)="setState('deleted')"
+    >
+      Eliminados
+    </button>
+
+    <button [class.active]="filterState === 'all'" (click)="setState('all')">
+      Todos
+    </button>
+  </div>
+
+  <div class="right-actions">
+    <button mat-flat-button color="primary" (click)="openDialog()">
+      <mat-icon>person_add</mat-icon>
+      Nuevo Usuario
+    </button>
+  </div>
+</div>
+
+<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+<div class="table-wrapper" style="overflow: auto">
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    matSort
+    class="mat-elevation-z1"
+    style="min-width: 900px; width: 100%"
+  >
+    <!-- ID -->
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Id</th>
+      <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+    </ng-container>
+
+    <!-- Username -->
+    <ng-container matColumnDef="fullName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+      <td mat-cell *matCellDef="let row">
+        {{ getFullName(row) }}
+      </td>
+    </ng-container>
+
+    <!-- Rut -->
+    <ng-container matColumnDef="rut">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>RUT</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.rut || "—" }}
+      </td>
+    </ng-container>
+
+    <!-- Email -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>Email</th>
+      <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+    </ng-container>
+
+    <!-- username -->
+    <ng-container matColumnDef="username">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.username }}
+      </td>
+    </ng-container>
+
+    <!-- rol -->
+    <ng-container matColumnDef="roles">
+      <th mat-header-cell *matHeaderCellDef>Roles</th>
+      <td mat-cell *matCellDef="let row">
+        {{ getRoles(row) }}
+      </td>
+    </ng-container>
+
+    <!-- Estado -->
+    <ng-container matColumnDef="estado">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+
+      <td mat-cell *matCellDef="let row">
+        <mat-chip
+          [color]="row.deletedAt ? 'warn' : 'primary'"
+          variant="outlined"
+        >
+          {{ row.deletedAt ? "Eliminado" : "Activo" }}
+        </mat-chip>
+      </td>
+    </ng-container>
+
+    <!-- Acciones -->
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button matTooltip="Editar" (click)="openDialog(row)">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <!-- (click)="softDelete(row)" -->
+        <button
+          *ngIf="!row.deletedAt"
+          mat-icon-button
+          color="warn"
+          matTooltip="Deshabilitado Eliminar"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+
+        <button
+          *ngIf="row.deletedAt"
+          mat-icon-button
+          color="primary"
+          matTooltip="Restaurar"
+          (click)="restore(row)"
+        >
+          <mat-icon>settings_backup_restore</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+        Sin resultados para "{{ q }}"
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- MOBILE CARDS -->
+
+<!-- MOBILE CARDS -->
+<div class="mobile-cards">
+  <div class="user-card" *ngFor="let row of dataSource.data">
+    <div class="card-row"><strong>ID:</strong> {{ row.id }}</div>
+
+    <div class="card-row"><strong>Nombre:</strong> {{ getFullName(row) }}</div>
+
+    <div class="card-row"><strong>RUT:</strong> {{ row.rut || "—" }}</div>
+
+    <div class="card-row"><strong>Email:</strong> {{ row.email }}</div>
+
+    <div class="card-row"><strong>Usuario:</strong> {{ row.username }}</div>
+
+    <div class="card-row"><strong>Roles:</strong> {{ getRoles(row) }}</div>
+
+    <div class="card-row">
+      <strong>Estado:</strong>
+      <mat-chip [color]="row.deletedAt ? 'warn' : 'primary'" variant="outlined">
+        {{ row.deletedAt ? "Eliminado" : "Activo" }}
+      </mat-chip>
+    </div>
+
+    <div class="card-actions">
+      <!-- EDITAR -->
+      <button mat-icon-button (click)="openDialog(row)">
+        <mat-icon>edit</mat-icon>
+      </button>
+
+      <!-- ELIMINAR BLOQUEADO -->
+      <button
+        *ngIf="!row.deletedAt"
+        mat-icon-button
+        color="warn"
+        disabled
+        matTooltip="No permitido eliminar usuarios"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+
+      <!-- RESTAURAR -->
+      <button
+        *ngIf="row.deletedAt"
+        mat-icon-button
+        color="primary"
+        (click)="restore(row)"
+      >
+        <mat-icon>settings_backup_restore</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+<mat-paginator
+  [length]="total"
+  pageSize="10"
+  [pageSizeOptions]="[5, 10, 20]"
+  showFirstLastButtons
+>
+</mat-paginator>

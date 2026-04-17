@@ -1,0 +1,497 @@
+// src\app\modules\gestion-personas\beneficios\postulacion-estudios\postulation-form.component.scss
+
+@use "./postulacion-base" as *;
+@use "./postulacion-dynamic" as *;
+@use "./postulacion-docs" as *;
+
+/* ============================
+   🔥 TIMBRE DE AGUA
+============================ */
+
+.form-wrapper {
+  position: relative;
+}
+
+.form-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible; // 🔥 CLAVE
+}
+
+.form-watermark img {
+  position: absolute;
+
+  top: 20px;
+  left: 10px;
+
+  transform: rotate(-18deg);
+
+  width: 300px; // 🔥 mismo tamaño del anterior grande
+
+  opacity: 0.26; // 🔥 más fuerte (antes 0.22)
+
+  filter: saturate(1.3) contrast(1.1); // 🔥 colores más vivos
+
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: multiply;
+}
+
+/* ============================*/
+.container {
+  width: 100%;
+  max-width: 100%; // 🔥 ESTE ES EL CAMBIO CLAVE
+  margin: 0;
+  padding: 0 20px;
+}
+
+/* ============================
+   🟦 HEADER FORM
+============================ */
+
+.form-header {
+  text-align: center;
+  margin-bottom: 12px;
+
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e3edf7;
+}
+
+.title-main {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1565c0;
+
+  letter-spacing: 0.3px;
+}
+
+.title-main::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: #1565c0;
+  margin: 6px auto 0;
+  border-radius: 2px;
+}
+
+.title-sub {
+  font-size: 12px;
+  color: #607d8b;
+
+  margin-top: 2px;
+}
+
+.sirus-stepper {
+  background: #f4f8fd;
+  border: 1px solid #dbe5f1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------- */
+
+/* ============================
+   🧱 STEP BASE (SIRUS PRO)
+============================ */
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 🔹 HEADER ESTÁNDAR */
+.step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 🔹 BLOQUES */
+.form-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 🔹 GRID BASE */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 10px;
+  margin-bottom: 8px;
+}
+
+/* 🔹 FIELD BASE */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* 🔹 BOTONES */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+/* --------------------------------------------------------------------------------------------------------------------*/
+
+/* 🔹 INPUT MATERIAL CONTROLADO */
+
+mat-form-field.sirus-field {
+  width: 100%;
+  min-width: 0;
+
+  .mat-mdc-text-field-wrapper {
+    height: 36px;
+    align-items: center;
+    border-radius: 6px;
+  }
+
+  .mat-mdc-form-field-infix {
+    min-height: 36px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  .mat-mdc-floating-label {
+    top: 50%;
+    transform: translateY(-50%) scale(1);
+    font-size: 12px;
+  }
+
+  .mdc-floating-label--float-above {
+    transform: translateY(-120%) scale(0.85);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------------------------------*/
+.step1-container {
+  .grid-datos-personales {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); // 🔥 FIX REAL
+    gap: 14px 10px;
+    margin-bottom: 8px;
+  }
+
+  .grid-fila3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); // 🔥 FIX REAL
+    gap: 14px 10px;
+    margin-bottom: 8px;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------------- */
+
+.step2-container {
+  .family-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .family-card {
+    @extend .dynamic-card;
+  }
+}
+
+.step3-container {
+  .textarea-card {
+    margin-top: 10px;
+
+    margin-left: auto;
+    margin-right: auto; // 🔥 centrado perfecto
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .textarea-card textarea {
+    width: 100%;
+    height: 80px;
+
+    border: 1px solid #cfd8dc;
+    border-radius: 8px;
+
+    padding: 10px;
+    font-size: 13px;
+
+    resize: vertical;
+  }
+
+  .textarea-card .hint {
+    font-size: 11px;
+    color: #78909c;
+  }
+}
+
+.step7-container {
+  .grid-gastos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+    gap: 16px;
+    margin: 0 auto;
+  }
+
+  .gasto-card {
+    @extend .dynamic-card;
+  }
+
+  .gasto-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #546e7a;
+    margin-bottom: 4px;
+  }
+
+  .total-box {
+    margin-top: 12px;
+    padding: 10px;
+
+    background: #fff3e0;
+    border-left: 4px solid #ef6c00;
+    border-radius: 6px;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: #ef6c00;
+  }
+
+  @media (max-width: 768px) {
+    .grid-gastos {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.step8-container {
+  .grid-salud {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+    gap: 12px;
+    margin: 0 auto;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .total-inline {
+    margin-top: 10px;
+    padding: 10px;
+
+    background: #e3f2fd;
+    border-left: 4px solid #1565c0;
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.step-final-container {
+  .resume-card {
+    margin-top: 12px;
+    padding: 10px;
+
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #dbe5f1;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .resume-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .resume-row {
+    padding: 4px 0;
+    border-bottom: 1px dashed #e0e0e0;
+  }
+
+  .resume-total {
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1565c0;
+  }
+
+  .success-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 14px 16px;
+    margin-top: 12px;
+
+    border-radius: 12px;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+  }
+
+  .success-box mat-icon {
+    font-size: 28px;
+    color: #2e7d32;
+  }
+
+  .success-box .title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1b5e20;
+  }
+
+  .success-box .sub {
+    font-size: 12px;
+    color: #4e944f;
+  }
+}
+
+/* 🔥 WIZARD STATES */
+.wizard-step.error .dot {
+  background: #c62828;
+  color: white;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+}
+
+.wizard-step.error .label {
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* CLICKABLE */
+.wizard-step {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.wizard-step:hover {
+  transform: translateY(-2px);
+}
+
+/* 🔒 OPCIONAL: pasos bloqueados visualmente */
+.wizard-step.pending {
+  opacity: 0.6;
+}
+
+.wizard-step.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ============================
+   🚀 STEPPER FIX (SIRUS PRO)
+============================ */
+
+.steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+/* 🔵 DOT */
+.step .dot {
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+  background: #e3f2fd;
+  color: #1565c0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  margin-bottom: 6px;
+}
+
+/* 🔵 LABEL */
+.step .label {
+  font-size: 11px;
+  color: #607d8b;
+  font-weight: 500;
+}
+
+/* ✅ ACTIVE */
+.step.active .dot {
+  background: #1976d2;
+  color: white;
+}
+
+/* ✅ COMPLETED */
+.step.completed .dot {
+  background: #2e7d32;
+  color: white;
+}
+
+/* ❌ ERROR */
+.step.error .dot {
+  background: #c62828;
+  color: white;
+}
+
+.input.invalid {
+  border: 1px solid #e53935;
+  background: #fff5f5;
+}
+
+.dynamic-card,
+.family-card,
+.gasto-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.final-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.step11-container img {
+  max-width: 100%;   // 🔥 CLAVE
+  height: auto;
+  display: block;
+}

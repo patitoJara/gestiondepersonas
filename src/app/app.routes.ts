@@ -1,16 +1,20 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './telework/views/auth/login/login.component';
+import { LoginComponent } from './core/auth/login/login.component';
 import { TemplateComponent } from './layout/template/template.component';
-import { AboutPublicComponent } from './telework/views/public/about/about-public/about-public.component';
+import { AboutPublicComponent } from './public/about/about-public/about-public.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // =====================================================
+  // 🔐 AUTH
+  // =====================================================
+
   { path: 'auth/login', component: LoginComponent },
 
   {
     path: 'auth/recover',
     loadComponent: () =>
-      import('./telework/views/auth/recover/recover.component').then(
+      import('./core/auth/recover/recover.component').then(
         (m) => m.RecoverComponent,
       ),
   },
@@ -18,11 +22,20 @@ export const routes: Routes = [
   {
     path: 'auth/change-password',
     loadComponent: () =>
-      import('./telework/views/auth/change-password/change-password.component').then(
+      import('./core/auth/change-password/change-password.component').then(
         (m) => m.ChangePasswordComponent,
       ),
   },
+
+  // =====================================================
+  // 🌍 PUBLICO
+  // =====================================================
+
   { path: 'about-public', component: AboutPublicComponent },
+
+  // =====================================================
+  // 🔐 SISTEMA
+  // =====================================================
 
   {
     path: '',
@@ -31,206 +44,243 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
 
+      // =====================================================
+      // 🟦 TELETRABAJO (MAIN)
+      // =====================================================
+
       {
         path: 'inicio',
         loadComponent: () =>
-          import('./telework/views/inicio/inicio.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/inicio/inicio.component').then(
             (m) => m.InicioComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          module: 'teletrabajo',
+          section: 'main',
           title: 'Inicio',
           icon: 'home',
-        },
-      },
-
-      // 👤 PERFIL
-      {
-        path: 'profile',
-        loadComponent: () =>
-          import('./telework/views/profile/profile.component').then(
-            (m) => m.ProfileComponent,
-          ),
-        data: {
-          hidden: true, // 👈 🔥 CLAVE
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
         },
       },
 
       {
         path: 'registro-jornada',
         loadComponent: () =>
-          import('./telework/views/dashboard/dashboard.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
           ),
         data: {
-          //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          roles: ['ADMIN', 'ADMINISTRATIVO'],
+          module: 'teletrabajo',
+          section: 'main',
           title: 'Registro de jornada',
           icon: 'access_time',
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
         },
       },
-
 
       {
         path: 'mi-reporte',
         loadComponent: () =>
-          import('./telework/views/reports/telework-report-user/telework-report-user.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/reports/telework-report-user/telework-report-user.component').then(
             (m) => m.TeleworkReportUserComponent,
           ),
         data: {
-          roles: ['ADMIN', 'ADMINISTRATIVO'],
+          module: 'teletrabajo',
+          section: 'main',
           title: 'Mi Control de Teletrabajo',
           icon: 'assignment_ind',
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
         },
       },
 
       {
         path: 'mis-suscripciones',
         loadComponent: () =>
-          import('./telework/views/reports/telework-subscriptions/telework-subscriptions.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/reports/telework-subscriptions/telework-subscriptions.component').then(
             (m) => m.TeleworkUserSubscriptionsComponent,
           ),
         data: {
-          roles: ['ADMIN', 'ADMINISTRATIVO'],
+          module: 'teletrabajo',
+          section: 'main',
           title: 'Mis Suscripciones',
           icon: 'event',
-        },
-      },
-
-      {
-        path: 'users-groups',
-        loadComponent: () =>
-          import('./telework/views/admin/users-groups/users-groups.component').then(
-            (m) => m.UsersGroupsComponent,
-          ),
-        data: {
-          roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Auditoría de Grupos',
-          icon: 'dashboard',
-        },
-      },
-
-      {
-        path: 'report',
-        loadComponent: () =>
-          import('./telework/views/reports/telework-report/telework-report.component').then(
-            (m) => m.TeleworkReportComponent,
-          ),
-        data: {
-          roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Auditoría TeleTrabajo',
-          icon: 'assessment',
+          roles: ['ADMIN', 'ADMINISTRATIVO'],
         },
       },
 
       {
         path: 'mis-funcionarios',
         loadComponent: () =>
-          import('./telework/views/admin/jefaturas/jefatura-usuarios.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/admin/jefaturas/jefatura-usuarios.component').then(
             (m) => m.JefaturaUsuariosComponent,
           ),
         data: {
-          roles: ['ADMIN', 'JEFATURA'],
+          module: 'teletrabajo',
+          section: 'admin',
           title: 'Funcionarios por Jefatura',
           icon: 'groups',
+          roles: ['ADMIN', 'JEFATURA'],
         },
       },
-
 
       {
         path: 'mi-reporte-jefatura',
         loadComponent: () =>
-          import('./telework/views/reports/telework-report-jefatura/telework-report-jefatura.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/reports/telework-report-jefatura/telework-report-jefatura.component').then(
             (m) => m.TeleworkReportJefaturaComponent,
           ),
         data: {
-          roles: ['ADMIN', 'JEFATURA'],
+          module: 'teletrabajo',
+          section: 'main',
           title: 'Reporte Jefatura',
           icon: 'assessment',
+          roles: ['ADMIN', 'JEFATURA'],
         },
-      },      
+      },
+
+      // =====================================================
+      // 🟧 TELETRABAJO (ADMIN)
+      // =====================================================
 
       {
-        path: 'manual',
+        path: 'users-groups',
         loadComponent: () =>
-          import('./telework/views/manual/manual.component').then(
-            (m) => m.ManualComponent,
+          import('./modules/gestion-personas/teletrabajo/views/admin/users-groups/users-groups.component').then(
+            (m) => m.UsersGroupsComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          title: 'Manual',
-          icon: 'menu_book',
+          module: 'teletrabajo',
+          section: 'admin',
+          title: 'Auditoría de Grupos',
+          icon: 'groups',
+          roles: ['ADMIN', 'SUPERVISOR'],
         },
       },
 
       {
-        path: 'about',
+        path: 'report',
         loadComponent: () =>
-          import('./telework/views/public/about/about-private/about-private.component').then(
-            (m) => m.AboutPrivateComponent,
+          import('./modules/gestion-personas/teletrabajo/views/reports/telework-report/telework-report.component').then(
+            (m) => m.TeleworkReportComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          title: 'Acerca del sistema',
-          icon: 'info',
+          module: 'teletrabajo',
+          section: 'main',
+          title: 'Auditoría Teletrabajo',
+          icon: 'assessment',
+          roles: ['ADMIN', 'SUPERVISOR'],
         },
       },
-
-      /* ADMIN */
-
+            
       {
-        path: 'admin/roles',
+        path: 'admin/subscribe',
         loadComponent: () =>
-          import('./telework/views/admin/roles/roles.component').then(
-            (m) => m.RolesComponent,
+          import('./modules/gestion-personas/teletrabajo/views/admin/subscribe/telework-subscribe.component').then(
+            (m) => m.TeleworkSubscribeComponent,
           ),
         data: {
-          roles: ['ADMIN'],
-          title: 'Roles',
-          icon: 'security',
+          module: 'teletrabajo',
+          section: 'admin',
+          title: 'Suscripción Teletrabajo',
+          icon: 'event',
+          roles: ['ADMIN', 'SUPERVISOR'],
         },
       },
 
       {
         path: 'admin/usuarios',
         loadComponent: () =>
-          import('./telework/views/admin/usuarios/users.component').then(
+          import('./modules/gestion-personas/teletrabajo/views/admin/usuarios/users.component').then(
             (m) => m.UsuariosComponent,
           ),
         data: {
-          roles: ['ADMIN', 'SUPERVISOR'],
+          module: 'teletrabajo',
+          section: 'admin',
           title: 'Usuarios',
           icon: 'person',
-        },
-      },
-/*
-      {
-        path: 'admin/jefaturas',
-        loadComponent: () =>
-          import('./telework/views/admin/jefaturas/jefatura-usuarios.component').then(
-            (m) => m.JefaturaUsuariosComponent,
-          ),
-        data: {
-          roles: ['ADMIN'],
-          title: 'Jefaturas',
-          icon: 'groups',
-        },
-      },
-*/
-      {
-        path: 'admin/subscribe',
-        loadComponent: () =>
-          import('./telework/views/admin/subscribe/telework-subscribe.component').then(
-            (m) => m.TeleworkSubscribeComponent,
-          ),
-        data: {
           roles: ['ADMIN', 'SUPERVISOR'],
-          title: 'Suscripcion a TeleTrabajo',
-          icon: 'event',
         },
+      },
+
+      {
+        path: 'admin/roles',
+        loadComponent: () =>
+          import('./modules/gestion-personas/teletrabajo/views/admin/roles/roles.component').then(
+            (m) => m.RolesComponent,
+          ),
+        data: {
+          module: 'teletrabajo',
+          section: 'admin',
+          title: 'Roles',
+          icon: 'security',
+          roles: ['ADMIN'],
+        },
+      },
+
+      {
+        path: 'manual',
+        loadComponent: () =>
+          import('./modules/gestion-personas/teletrabajo/views/manual/manual.component').then(
+            (m) => m.ManualComponent,
+          ),
+        data: {
+          module: 'teletrabajo',
+          section: 'main',
+          title: 'Manual',
+          icon: 'menu_book',
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+        },
+      },
+
+      {
+        path: 'about',
+        loadComponent: () =>
+          import('./modules/gestion-personas/teletrabajo/views/about-private/about-private.component').then(
+            (m) => m.AboutPrivateComponent,
+          ),
+        data: {
+          module: 'teletrabajo',
+          section: 'main',
+          title: 'Acerca del sistema',
+          icon: 'info',
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+        },
+      },
+
+      // =====================================================
+      // 🟩 BENEFICIOS
+      // =====================================================
+
+      {
+        path: 'bienestar',
+        loadComponent: () =>
+          import('./modules/gestion-personas/beneficios/postulacion-estudios/postulation-form.component').then(
+            (m) => m.PostulationFormComponent,
+          ),
+        data: {
+          module: 'beneficios',
+          group: 'Postulación', // 🔥 ESTE ES EL CAMBIO
+          title: 'Postulación Estudios',
+          icon: 'school',
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+        },
+      },
+      // 👤 PERFIL (OCULTO)
+
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./modules/gestion-personas/teletrabajo/views/profile/profile.component').then(
+            (m) => m.ProfileComponent,
+          ),
+        data: { hidden: true },
       },
     ],
   },
+
+  // =====================================================
+  // ❌ FALLBACK
+  // =====================================================
 
   { path: '**', redirectTo: 'auth/login' },
 ];

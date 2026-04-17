@@ -1,53 +1,33 @@
 <!-- =======================================================
-     🧭 LAYOUT TELEWORK-SM — PROFESIONAL
+     🧭 LAYOUT GESTIÓN DE PERSONAS — FINAL PRO
      ======================================================= -->
 
-<!-- 🔹 Pantalla selección rol/programa -->
+<!-- 🔹 Pantalla selección rol -->
 <ng-container *ngIf="!menuVisible && userRoles.length > 1; else mainLayout">
   <div class="login-wrapper">
     <mat-card class="login-card" appearance="outlined">
       <div class="login-header">
-        <img
-          src="assets/logoSSM.png"
-          alt="Logo SSM"
-          class="login-logo"
-          width="120"
-        />
+        <img src="assets/logoSSM.png" alt="Logo SSM" width="120" />
         <h2>Bienvenido, {{ userFullName }}</h2>
         <p>Selecciona el rol con el cual desea ingresar.</p>
       </div>
 
-      <div class="role-program-row">
-        <!-- Rol -->
-        <div class="role-program-item">
-          <mat-form-field appearance="fill">
-            <mat-label>Rol</mat-label>
-            <mat-select [(ngModel)]="activeRole">
-              <mat-option *ngFor="let r of userRoles" [value]="r">
-                {{ r }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
+      <mat-form-field appearance="fill">
+        <mat-label>Rol</mat-label>
+        <mat-select [(ngModel)]="activeRole">
+          <mat-option *ngFor="let r of userRoles" [value]="r">
+            {{ r }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-      <!-- Botones -->
       <div class="login-actions">
-        <button
-          mat-stroked-button
-          color="accent"
-          [routerLink]="['/auth/login']"
-        >
+        <button mat-stroked-button color="accent" routerLink="/auth/login">
           <mat-icon>arrow_back</mat-icon>
           Volver
         </button>
 
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="onContinue()"
-          [disabled]="isLoading"
-        >
+        <button mat-flat-button color="primary" (click)="onContinue()">
           <mat-icon>arrow_forward</mat-icon>
           Ingresar
         </button>
@@ -61,100 +41,123 @@
      ======================================================= -->
 <ng-template #mainLayout>
   <mat-sidenav-container class="sidenav-container">
-    <!-- 🔹 MENÚ LATERAL -->
+
+    <!-- SIDENAV -->
     <mat-sidenav
       #drawer
       fixedInViewport
       [mode]="(isHandset$ | async) ? 'over' : 'side'"
       [opened]="(isHandset$ | async) === false"
     >
-      <mat-toolbar class="sidenav-title"> MENÚ </mat-toolbar>
 
-      <mat-nav-list>
-        <a
-          *ngFor="let item of menuItems"
-          mat-list-item
-          (click)="navigate(item.route, drawer)"
-          routerLinkActive="active"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+     <!-- <img src="assets/logo100ssm.png" class="logo-ssm" /> -->
+      <mat-toolbar class="sidenav-title">
+        <span>Gestión Personas</span>
+      </mat-toolbar>
 
-          <span matListItemTitle>
-            {{ item.title }}
-          </span>
-        </a>
-      </mat-nav-list>
-      <!-- MANTENEDORES -->
-      <div class="submenu">
-        <div
-          class="submenu-title"
-          (click)="mantenedoresOpen = !mantenedoresOpen"
-        >
-          <mat-icon>settings</mat-icon>
-          Administración
-
-          <span class="submenu-arrow">
-            <mat-icon>
-              {{ mantenedoresOpen ? "expand_less" : "expand_more" }}
-            </mat-icon>
-          </span>
-        </div>
-
-        <div *ngIf="mantenedoresOpen">
-          <a
-            *ngFor="let item of mantenedorItems"
-            mat-list-item
-            class="submenu-item"
-            (click)="navigate(item.route, drawer)"
-            routerLinkActive="active"
-          >
-            <mat-icon>{{ item.icon }}</mat-icon>
-            {{ item.title }}
-          </a>
-        </div>
+      <!-- GESTIÓN -->
+      <div class="menu-section">
+        <mat-icon>business</mat-icon>
+        Gestión de Personas
       </div>
 
-      <mat-divider></mat-divider>
+      <!-- TELETRABAJO -->
+      <div class="submenu-title" (click)="teletrabajoOpen = !teletrabajoOpen">
+        <mat-icon>laptop</mat-icon>
+        Teletrabajo
+      </div>
 
-      <div class="menu-divider">
-        <img src="assets/logoSSM.png" alt="Logo SSM" />
+      <div *ngIf="teletrabajoOpen" class="submenu">
+        <div *ngFor="let group of menuItems.teletrabajo">
+          <!-- 👇 SOLO mostrar carpeta si NO es Operación -->
+          <ng-container *ngIf="group.label !== 'Operación'; else flatGroup">
+            <div class="submenu-title" (click)="toggleGroup(group)">
+              <mat-icon>{{ group.open ? "folder_open" : "folder" }}</mat-icon>
+              {{ group.label }}
+            </div>
+
+            <div *ngIf="group.open">
+              <div
+                *ngFor="let item of group.children"
+                class="submenu-item"
+                [routerLink]="item.route"
+                (click)="isMobile() && drawer?.close()"
+                [class.active]="isActive(item.route)"
+              >
+                <mat-icon>{{ item.icon }}</mat-icon>
+                <span>{{ item.title }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- 👇 ESTE ES EL TRUCO -->
+          <ng-template #flatGroup>
+            <div
+              *ngFor="let item of group.children"
+              class="submenu-item"
+              [routerLink]="item.route"              
+              [class.active]="isActive(item.route)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span>{{ item.title }}</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <div class="form-watermark">
+        <img src="assets/logoSSM.png" />
+      </div>   
+      
+      <!-- BENEFICIOS -->
+      <div class="submenu-title" (click)="beneficiosOpen = !beneficiosOpen">
+        <mat-icon>{{ beneficiosOpen ? "folder_open" : "folder" }}</mat-icon>
+        Beneficios
+      </div>
+
+      <div *ngIf="beneficiosOpen" class="submenu">
+        <div *ngFor="let group of menuItems.beneficios">
+          <div class="submenu-title" (click)="toggleGroup(group)">
+            <mat-icon>{{ group.open ? "folder_open" : "folder" }}</mat-icon>
+            {{ group.label }}
+          </div>
+
+          <div *ngIf="group.open">
+            <div
+              *ngFor="let item of group.children"
+              class="submenu-item"
+              [routerLink]="item.route"
+              [class.active]="isActive(item.route)"
+            >
+              <mat-icon class="tree-dot">fiber_manual_record</mat-icon>
+              <span>{{ item.title }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </mat-sidenav>
 
-    <!-- 🔹 CONTENIDO -->
-    <mat-sidenav-content>
-      <!-- TOPBAR -->
+    <!-- CONTENIDO -->
+    <mat-sidenav-content class="main-content">
       <!-- TOPBAR -->
       <mat-toolbar class="topbar">
-        <!-- ☰ MENU -->
         <button mat-icon-button (click)="toggleDrawer()">
           <mat-icon>menu</mat-icon>
         </button>
 
-        <!-- 🏷️ TÍTULO -->
-        <span class="title">TELETRABAJO</span>
-
+        <span class="title">Gestión de Personas</span>
         <span class="spacer"></span>
 
-        <!-- 👤 USUARIO (PRINCIPAL) -->
         <div class="user-main">
           <mat-icon>account_circle</mat-icon>
-
           <div class="user-text">
             <div class="name">{{ userFullName }}</div>
             <div class="meta">{{ userUsername }} · {{ activeRole }}</div>
           </div>
         </div>
 
-        <!-- ⏱️ SESIÓN -->
         <div class="session-box">
-          <span
-            class="session-timer"
-            [ngClass]="{
-              warn: remainingMinutes <= 5 && remainingMinutes > 2,
-              critical: remainingMinutes <= 2,
-            }"
-          >
+          <span class="session-timer">
             <mat-icon>timer</mat-icon>
             {{ remainingMinutes }} min
           </span>
@@ -164,40 +167,34 @@
             mat-stroked-button
             class="extend-btn"
             (click)="extendSession()"
-            [disabled]="isRefreshing"
           >
             <mat-icon>autorenew</mat-icon>
-            Extender
           </button>
-        </div>
 
-        <!-- ⚙️ ACCIONES -->
-        <div class="user-actions">
-          <!-- Perfil -->
+          <!-- 🔒 CAMBIO DE CLAVE (AQUÍ VA) -->
           <button
             mat-icon-button
-            matTooltip="Mi Perfil"
+            matTooltip="Cambiar contraseña"
             (click)="goToProfile()"
           >
-            <mat-icon>manage_accounts</mat-icon>
-          </button>
-
-          <!-- Logout -->
-          <button mat-stroked-button class="logout-btn" (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            Salir
+            <mat-icon>lock</mat-icon>
           </button>
         </div>
-      </mat-toolbar>
 
-      <!-- CONTENIDO DINÁMICO -->
-      <div class="content fade-route">
+        <button mat-stroked-button class="logout-btn" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Salir
+        </button>
+      </mat-toolbar>
+  <!-- 🔥 TIMBRE -->
+      <!-- 👇 SCROLL REAL AQUÍ -->
+      <div class="content">    
         <router-outlet></router-outlet>
       </div>
 
-      <!-- FOOTER -->
+      <!-- FOOTER FIJO -->
       <footer class="footer">
-        Servicio de Salud Magallanes — Área de Desarrollo TIC
+        Servicio de Salud Magallanes — Área TIC
       </footer>
     </mat-sidenav-content>
   </mat-sidenav-container>

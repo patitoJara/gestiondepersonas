@@ -1,0 +1,2142 @@
+/* ============================
+   🔥 TIMBRE DE AGUA
+============================ */
+
+.form-wrapper {
+  position: relative;
+  overflow: hidden; // 🔥 CLAVE TOTAL
+}
+
+.form-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden; // 🔥 CLAVE
+}
+
+.form-watermark img {
+  position: absolute;
+
+  top: 20px;
+  left: 10px;
+
+  transform: rotate(-18deg);
+
+  width: 300px; // 🔥 mismo tamaño del anterior grande
+
+  opacity: 0.28; // 🔥 más fuerte (antes 0.22)
+
+  filter: saturate(1.3) contrast(1.1); // 🔥 colores más vivos
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+.form-watermark::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-18deg);
+
+  width: 420px;
+  height: 420px;
+
+  background: url("/assets/LOGOBIENESTARSSM.png") center/contain no-repeat;
+
+  opacity: 0.22; // 🔥 más presencia real (antes 0.18)
+
+  filter: brightness(1.05) // 🔥 levanta el logo
+    saturate(1.25) // 🔥 colores vivos pero elegantes
+    contrast(1.08); // 🔥 definición suave
+
+  mix-blend-mode: multiply; // 🔥 👈 AQUÍ ESTÁ LA MAGIA REAL
+  mask-image: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+}*/
+
+/* 📱 TIMBRE RESPONSIVE */
+
+/* ============================
+   🌐 BASE
+============================ */
+body {
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef3f9 100%);
+  font-family: Roboto, sans-serif;
+}
+
+/* ============================
+   🟦 HEADER LOGOS
+============================ */
+.header-logos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 8px 16px;
+  background: #ffffff;
+  border-bottom: 3px solid #1565c0;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.header-logos img {
+  height: 32px;
+}
+
+/* ============================
+   🟦 CONTENEDOR
+============================ */
+.container {
+  position: relative;
+  z-index: 2;
+
+  max-width: 1100px;
+  width: 100%;
+  margin: 20px auto;
+  padding: 12px;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(2px);
+
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* 🔥 FIX REAL */
+  height: auto;
+  max-height: none;
+
+  overflow: visible; // 🔥 elimina scroll interno
+}
+
+.section:last-child {
+  margin-bottom: 40px;
+}
+
+/* ============================
+   🟦 HEADER FORM
+============================ */
+.form-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.title-main {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0d47a1;
+}
+
+.title-sub {
+  font-size: 12px;
+  color: #78909c;
+}
+
+/* ============================
+   🟦 SECCIONES
+============================ */
+.section {
+  margin-top: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  background: linear-gradient(180deg, #ffffff, #f7faff);
+  border: 1px solid #d6e4f0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TITULOS */
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px; // 🔥 separa del subtítulo
+
+  color: #1565c0;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.section-sub {
+  margin-bottom: 14px; // 🔥 antes 6px
+  font-size: 11px;
+  color: #546e7a;
+
+  display: block; // 🔥 asegura que baje correctamente
+}
+
+.section-sub.strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #455a64;
+}
+
+/* ============================
+   🟦 GRID
+============================ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+  overflow-x: hidden; // 🔥 CLAVE
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================
+   🟦 MATERIAL COMPACTO
+============================ */
+
+::ng-deep .mat-mdc-form-field {
+  margin-bottom: -4px;
+  width: 100%;
+  min-width: 0; // 🔥 IMPORTANTÍSIMO
+}
+::ng-deep .mat-mdc-floating-label {
+  font-size: 15px !important;
+  color: #607d8b !important;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+/* 🔥 SOLO color y opacidad */
+::ng-deep .mat-mdc-floating-label.mdc-floating-label--float-above {
+  color: #607d8b !important;
+  opacity: 1 !important;
+}
+
+/* ============================
+   🔥 SIRUS SELECT PRO FIX
+============================ */
+
+/* 🔹 CONTENEDOR */
+::ng-deep .mat-mdc-form-field {
+  font-size: 12px !important;
+}
+
+/* 🔹 INPUT INTERNO */
+::ng-deep .mat-mdc-select {
+  font-size: 12px !important;
+  font-weight: 500;
+  color: #263238 !important;
+}
+
+/* 🔹 TEXTO SELECCIONADO */
+::ng-deep .mat-mdc-select-value {
+  font-size: 12px !important;
+  color: #263238 !important;
+}
+
+/* 🔹 PLACEHOLDER */
+::ng-deep .mat-mdc-select-placeholder {
+  font-size: 12px !important;
+  color: #90a4ae !important;
+}
+
+/* 🔹 ALTURA REAL */
+::ng-deep .mat-mdc-text-field-wrapper {
+  height: 32px !important;
+  border-radius: 10px;
+  align-items: center;
+}
+
+/* 🔹 INFIX (CLAVE PARA CENTRAR) */
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  min-height: 32px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 🔹 BORDE */
+::ng-deep .mdc-notched-outline {
+  border-radius: 6px !important;
+  border-color: #cfd8dc !important;
+}
+
+/* 🔹 HOVER */
+::ng-deep .mat-mdc-form-field:hover .mdc-notched-outline {
+  border-color: #90caf9 !important;
+}
+
+/* 🔹 FOCUS */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline {
+  border-color: #1565c0 !important;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+}
+
+/* 🔹 FLECHA */
+::ng-deep .mat-mdc-select-arrow {
+  color: #607d8b !important;
+}
+
+/* 🔹 PANEL DROPDOWN */
+::ng-deep .mat-mdc-select-panel {
+  background: #ffffff !important;
+  border-radius: 8px;
+  border: 1px solid #dbe5f1;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 🔹 OPCIONES */
+::ng-deep .mat-mdc-option {
+  font-size: 12px !important;
+  min-height: 32px !important;
+  color: #263238;
+}
+
+/* 🔹 HOVER OPCIÓN */
+::ng-deep .mat-mdc-option:hover {
+  background: #e3f2fd !important;
+}
+
+/* 🔹 SELECCIONADO */
+::ng-deep .mat-mdc-option.mdc-list-item--selected {
+  background: #bbdefb !important;
+  color: #0d47a1;
+}
+
+::ng-deep .mat-mdc-form-field {
+  --mdc-filled-text-field-container-color: #ffffff !important;
+  --mdc-outlined-text-field-outline-color: #cfd8dc !important;
+  --mdc-outlined-text-field-focus-outline-color: #1565c0 !important;
+}
+
+::ng-deep .mat-mdc-floating-label {
+  transform: translateY(-50%) scale(1) !important;
+  top: 50% !important;
+}
+
+/* 🔥 cuando está flotando arriba */
+::ng-deep .mdc-floating-label--float-above {
+  transform: translateY(-120%) scale(0.85) !important;
+}
+
+/* 🔹 TEXTO SELECT */
+::ng-deep .mat-mdc-select-value {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-family: Roboto, sans-serif !important;
+  color: #263238 !important;
+}
+
+/* 🔹 LABEL */
+::ng-deep .mat-mdc-floating-label {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-family: Roboto, sans-serif !important;
+}
+
+/* 🔹 OPCIONES DROPDOWN */
+::ng-deep .mat-mdc-option {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-family: Roboto, sans-serif !important;
+}
+
+/* 🔹 PANEL */
+::ng-deep .mat-mdc-select-panel {
+  font-family: Roboto, sans-serif !important;
+}
+
+/* ============================
+   📎 DOC ITEM COMPACTO PRO
+============================ */
+
+/* HEADER */
+.doc-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 0px;
+  line-height: 1.2;
+  padding: 2px 0 !important;
+  margin: 0 !important;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.doc-title:hover {
+  color: #1565c0; // 🔵 institucional
+  transform: translateX(1px);
+}
+
+/* UPLOAD MÁS CHICO */
+.file-upload {
+  margin-top: 2px !important;
+  padding: 6px 8px;
+  border: 1px dashed #b0bec5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fafbfc;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.file-upload:active {
+  transform: scale(0.97);
+}
+
+.file-upload:hover {
+  background: #f1f8ff;
+  border-color: #1565c0;
+  transform: translateY(-1px);
+}
+
+/* TEXTO */
+.file-title {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.file-upload .hint {
+  font-size: 11px;
+  margin: 0;
+}
+
+/* LISTA ARCHIVOS 🔥 */
+.file-list {
+  margin-top: 2px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ITEM ARCHIVO */
+.file-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 6px 10px;
+  border-radius: 8px;
+
+  background: linear-gradient(180deg, #e3f2fd, #e1f5fe);
+  border-left: 4px solid #1565c0;
+
+  font-size: 12px;
+  transition: 0.2s;
+}
+
+.file-list > div:hover {
+  background: linear-gradient(180deg, #dbeafe, #e0f7fa);
+}
+
+/* IZQUIERDA */
+.file-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ICONOS MÁS CHICOS */
+.file-left mat-icon {
+  font-size: 14px;
+  color: #1565c0;
+  background: #e3f2fd;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.icon-ok {
+  color: #2e7d32; // verde
+}
+
+.icon-pendiente {
+  color: #c62828; // rojo
+}
+
+.help-icon {
+  font-size: 16px;
+  color: #90a4ae;
+  margin-left: auto; // 🔥 lo manda a la derecha
+  cursor: help;
+  transition: 0.2s;
+}
+
+.help-icon:hover {
+  color: #1565c0;
+  transform: scale(1.1);
+}
+
+.step.error .dot {
+  background: #c62828;
+  color: white;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+}
+
+.step.error .label {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+/* BOTÓN BORRAR */
+.file-list button mat-icon {
+  font-size: 16px;
+}
+
+.file-upload.has-file {
+  background: #e8f5e9;
+  border-color: #2e7d32;
+}
+
+.doc-content.closed {
+  display: none;
+}
+
+.doc-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2px;
+  border-radius: 6px;
+  transition: 0.15s;
+  border-left: 2px solid transparent;
+  gap: 0px !important;
+}
+
+.doc-item.completed {
+  border-left: 2px solid #2e7d32;
+  background: rgba(46, 125, 50, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(46, 125, 50, 0.2);
+}
+
+.doc-item > div {
+  padding-left: 14px;
+  margin-top: 1px;
+}
+
+.doc-item .file-upload,
+.doc-item .file-list,
+.doc-item .hint {
+  margin-top: 2px !important;
+}
+
+.doc-item.completed .doc-title {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.doc-item:hover {
+  background: rgba(21, 101, 192, 0.06);
+  border-radius: 6px;
+}
+
+.doc-item * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.doc-icon {
+  font-size: 18px;
+  transition: 0.2s;
+}
+
+.doc-item.completed .doc-icon {
+  color: #2e7d32 !important;
+}
+
+.doc-title mat-icon {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-title span {
+  display: block;
+  transform: translateY(-1px);
+}
+
+/* TEXTO SIN ARCHIVO */
+.hint {
+  font-size: 11px;
+  margin-top: 2px !important;
+}
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  margin-top: 8px; // 🔥 pequeño respiro extra
+}
+
+@media (max-width: 900px) {
+  .docs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.file-upload mat-icon {
+  font-size: 20px;
+  color: #1565c0;
+  transition: transform 0.2s ease;
+}
+
+.file-upload:hover mat-icon {
+  transform: scale(1.15);
+}
+
+/* ============================
+   🟧 BOTONES
+============================ */
+.actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-secondary {
+  background: #eceff1 !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1565c0, #1976d2) !important;
+  color: white !important;
+}
+
+.actions button {
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================
+   🟧 FILE PREVIEW
+============================ */
+.file-preview {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 12px;
+  color: #37474f;
+}
+
+/* ============================
+   🔐 ACCESO SUPERVISOR (🔥 SUTIL)
+============================ */
+.admin-access {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.admin-access button {
+  font-size: 11px;
+  opacity: 0.6;
+  border-radius: 8px;
+}
+
+.admin-access button:hover {
+  opacity: 1;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 11px;
+  margin-top: 2px;
+  margin-left: 0;
+  padding-left: 10px;
+  min-height: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0.5;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::ng-deep input::placeholder {
+  color: #90a4ae;
+  opacity: 0.8; //
+  font-weight: 400;
+}
+
+::ng-deep input {
+  min-width: 0 !important;
+}
+
+.correo-hint {
+  font-size: 11px;
+  color: #78909c;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+/* ============================
+   🚀 GENERA ESPACIO ENTRE ELEMENTOS
+============================ */
+
+.full-width {
+  grid-column: span 2;
+}
+
+/* ============================
+   🚀 SIRUS STEPPER PRO
+============================ */
+
+.sirus-stepper {
+  margin-bottom: 20px;
+  padding: 10px 10px 0 10px;
+}
+
+/* 🔹 BARRA */
+.progress-bar {
+  height: 4px;
+  background: #e3e8ef;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  transition: width 0.3s ease;
+}
+
+/* 🔹 STEPS */
+.steps {
+  display: flex;
+  justify-content: center; // 🔥 CLAVE
+  align-items: center;
+  gap: 18px; // 🔥 tú controlas el espacio
+  flex-wrap: nowrap;
+  min-height: 60px;
+}
+
+/* 🔹 STEP */
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  min-width: 60px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+}
+
+/* 🔹 DOT */
+.dot {
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+  background: #e3e8ef;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #607d8b;
+
+  transition: all 0.25s ease;
+}
+
+/* 🔹 LABEL */
+.label {
+  font-size: 10px;
+  margin-top: 4px;
+  color: #78909c;
+}
+
+/* 🔥 ACTIVE */
+.step.active .dot {
+  background: #1565c0;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.2);
+}
+
+.step.active .label {
+  color: #1565c0;
+  font-weight: 600;
+}
+
+/* 🔥 COMPLETED */
+.step.completed .dot {
+  background: #2e7d32;
+  color: white;
+}
+
+::ng-deep .mdc-notched-outline__leading,
+::ng-deep .mdc-notched-outline__notch,
+::ng-deep .mdc-notched-outline__trailing {
+  border-color: #cfd8dc !important; // 🔥 gris suave PRO
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 700px) {
+  .label {
+    display: none;
+  }
+
+  .dot {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+}
+
+.input.ng-invalid.ng-touched {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 1px rgba(211, 47, 47, 0.2);
+}
+
+::ng-deep .mat-mdc-raised-button {
+  font-weight: 500 !important; // 🔥 menos peso = más nitidez
+}
+
+/* ============================================
+   🟣 STEP 1 — DATOS PERSONALES (LIMPIO PRO)
+============================================ */
+.step1-container {
+  /* 🔹 HEADER */
+  .step1-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    button {
+      height: 30px;
+      font-size: 12px;
+    }
+  }
+
+  /* 🔹 GRID PRINCIPAL */
+  .grid-datos-personales {
+    display: grid;
+    grid-template-columns:
+      minmax(90px, 1fr)
+      minmax(160px, 2fr)
+      minmax(140px, 2fr)
+      minmax(120px, 1fr)
+      minmax(180px, 2fr);
+    gap: 14px 10px;
+    width: 100%;
+    margin: 0 auto;
+    margin-bottom: 8px; // 🔥 controlas separación
+  }
+
+  .grid-fila3 {
+    display: grid;
+    grid-template-columns:
+      minmax(220px, 2fr)
+      minmax(50px, 1fr)
+      minmax(200px, 2fr);
+    gap: 14px 10px;
+    //max-width: 500px;
+    width: 100%;
+    margin-bottom: 8px; // 🔥 controlas separación
+  }
+
+  .input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 🔹 TITULOS (SE MANTIENE BONITO) */
+  .group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #546e7a;
+    margin: 12px 0 6px;
+    border-bottom: 1px solid #e3e8ef;
+    padding-bottom: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  /* 🔹 RADIOS */
+
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    //align-items: flex-start;
+    font-size: 13px;
+    background: transparent; // 🔥 clave
+    padding: 6px 0;
+    margin-bottom: 10px;
+    //width: 100%; // 🔥 clave
+    //width: fit-content; // 🔥 🔥 🔥 ESTE ES EL ARREGLO REAL
+  }
+
+  .radio-group label {
+    //min-width: 220px;
+    min-width: auto;
+    font-weight: 500;
+    color: #37474f;
+  }
+
+  .radio-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    //cursor: pointer;
+  }
+
+  .radio-group.invalid {
+    border: 1px solid #d32f2f;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: rgba(211, 47, 47, 0.03);
+  }
+
+  .radio-group .error {
+    color: #d32f2f;
+    font-size: 11px;
+    margin-top: 4px;
+    margin-left: 0;
+  }
+
+  .radio-error {
+    border-left: 3px solid #d32f2f;
+    padding-left: 10px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  ::ng-deep .mat-radio-group.ng-invalid.ng-touched {
+    border-left: 3px solid #d32f2f;
+    padding-left: 8px;
+  }
+
+  .grid-option {
+    //display: grid;
+    //grid-template-columns: 1fr 1fr; // 🔥 columnas iguales
+    //grid-template-columns: repeat(2, minmax(180px, 1fr));
+    //gap: 14px 20px;
+    display: flex; // 🔥 CAMBIO CLAVE
+    gap: 30px; // separación entre preguntas
+  }
+
+  .datos-row {
+    display: flex;
+    gap: 8px;
+    //display: flex;
+    //display: inline-flex; // 🔥 ESTE ES EL CAMBIO
+    //align-items: center;
+    //gap: 4px; // 🔥 espacio entre círculo y texto
+    //white-space: nowrap; // 🔥 evita que ocupen más espacio del necesario
+    //width: 120px; // 🔥 🔥 🔥 clave
+    //cursor: pointer;
+  }
+
+  .datos-row label {
+    //display: flex;
+    display: inline-flex; // 🔥 ESTE ES EL CAMBIO
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap; // 🔥 evita que ocupen más espacio del necesario
+    cursor: pointer;
+  }
+
+  /* 🔹 INPUT BASE (SE MANTIENE HERMOSO) */
+  .input,
+  select.input {
+    width: 100%;
+    height: 32px;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #ffffff, #f9fbfd);
+    color: #263238 !important;
+    transition: 0.2s;
+    font-weight: 500;
+  }
+
+  /* 🔹 HOVER */
+  .input:hover {
+    border-color: #90caf9;
+  }
+
+  /* 🔹 FOCUS PRO */
+  .input:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+  }
+
+  /* 🔹 SELECT */
+  select.input {
+    cursor: pointer;
+    background: #fff !important;
+  }
+
+  select.input option {
+    color: #263238;
+    background: #fff;
+  }
+
+  /* 🔹 BOTÓN */
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .actions button {
+    height: 36px; // 🔥 igual que los otros
+    border-radius: 10px !important; // 🔥 misma curva
+    padding: 0 18px !important;
+
+    font-size: 13px !important;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    line-height: normal !important;
+  }
+
+  /* 🔹 EMPTY */
+  .empty-state {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #90a4ae;
+    padding: 10px;
+  }
+
+  /* 📱 RESPONSIVE */
+  @media (max-width: 600px) {
+    .grid-datos-personales {
+      grid-template-columns: 1fr;
+    }
+
+    .grid-2,
+    .grid-3-equal {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 2 — GRUPO FAMILIAR (SIRUS PRO)
+============================================ */
+
+.step2-container {
+  .step2-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    button {
+      height: 30px;
+      font-size: 12px;
+    }
+  }
+
+  .add-btn {
+    margin-bottom: 8px;
+
+    button {
+      height: 32px;
+      font-size: 12px;
+    }
+  }
+
+  .family-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .family-card {
+    border: 1px solid #dbe5f1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    animation: fadeInUp 0.2s ease;
+  }
+
+  .family-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #e3f2fd, #e8f5fe);
+    border-left: 3px solid #1565c0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1565c0;
+    }
+
+    mat-icon {
+      font-size: 18px;
+    }
+  }
+
+  .mini-summary {
+    font-size: 12px;
+    color: #607d8b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f5f9ff;
+    border-radius: 6px;
+    padding: 6px 10px;
+  }
+
+  .card-header.active {
+    background: linear-gradient(90deg, #bbdefb, #e3f2fd);
+    border-left: 4px solid #0d47a1;
+  }
+
+  .card-body {
+    margin-top: 10px;
+  }
+
+  .card-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* 🔹 DATOS BÁSICOS */
+  .grid-datos {
+    display: grid;
+    grid-template-columns: 130px 1fr 70px;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .datos-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  /* tamaños reales */
+  .input.rut {
+    width: 130px;
+    flex: none;
+  }
+
+  .input.nombre {
+    flex: 1; // 🔥 ocupa todo el espacio disponible
+  }
+
+  .input.edad {
+    width: 70px;
+    flex: none;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 10px;
+  }
+
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px 10px;
+  }
+
+  /* 🔥 títulos ocupan toda la fila */
+  .group-title {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #546e7a;
+    margin-bottom: 2px;
+    margin-top: 8px;
+    border-bottom: 1px solid #e3e8ef;
+    padding-bottom: 2px;
+    letter-spacing: 0.3px;
+  }
+
+  .card-header button:hover {
+    background: rgba(211, 47, 47, 0.08);
+    border-radius: 50%;
+  }
+
+  input[placeholder="Rut"] {
+    width: 130px;
+  }
+
+  input[placeholder="Nombre completo"] {
+    width: 100%;
+  }
+
+  input[placeholder="Edad"] {
+    width: 70px;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .step2-header button {
+    border-radius: 8px;
+  }
+
+  .step2-header button mat-icon {
+    font-size: 18px;
+  }
+
+  .input.rut {
+    grid-column: span 1;
+  }
+
+  .input.edad {
+    grid-column: span 1;
+  }
+
+  .input.nombre {
+    grid-column: span 2;
+  }
+
+  select.input {
+    appearance: auto;
+    cursor: pointer;
+    background: #fff !important;
+    color: #263238 !important;
+    font-weight: 500;
+  }
+
+  select.input option {
+    color: #263238;
+    background: #fff;
+  }
+
+  .input,
+  select.input {
+    width: 100%;
+  }
+
+  .input:hover {
+    border-color: #90caf9;
+  }
+
+  /* 🔥 inputs NO se estiran */
+  .input {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    height: 32px;
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    background: #fff;
+    color: #263238 !important;
+    transition: 0.2s;
+    font-weight: 500;
+    background: linear-gradient(180deg, #ffffff, #f9fbfd);
+  }
+
+  /* 🔥 FOCUS PRO */
+  .input:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+  }
+
+  .input.wide {
+    grid-column: span 2;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #90a4ae;
+    padding: 10px;
+  }
+
+  /* 📱 MOBILE */
+  @media (max-width: 900px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 3 — POSTULANTE
+============================================ */
+
+.step3-container {
+  .textarea-card {
+    margin-top: 10px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto; // 🔥 centrado
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #455a64;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      border: 1px solid #cfd8dc;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      resize: vertical;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #78909c;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 5 — VERIFICACION ACADEMICOS
+============================================ */
+
+.estado-evaluacion {
+  margin-top: 12px;
+  padding: 12px;
+
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: #f5f9ff;
+  border-left: 5px solid #90caf9;
+
+  .title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .sub {
+    font-size: 11px;
+    color: #607d8b;
+  }
+
+  mat-icon {
+    font-size: 22px;
+  }
+
+  &.ok {
+    background: #e8f5e9;
+    border-left-color: #2e7d32;
+
+    .title {
+      color: #2e7d32;
+    }
+
+    mat-icon {
+      color: #2e7d32;
+    }
+  }
+
+  &.error {
+    background: #ffebee;
+    border-left-color: #c62828;
+
+    .title {
+      color: #c62828;
+    }
+
+    mat-icon {
+      color: #c62828;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 6 — INGRESOS (SIRUS PRO LIMPIO)
+============================================ */
+.step6-container {
+  .grid-ingresos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; // 🔥 más flexible
+    max-width: 800px; // 🔥 CLAVE → reduces ancho total
+    margin: 0 auto; // 🔥 lo centras
+    gap: 48px;
+  }
+
+  .grid-ingresos > * {
+    min-width: 0;
+  }
+
+  /* 🔹 CARD */
+  .income-card {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #dbe5f1;
+    border-radius: 10px;
+    padding: 14px;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: 0.2s;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  /* 🔹 LABEL */
+  .income-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #455a64;
+    margin-bottom: 6px;
+  }
+
+  .income-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 🔹 INPUT MONEDA */
+  .money-input {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+    min-width: 0;
+
+    border: 1px solid #cfd8dc;
+    border-radius: 8px;
+    overflow: hidden;
+
+    span {
+      background: #e3f2fd;
+      color: #1565c0;
+
+      min-width: 32px; // 🔥 tamaño fijo bonito
+      justify-content: center;
+
+      padding: 0 10px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input {
+      flex: 1;
+      height: 40px;
+      border: none;
+      outline: none;
+
+      padding: 0 10px;
+
+      font-size: 16px;
+      font-weight: 700;
+      text-align: right;
+
+      color: #2e7d32;
+    }
+  }
+
+  /* 🔹 TOTAL */
+  .total-box {
+    margin-top: 12px;
+    padding: 10px;
+    background: #e3f2fd;
+    border-left: 4px solid #1565c0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0d47a1;
+  }
+
+  /* 📱 RESPONSIVE */
+  @media (max-width: 600px) {
+    .grid-ingresos {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 7
+============================================ */
+.step7-container {
+  /* 🔹 HEADER */
+  .header-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #1565c0;
+  }
+
+  .section-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #78909c;
+    margin-left: 28px;
+  }
+
+  /* 🔹 GRID */
+  .grid-gastos {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    max-width: 900px;
+    margin: 0 auto 10px;
+  }
+
+  .grid-gastos > * {
+    min-width: 0;
+  }
+
+  /* 🔹 EDUCACIÓN */
+  .grid-gastos.educacion > * {
+    grid-column: span 2;
+  }
+
+  /* 🔹 CARD */
+  .gasto-card {
+    border: 1px solid #dbe5f1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  /* 🔹 LABEL */
+  .gasto-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #546e7a;
+    margin-bottom: 4px;
+  }
+
+  /* 🔹 INPUT MONEDA */
+  .money-input {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cfd8dc;
+    border-radius: 8px;
+    overflow: hidden;
+
+    span {
+      background: #e3f2fd;
+      color: #1565c0;
+      min-width: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    input {
+      flex: 1;
+      height: 34px;
+      border: none;
+      outline: none;
+      padding: 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+
+      color: #2e7d32; // 🔥 VERDE CORRECTO
+    }
+  }
+
+  /* 🔹 SUBTÍTULOS */
+  .group-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1565c0;
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &::before {
+      content: "●";
+      font-size: 10px;
+      color: #42a5f5;
+    }
+  }
+
+  /* 🔹 TEXTAREA */
+  .textarea-card {
+    margin-top: 6px;
+    max-width: 900px; // 🔥 MISMO ancho que grid
+    margin-left: calc((100% - 900px) / 2); // 🔥 alineación perfecta
+
+    textarea {
+      width: 100%;
+      height: 80px; // 🔥 MÁS BAJO (antes muy alto)
+      min-height: unset; // 🔥 evita que crezca solo
+
+      border: 1px solid #cfd8dc;
+      border-radius: 8px;
+      padding: 10px;
+
+      font-size: 13px;
+
+      resize: vertical;
+    }
+  }
+
+  /* 🔹 CONTENEDOR COMÚN */
+  .form-block {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* 🔹 TOTAL */
+  .total-box {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .total-box.gastos {
+    background: #e3f2fd; // 🔵 azul
+    border-left: 4px solid #1565c0;
+    color: #0d47a1;
+  }
+
+  /* 📱 RESPONSIVE */
+  @media (max-width: 768px) {
+    .grid-gastos {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .grid-gastos {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 8 — SALUD + VIVIENDA
+============================================ */
+
+.step8-container {
+  /* 🔹 HEADER igual Step 2 pero controlado */
+  .step2-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    button {
+      height: 32px;
+      font-size: 12px;
+    }
+  }
+
+  /* 🔹 CARDS */
+  .family-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .family-card {
+    border: 1px solid #dbe5f1;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background: #e3f2fd;
+    border-left: 4px solid #1565c0;
+
+    padding: 6px 8px;
+    border-radius: 6px;
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1565c0;
+    }
+  }
+
+  .card-body {
+    margin-top: 10px;
+  }
+
+  /* 🔥 GRID PRO (alineado con Step 1) */
+  .grid-salud {
+    display: grid;
+    grid-template-columns:
+      minmax(160px, 2fr)
+      minmax(160px, 2fr)
+      minmax(180px, 2fr)
+      minmax(120px, 1fr);
+
+    gap: 12px 10px;
+  }
+
+  /* 🔥 FIELD SYSTEM (CLAVE TOTAL) */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    label {
+      font-size: 11px;
+      color: #607d8b;
+      font-weight: 500;
+    }
+  }
+
+  /* 🔥 INPUT PRO (MISMO ALTO MATERIAL) */
+  .input-text {
+    height: 32px;
+    font-size: 12px;
+    padding: 4px 8px;
+
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+
+    background: linear-gradient(180deg, #ffffff, #f9fbfd);
+  }
+
+  .input-money {
+    height: 32px;
+    font-size: 12px;
+    padding: 4px 6px;
+
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+
+    text-align: right;
+    font-weight: 700;
+    color: #2e7d32;
+  }
+
+  .input-select {
+    height: 32px;
+    font-size: 12px;
+    padding: 4px 8px;
+
+    border: 1px solid #cfd8dc;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  ::ng-deep .mat-mdc-form-field-flex {
+    height: 32px !important;
+    align-items: center;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    height: 32px !important;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 32px !important;
+    display: flex;
+    align-items: center;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .input-text:hover,
+  .input-select:hover,
+  .input-money:hover {
+    border-color: #90caf9;
+  }
+
+  .input-text:focus,
+  .input-select:focus,
+  .input-money:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+  }
+
+  /* 🔥 TOTAL (MEJOR CONTRASTE) */
+  .total-inline {
+    margin-top: 10px;
+    padding: 10px;
+
+    background: #dbeeff;
+    border-left: 5px solid #1565c0;
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    strong {
+      color: #2e7d32;
+      font-size: 14px;
+    }
+  }
+}
+
+/* ============================================
+   🟣 STEP 10 — CONFIRMACION INFORMACION
+============================================ */
+.step10-container {
+  .resume-card {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #dbe5f1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .card-header.blue {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .card-header.green {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .card-header.orange {
+    background: #fff3e0;
+    color: #ef6c00;
+  }
+  .card-header.purple {
+    background: #ede7f6;
+    color: #6a1b9a;
+  }
+  .card-header.red {
+    background: #ffebee;
+    color: #c62828;
+  }
+
+  .resume-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .resume-row {
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px dashed #e0e0e0;
+  }
+
+  .resume-total {
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1565c0;
+  }
+}
+
+/* ============================================
+   🟣 COMPROBANTE  OCULTO
+============================================ */
+.oculto-pdf {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pdf-hidden {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 800px;
+
+  opacity: 0; // 👈 invisible pero EXISTE
+  pointer-events: none;
+  z-index: -1;
+}
+
+.pdf-visible {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 800px;
+  background: white;
+  z-index: 9999;
+}
+
+.comprobante {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #333;
+
+  .header {
+    text-align: center;
+    position: relative;
+    margin-bottom: 15px;
+
+    .logo {
+      width: 90px;
+      position: absolute;
+      top: 0;
+    }
+
+    .left {
+      left: 0;
+    }
+    .right {
+      right: 0;
+    }
+
+    h2 {
+      margin: 0;
+      color: #1565c0;
+    }
+
+    span {
+      font-size: 12px;
+      color: #666;
+    }
+  }
+
+  .info-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+
+  .bloque {
+    border: 1px solid #dbe5f1;
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .bloque-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #1565c0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .row {
+    border-bottom: 1px dashed #ccc;
+    padding: 3px 0;
+  }
+
+  .total {
+    margin-top: 6px;
+    font-weight: bold;
+    color: #1565c0;
+  }
+
+  .rojo {
+    color: #c62828;
+  }
+
+  .money {
+    color: #2e7d32;
+    font-weight: bold;
+  }
+
+  .estado {
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #2e7d32;
+    font-size: 14px;
+  }
+
+  .footer {
+    margin-top: 10px;
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+  }
+}
+
+.success-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px 16px;
+  margin-top: 12px;
+
+  border-radius: 12px;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+  mat-icon {
+    font-size: 28px;
+    color: #2e7d32;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1b5e20;
+  }
+
+  .sub {
+    font-size: 12px;
+    color: #4e944f;
+  }
+}
+
+/* ============================================
+   🟣 PASO  11
+============================================ */
+
+.step11-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px; // 🔥 separación entre bloques
+}
+
+.final-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  flex-wrap: wrap; // 🔥 responsive
+}
+
+/* 🔹 BOTÓN PDF MÁS PRO */
+.btn-pdf {
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 1px solid #1565c0;
+  color: #0d47a1;
+}
+
+/* 🔹 HOVER PRO */
+.btn-pdf:hover {
+  background: linear-gradient(135deg, #d0e8ff, #90caf9);
+  transform: translateY(-1px);
+}

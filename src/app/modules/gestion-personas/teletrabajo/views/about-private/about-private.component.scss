@@ -1,0 +1,38 @@
+@use '../../../../../core/auth/login/login.component.scss' as *;
+
+.page-container {
+  padding: 20px;
+}
+
+.section-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-block {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #f7f9fc;
+  border-radius: 8px;
+  border-left: 4px solid #1565c0;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.value {
+  color: #666;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

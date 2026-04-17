@@ -5,7 +5,7 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, switchMap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { AuthLoginService } from '../../services/auth.login.service';
+import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { TokenService } from '../../core/services/token.service';
 
 export const refreshInterceptor: HttpInterceptorFn = (req, next) => {

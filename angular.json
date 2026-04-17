@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "projects": {
-    "telework-sm": {
+    "gestion-personas": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -10,7 +10,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/telework-sm",
+            "outputPath": "dist/gestion-personas",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -53,15 +53,15 @@
           "options": {
             "port": 4200,
             "host": "localhost",
-            "buildTarget": "telework-sm:build",
+            "buildTarget": "gestion-personas:build",
             "open": true
           },
           "configurations": {
             "production": {
-              "buildTarget": "telework-sm:build:production"
+              "buildTarget": "gestion-personas:build:production"
             },
             "development": {
-              "buildTarget": "telework-sm:build:development"
+              "buildTarget": "gestion-personas:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -70,7 +70,7 @@
     }
   },
   "cli": {
-    "defaultProject": "telework-sm",
+    "defaultProject": "gestion-personas",
     "analytics": "ce4b5620-b20e-4b14-88b2-7df34b079240"
   }
 }

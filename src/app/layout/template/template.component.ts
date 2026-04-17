@@ -34,10 +34,11 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
 import { OnDestroy } from '@angular/core';
 
 import { TokenService } from '@app/core/services/token.service';
-import { AuthLoginService } from '../../telework/services/auth.login.service';
+import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { SessionService } from '@app/core/services/session.service';
 import { TimeService } from '@app/core/services/time.service';
 import { routes } from '../../app.routes';
+import { AppRouteData } from '@app/core/models/route-data.model';
 
 @Component({
   selector: 'app-template',
@@ -85,12 +86,19 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
   decodedToken: any = null;
 
-  menuItems: any[] = [];
-  mantenedorItems: any[] = [];
+  menuItems: {
+    teletrabajo: any[];
+    beneficios: any[];
+  } = {
+    teletrabajo: [],
+    beneficios: [],
+  };
+
+  teletrabajoOpen = true;
+  beneficiosOpen = true;
+
   mantenedoresOpen = true;
-
   menuVisible = false;
-
   isLoading = false;
 
   remainingMinutes: number = 0;
@@ -112,9 +120,11 @@ export class TemplateComponent implements OnInit, OnDestroy {
     this.router.events.subscribe(async () => {
       const isMobile = await firstValueFrom(this.isHandset$);
 
+      /*
       if (isMobile && this.drawer?.opened) {
         this.drawer.close();
       }
+        */
     });
   }
 
@@ -123,6 +133,8 @@ export class TemplateComponent implements OnInit, OnDestroy {
   }
 
   private loadSessionData(): void {
+    this.buildMenu();
+    this.loadMenuState();
     const profile = this.tokenService.getUserProfile();
 
     this.userFullName = profile?.fullName || profile?.firstName || 'Usuario';
@@ -222,54 +234,56 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
   buildMenu(): void {
     const normalize = (r: string) => r?.trim().toUpperCase();
-
     const role = normalize(this.activeRole || '');
 
-    const baseMenu: any[] = [];
-    const adminMenu: any[] = [];
+    const grouped: any = {
+      teletrabajo: [],
+      beneficios: [],
+      teletrabajoOpen: true,
+      beneficiosOpen: true,
+    };
 
     const mainRoute = routes.find((r) => r.children);
     const childRoutes = mainRoute?.children ?? [];
 
-    const processRoute = (route: any, parentPath = '') => {
-      if (!route.path || route.redirectTo) return;
+    for (const route of childRoutes) {
+      if (!route.path || route.redirectTo) continue;
 
-      const fullPath = parentPath ? `${parentPath}/${route.path}` : route.path;
+      const data = route.data as any;
+      if (!data) continue;
 
-      const allowedRoles = route.data?.['roles'] ?? [];
+      const allowedRoles = data.roles ?? [];
 
       const visible =
+        role === 'ADMIN' ||
         allowedRoles.length === 0 ||
         allowedRoles.some((r: string) => normalize(r) === role);
 
-      if (visible && !route.children && !route.data?.hidden) {
-        const item = {
-          title: route.data?.title || route.path,
-          icon: route.data?.icon || 'chevron_right',
-          route: '/' + fullPath,
-        };
+      if (!visible || data.hidden) continue;
 
-        if (fullPath.startsWith('admin/')) {
-          adminMenu.push(item);
-        } else {
-          baseMenu.push(item);
-        }
+      const module = data.module || 'teletrabajo';
+      const groupName =
+        data.group || (module === 'beneficios' ? 'Postulación' : 'Operación');
+
+      const item = {
+        title: data.title || route.path,
+        icon: data.icon || 'chevron_right',
+        route: '/' + route.path,
+      };
+
+      if (!grouped[module]) grouped[module] = [];
+
+      let group = grouped[module].find((g: any) => g.label === groupName);
+
+      if (!group) {
+        group = { label: groupName, children: [], open: true };
+        grouped[module].push(group);
       }
 
-      // 🔥 recorrer hijos
-      if (route.children) {
-        for (const child of route.children) {
-          processRoute(child, fullPath);
-        }
-      }
-    };
-
-    for (const route of childRoutes) {
-      processRoute(route);
+      group.children.push(item);
     }
 
-    this.menuItems = baseMenu;
-    this.mantenedorItems = adminMenu;
+    this.menuItems = grouped;
   }
 
   async extendSession(): Promise<void> {
@@ -374,5 +388,25 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
   goToProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+  toggleGroup(group: any) {
+    group.open = !group.open;
+    this.saveMenuState();
+  }
+
+  saveMenuState() {
+    sessionStorage.setItem('menu_state', JSON.stringify(this.menuItems));
+  }
+
+  loadMenuState() {
+    const saved = sessionStorage.getItem('menu_state');
+    if (saved) {
+      this.menuItems = JSON.parse(saved);
+    }
+  }
+
+  isActive(route: string): boolean {
+    return this.router.url.includes(route);
   }
 }

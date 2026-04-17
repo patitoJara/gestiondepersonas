@@ -1,7 +1,7 @@
 {
-    "name": "telework-sm",
-    "version": "0.0.1",
-    "description": "Sistema RDA-SM (Registro de Demanda de Atención - Salud Mental) del Servicio de Salud Magallanes.",
+    "name": "gestion-personas",
+    "version": "1.0.0",
+    "description": "Sistema modular de Gestión de Personas del Servicio de Salud Magallanes, diseñado para integrar teletrabajo, beneficios, bienestar y futuros procesos institucionales.",
     "private": true,
     "scripts": {
         "ng": "ng",

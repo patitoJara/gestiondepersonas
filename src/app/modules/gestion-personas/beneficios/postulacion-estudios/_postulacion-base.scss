@@ -1,0 +1,147 @@
+//src\app\modules\gestion-personas\beneficios\postulacion-estudios\_postulacion-base.scss
+
+/* ============================================
+   🔵 SIRUS BASE — POSTULACIÓN (GLOBAL LOCAL)
+============================================ */
+
+/* 🔹 CONTENEDOR */
+.container {
+  position: relative;
+  z-index: 2;
+
+  max-width: 1100px;
+  width: 100%;
+  margin: 20px auto;
+  padding: 12px;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(2px);
+
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+/* 🔹 SECCIONES */
+.section {
+  margin-top: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  background: linear-gradient(180deg, #ffffff, #f7faff);
+  border: 1px solid #d6e4f0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔹 TITULOS */
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #1565c0;
+}
+
+.section-sub {
+  margin-bottom: 14px;
+  font-size: 11px;
+  color: #546e7a;
+  display: block;
+}
+
+.section-sub.strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #455a64;
+}
+
+/* 🔹 INPUT BASE */
+.input,
+select.input {
+  width: 100%;
+  height: 32px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ffffff, #f9fbfd);
+  color: #263238 !important;
+  transition: 0.2s;
+  font-weight: 500;
+}
+
+.input:hover {
+  border-color: #90caf9;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+}
+
+/* 🔹 GRID BASE */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🔹 RADIO */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+/* 🔹 BOTONES */
+.actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1565c0, #1976d2) !important;
+  color: white !important;
+}
+
+.btn-secondary {
+  background: #eceff1 !important;
+}
+
+.actions button {
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.actions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+

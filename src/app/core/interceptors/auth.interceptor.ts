@@ -10,7 +10,8 @@ import {
 } from 'rxjs';
 
 import { TokenService } from '../../core/services/token.service';
-import { AuthLoginService } from '../../telework/services/auth.login.service';
+import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
+
 
 let isRefreshing = false;
 let refreshSubject = new BehaviorSubject<string | null>(null);

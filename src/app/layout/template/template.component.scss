@@ -1,916 +1,327 @@
-// C:\Users\pjara\Documents\DESARROLLO\ANGULAR\rda-sm\src\app\layout\template\template.component.scss
+.form-wrapper {
+  position: relative;
+}
+
+.form-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible; // 🔥 CLAVE
+}
+
+.form-watermark img {
+  position: absolute;
+
+  top: 810px;
+  left: 0px;
+
+  transform: rotate(0deg);
+
+  width: 200px; // 🔥 mismo tamaño del anterior grande
+
+  opacity: 0.50; // 🔥 más fuerte (antes 0.22)
+
+  filter: saturate(1.3) contrast(1.1); // 🔥 colores más vivos
+
+  pointer-events: none;
+  user-select: none;
+  mix-blend-mode: multiply;
+}
+
 
 /* ============================================
-   🎨 ESTILO GLOBAL DEL LAYOUT PRINCIPAL (SSM)
-   ============================================ */
-
-/* ======== CONTENEDOR PRINCIPAL ======== */
+   🎨 LAYOUT GESTIÓN DE PERSONAS — PRO FINAL
+============================================ */
+/* CONTENEDOR GENERAL */
 .sidenav-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f4f6f9;
-  width: 100vw;
-  overflow: hidden;
+  height: 100dvh;
 }
 
-/* ======== SIDENAV ======== */
-.sidenav {
-  width: 270px;
-  background-color: #ffffff;
+/* SIDENAV */
+mat-sidenav {
+  width: 250px;
+  background: #fafbfc; /* 👈 solo cambia esto */
   border-right: 1px solid #e0e0e0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
 }
 
+/* CONTENIDO PRINCIPAL */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* TOPBAR */
+.topbar {
+  height: 56px;
+  background: #1565c0 !important;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+/* SCROLL SOLO AQUÍ */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+
+  min-width: 0;
+}
+
+/* FOOTER SIEMPRE VISIBLE */
+.footer {
+  height: 40px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 12px;
+  background: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* MENÚ */
+.menu-section {
+  font-size: 12px;
+  font-weight: 700;
+  color: #607d8b;
+  padding: 10px 14px 4px;
+  margin-top: 8px; /* 👈 este es el cambio */
+}
+
+/* SUBMENU */
+.submenu {
+  margin-left: 16px;
+  padding-left: 10px;
+  border-left: 1px dashed rgba(0, 0, 0, 0.15); 
+}
+
+.submenu-item {
+  position: relative;
+  padding: 6px 12px 6px 28px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  will-change: transform;
+}
+
+/* TITULOS */
+.submenu-title {
+  padding: 8px 12px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.submenu-title:hover {
+  background: #e3f2fd;
+}
+
+/* ITEMS */
+
+.submenu-item:hover {
+  background: #e3f2fd;
+  transform: translateX(3px);
+}
+
+.submenu-title:hover mat-icon {
+  color: #1565c0;
+}
+
+/* DOT */
+.tree-dot {
+  font-size: 8px;
+}
+
+.submenu-item:hover .tree-dot {
+  color: #1565c0;
+}
+
+/* USER */
+.user-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+
+
+
+
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+/* ===== TITULO ===== */
 .sidenav-title {
-  background-color: #1565c0;
+  background: #1565c0;
   color: #fff;
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
-  padding: 16px;
   text-align: center;
+  padding: 14px;
   border-bottom: 3px solid #0d47a1;
 }
 
-/* ======== LINKS ======== */
-mat-nav-list a[mat-list-item] {
-  color: #1a237e;
-  font-weight: 500;
-  border-radius: 4px;
-  margin: 2px 6px;
-  transition: all 0.2s ease-in-out;
-}
-
-mat-nav-list a[mat-list-item]:hover {
-  background-color: #e3f2fd;
-  color: #0d47a1;
-}
-
-mat-nav-list a.active {
-  background-color: #bbdefb;
-  color: #0d47a1;
-  font-weight: 600;
-}
-
-/* ======== ICONOS DE MENÚ ======== */
-mat-icon[matListItemIcon] {
-  color: #1565c0;
-  margin-right: 8px;
-  font-size: 20px;
-}
-
-/* ======== SUBMENÚS ======== */
-.submenu {
-  background-color: #fafafa;
-  border-radius: 6px;
-  margin: 4px 6px;
-  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05);
-}
-
-mat-expansion-panel-header {
-  font-weight: 600;
-  color: #0d47a1;
-  background: #e3f2fd;
-  border-radius: 4px;
-}
-
-mat-expansion-panel-header:hover {
-  background-color: #bbdefb;
-}
-
-/* ======== TOPBAR ======== */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background-color: #1565c0 !important;
-  color: white;
+.sidenav-title.clean {
   display: flex;
   align-items: center;
-  height: 56px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  padding: 0 12px;
-  gap: 10px;
-
-  .brand {
-    font-weight: 600;
-    font-size: 1rem;
-    margin-left: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .spacer {
-    flex: 1 1 auto;
-  }
-
-  .mat-icon {
-    color: #fff;
-  }
+  gap: 8px;
+  padding: 10px 12px;
 }
 
-/* ===============================
-   📦 CONTENIDO PRINCIPAL
-   =============================== */
-
-mat-sidenav-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* mejor que height fijo */
-}
-
-.content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
+.logo-ssm {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  height: 22px;
+  opacity: 0.9;
 }
 
 /* ============================================
-   👤 SESIÓN / TIMER PROFESIONAL
-   ============================================ */
+   🌳 ÁRBOL PROFESIONAL
+============================================ */
 
+
+/* ICONO CARPETA */
+.submenu-title mat-icon {
+  color: #546e7a;
+  font-size: 20px;
+}
+
+/* ACTIVO */
+.submenu-item.active {
+  background: #bbdefb;
+  font-weight: 600;
+}
+
+/* INDICADOR ACTIVO */
+.submenu-item.active::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  height: 60%;
+  width: 3px;
+  background: #1565c0;
+  border-radius: 4px;
+}
+
+/* ===== NODO ÁRBOL ===== */
+.submenu-item::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 12px;
+  width: 10px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   🧭 TOPBAR
+============================================ */
+
+.title {
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.user-main .name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.user-main .meta {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* ===== SESIÓN ===== */
 .session-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
+
 .session-timer {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-weight: 700;
-  color: #fff;
   background: #0d47a1;
-  border: 2px solid #bbdefb;
   border-radius: 999px;
   padding: 4px 12px;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-
-  mat-icon {
-    font-size: 18px;
-    height: 18px;
-    width: 18px;
-  }
-
-  &.warn {
-    background: #ff9800;
-    border-color: #ffe082;
-  }
-
-  &.critical {
-    background: #d32f2f;
-    border-color: #ffcdd2;
-  }
-}
-
-.extend-btn {
-  font-weight: 600;
-  border-radius: 999px;
-  height: 32px;
-  line-height: 24px;
-  background-color: #fff;
-  color: #1565c0 !important;
-  border-color: #1565c0 !important;
-  padding: 0 14px;
-
-  &:hover {
-    background-color: #e3f2fd;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-  }
-}
-
-/* Bienvenida usuario */
-.welcome-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   font-weight: 500;
-  margin-right: 12px;
   color: #fff;
-  font-size: 0.9rem;
-
-  mat-icon {
-    color: #fff;
-    font-size: 18px;
-  }
 }
 
-/* ======== BOTÓN SALIR ======== */
+/* ===== BOTONES ===== */
 .logout-btn {
   color: #fff !important;
-  font-weight: 600;
   border-color: #bbdefb !important;
-  height: 32px;
-  line-height: 24px;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
 }
 
-/* ======== SNACKBARS ======== */
-::ng-deep .warn-snackbar {
-  background-color: #ff9800 !important;
-  color: #fff !important;
+/* ============================================
+   📦 CONTENIDO
+============================================ */
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  background: var(--ssm-surface);
 }
 
-::ng-deep .error-snackbar {
-  background-color: #d32f2f !important;
-  color: #fff !important;
-}
 
-::ng-deep .success-snackbar {
-  background-color: #2e7d32 !important;
-  color: #fff !important;
-}
+/* ============================================
+   🔐 LOGIN
+============================================ */
 
-/* ======== FOOTER ======== */
-.footer {
-  text-align: center;
-  font-size: 0.75rem;
-  color: #607d8b;
-  padding: 8px 0;
-  background-color: #e3f2fd;
-  border-top: 1px solid #bbdefb;
-  opacity: 0.8;
-}
-
-/* ======== LOGIN / SELECCIÓN ======== */
 .login-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
-  padding: 1rem;
+  background: linear-gradient(145deg, #e3f2fd, #bbdefb);
 }
 
 .login-card {
-  width: 100%;
   max-width: 420px;
-  padding: 2.5rem 2rem;
+  width: 100%;
+  padding: 2rem;
   border-radius: 1rem;
-  background-color: #ffffff;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.login-header {
-  margin-bottom: 1rem;
-
-  h2 {
-    font-weight: 600;
-    color: #0d47a1;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: #555;
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
-  }
-
-  .login-logo {
-    margin-bottom: 1rem;
-  }
-}
-
-.login-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1.5rem;
-}
-
-/* =======================================================
-   🧱 CORRECCIÓN VISUAL DEL MENÚ LATERAL
-   ======================================================= */
-.mat-drawer,
-.mat-sidenav,
-.sidenav {
-  border-radius: 0 !important;
-}
-
-.mat-sidenav-container,
-.sidenav-container {
-  border-top-left-radius: 0 !important;
-  border-top-right-radius: 0 !important;
-  overflow: hidden;
-}
-
-/* Evita scroll lateral */
-html,
-body,
-.sidenav-container,
-.mat-sidenav-container {
-  overflow-x: hidden !important;
-}
-
-.sidenav-container {
-  width: 100%;
-  max-width: 100vw;
-}
-
-.mat-sidenav,
-.sidenav {
-  width: 260px;
-  max-width: 100%;
-}
-
-/* scrollbars */
-* {
-  scrollbar-width: thin;
-}
-
-.login-card {
-  max-width: 600px !important;
-}
-
-/* ============================================================
-   🎯 Selección de Rol y Programa — Diseño Profesional SSM
-   ============================================================ */
-
-/* Contenedor de ambas columnas */
-.role-program-row {
-  display: flex;
-  flex-direction: column; /* 🔹 UNA DEBAJO DE OTRA */
-  justify-content: center;
-  align-items: center;
-  gap: 22px; /* 🔹 Separación vertical */
-  margin-top: 18px;
-  width: 100%;
-}
-
-/* Cada item centrado */
-.role-program-item {
-  width: 260px; /* 🔹 Ancho uniforme */
   text-align: center;
 }
 
-.role-program-item mat-form-field {
-  width: 100%;
-}
-
-/* Títulos de form-field más claros */
-.role-program-item .mat-mdc-form-field-label {
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  color: #1565c0 !important; /* Azul institucional */
-}
-
-/* --- CONTENEDOR EN COLUMNAS (ROL ARRIBA / PROGRAMA ABAJO) --- */
-.role-program-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  margin-top: 10px;
-}
-
-/* --- CADA ITEM --- */
-.role-program-item {
-  width: 100%;
-}
-
-/* --- PROGRAMA OCUPA TODO EL ANCHO DISPONIBLE --- */
-.program-full mat-form-field {
-  width: 100% !important;
-}
-
-/* Para mantener uniformidad visual */
-mat-form-field {
-  min-width: 260px;
-}
-
-.menu-section-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px; /* 👈 más compacto */
-  font-weight: 600;
-  color: #0d47a1;
-  text-transform: uppercase;
-  font-size: 0.75rem; /* 👈 clave */
-  background-color: #e3f2fd;
-  margin: 6px 8px;
-  border-radius: 4px;
-}
-
-.menu-section-title mat-icon {
-  font-size: 18px;
-}
-
-/* ==================================================
-   📦 MENÚ LATERAL COMPACTO (Material 3 / MDC)
-   ================================================== */
-/* ==================================================
-   🧱 MENÚ LATERAL — COMPACTO REAL (MDC FRIENDLY)
-   ================================================== */
-
-/* 🔑 ESTA ES LA CLAVE */
-mat-nav-list {
-  --mdc-list-list-item-one-line-container-height: auto;
-  --mdc-list-list-item-two-line-container-height: auto;
-
-  padding-top: 4px;
-  padding-bottom: 4px;
-}
-
-/* Item completo */
-mat-nav-list .mat-mdc-list-item {
-  align-items: flex-start;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
-
-/* Contenido interno */
-mat-nav-list .mdc-list-item__content {
-  display: flex;
-  align-items: center;
-  padding: 0 !important;
-}
-
-/* Texto */
-mat-nav-list .mdc-list-item__primary-text {
-  font-size: 0.85rem;
-  line-height: 1;
-  font-weight: 500;
-}
-
-/* Ícono */
-mat-nav-list mat-icon {
-  font-size: 20px;
-  margin-right: 10px;
-  color: #1565c0;
-}
-
-/* Hover */
-mat-nav-list a.mat-mdc-list-item:hover {
-  background-color: #e3f2fd;
-}
-
-/* Activo */
-mat-nav-list a.active {
-  background-color: #bbdefb;
-  font-weight: 600;
-}
-
-.menu-section-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  margin: 6px 8px;
-  border-radius: 4px;
-
-  background-color: #e3f2fd;
-  color: #0d47a1;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-
-  mat-icon {
-    font-size: 18px;
-  }
-}
-
-/* ===============================
-   🛠️ MANTENEDORES COLAPSABLES
-   =============================== */
-
-.menu-section-title.collapsable {
-  cursor: pointer;
-  user-select: none;
-}
-
-/* Ícono rotatorio */
-.menu-section-title mat-icon.rotate {
-  transition: transform 0.3s ease;
-}
-
-.menu-section-title mat-icon.rotate.open {
-  transform: rotate(90deg);
-}
-
-/* Submenú compacto */
-.submenu {
-  margin-left: 8px;
-  margin-right: 8px;
-  margin-top: 4px;
-  margin-bottom: 6px;
-
-  border-left: 3px solid #bbdefb;
-  padding-left: 4px;
-}
-
-/* Más compacto aún */
-.submenu a.mat-mdc-list-item {
-  --mdc-list-list-item-one-line-container-height: 34px;
-}
-
-.menu-section-title.collapsable:hover {
-  background-color: #dbeafe;
-}
-
-/* ===============================
-   LOGOTIPO INFERIOR — SIDENAV
-   =============================== */
-
-.menu-divider {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  width: 100%;
-  padding: 12px 0;
-  overflow: hidden; /* 🔥 mata scroll horizontal */
-}
-
-.menu-divider img {
-  display: block;
-  width: 180px; /* 👈 TAMAÑO REAL DEL LOGO */
-  max-width: 90%; /* responsive */
-  height: auto;
-
-  object-fit: contain;
-}
-
-mat-sidenav,
-.mat-sidenav,
-.sidenav {
-  overflow-x: hidden !important;
-}
-
-.mat-sidenav-content,
-.mat-sidenav-container {
-  overflow-x: hidden !important;
-}
-
-.mat-sidenav-container,
-.sidenav-container {
-  overflow-x: hidden !important;
-}
-
-/* ===============================
-   ICONOS MENÚ LATERAL — PRO
-   =============================== */
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* ===============================
-   ⚙️ ANIMACIÓN ENGRANAJE MANTENEDORES
-   =============================== */
-
-@keyframes gear-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-.menu-section-title.animated mat-icon {
-  animation: gear-spin 6s linear infinite;
-}
-
-/* =========================================
-   📌 TEXTO MENU LATERAL (FIX REAL)
-========================================= */
-
-mat-nav-list .mat-mdc-list-item .mdc-list-item__primary-text {
-  white-space: normal !important;
-  word-break: break-word;
-  overflow: visible;
-  line-height: 1.2;
-  font-size: 13px;
-}
-
-/* ===============================
-   📌 ÍCONOS MENÚ NORMAL
-   =============================== */
-
-mat-nav-list a.mat-mdc-list-item mat-icon {
-  transition:
-    transform 0.25s ease,
-    color 0.25s ease;
-
-  will-change: transform;
-}
-
-/* Hover */
-mat-nav-list a.mat-mdc-list-item:hover mat-icon {
-  transform: translateX(4px) scale(1.15);
-  color: #0d47a1;
-}
-
-/* Activo */
-mat-nav-list a.active mat-icon {
-  animation: menu-pulse 0.35s ease;
-}
-
-@keyframes menu-pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.25);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* ===============================
-   🎯 INDICADOR LATERAL ACTIVO
-   =============================== */
-
-mat-nav-list a.mat-mdc-list-item {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Barra azul */
-mat-nav-list a.mat-mdc-list-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10%;
-  height: 80%;
-  width: 4px;
-  background-color: #1565c0;
-  border-radius: 0 4px 4px 0;
-
-  transform: scaleY(0);
-  transition: transform 0.25s ease;
-}
-
-/* Activo */
-mat-nav-list a.active::before {
-  transform: scaleY(1);
-}
-
-/* ===============================
-   🧭 TRANSICIÓN DE RUTAS
-   =============================== */
-
-.fade-route {
-  animation: routeFade 0.25s ease;
-}
-
-@keyframes routeFade {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ===============================
-   ✨ MICRO INTERACCIONES MENÚ
-   =============================== */
-
-/* Hover */
-mat-nav-list a.mat-mdc-list-item:hover {
-  background-color: #e3f2fd;
-}
-
-/* Focus (teclado / accesibilidad) */
-mat-nav-list a.mat-mdc-list-item:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px #90caf9;
-  background-color: #e3f2fd;
-}
-
-/* Activo refuerzo */
-mat-nav-list a.active {
-  background-color: #bbdefb;
-  font-weight: 600;
-}
-
-/* ==========================================
-   📱 RESPONSIVE TELEWORK-SM
-========================================== */
+/* ============================================
+   📱 RESPONSIVE
+============================================ */
 
 @media (max-width: 768px) {
   .topbar {
     flex-wrap: wrap;
     height: auto;
-    padding: 8px 12px;
   }
 
-  .brand {
-    width: 100%;
-    font-size: 0.85rem;
-    margin-top: 6px;
-  }
-
-  .session-box {
-    width: 100%;
-    justify-content: space-between;
-    margin-top: 6px;
-  }
-  /* 👇 AGREGA ESTO */
-  .session-timer {
-    flex: 1;
-  }
-  .topbar button {
-    margin-top: 4px;
-  }
-  .welcome-badge {
-    display: none;
-  }
-
-  .logout-btn {
-    font-size: 0.8rem;
-    padding: 0 8px;
-  }
-
-  .content {
-    padding: 16px;
-    justify-content: stretch;
-  }
-
-  .footer {
-    font-size: 0.7rem;
-    padding: 6px 0;
-  }
 }
 
-html,
-body {
-  height: 100%;
-}
-
-html,
-body {
-  overflow-x: hidden;
-}
-/* =========================================
-   SUBMENU ADMINISTRACIÓN
-========================================= */
-
-.submenu-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  padding: 12px 16px;
-  cursor: pointer;
-
-  font-weight: 500;
-  color: #1565c0;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-/* icono del titulo */
-.submenu-title mat-icon {
-  color: #1565c0;
-}
-
-/* flecha derecha */
-.submenu-arrow {
-  margin-left: auto;
-}
-
-/* hover igual que menú principal */
-.submenu-title:hover {
-  background: rgba(21, 101, 192, 0.08);
-}
-
-/* cambio de color hover */
-.submenu-title:hover mat-icon,
-.submenu-title:hover {
-  color: #0d47a1;
-}
-
-/* =========================================
-   ANIMACIÓN ICONO TITULO ADMINISTRACIÓN
-========================================= */
-
-.submenu-title mat-icon {
-  transition:
-    transform 0.25s ease,
-    color 0.25s ease;
-}
-
-.submenu-title:hover mat-icon {
-  transform: translateX(4px) scale(1.15);
-  color: #0d47a1;
-}
-
-/* =========================================
-   ITEMS DEL SUBMENU
-========================================= */
-
-.submenu-item {
-  padding-left: 36px;
-  transition: background 0.2s ease;
-}
-
-.submenu-item mat-icon {
-  color: #1565c0;
-}
-
-.submenu-item:hover {
-  background: rgba(21, 101, 192, 0.08);
-}
-
-.submenu-item:hover mat-icon,
-.submenu-item:hover span {
-  color: #0d47a1;
-}
-
-.submenu-item.active {
-  background: rgba(21, 101, 192, 0.15);
-}
-
-/* =========================================
-   ANIMACIÓN ICONOS SUBMENU
-========================================= */
-
-.submenu-item mat-icon {
-  transition:
-    transform 0.25s ease,
-    color 0.25s ease;
-}
-
-.submenu-item:hover mat-icon {
-  transform: translateX(4px) scale(1.15);
-  color: #0d47a1;
-}
-
-/* animación cuando está activo */
-.submenu-item.active mat-icon {
-  animation: menu-pulse 0.35s ease;
-}
-
-.title {
-  margin-left: 8px;
-  font-weight: 500;
-}
-
-.spacer {
-  flex: 1 1 auto;
-}
-
-.user-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 16px;
-
-  .name {
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  .meta {
-    font-size: 0.75rem;
-    opacity: 0.7;
-  }
-}
-
-@media (max-width: 768px) {
-  .user-main {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .user-actions {
-    width: 100%;
-    justify-content: center;
-  }
+th {
+  background: #e3f2fd;
+  font-weight: 600;
 }

@@ -1,0 +1,47 @@
+<div class="about-wrapper">
+  <div class="about-card animate-entry">
+    <div class="logo-header">
+      <img src="assets/logoSSM.png" alt="Logo Servicio de Salud Magallanes" />
+      <h1>Servicio de Salud Magallanes</h1>
+      <p class="dept">
+        Departamento de Tecnologías de la Información y Comunicaciones
+      </p>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <h2 class="form-title">Acerca del sistema</h2>
+
+    <p class="subtitle">
+      Plataforma institucional de gestión de personas del Servicio de Salud
+      Magallanes.
+    </p>
+
+    <p class="description">
+      Sistema modular orientado a la Gestión de Personas, que integra
+      funcionalidades de teletrabajo, beneficios y procesos administrativos,
+      diseñado para escalar según las necesidades institucionales del Servicio
+      de Salud Magallanes.
+    </p>
+
+    <div class="version-box">
+      <p><strong>Versión:</strong> {{ appVersion }}</p>
+      <p><strong>Ambiente:</strong> {{ appEnv }}</p>
+    </div>
+
+    <p class="credits">
+      Desarrollado por el Equipo TIC — SSM<br />
+      © {{ currentYear }} Ministerio de Salud — Gobierno de Chile.
+    </p>
+
+    <a routerLink="/auth/login" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      Volver al inicio de sesión
+    </a>
+  </div>
+
+  <footer class="footer-seal">
+    <img src="assets/logoGobierno.png" alt="Gobierno de Chile" />
+    <span>Gobierno de Chile — Ministerio de Salud</span>
+  </footer>
+</div>

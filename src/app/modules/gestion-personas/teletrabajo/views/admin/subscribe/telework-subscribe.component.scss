@@ -1,0 +1,430 @@
+/* =========================
+   📦 CONTENEDOR GENERAL
+========================= */
+
+.transfer-container {
+  padding: 8px;
+  padding-bottom: 80px;
+}
+
+/* =========================
+   🟢 HEADER
+========================= */
+
+.transfer-header {
+  background: #2e7d32;
+  color: white;
+
+  padding: 14px 20px;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+/* =========================
+   🧭 STEPPER PRO
+========================= */
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+}
+
+.circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+  background: #bdbdbd;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+  font-size: 13px;
+
+  margin: 0 auto 4px;
+  transition: all 0.25s ease;
+}
+
+/* estados */
+.step.active .circle {
+  background: #ef6c00;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(239, 108, 0, 0.15);
+}
+
+.step.completed .circle {
+  background: #2e7d32;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #424242;
+}
+
+.value {
+  font-size: 10px;
+  color: #757575;
+}
+
+/* =========================
+   🎴 CARD BASE
+========================= */
+/* =========================
+   🎨 CARD HEADER SYSTEM
+========================= */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  margin-bottom: 12px;
+}
+
+/* 🔵 VARIANTE AZUL 
+.card-header.blue {
+  background: rgba(21, 101, 192, 0.08);
+}
+*/
+
+/* ICONO */
+.card-header.blue mat-icon {
+  color: #1565c0;
+  background: rgba(21, 101, 192, 0.12);
+
+  padding: 6px;
+  border-radius: 8px;
+}
+
+/* TEXTO PRINCIPAL */
+.card-header.blue .title {
+  color: #1565c0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* SUBTEXTO */
+.card-header.blue .subtitle {
+  color: #22a564;
+  font-size: 13px;
+}
+
+.card-elegante {
+  max-width: 900px;
+  margin: 12px auto;
+  padding: 16px;
+
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.card-elegante:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* TEXTO */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1565c0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-title span {
+  color: #15c062; // 🔵 solo el texto
+}
+
+.card-title mat-icon {
+  color: #1565c0; // 🔵 azul institucional
+  background: rgba(21, 101, 192, 0.08);
+
+  padding: 6px;
+  border-radius: 8px;
+
+  font-size: 20px;
+}
+
+/* SISTEMA DE ICONOS */
+mat-icon {
+  transition: all 0.2s ease;
+}
+
+/* COLORES POR CONTEXTO */
+.icon-primary {
+  color: #1565c0;
+}
+
+.icon-success {
+  color: #2e7d32;
+}
+
+.icon-warning {
+  color: #ef6c00;
+}
+
+/* =========================
+   🔵 CONFIRMACIÓN PRO (FIX)
+========================= */
+
+.confirm-box {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 24px;
+
+  background: #ffffff;
+  border-radius: 14px;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+/* header */
+.confirm-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #1565c0;
+
+  margin-bottom: 20px;
+}
+
+/* contenido */
+.confirm-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.confirm-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.confirm-item .label {
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.confirm-item .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+/* botones */
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* =========================
+   📋 HISTORIAL
+========================= */
+
+.history-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.history-box {
+  width: 100%;
+  max-width: 900px;
+
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ICONO */
+.history-title mat-icon {
+  color: #2e7d32;
+  background: rgba(46, 125, 50, 0.12);
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 25px;
+}
+
+/* TEXTO */
+.history-title span {
+  color: #2e7d32;
+  font-size: 20px;
+}
+
+.history-item {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1565c0;
+
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 6px;
+
+  background: #fafafa;
+  border: 1px solid #eeeeee;
+
+  transition: all 0.2s ease;
+}
+
+.history-item.active-sub {
+  background: #e8f5e9;
+  border-left: 4px solid #2e7d32;
+}
+
+/* HOVER (CLAVE) */
+.history-item:hover {
+  background: #f1f8f4;
+  transform: translateX(3px);
+}
+
+/* ACTIVO */
+.history-item.active-sub {
+  background: #e8f5e9;
+  border-left: 4px solid #2e7d32;
+}
+
+/* FECHAS */
+.history-dates {
+  font-weight: 500;
+  color: #1565c0;
+}
+
+
+/* BADGE ACTIVO */
+.active-label {
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #2e7d32;
+  background: rgba(46, 125, 50, 0.12);
+
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* =========================
+   👤 AUTOCOMPLETE
+========================= */
+
+.user-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.user-option:hover {
+  background: rgba(21, 101, 192, 0.06);
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0d47a1;
+}
+
+.user-rut {
+  font-size: 12px;
+  color: #546e7a;
+}
+
+.user-icon {
+  color: #1565c0;
+  opacity: 0.7;
+}
+
+/* =========================
+   ✨ ANIMACIÓN STEPS
+========================= */
+
+.step-content {
+  animation: stepEnter 0.35s ease;
+}
+
+@keyframes stepEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   📅 DATE INPUT
+========================= */
+
+.mat-datepicker-toggle mat-icon {
+  color: #1565c0;
+}
+
+mat-form-field:hover {
+  transform: translateY(-1px);
+}
+
+mat-form-field.mat-focused {
+  transform: scale(1.01);
+}
+
+/* =========================
+   🔘 BOTONES
+========================= */
+
+button.mat-mdc-raised-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
