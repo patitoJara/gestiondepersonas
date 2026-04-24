@@ -57,6 +57,18 @@ export class UsersService {
     );
   }
 
+  searchUsers(term: string, limit: number = 10) {
+    const clean = term?.trim();
+
+    if (!clean) {
+      return this.http.get<any[]>(`${this.api}?limit=${limit}`);
+    }
+
+    return this.http.get<any[]>(
+      `${this.api}/search?term=${encodeURIComponent(clean)}&limit=${limit}`,
+    );
+  }
+
   addUserRole(userId: number, roleId: number) {
     return this.http.post(`${environment.apiUrl}/users_roles`, {
       user: { id: userId },

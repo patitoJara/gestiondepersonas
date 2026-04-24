@@ -71,7 +71,7 @@
 
           <span *ngIf="step.id === 7 && currentStep === 7">
             Suscripción registrada
-          </span>          
+          </span>
         </div>
       </div>
     </div>
@@ -120,16 +120,13 @@
         <mat-autocomplete
           #auto="matAutocomplete"
           [displayWith]="displayUser"
-          (optionSelected)="selectUser($event.option.value)"
+          (optionSelected)="selectUserFromSearch($event.option.value)"
+          autoActiveFirstOption
         >
           <mat-option *ngFor="let u of filteredUsers" [value]="u">
-            <div class="user-option">
-              <div class="user-left">
-                <span class="user-name">{{ u.fullName }}</span>
-                <span class="user-rut">RUT: {{ u.rut }}</span>
-              </div>
-
-              <mat-icon class="user-icon">person</mat-icon>
+            <div class="option-user">
+              <div class="name">{{ u.fullName }}</div>
+              <div class="rut">{{ u.rut }}</div>
             </div>
           </mat-option>
         </mat-autocomplete>
@@ -447,7 +444,10 @@
     </div>
 
     <!-- HISTORIAL -->
-    <div *ngIf="subscriptions.length > 0 && currentStep !== 7" class="history-wrapper">
+    <div
+      *ngIf="subscriptions.length > 0 && currentStep !== 7"
+      class="history-wrapper"
+    >
       <div class="history-box">
         <div class="history-title">
           <mat-icon>history</mat-icon>

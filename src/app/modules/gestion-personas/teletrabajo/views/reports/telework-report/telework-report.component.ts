@@ -13,7 +13,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { TeleworkReportService } from '@app/modules/gestion-personas/teletrabajo/services/telework-report.service';
@@ -26,6 +25,14 @@ import { TeleworkReportPrintService } from '@app/modules/gestion-personas/teletr
 import { LoaderService } from '@app/core/services/loader.service';
 import { WorkService } from '@app/modules/gestion-personas/teletrabajo/services/work.service';
 import { UsersGroupService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users-group.service';
+import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  map,
+} from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import { filterByRutOrName } from '@app/shared/utils/filter.util';
 
@@ -56,6 +63,9 @@ export class TeleworkReportComponent {
   private loader = inject(LoaderService);
   private workService = inject(WorkService);
   private usersGroupService = inject(UsersGroupService);
+  private usersService = inject(UsersService);
+  private prefixCache = new Map<string, any[]>();
+  private currentPrefix = '';
 
   // ===============================
   // FILTROS
@@ -139,47 +149,45 @@ export class TeleworkReportComponent {
 
   displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
 
-  async ngOnInit() {
+  ngOnInit(): void {
+    this.initDates();
+    this.initYears();
+    this.initUsersState();
     this.setupUserFilter();
+  }
 
+  private initDates(): void {
+    const now = new Date();
+
+    this.month = now.getMonth() + 1;
+    this.year = now.getFullYear();
+
+    this.onMonthYearChange();
+    this.syncMonthYearFromDate();
+  }
+
+  private initYears(): void {
     const currentYear = new Date().getFullYear();
 
-    for (let i = currentYear; i <= currentYear + 10; i++) {
-      this.years.push(i);
-    }
+    this.years = Array.from({ length: 11 }, (_, i) => currentYear + i);
+  }
 
-    this.month = new Date().getMonth() + 1;
-    this.year = new Date().getFullYear();
-    // 🔥 genera automáticamente el rango
-    this.onMonthYearChange();
-    // 🔥 ahora sí sincroniza visual (opcional)
-    this.syncMonthYearFromDate();
+  private initUsersState(): void {
+    this.filteredUsers = [];
+    this.users = [];
+  }
 
-    // 🔥 CARGAR USUARIOS SOLO PARA AUTOCOMPLETE
-    try {
-      const users = await firstValueFrom(this.reportService.getUsers());
-
-      this.allUsers = users.map((u: any) => ({
-        id: u.id,
-        fullName: [u.firstName, u.secondName, u.firstLastName, u.secondLastName]
-          .filter(Boolean)
-          .join(' '),
-        rut: u.rut,
-      }));
-
-      this.filteredUsers = []; // 🔥 importante
-    } catch (e) {
-      console.error('Error cargando usuarios', e);
-    }
+  private clearInitialState(): void {
     this.clearResults();
-
-    // 🔥 MOSTRAR USUARIOS AL INICIO
-    this.users = [...this.allUsers];
   }
 
   // ===============================
   // BUSCAR
   // ===============================
+  trackByUser(index: number, user: any) {
+    return user.id;
+  }
+
   async search() {
     this.hasSearched = false;
 
@@ -1148,21 +1156,67 @@ export class TeleworkReportComponent {
 
   private setupUserFilter() {
     this.userSearch.valueChanges
-      .pipe(debounceTime(200), distinctUntilChanged())
-      .subscribe((value: any) => {
-        const term = (value || '').toString().trim();
+      .pipe(
+        debounceTime(300),
 
-        // 🔥 SOLO AUTOCOMPLETE
-        if (!term) {
-          this.filteredUsers = [];
-          return;
-        }
+        map((value: any) => {
+          if (typeof value === 'string') return value;
+          return value?.fullName ?? '';
+        }),
 
-        this.filteredUsers = filterByRutOrName(this.allUsers, term, {
-          nameKey: 'fullName',
-          rutKey: 'rut',
-        });
+        distinctUntilChanged(),
+
+        switchMap((term: string) => {
+          const clean = term.trim().toLowerCase();
+
+          if (clean.length < 3) {
+            return of([]);
+          }
+
+          const prefix = clean.substring(0, 3);
+
+          // 🔥 SI CAMBIA PREFIJO → IR AL BACKEND
+          if (prefix !== this.currentPrefix) {
+            this.currentPrefix = prefix;
+
+            return this.usersService.searchUsers(prefix).pipe(
+              map((resp: any) => {
+                const users = resp.data || resp.content || resp;
+
+                const mapped = (users || []).map((u: any) => ({
+                  id: u.id,
+                  fullName: [
+                    u.firstName,
+                    u.secondName,
+                    u.firstLastName,
+                    u.secondLastName,
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
+                  rut: u.rut,
+                }));
+
+                this.prefixCache.set(prefix, mapped);
+                return this.filterLocal(mapped, clean);
+              }),
+            );
+          }
+
+          // 🔥 MISMO PREFIJO → FILTRO LOCAL
+          const cached = this.prefixCache.get(prefix) || [];
+          return of(this.filterLocal(cached, clean));
+        }),
+      )
+      .subscribe((users: any[]) => {
+        this.filteredUsers = users;
       });
+  }
+
+  private filterLocal(users: any[], term: string) {
+    return users.filter((u: any) => {
+      const full = `${u.fullName} ${u.rut}`.toLowerCase();
+      return full.includes(term);
+    });
   }
 
   selectUserFromSearch(user: any) {
@@ -1188,7 +1242,7 @@ export class TeleworkReportComponent {
   }
 
   displayUser(user: any): string {
-    return user ? user.fullName : '';
+    return user ? `${user.fullName} (${user.rut})` : '';
   }
 
   generateFullRegisters(subs: any[], regs: any[]) {
@@ -1377,9 +1431,12 @@ export class TeleworkReportComponent {
     return `${y}-${m}-${d}`; // 🔥 evita toISOString (bug clásico)
   }
 
-  onFilterFocus(): void {
-    this.clearResults();
-    this.hasSearched = false;
+  onFilterFocus() {
+    const value = this.userSearch.value;
+
+    if (typeof value === 'string' && value.trim() === '') {
+      this.filteredUsers = [];
+    }
   }
 
   async onBuscarClick(): Promise<void> {

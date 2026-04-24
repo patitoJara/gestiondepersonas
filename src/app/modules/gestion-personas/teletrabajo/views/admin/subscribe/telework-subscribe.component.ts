@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +20,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
 import { filterByRutOrName } from '@app/shared/utils/filter.util';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { UserSearchService } from 'src/app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
 
 import {
   AfterViewInit,
@@ -101,14 +103,14 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   private overlapWarningShown = false;
   private timeService = inject(TimeService);
 
+  constructor(private userSearchService: UserSearchService) {}
+
   users: User[] = [];
   filteredUsers: User[] = [];
   selectedUser: User | null = null;
   hasDateConflict = false;
 
-  userSearch = this.fb.control<
-    string | { id: number; fullName: string } | null
-  >(null);
+  userSearch = new FormControl('');
 
   subscriptions: any[] = [];
   today = new Date();
@@ -134,17 +136,36 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   });
 
   ngOnInit() {
-    this.setupUserFilter();
-    this.loadUsers();
+    this.userSearchService
+      .search(this.userSearch.valueChanges)
+      .subscribe((users) => {
+        this.filteredUsers = users;
+      });
 
-    // 🔥 UN SOLO OBSERVER PARA TODO EL FORM
     this.form.valueChanges.subscribe(() => {
       this.checkOverlapDates();
     });
   }
 
+  /*displayUser(user: any): string {
+    return user ? `${user.fullName} (${user.rut})` : '';
+  }*/
+
   displayUser(user: any): string {
-    return user ? user.fullName : '';
+    return user ? `${user.fullName}` : '';
+  }
+
+  selectUserFromSearch(user: any) {
+    if (!user) return;
+
+    this.selectedUser = user;
+
+    // 🔥 ESTO ES LO QUE TE FALTA
+    this.form.patchValue({
+      userId: user.id,
+    });
+
+    console.log('✔️ userId seteado:', user.id);
   }
 
   async selectUser(user: any) {
@@ -327,9 +348,10 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   limpiarBusqueda(): void {
-    this.userSearch.setValue(null);
+    this.userSearch.setValue(''); // 🔥 string, no null
 
-    this.filteredUsers = this.users;
+    this.filteredUsers = []; // 🔥 limpiar resultados
+
     this.subscriptions = [];
     this.selectedUser = null;
 
@@ -517,6 +539,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     return new Date(date);
   }
 
+  /*
   private setupUserFilter() {
     this.userSearch.valueChanges
       .pipe(debounceTime(200), distinctUntilChanged())
@@ -529,6 +552,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
         });
       });
   }
+  */
 
   canGoNext(): boolean {
     switch (this.currentStep) {

@@ -30,8 +30,12 @@
       #auto="matAutocomplete"
       [displayWith]="displayUser"
       (optionSelected)="selectUserFromSearch($event.option.value)"
+      autoActiveFirstOption
     >
-      <mat-option *ngFor="let u of filteredUsers" [value]="u">
+      <mat-option
+        *ngFor="let u of filteredUsers; trackBy: trackByUser"
+        [value]="u"
+      >
         <div class="option-user">
           <div class="name">{{ u.fullName }}</div>
           <div class="rut">{{ u.rut }}</div>
