@@ -2,7 +2,6 @@
    🧠 SIRUS UI - TELEWORK REPORT FINAL CLEAN (PRO)
    ===================================================== */
 
-
 /* =====================================================
    🟦 01. CONTENEDOR GENERAL
    ===================================================== */
@@ -14,7 +13,6 @@
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
-
 
 /* =====================================================
    🟦 02. HEADER / TITLE
@@ -44,7 +42,6 @@
   color: #607d8b;
 }
 
-
 /* =====================================================
    🟦 03. HINT / MENSAJES
    ===================================================== */
@@ -66,7 +63,6 @@
   margin: 0 14px 6px 14px;
 }
 
-
 /* =====================================================
    🟦 04. TEXTOS GENERALES
    ===================================================== */
@@ -75,7 +71,6 @@
   font-weight: 600;
   color: #455a64;
 }
-
 
 /* =====================================================
    🟦 05. EMPTY STATES
@@ -99,10 +94,14 @@
   color: #90a4ae;
 }
 
-
 /* =====================================================
    🟦 06. FILTROS (CORE UX)
    ===================================================== */
+
+/* =====================================================
+   🟦 FILTROS (VERSIÓN ESTABLE SIRUS)
+   ===================================================== */
+
 .filters {
   display: flex;
   justify-content: space-between;
@@ -119,14 +118,37 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.filters-left,
+/* IZQUIERDA */
+.filters-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 🔥 WRAPPER (CONTROL REAL) */
+
+.user-group mat-form-field {
+  width: 260px;
+}
+
+/* DERECHA */
 .filters-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
+.filters-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-group {
+  flex: 0 0 auto;
+  min-width: 260px;
+}
 
 /* =====================================================
    🟦 07. INPUTS / SELECTS
@@ -139,61 +161,109 @@
   font-size: 12px;
 }
 
-.filters-left .input {
-  max-width: 260px;
-}
-
-.filters-left select.input {
-  width: 120px;
-}
-
-
 /* =====================================================
    🟦 08. DATEPICKERS
    ===================================================== */
+
 .date-range {
   display: flex;
   gap: 10px;
   align-items: center;
+
+  padding-left: 12px;
+  border-left: 2px solid #e3f2fd;
 }
 
-.date-field {
-  width: 150px;
+.date-range mat-form-field {
+  width: 140px; /* 🔥 cada fecha mide 140, no el contenedor */
 }
 
+.month-group {
+  display: flex;
+  gap: 10px;
+  align-items: center; /* 🔥 CLAVE */
+  position: relative;
+}
+
+/* 🔥 altura uniforme con todo el sistema */
+::ng-deep .month-group .mat-mdc-text-field-wrapper {
+  height: 38px !important;
+}
+
+/* 🔥 centra el contenido */
+::ng-deep .month-group .mat-mdc-form-field-flex {
+  align-items: center !important;
+  height: 38px !important;
+}
+
+/* 🔥 elimina espacio extra */
+::ng-deep .month-group .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+/* 🔥 NORMALIZA TODO EN FILTROS */
+::ng-deep .filters .mat-mdc-text-field-wrapper {
+  height: 38px !important;
+}
+
+/* 🔥 centra contenido */
+::ng-deep .filters .mat-mdc-form-field-flex {
+  height: 38px !important;
+  align-items: center !important;
+}
+
+/* 🔥 elimina padding interno */
+::ng-deep .filters .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+::ng-deep .filters .mat-mdc-select-value {
+  font-size: 12px !important;
+}
+
+::ng-deep .filters .mat-mdc-floating-label {
+  font-size: 12px !important;
+}
+
+.month-group mat-form-field,
+.date-range mat-form-field {
+  width: fit-content;
+  min-width: 90px;
+}
+
+::ng-deep .filters .mat-mdc-form-field {
+  width: fit-content;
+}
+
+/* 🔥 hace que el contenido defina el ancho */
+::ng-deep .filters .mat-mdc-form-field-infix {
+  width: auto !important;
+  min-width: unset !important;
+}
 
 /* =====================================================
    🟦 09. MATERIAL FIX (FORM)
    ===================================================== */
 ::ng-deep .mat-mdc-form-field {
   font-size: 12px !important;
-  min-width: 220px;
-}
-
-::ng-deep .mat-mdc-floating-label {
-  font-size: 12px !important;
-}
-
-::ng-deep .mat-mdc-text-field-wrapper {
-  height: 38px !important;
-  padding: 0 8px !important;
-  border-radius: 8px !important;
-  border: 1px solid #cbd5e1 !important;
-  display: flex;
-  align-items: center;
-  background: #fff !important;
-}
-
-::ng-deep .mat-mdc-form-field-infix {
-  padding: 0 !important;
-  display: flex;
-  align-items: center;
+  min-width: unset !important; /* 🔥 CLAVE */
 }
 
 ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none !important;
 }
 
+::ng-deep .filters .mat-mdc-select-value {
+  padding-right: 20px; /* 🔥 espacio para la flecha */
+}
+
+::ng-deep .filters .mat-mdc-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
 /* =====================================================
    🟦 10. AUTOCOMPLETE PANEL
@@ -211,7 +281,6 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
-
 /* =====================================================
    🟦 11. AUTOCOMPLETE OPTIONS
    ===================================================== */
@@ -225,7 +294,6 @@
 ::ng-deep .mat-mdc-option:hover {
   background: #e3f2fd;
 }
-
 
 /* =====================================================
    🟦 12. AUTOCOMPLETE ITEM (FIX FINAL)
@@ -254,7 +322,6 @@
   white-space: nowrap; /* 🔥 nunca se corta */
 }
 
-
 /* =====================================================
    🟦 13. BOTONES
    ===================================================== */
@@ -282,83 +349,78 @@
   color: #455a64;
 }
 
-
-/* =====================================================
-   🟦 14. GRID / CARDS
-   ===================================================== */
-.tables-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  margin-top: 20px;
-  gap: 6px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid #e3e8ef;
-  display: flex;
-  flex-direction: column;
-  height: 520px;
-  overflow: visible;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-
 /* =====================================================
    🟦 15. HEADERS
    ===================================================== */
 .card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 🔥 clave */
+
   gap: 8px;
   min-height: 42px;
   padding: 10px 14px;
+
   font-size: 12px;
   font-weight: 600;
 }
 
-.card-header.blue { background: rgba(21, 101, 192, 0.06); color: #1565c0; }
-.card-header.green { background: rgba(46, 125, 50, 0.06); color: #2e7d32; }
-.card-header.orange { background: rgba(0, 137, 123, 0.08); color: #00897b; }
-.card-header.purple { background: rgba(123, 31, 162, 0.06); color: #7b1fa2; }
-
-
-/* =====================================================
-   🟦 16. TABLAS
-   ===================================================== */
-.table-scroll {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
+/* título izquierda */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-table {
-  width: 100%;
-  font-size: 12px;
-  border-collapse: collapse;
+/* acciones derecha */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto; /* 🔥 empuja a la derecha */
 }
 
-th {
-  position: sticky;
-  top: 0;
-  background: #f1f5f9;
-  font-size: 12px;
-  color: #546e7a;
+/* botones */
+.header-actions button {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-td {
-  padding: 6px;
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* hover */
+.header-actions button:hover {
+  background: rgba(21, 101, 192, 0.1);
+  transform: scale(1.1);
 }
 
-tbody tr:hover {
-  background: #f1f7ff;
+/* iconos */
+.header-actions mat-icon {
+  font-size: 18px;
+  color: #1565c0;
 }
 
+.card-header.blue {
+  background: rgba(21, 101, 192, 0.06);
+  color: #1565c0;
+}
+.card-header.green {
+  background: rgba(46, 125, 50, 0.06);
+  color: #2e7d32;
+}
+.card-header.orange {
+  background: rgba(0, 137, 123, 0.08);
+  color: #00897b;
+}
+.card-header.purple {
+  background: rgba(123, 31, 162, 0.06);
+  color: #7b1fa2;
+}
 
 /* =====================================================
    🟦 17. ACTIVIDADES
@@ -367,14 +429,6 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.actions {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
 }
 
 .activity-cell button {
@@ -386,7 +440,6 @@ tbody tr:hover {
 .activity-cell button:hover {
   transform: scale(1);
 }
-
 
 /* =====================================================
    🟦 18. BADGES / ESTADOS
@@ -411,10 +464,18 @@ tbody tr:hover {
   font-weight: 600;
 }
 
-.vigente { background: #e8f5e9; color: #2e7d32; }
-.vencido { background: #fdecea; color: #c62828; }
-.pendiente { background: #fff3cd; color: #f57c00; }
-
+.vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.vencido {
+  background: #fdecea;
+  color: #c62828;
+}
+.pendiente {
+  background: #fff3cd;
+  color: #f57c00;
+}
 
 /* =====================================================
    🟦 19. TIPO INGRESO / SALIDA
@@ -429,18 +490,15 @@ tbody tr:hover {
   font-weight: 600;
 }
 
-.tipo-badge.ing { background: rgba(46, 125, 50, 0.1); color: #2e7d32; }
-.tipo-badge.sal { background: rgba(245, 124, 0, 0.1); color: #f57c00; }
-
-
-/* =====================================================
-   🟦 20. RESPONSIVE
-   ===================================================== */
-@media (max-width: 900px) {
-  .tables-row {
-    grid-template-columns: 1fr;
-  }
+.tipo-badge.ing {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
 }
+.tipo-badge.sal {
+  background: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+}
+
 
 @media (max-width: 600px) {
   .filters {
@@ -451,10 +509,6 @@ tbody tr:hover {
   .filters-actions {
     justify-content: space-between;
   }
-}
-
-.full-width {
-  width: 260px; /* o 240px si quieres más compacto */
 }
 
 .actions-wrapper {
@@ -474,49 +528,297 @@ tbody tr:hover {
    🔥 FIX FINAL INPUT MATERIAL (SIN ESPACIO FANTASMA)
    ===================================================== */
 
-/* 🔥 contenedor interno real */
-::ng-deep .mat-mdc-form-field-flex {
-  align-items: center !important;
-  height: 36px !important;
-}
-
-/* 🔥 elimina espacio vertical interno */
-::ng-deep .mat-mdc-form-field-infix {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  min-height: unset !important;
-}
-
-/* 🔥 input real */
-::ng-deep .mat-mdc-input-element {
-  padding: 0 !important;
-  margin: 0 !important;
-  height: 100% !important;
-}
-
 /* 🔥 cuando flota */
 ::ng-deep .mat-mdc-form-field-should-float .mat-mdc-floating-label,
-::ng-deep .mdc-text-field--focused .mat-mdc-floating-label {
-  transform: translateY(-130%) scale(0.85) !important;
-}
-
-/* 🔥 elimina altura extra del wrapper MDC */
-::ng-deep .mdc-text-field {
-  padding: 0 !important;
-  height: 36px !important;
-  align-items: center !important;
-}
-
-::ng-deep .mat-mdc-form-field-should-float .mat-mdc-floating-label,
-::ng-deep .mdc-text-field--focused .mat-mdc-floating-label {
-  transform: translateY(-120%) scale(0.85) !important;
-}
-
-::ng-deep .mat-mdc-form-field.mat-mdc-form-field-should-float .mat-mdc-floating-label,
+::ng-deep
+  .mat-mdc-form-field.mat-mdc-form-field-should-float
+  .mat-mdc-floating-label,
 ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
   transform: translateY(-120%) scale(0.85) !important;
 }
 
 ::ng-deep .mat-mdc-floating-label {
   transition: transform 0.2s ease !important;
+}
+
+/* =============================
+   🟦 LAYOUT PRINCIPAL (PRO FINAL)
+============================= */
+
+.tables-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, max-content));
+  //justify-content: center;  // 🔥 centra cuando hay 1 card
+  gap: 12px;
+}
+
+.card {
+  width: 100%;
+  max-width: 900px;         // 🔥 evita que se estire
+}
+
+
+/* =============================
+   🟦 CARD
+============================= */y
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 520px;
+
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e3e8ef;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+
+  min-width: 0;
+  overflow: hidden;
+
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =============================
+   🟦 SCROLL SOLO VERTICAL
+============================= */
+
+.table-scroll {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* =============================
+   🟦 TABLAS
+============================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+th {
+  font-size: 12px;
+  color: #546e7a;
+
+  white-space: normal;       /* 🔥 permite 2 líneas */
+  word-break: break-word;    /* 🔥 evita corte feo */
+}
+
+td {
+  padding: 6px 8px;
+  font-size: 11px;
+
+  word-break: break-word;
+}
+
+/* =============================
+   🟦 FILAS INTERACTIVAS
+============================= */
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.clickable-row:hover {
+  background: #eef5ff;
+}
+
+/* =============================
+   🟦 GRUPOS
+============================= */
+
+.groups-table {
+  .mat-column-name { width: 90px; }
+  .mat-column-jefatura { width: 120px; }
+  .mat-column-count { width: 50px; text-align: center; }
+}
+
+/* =============================
+   🟦 USUARIOS
+============================= */
+
+.users-table {
+
+  /* columnas */
+  .mat-column-fullName { 
+    width: 140px; 
+  }
+
+  .mat-column-rut { 
+    width: 90px; 
+  }
+
+.mat-column-marks {
+  min-width: 90px;      // 🔥 ajusta según diseño
+  white-space: nowrap;  // 🚀 NO permitir salto
+  text-align: center;
+}
+
+  /* 🔥 FIX ACCIONES */
+  .mat-column-actions { 
+    width: 50px;
+    min-width: 50px;
+    text-align: center; 
+  }
+
+  /* estilo */
+  td:first-child { 
+    font-weight: 600; 
+  }
+
+}
+/* =============================
+   🟦 REGISTROS
+============================= */
+
+.registers-table {
+  .mat-column-date { width: 70px; }
+  .mat-column-day { width: 50px; }
+  .mat-column-hour { width: 60px; text-align: center; }
+  .mat-column-type { width: 110px; text-align: center; }
+}
+
+/* =============================
+   🟦 ACTIVIDADES
+============================= */
+
+.works-table {
+  .mat-column-hour { width: 60px; }
+  .mat-column-description { width: auto; }
+
+  td:first-child {
+    text-align: center;
+    color: #1565c0;
+  }
+}
+
+/* =============================
+   🟦 SUSCRIPCIONES
+============================= */
+
+.subscriptions-table {
+  .mat-column-start { width: 80px; }
+  .mat-column-end { width: 80px; }
+  .mat-column-duration { width: 80px; }
+  .mat-column-state { width: 100px; }
+}
+
+/* =============================
+   🟦 ACCIONES
+============================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; // 🔥 un poco más de espacio
+}
+
+.actions button {
+  width: 32px;   // 🔥 tamaño correcto de click
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.actions mat-icon {
+  font-size: 18px; // 🔥 visible pero compacto
+}
+
+/* =============================
+   📱 RESPONSIVE
+============================= */
+
+@media (max-width: 900px) {
+  .tables-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card {
+    height: auto;
+  }
+}
+
+
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 2px 10px;
+  border-radius: 999px; // 🔥 más moderno
+
+  font-size: 11.5px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.state-pendiente {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.state-vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.state-vencido {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* ----------------------------------------------
+    Busqueda dinamica por usuario
+------------------------------------------------- */
+
+.option-user {
+  display: flex;
+  flex-direction: column;
+
+  .name {
+    font-weight: 500;
+  }
+
+  .rut {
+    font-size: 12px;
+    color: #607d8b;
+  }
+}
+
+.f-user {
+  width: 380px; // 🔥 ajusta a gusto (350–450 ideal)
+  min-width: 300px;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel {
+  min-width: 380px !important;
+  max-width: 500px !important;
+}
+
+::ng-deep .mat-mdc-option {
+  white-space: normal; // 🔥 permite salto de línea
+  line-height: 1.2;
+  padding: 8px 12px;
+}
+
+.no-results {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: #757575;
+  font-size: 14px;
 }

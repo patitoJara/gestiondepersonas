@@ -110,14 +110,29 @@
             <div class="desc">
               {{ w.description }}
             </div>
-
             <div class="meta">
-              {{ w.createdAt | date: "HH:mm" }}
+              <!-- 🕒 CREACIÓN -->
+              <span class="created">
+                <mat-icon>schedule</mat-icon>
+                {{ fixWorkDate(w.createdAt) | date: "HH:mm" }}
+              </span>
+
+              <!-- ✏️ EDICIÓN -->
+              <span
+                *ngIf="w.updatedAt && w.updatedAt !== w.createdAt"
+                class="edited"
+                matTooltip="Editado a las {{
+                  fixWorkDate(w.updatedAt) | date: 'HH:mm'
+                }}"
+              >
+                <mat-icon>edit</mat-icon>
+                {{ fixWorkDate(w.updatedAt) | date: "HH:mm" }}
+              </span>
             </div>
           </div>
 
           <!-- 🔥 ACCIONES POR FILA -->
-          <div class="work-actions" *ngIf="w.esHoy">
+          <div class="work-actions">
             <!-- ✏️ EDITAR -->
             <button mat-icon-button matTooltip="Editar" (click)="editarWork(w)">
               <mat-icon class="edit">edit</mat-icon>

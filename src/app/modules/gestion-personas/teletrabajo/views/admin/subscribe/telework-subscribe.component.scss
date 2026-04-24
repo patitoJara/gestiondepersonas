@@ -3,7 +3,7 @@
 ========================= */
 
 .transfer-container {
-  padding: 8px;
+  padding: 12px;
   padding-bottom: 80px;
 }
 
@@ -21,9 +21,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-
-  margin-left: -8px;
-  margin-right: -8px;
+  font-weight: 600;
 }
 
 /* =========================
@@ -31,15 +29,31 @@
 ========================= */
 
 .stepper {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: 6px;
-  margin: 12px 0;
+  margin: 16px 0;
 }
 
 .step {
   flex: 1;
   text-align: center;
+}
+
+.stepper::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 0;
+}
+
+.step.completed ~ .step::before {
+  background: #2e7d32;
 }
 
 .circle {
@@ -57,7 +71,7 @@
   font-weight: 600;
   font-size: 13px;
 
-  margin: 0 auto 4px;
+  margin: 0 auto 6px;
   transition: all 0.25s ease;
 }
 
@@ -74,20 +88,157 @@
   box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
 }
 
+.step.active .label {
+  color: #ef6c00;
+  font-weight: 600;
+}
+
 .label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: #424242;
 }
 
 .value {
-  font-size: 10px;
+  font-size: 11px;
   color: #757575;
 }
 
 /* =========================
    🎴 CARD BASE
 ========================= */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  color: #1565c0; // 🔥 COLOR SIRUS
+
+  margin-bottom: 12px; // 🔥 separación real
+}
+
+.card-title mat-icon {
+  color: #1565c0;
+  background: rgba(21, 101, 192, 0.12);
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.card-elegante {
+  max-width: 900px;
+  margin: 16px auto;
+  padding: 18px;
+
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.sirus-field {
+  margin-top: 12px; // 🔥 separación real
+}
+
+.acciones-center,
+.card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px; // 🔥 espacio entre botones
+  margin-top: 18px;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* 🔹 VOLVER (secundario elegante) */
+button.volver-btn {
+  border: 1px solid #cfd8dc !important; // 🔥 elimina negro
+  color: #546e7a !important;
+  background: #fff;
+
+  border-radius: 8px;
+  padding: 0 18px;
+
+  &:hover {
+    background: #f5f7fa;
+    border-color: #90a4ae !important;
+  }
+}
+
+/* 🔹 CONTINUAR (principal) */
+button.continuar-btn {
+  border-radius: 8px;
+  padding: 0 22px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+
+  background: #1565c0;
+  color: #fff;
+
+  box-shadow:
+    0 4px 12px rgba(21, 101, 192, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.15); // 🔥 doble sombra PRO
+
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 8px 20px rgba(21, 101, 192, 0.45),
+      0 4px 8px rgba(0, 0, 0, 0.2); // 🔥 MÁS PROFUNDO
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
+  }
+}
+
+button.continuar-btn.mat-mdc-raised-button {
+  background: #1565c0 !important;
+  color: #fff !important;
+}
+
+/* BOTÓN VOLVER */
+button.mat-mdc-stroked-button {
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+    background: #f5f5f5;
+  }
+}
+
+/* BOTÓN CONTINUAR (PROTAGONISTA) */
+button.mat-mdc-raised-button {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0 20px;
+
+  box-shadow: 0 3px 10px rgba(21, 101, 192, 0.25);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(21, 101, 192, 0.35);
+  }
+}
+
+.card-elegante:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.full-width {
+  width: 100%;
+}
+
 /* =========================
    🎨 CARD HEADER SYSTEM
 ========================= */
@@ -100,143 +251,94 @@
   padding: 12px 14px;
   border-radius: 10px;
 
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-/* 🔵 VARIANTE AZUL 
-.card-header.blue {
-  background: rgba(21, 101, 192, 0.08);
-}
-*/
-
-/* ICONO */
 .card-header.blue mat-icon {
   color: #1565c0;
   background: rgba(21, 101, 192, 0.12);
-
   padding: 6px;
   border-radius: 8px;
 }
 
-/* TEXTO PRINCIPAL */
 .card-header.blue .title {
   color: #1565c0;
   font-weight: 600;
   font-size: 15px;
 }
 
-/* SUBTEXTO */
 .card-header.blue .subtitle {
-  color: #22a564;
-  font-size: 13px;
-}
-
-.card-elegante {
-  max-width: 900px;
-  margin: 12px auto;
-  padding: 16px;
-
-  border-radius: 12px;
-  transition: all 0.25s ease;
-}
-
-.card-elegante:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* TEXTO */
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1565c0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.card-title span {
-  color: #15c062; // 🔵 solo el texto
-}
-
-.card-title mat-icon {
-  color: #1565c0; // 🔵 azul institucional
-  background: rgba(21, 101, 192, 0.08);
-
-  padding: 6px;
-  border-radius: 8px;
-
-  font-size: 20px;
-}
-
-/* SISTEMA DE ICONOS */
-mat-icon {
-  transition: all 0.2s ease;
-}
-
-/* COLORES POR CONTEXTO */
-.icon-primary {
-  color: #1565c0;
-}
-
-.icon-success {
-  color: #2e7d32;
-}
-
-.icon-warning {
-  color: #ef6c00;
+  color: #78909c;
+  font-size: 12px;
 }
 
 /* =========================
-   🔵 CONFIRMACIÓN PRO (FIX)
+   🔵 CONFIRMACIÓN PRO
 ========================= */
 
 .confirm-box {
-  max-width: 500px;
-  margin: 30px auto;
-  padding: 24px;
+  max-width: 540px;
+  margin: 28px auto;
+  margin-top: 40px;
+  padding: 22px;
 
   background: #ffffff;
   border-radius: 14px;
 
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-  text-align: center;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.05);
+
+  border: 1px solid #eef2f7; // 🔥 leve borde elegante
 }
 
-/* header */
 .confirm-header {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 
-  font-size: 18px;
-  font-weight: 600;
-  color: #1565c0;
+  margin-bottom: 18px;
 
-  margin-bottom: 20px;
+  mat-icon {
+    color: #1565c0;
+    background: rgba(21, 101, 192, 0.12);
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1565c0;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: #78909c;
+  }
 }
-
-/* contenido */
 .confirm-grid {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
 .confirm-item {
+  background: #f8fafc; // 🔥 ya no gris muerto
+  border-radius: 10px;
+  padding: 14px;
+
   display: flex;
   flex-direction: column;
-  align-items: center;
+
+  border: 1px solid #e3f2fd; // 🔥 toque azul sutil
+
+  transition: all 0.2s ease;
+}
+
+.confirm-item:hover {
+  background: #f1f7ff;
+  transform: translateY(-1px);
 }
 
 .confirm-item .label {
@@ -245,16 +347,45 @@ mat-icon {
 }
 
 .confirm-item .value {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
-  color: #2e7d32;
+  color: #263238;
 }
 
 /* botones */
 .confirm-actions {
+  margin-top: 18px;
+
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
+}
+
+.success-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+
+  color: #2e7d32;
+}
+
+.success-title {
+  margin: 10px 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+
+  color: #2e7d32; // 🔥 coherente con éxito
+}
+
+.success-text {
+  font-size: 13px;
+  color: #607d8b;
+}
+
+.confirm-box.success {
+  border: 1px solid #c8e6c9;
+  background: #f1f8f4;
 }
 
 /* =========================
@@ -264,44 +395,42 @@ mat-icon {
 .history-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 40px;
 }
 
 .history-box {
   width: 100%;
   max-width: 900px;
+  margin-top: 24px;
 
   background: #ffffff;
   border-radius: 12px;
   padding: 16px;
 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* ICONO */
 .history-title mat-icon {
   color: #2e7d32;
   background: rgba(46, 125, 50, 0.12);
   padding: 6px;
   border-radius: 8px;
-  font-size: 25px;
+  font-size: 22px;
 }
 
-/* TEXTO */
 .history-title span {
   color: #2e7d32;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .history-item {
   width: 100%;
-  box-sizing: border-box;
   padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1565c0;
 
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
 
   display: flex;
   justify-content: space-between;
@@ -315,33 +444,23 @@ mat-icon {
   transition: all 0.2s ease;
 }
 
-.history-item.active-sub {
-  background: #e8f5e9;
-  border-left: 4px solid #2e7d32;
-}
-
-/* HOVER (CLAVE) */
 .history-item:hover {
   background: #f1f8f4;
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 
-/* ACTIVO */
 .history-item.active-sub {
   background: #e8f5e9;
   border-left: 4px solid #2e7d32;
 }
 
-/* FECHAS */
 .history-dates {
-  font-weight: 500;
   color: #1565c0;
 }
 
-
-/* BADGE ACTIVO */
+/* badge activo */
 .active-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
 
   color: #2e7d32;
@@ -390,6 +509,7 @@ mat-icon {
 ========================= */
 
 .step-content {
+  margin-top: 24px;
   animation: stepEnter 0.35s ease;
 }
 
@@ -412,6 +532,10 @@ mat-icon {
   color: #1565c0;
 }
 
+mat-form-field {
+  margin-bottom: 12px;
+}
+
 mat-form-field:hover {
   transform: translateY(-1px);
 }
@@ -425,6 +549,49 @@ mat-form-field.mat-focused {
 ========================= */
 
 button.mat-mdc-raised-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+  .stepper {
+    position: relative;
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+
+    padding-bottom: 10px;
+
+    scroll-behavior: smooth;
+
+    /* 🔥 mejora UX */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .step {
+    flex: 0 0 auto; // 🔥 CLAVE (no se comprimen)
+    min-width: 80px;
+  }
+
+  .stepper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 100%;
+
+    background: linear-gradient(to left, white, transparent);
+    pointer-events: none;
+  }
+
+  /* 🔥 Scroll más limpio */
+  .stepper::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .stepper::-webkit-scrollbar-thumb {
+    background: #cfd8dc;
+    border-radius: 10px;
+  }
 }

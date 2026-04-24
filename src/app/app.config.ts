@@ -9,13 +9,9 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 
 import {
-  provideMomentDateAdapter,
-  MAT_MOMENT_DATE_ADAPTER_OPTIONS
-} from '@angular/material-moment-adapter';
-
-import {
   MAT_DATE_FORMATS,
-  MAT_DATE_LOCALE
+  MAT_DATE_LOCALE,
+  provideNativeDateAdapter
 } from '@angular/material/core';
 
 export const MY_FORMATS = {
@@ -30,7 +26,6 @@ export const MY_FORMATS = {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-
     { provide: LOCALE_ID, useValue: 'es-CL' },
 
     provideRouter(
@@ -50,13 +45,11 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
 
-    provideMomentDateAdapter(),
+    // 🔥 SIN MOMENT → SOLO DATE NATIVO
+    provideNativeDateAdapter(),
 
     { provide: MAT_DATE_LOCALE, useValue: 'es-CL' },
-
     { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS },
-
-    { provide: MAT_MOMENT_DATE_ADAPTER_OPTIONS, useValue: { useUtc: true } },
 
     provideCharts(withDefaultRegisterables()),
   ],

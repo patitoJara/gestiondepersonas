@@ -24,7 +24,7 @@ import { LoaderService } from '@app/core/services/loader.service';
 import { TokenService } from '@app/core/services/token.service';
 import { WorkService } from '@app/modules/gestion-personas/teletrabajo/services/work.service';
 import { Work } from '@app/modules/gestion-personas/teletrabajo/models/work.model';
-
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-telework-report-user',
@@ -56,6 +56,7 @@ export class TeleworkReportUserComponent {
   // ===============================
   // FILTROS
   // ===============================
+  dataSource = new MatTableDataSource<any>();
 
   userId: number = 0;
   userName: string = '';
@@ -298,27 +299,36 @@ export class TeleworkReportUserComponent {
       );
 
       if (this.dateFrom && this.dateTo) {
-        const from = new Date(this.dateFrom);
+        const from = this.parseLocalDate(this.dateFrom);
         from.setHours(0, 0, 0, 0);
 
-        const to = new Date(this.dateTo);
+        const to = this.parseLocalDate(this.dateTo);
         to.setHours(23, 59, 59, 999);
 
         this.subscriptions = mySubscriptions
           .filter((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
             return start <= to && end >= from;
           })
           .map((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+
+            const finalStart = start < from ? from : start;
+            const finalEnd = end > to ? to : end;
 
             return {
               ...s,
-              begin: start < from ? from : start,
-              end: end > to ? to : end,
+              begin: this.formatToLocalISOString(finalStart),
+              end: this.formatToLocalISOString(finalEnd),
             };
+          })
+          // 🔥 FALTABA ESTO
+          .sort((a: any, b: any) => {
+            const d1 = this.parseLocalDate(a.begin).getTime();
+            const d2 = this.parseLocalDate(b.begin).getTime();
+            return d1 - d2;
           });
       } else if (this.month !== null && this.year !== null) {
         const from = new Date(this.year, this.month - 1, 1, 0, 0, 0, 0);
@@ -326,22 +336,34 @@ export class TeleworkReportUserComponent {
 
         this.subscriptions = mySubscriptions
           .filter((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
             return start <= to && end >= from;
           })
           .map((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+
+            const finalStart = start < from ? from : start;
+            const finalEnd = end > to ? to : end;
 
             return {
               ...s,
-              begin: start < from ? from : start,
-              end: end > to ? to : end,
+              begin: this.formatToLocalISOString(finalStart),
+              end: this.formatToLocalISOString(finalEnd),
             };
+          })
+          .sort((a: any, b: any) => {
+            const d1 = this.parseLocalDate(a.begin).getTime();
+            const d2 = this.parseLocalDate(b.begin).getTime();
+            return d1 - d2;
           });
       } else {
-        this.subscriptions = mySubscriptions;
+        this.subscriptions = mySubscriptions.sort((a: any, b: any) => {
+          const d1 = this.parseLocalDate(a.begin).getTime();
+          const d2 = this.parseLocalDate(b.begin).getTime();
+          return d1 - d2;
+        });
       }
 
       // =========================================
@@ -704,13 +726,6 @@ export class TeleworkReportUserComponent {
     this.clearResults();
   }
 
-  onDateFocus(): void {
-    this.month = null;
-    this.year = null;
-
-    this.clearResults(); // 🔥 limpieza completa
-  }
-
   onMonthFocus(): void {
     this.dateFrom = null;
     this.dateTo = null;
@@ -1065,4 +1080,67 @@ export class TeleworkReportUserComponent {
       this.loader.hide();
     }
   }
+
+  formatDateSafe(dateStr: string): string {
+    if (!dateStr) return '';
+
+    const [date] = dateStr.split('T'); // 🔥 solo fecha
+    const [y, m, d] = date.split('-');
+
+    return `${d}/${m}/${y}`;
+  }
+
+  parseLocalDate(value: string | Date): Date {
+    if (!value) return new Date();
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours(),
+        value.getMinutes(),
+        value.getSeconds(),
+      );
+    }
+
+    // 🔥 si es string
+    const [datePart, timePart] = value.split('T');
+    const [y, m, d] = datePart.split('-').map(Number);
+
+    if (!timePart) {
+      return new Date(y, m - 1, d);
+    }
+
+    const [h, min, s] = timePart.split(':').map(Number);
+
+    return new Date(y, m - 1, d, h || 0, min || 0, s || 0);
+  }
+
+  formatToLocalISOString(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+
+    return `${y}-${m}-${d}T${h}:${min}:${s}`;
+  }
+
+  onFilterFocus(): void {
+    // 🔥 limpiar fechas si usas mes/año
+    this.dateFrom = null;
+    this.dateTo = null;
+  }
+
+
+  onDateFocus(): void {
+    this.month = null;
+    this.year = null;
+
+    this.clearResults(); // 🔥 limpieza completa
+  }  
 }

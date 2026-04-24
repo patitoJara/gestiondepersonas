@@ -20,6 +20,13 @@ import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialo
 import { filterByRutOrName } from '@app/shared/utils/filter.util';
 import { trigger, transition, style, animate } from '@angular/animations';
 
+import {
+  AfterViewInit,
+  ElementRef,
+  QueryList,
+  ViewChildren,
+} from '@angular/core';
+
 interface Step {
   id: number;
   title: string;
@@ -85,7 +92,8 @@ interface UserRoleResponse {
     ]),
   ],
 })
-export class TeleworkSubscribeComponent implements OnInit {
+export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
+  @ViewChildren('stepItem') stepItems!: QueryList<ElementRef>;
   private fb = inject(FormBuilder);
   private subscribeService = inject(SubscribesService);
   private usersService = inject(UsersService);
@@ -121,18 +129,16 @@ export class TeleworkSubscribeComponent implements OnInit {
 
   form = this.fb.group({
     userId: [null, Validators.required],
-    begin: [null, Validators.required],
-    end: [null, Validators.required],
+    begin: [null as Date | null, Validators.required],
+    end: [null as Date | null, Validators.required],
   });
 
   ngOnInit() {
     this.setupUserFilter();
     this.loadUsers();
-    this.form.get('begin')?.valueChanges.subscribe((begin) => {
-      this.checkOverlapDates();
-    });
 
-    this.form.get('end')?.valueChanges.subscribe((end) => {
+    // 🔥 UN SOLO OBSERVER PARA TODO EL FORM
+    this.form.valueChanges.subscribe(() => {
       this.checkOverlapDates();
     });
   }
@@ -148,14 +154,14 @@ export class TeleworkSubscribeComponent implements OnInit {
 
     this.form.patchValue({
       userId: user.id,
-      begin: null,
-      end: null,
     });
 
-    // limpiar historial anterior inmediatamente
+    // 🔥 RESET REAL (CLAVE PARA EL FANTASMA)
+    this.form.get('begin')?.reset();
+    this.form.get('end')?.reset();
+
     this.subscriptions = [];
 
-    // cargar historial del nuevo usuario
     await this.loadSubscriptions(user.id);
   }
 
@@ -215,7 +221,11 @@ export class TeleworkSubscribeComponent implements OnInit {
       if (activeA && !activeB) return -1;
       if (!activeA && activeB) return 1;
 
-      return new Date(b.begin).getTime() - new Date(a.begin).getTime();
+      // 🔥 NORMALIZAR FECHA (SIN TIMEZONE)
+      const bDate = this.parseDateCL(b.begin);
+      const aDate = this.parseDateCL(a.begin);
+
+      return bDate.getTime() - aDate.getTime();
     });
   }
 
@@ -237,6 +247,8 @@ export class TeleworkSubscribeComponent implements OnInit {
     if (this.currentStep < this.steps.length) {
       this.steps[this.currentStep - 1].completed = true;
       this.currentStep++;
+
+      this.scrollToActiveStep(); // 🔥 AQUÍ
     }
   }
 
@@ -244,66 +256,89 @@ export class TeleworkSubscribeComponent implements OnInit {
     if (this.currentStep > 1) {
       this.steps[this.currentStep - 2].completed = false;
       this.currentStep--;
+
+      this.scrollToActiveStep(); // 🔥 AQUÍ
     }
   }
 
   calculateActive(begin: Date, end: Date): boolean {
+    if (!begin || !end) return false;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return today >= begin && today <= end;
+    const b = new Date(begin);
+    const e = new Date(end);
+
+    b.setHours(0, 0, 0, 0);
+    e.setHours(0, 0, 0, 0);
+
+    return today >= b && today <= e;
   }
 
   async createSubscription() {
-    const begin = this.form.value.begin!;
-    const end = this.form.value.end!;
+    const begin = this.form.get('begin')?.value;
+    const end = this.form.get('end')?.value;
+
+    if (!begin || !end) {
+      this.showWarning('Debe seleccionar fechas válidas');
+      return;
+    }
 
     const payload = {
-      begin,
-      end,
+      begin: this.toBackendDate(begin), // 🔥 CLAVE
+      end: this.toBackendDate(end), // 🔥 CLAVE
       user: { id: this.form.value.userId },
       active: this.calculateActive(begin, end),
     };
 
     await firstValueFrom(this.subscribeService.create(payload));
 
-    // avanzar al paso final
     this.steps.forEach((step) => (step.completed = true));
     this.currentStep = 7;
-
-    // marcar paso 7 como completado
-    this.steps[6].completed = true;
   }
 
   reset() {
     this.form.reset();
-    this.limpiarBusqueda();
-    this.selectedUser = null;
 
+    // 🔥 LIMPIEZA REAL
+    this.selectedUser = null;
+    this.userSearch.setValue(null); // 🔥 CLAVE
+    this.filteredUsers = this.users;
+    this.subscriptions = [];
+
+    this.form.patchValue({
+      userId: null,
+    });
+
+    // 🔥 STEPS
     this.steps.forEach((s) => (s.completed = false));
     this.currentStep = 1;
 
+    // 🔥 FILE
     this.selectedFile = null;
     this.fileName = null;
 
-    this.overlapWarningShown = false; // ← agregar
+    this.overlapWarningShown = false;
+
+    // 🔥 SCROLL
+    this.lastStep = -1;
+    this.scrollToActiveStep();
   }
 
   limpiarBusqueda(): void {
-    this.userSearch.setValue('');
+    this.userSearch.setValue(null);
 
-    // restaurar lista completa
     this.filteredUsers = this.users;
-
-    // limpiar historial
     this.subscriptions = [];
-
-    // limpiar usuario
     this.selectedUser = null;
 
     this.form.patchValue({
       userId: null,
     });
+
+    this.userSearch.markAsPristine();
+    this.userSearch.markAsUntouched();
   }
 
   removeFile(input: any) {
@@ -316,10 +351,9 @@ export class TeleworkSubscribeComponent implements OnInit {
   isActive(s: any): boolean {
     const today = this.timeService.getServerTime();
 
-    const begin = new Date(s.begin).setHours(0, 0, 0, 0);
-    const end = new Date(s.end).setHours(0, 0, 0, 0);
-
-    const current = new Date(today).setHours(0, 0, 0, 0);
+    const begin = this.parseDateCL(s.begin).getTime();
+    const end = this.parseDateCL(s.end).getTime();
+    const current = this.parseDateCL(today).getTime();
 
     return current >= begin && current <= end;
   }
@@ -381,10 +415,6 @@ export class TeleworkSubscribeComponent implements OnInit {
 
     if (!begin) return;
 
-    // 🔥 reset SIEMPRE al inicio
-    this.hasDateConflict = false;
-    this.overlapWarningShown = false;
-
     const beginDate = this.parseDateCL(begin);
     const endDate = end ? this.parseDateCL(end) : null;
 
@@ -418,7 +448,7 @@ export class TeleworkSubscribeComponent implements OnInit {
       }
     }
 
-    // 🟢 SI NO HAY CONFLICTO
+    // 🟢 SI NO HAY CONFLICTO → recién aquí limpias
     else {
       this.hasDateConflict = false;
       this.overlapWarningShown = false;
@@ -440,7 +470,19 @@ export class TeleworkSubscribeComponent implements OnInit {
   }
 
   formatDateCL(date: any): string {
-    const d = this.parseDateCL(date);
+    if (!date) return '';
+
+    let d: Date;
+
+    if (date instanceof Date) {
+      d = date;
+    } else if (typeof date === 'string') {
+      const [year, month, day] = date.split('T')[0].split('-');
+      d = new Date(+year, +month - 1, +day);
+    } else {
+      console.warn('Fecha inválida:', date);
+      return '';
+    }
 
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -449,35 +491,30 @@ export class TeleworkSubscribeComponent implements OnInit {
     return `${day}/${month}/${year}`;
   }
 
+  private formatFromDate(d: Date): string {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  }
+
   parseDateCL(date: any): Date {
-    if (!date) return new Date();
+    if (!date) return null as any;
 
-    // ya es Date (datepicker)
+    // ✅ SI YA ES DATE
     if (date instanceof Date) {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      return d;
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
     }
 
-    // viene del backend ISO
-    if (typeof date === 'string' && date.includes('T')) {
-      const d = new Date(date);
-      d.setHours(0, 0, 0, 0);
-      return d;
+    // ✅ STRING ISO YYYY-MM-DD
+    if (typeof date === 'string' && date.includes('-')) {
+      const [year, month, day] = date.split('T')[0].split('-');
+      return new Date(+year, +month - 1, +day);
     }
 
-    // formato dd/mm/yyyy
-    if (typeof date === 'string' && date.includes('/')) {
-      const parts = date.split('/');
-      const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-
-    // fallback
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    // fallback seguro
+    return new Date(date);
   }
 
   private setupUserFilter() {
@@ -531,5 +568,65 @@ export class TeleworkSubscribeComponent implements OnInit {
       default:
         this.nextStep();
     }
+  }
+
+  fixDate(date: Date): Date {
+    const d = new Date(date);
+    d.setHours(12, 0, 0, 0);
+    return d;
+  }
+
+  onDateChange(field: 'begin' | 'end', event: any) {
+    const value = event.value;
+    if (!value) return;
+
+    const cleanDate = new Date(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate(),
+    );
+
+    this.form.get(field)?.setValue(cleanDate);
+
+    // 🔥 SOLO reset, NO validar aquí
+    this.overlapWarningShown = false;
+  }
+
+  getDate(field: 'begin' | 'end'): string {
+    const value = this.form.get(field)?.value;
+    return value ? this.formatDateCL(value) : '';
+  }
+
+  toBackendDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  ngAfterViewInit() {
+    this.scrollToActiveStep();
+  }
+
+  private lastStep = -1;
+
+  scrollToActiveStep() {
+    if (this.lastStep === this.currentStep) return;
+
+    this.lastStep = this.currentStep;
+
+    setTimeout(() => {
+      const index = this.steps.findIndex((s) => s.id === this.currentStep);
+      const el = this.stepItems?.toArray()[index];
+
+      if (el) {
+        el.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'center',
+          block: 'nearest',
+        });
+      }
+    }, 100);
   }
 }

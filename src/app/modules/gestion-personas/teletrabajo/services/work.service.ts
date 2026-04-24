@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { Work, PageResponse } from '@app/modules/gestion-personas/teletrabajo/models/work.model';
+import {
+  Work,
+  PageResponse,
+} from '@app/modules/gestion-personas/teletrabajo/models/work.model';
 
 type WorkPayload = {
   description: string;
@@ -12,6 +15,11 @@ type WorkPayload = {
     id: number;
     active: boolean;
   } | null;
+};
+
+// 🔥 ESTE FALTABA
+type WorkUpdatePayload = {
+  description: string;
 };
 
 @Injectable({

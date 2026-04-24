@@ -21,10 +21,10 @@ import { firstValueFrom } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { TeleworkReportPrintService } from  '@app/modules/gestion-personas/teletrabajo/services/reports/telework-report-print.service';
+import { TeleworkReportPrintService } from '@app/modules/gestion-personas/teletrabajo/services/reports/telework-report-print.service';
 
 import { LoaderService } from '@app/core/services/loader.service';
-import { WorkService } from  '@app/modules/gestion-personas/teletrabajo/services/work.service';
+import { WorkService } from '@app/modules/gestion-personas/teletrabajo/services/work.service';
 import { UsersGroupService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users-group.service';
 
 import { filterByRutOrName } from '@app/shared/utils/filter.util';
@@ -64,7 +64,8 @@ export class TeleworkReportComponent {
   hasSearched: boolean = false;
 
   userSearch = new FormControl('');
-  filteredUsers: any[] = [];
+
+  isFiltering: boolean = false;
 
   rut: string = '';
   rutInvalido = false;
@@ -105,6 +106,10 @@ export class TeleworkReportComponent {
   // RESULTADOS
   // ===============================
 
+  filteredGroups: any[] = [];
+  filteredUsers: any[] = [];
+  noResults = false;
+
   users: any[] = [];
   allUsers: any[] = [];
   selectedUser: any = null;
@@ -122,7 +127,7 @@ export class TeleworkReportComponent {
   // COLUMNAS TABLAS
   // ===============================
 
-  displayedUsersColumns: string[] = ['fullName', 'rut', 'activity'];
+  displayedUsersColumns = ['fullName', 'rut', 'marks', 'actions'];
   displayedWarningColumns: string[] = ['fullName', 'rut', 'marks'];
 
   displayedRegistersColumns = [
@@ -145,6 +150,10 @@ export class TeleworkReportComponent {
 
     this.month = new Date().getMonth() + 1;
     this.year = new Date().getFullYear();
+    // 🔥 genera automáticamente el rango
+    this.onMonthYearChange();
+    // 🔥 ahora sí sincroniza visual (opcional)
+    this.syncMonthYearFromDate();
 
     // 🔥 CARGAR USUARIOS SOLO PARA AUTOCOMPLETE
     try {
@@ -162,14 +171,15 @@ export class TeleworkReportComponent {
     } catch (e) {
       console.error('Error cargando usuarios', e);
     }
-
     this.clearResults();
+
+    // 🔥 MOSTRAR USUARIOS AL INICIO
+    this.users = [...this.allUsers];
   }
 
   // ===============================
   // BUSCAR
   // ===============================
-
   async search() {
     this.hasSearched = false;
 
@@ -179,39 +189,18 @@ export class TeleworkReportComponent {
     this.allWorks = [];
     this.works = [];
 
-    this.validarRut();
-
-    if (this.rutInvalido) {
-      this.showWarning('El RUT ingresado no es válido');
-      return;
-    }
+    // ===============================
+    // 🔥 RANGO FECHAS aca debiera limpiar
+    // ===============================
+    let from: Date | null = null;
+    let to: Date | null = null;
 
     if (this.dateFrom && this.dateTo) {
-      const from = new Date(this.dateFrom);
-      const to = new Date(this.dateTo);
+      from = this.parseDateCL(this.dateFrom);
+      from.setHours(0, 0, 0, 0);
 
-      if (from > to) {
-        this.showWarning('La fecha "Desde" no puede ser mayor que "Hasta"');
-        return;
-      }
-    }
-
-    const rutFiltro = this.rut
-      ?.replace(/\./g, '')
-      .replace('-', '')
-      .toLowerCase();
-
-      
-    if (
-      !this.month &&
-      !this.year &&
-      !this.dateFrom &&
-      !this.dateTo &&
-      !this.rut &&
-      !this.selectedUser // 🔥 CLAVE
-    ) {
-      this.showWarning('Debe ingresar al menos un filtro');
-      return;
+      to = this.parseDateCL(this.dateTo);
+      to.setHours(23, 59, 59, 999);
     }
 
     try {
@@ -227,7 +216,20 @@ export class TeleworkReportComponent {
           firstValueFrom(this.usersGroupService.getAll()),
         ]);
 
-      const selectedUserId = this.selectedUser?.id || null;
+      const fixDate = (dateStr: any): Date | null => {
+        if (!dateStr) return null;
+
+        const [datePart] = String(dateStr).split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+
+        return new Date(year, month - 1, day); // 🔥 fecha local correcta
+      };
+
+      this.allSubscriptions = subscribes.map((s: any) => ({
+        ...s,
+        begin: fixDate(s.begin),
+        end: fixDate(s.end),
+      }));
 
       // ===============================
       // 🔥 LIMPIAR DATOS
@@ -248,58 +250,45 @@ export class TeleworkReportComponent {
         return true;
       });
 
-      let filteredRegisters = [...cleanRegisters];
-      let filteredSubscribes = [...cleanSubscribes];
-
       // ===============================
-      // 🔥 FILTRO FECHA
+      // 🔥 FILTRO POR FECHA
       // ===============================
-      if (this.month && this.year) {
-        filteredRegisters = filteredRegisters.filter((r: any) => {
-          const d = new Date(r.register_datetime);
-          return (
-            d.getMonth() + 1 === this.month && d.getFullYear() === this.year
-          );
-        });
-      }
+      this.allRegisters = cleanRegisters.filter((r: any) => {
+        if (!from || !to) return true;
 
-      if (this.dateFrom && this.dateTo) {
-        const from = new Date(this.dateFrom);
-        from.setHours(0, 0, 0, 0);
+        const d = this.parseDateCL(r.register_datetime);
+        return d >= from && d <= to;
+      });
 
-        const to = new Date(this.dateTo);
-        to.setHours(23, 59, 59, 999);
+      this.allSubscriptions = subscribes.map((s: any) => {
+        const fixDate = (dateStr: string) => {
+          const [datePart] = String(dateStr).split('T');
+          const [y, m, d] = datePart.split('-').map(Number);
+          return new Date(y, m - 1, d);
+        };
 
-        filteredRegisters = filteredRegisters.filter((r: any) => {
-          const d = new Date(r.register_datetime);
-          return d >= from && d <= to;
-        });
+        return {
+          ...s,
+          begin: fixDate(s.begin),
+          end: fixDate(s.end),
+        };
+      });
 
-        filteredSubscribes = filteredSubscribes.filter((s: any) => {
-          const start = new Date(s.begin);
-          const end = new Date(s.end);
-          return start <= to && end >= from;
-        });
-      }
+      this.allWorks = cleanWorks.filter((w: any) => {
+        if (!from || !to) return true;
 
-      // ===============================
-      // 🔥 FILTRO POR USUARIO (PRO)
-      // ===============================
-      if (selectedUserId) {
-        filteredRegisters = filteredRegisters.filter(
-          (r: any) =>
-            r.user?.id === selectedUserId || r.userId === selectedUserId,
-        );
+        const d = new Date(w.createdAt || w.created_at);
+        return d >= from && d <= to;
+      });
 
-        filteredSubscribes = filteredSubscribes.filter(
-          (s: any) =>
-            s.user?.id === selectedUserId || s.userId === selectedUserId,
-        );
-      }
+      // 👇 sincroniza
+      this.registers = [...this.allRegisters];
+      this.subscriptions = [...this.allSubscriptions];
+      this.works = [...this.allWorks];
 
-      this.allRegisters = filteredRegisters;
-      this.allSubscriptions = filteredSubscribes;
-      this.allWorks = cleanWorks;
+      // 🔥 DEBUG AQUÍ
+      console.log('REGISTROS REALES:', this.allRegisters);
+      console.log('SUSCRIPCIONES:', this.allSubscriptions);
 
       // ===============================
       // 🔥 MAPA USER → GROUP
@@ -324,35 +313,38 @@ export class TeleworkReportComponent {
       });
 
       // ===============================
-      // 🔥 CONTAR MARCAS
+      // 🔥 CONTAR MARCAS (CLAVE)
       // ===============================
       const userMap = new Map<number, number>();
 
-      filteredRegisters.forEach((r: any) => {
+      this.allRegisters.forEach((r: any) => {
         const uid = r.user?.id;
         if (!uid) return;
         userMap.set(uid, (userMap.get(uid) || 0) + 1);
       });
 
       // ===============================
-      // 🔥 FILTRAR USUARIOS
+      // 🔥 USERS
       // ===============================
-      let filteredUsers = [...users];
+      this.users = users
+        .filter((u: any) => {
+          const name = [
+            u.firstName,
+            u.secondName,
+            u.firstLastName,
+            u.secondLastName,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toUpperCase();
 
-      if (this.rut) {
-        filteredUsers = filteredUsers.filter((u: any) =>
-          u.rut
-            ?.replace(/\./g, '')
-            .replace('-', '')
-            .toLowerCase()
-            .includes(rutFiltro),
-        );
-      }
-
-      // ===============================
-      // 🔥 ARMAR USUARIOS
-      // ===============================
-      this.users = filteredUsers
+          return !(
+            name.includes('ADMIN') ||
+            name.includes('OPERADOR') ||
+            name.includes('SUPERVISOR') ||
+            name.includes('JEFATURA')
+          );
+        })
         .map((u: any) => {
           const marks = userMap.get(u.id) || 0;
 
@@ -380,15 +372,9 @@ export class TeleworkReportComponent {
                 }
               : null,
           };
-        })
-        .filter((u: any) => {
-          return filteredSubscribes.some(
-            (s: any) => s.user?.id === u.id || s.userId === u.id,
-          );
         });
 
       this.allUsers = [...this.users];
-      this.users = [];
       this.selectedGroup = null;
 
       // ===============================
@@ -457,7 +443,10 @@ export class TeleworkReportComponent {
     this.selectedGroup = group;
 
     // 🔥 usa base correcta según búsqueda
-    const base = this.userSearch.value ? this.filteredUsers : this.allUsers;
+    const hasSearch =
+      (this.userSearch.value || '').toString().trim().length > 0;
+
+    const base = hasSearch ? this.filteredUsers : this.allUsers;
 
     if (group.id === -1) {
       this.users = base.filter((u: any) => !u.groupId);
@@ -493,9 +482,8 @@ export class TeleworkReportComponent {
     this.dateFrom = null;
     this.dateTo = null;
 
-    this.users = [];
-    this.filteredUsers = [];  // 🔥 importante
-    this.groups = [...this.allGroups]; // 🔥 restaurar grupos
+    this.users = [...this.allUsers];
+    this.groups = [...this.allGroups];
 
     this.userSearch.setValue('');
 
@@ -508,11 +496,19 @@ export class TeleworkReportComponent {
   }
 
   onSearchFocus(): void {
-    this.filteredUsers = [...this.allUsers]; // 🔥 mostrar todo
+    // 🔥 limpiar filtro
+    this.userSearch.setValue('');
 
+    // 🔥 limpiar resultados de búsqueda
+    this.filteredUsers = [];
+    this.filteredGroups = [];
+    this.noResults = false;
+
+    // 🔥 reset de navegación
     this.selectedGroup = null;
     this.selectedUser = null;
 
+    // 🔥 limpiar detalle
     this.registers = [];
     this.subscriptions = [];
     this.works = [];
@@ -526,76 +522,105 @@ export class TeleworkReportComponent {
   }
 
   selectUser(user: any): void {
+    console.log('USER:', user);
+
     this.selectedUser = user;
 
+    // limpiar vista
     this.registers = [];
     this.subscriptions = [];
-
-    // 🔥 CLAVE: limpiar works y día seleccionado
     this.works = [];
     this.selectedDay = null;
 
+    // 🔥 validar datos base
+    if (!this.allSubscriptions?.length) {
+      console.warn('⏳ Subs no cargadas aún');
+      return;
+    }
+
     // ===============================
-    // 🔹 REGISTROS
+    // 🔹 REGISTROS (usuario + fecha)
     // ===============================
-    let userRegisters = this.allRegisters
-      .filter((r: any) => r.user?.id === user.id || r.userId === user.id)
+    const userRegisters = this.allRegisters
+      .filter((r: any) => {
+        const regUserId = r.user?.id ?? r.userId ?? r.usuarioId ?? r.user_id;
+        if (Number(regUserId) !== Number(user.id)) return false;
+
+        const d = new Date(r.register_datetime);
+
+        return (
+          (!this.dateFrom || d >= this.dateFrom) &&
+          (!this.dateTo || d <= this.dateTo)
+        );
+      })
       .sort(
         (a: any, b: any) =>
           new Date(a.register_datetime).getTime() -
           new Date(b.register_datetime).getTime(),
-      );
+      )
+      .map((r: any) => ({
+        ...r,
+        type: r.type || r.state,
+        isVirtual: false,
+      }));
 
-    userRegisters = userRegisters.map((r: any, index: number) => ({
-      ...r,
-      type: r.type || (index % 2 === 0 ? 'ING' : 'SAL'),
-      isVirtual: false,
-    }));
+    console.log('REGISTROS FILTRADOS:', userRegisters);
 
     // ===============================
-    // 🔥 RANGO
+    // 🔹 SUBS (SOLO por usuario)
     // ===============================
-    let from: Date | null = null;
-    let to: Date | null = null;
+    console.log('SUBS RAW:', this.allSubscriptions);
+    const userSubscriptions = (this.allSubscriptions || [])
+      .filter((s: any) => {
+        const subUserId = s.user?.id ?? s.userId ?? s.usuarioId ?? s.user_id;
+        return Number(subUserId) === Number(user.id);
+      })
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.begin).getTime();
+        const dateB = new Date(b.begin).getTime();
 
-    if (this.dateFrom && this.dateTo) {
-      from = this.parseDateCL(this.dateFrom);
-      from.setHours(0, 0, 0, 0);
+        return dateB - dateA; // 🔥 DESC
+      });
 
-      to = this.parseDateCL(this.dateTo);
-      to.setHours(23, 59, 59, 999);
-    } else if (this.month && this.year) {
-      from = new Date(this.year, this.month - 1, 1);
-      to = new Date(this.year, this.month, 0);
+    this.subscriptions = userSubscriptions;
 
-      from.setHours(0, 0, 0, 0);
-      to.setHours(23, 59, 59, 999);
+    console.log(
+      'ORDEN FINAL:',
+      userSubscriptions.map((s) => s.begin.toLocaleDateString('es-CL')),
+    );
+
+    // ===============================
+    // 🔥 SIN SUBS → mostrar reales
+    // ===============================
+    if (!userSubscriptions.length) {
+      console.warn('⚠️ Usuario sin suscripciones');
+      this.registers = userRegisters;
+      return;
     }
 
     // ===============================
-    // 🔹 SUSCRIPCIONES
+    // 🔥 GENERAR (virtuales + reales)
     // ===============================
-    this.subscriptions = this.allSubscriptions.filter((s: any) => {
-      const isUser = s.user?.id === user.id || s.userId === user.id;
-
-      if (!isUser) return false;
-      if (!from || !to) return true;
-
-      const start = new Date(s.begin);
-      const end = new Date(s.end);
-
-      return start <= to && end >= from;
-    });
-
-    // ===============================
-    // 🔹 REGISTROS COMPLETOS
-    // ===============================
-    this.registers = this.generateFullRegisters(
-      this.subscriptions,
+    let finalRegisters = this.generateFullRegisters(
+      userSubscriptions,
       userRegisters,
     );
 
-    // 🚫 NO TOCAR WORKS AQUÍ
+    // ===============================
+    // 🔥 FILTRO FINAL (ÚNICO)
+    // ===============================
+    finalRegisters = finalRegisters.filter((r: any) => {
+      const d = new Date(r.register_datetime);
+
+      return (
+        (!this.dateFrom || d >= this.dateFrom) &&
+        (!this.dateTo || d <= this.dateTo)
+      );
+    });
+
+    this.registers = finalRegisters;
+
+    console.log('FINAL REGISTERS:', this.registers);
   }
 
   selectDay(date: any): void {
@@ -717,6 +742,15 @@ export class TeleworkReportComponent {
     return `${day}/${month}/${year}`;
   }
 
+  formatDateShortCL(date: any): string {
+    const d = this.toLocalDate(date);
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+
+    return `${day}/${month}`; // 🔥 SOLO dd/MM
+  }
+
   parseDateCL(date: any): Date {
     if (!date) return new Date();
 
@@ -776,8 +810,8 @@ export class TeleworkReportComponent {
     this.allSubscriptions.forEach((s: any) => {
       if (!s.active) return;
 
-      const start = new Date(s.begin);
-      const end = new Date(s.end);
+      const start = this.parseDateCL(s.start_date);
+      const end = this.parseDateCL(s.end_date);
 
       const missingDays: string[] = [];
 
@@ -812,18 +846,28 @@ export class TeleworkReportComponent {
   }
 
   onMonthYearChange(): void {
-    this.hasSearched = false; // 🔥 CLAVE
-    if (!this.month || !this.year) {
-      this.dateFrom = null;
-      this.dateTo = null;
-      return;
+    this.hasSearched = false;
+
+    // 🔥 solo actúa cuando ambos existen
+    if (this.month && this.year) {
+      const from = new Date(this.year, this.month - 1, 1);
+      from.setHours(0, 0, 0, 0);
+
+      const to = new Date(this.year, this.month, 0);
+      to.setHours(23, 59, 59, 999);
+
+      this.dateFrom = from;
+      this.dateTo = to;
     }
+  }
 
-    // primer día del mes
-    this.dateFrom = new Date(this.year, this.month - 1, 1);
+  validateRange(): void {
+    if (!this.dateFrom || !this.dateTo) return;
 
-    // último día del mes
-    this.dateTo = new Date(this.year, this.month, 0);
+    if (this.dateFrom > this.dateTo) {
+      this.dateTo = new Date(this.dateFrom);
+      this.dateTo.setHours(23, 59, 59, 999);
+    }
   }
 
   getDurationDays(s: any): number {
@@ -931,98 +975,6 @@ export class TeleworkReportComponent {
     saveAs(blob, `reporte_${user.fullName}.xlsx`);
   }
 
-  generateFullRegisters(subscriptions: any[], registers: any[]) {
-    const result = [...registers];
-
-    const today = this.parseDateCL(this.getToday());
-
-    // 🔥 rango activo SIEMPRE
-    let from: Date | null = null;
-    let to: Date | null = null;
-
-    if (this.dateFrom && this.dateTo) {
-      from = this.parseDateCL(this.dateFrom);
-      to = this.parseDateCL(this.dateTo);
-    } else if (this.month && this.year) {
-      from = new Date(this.year, this.month - 1, 1);
-      to = new Date(this.year, this.month, 0);
-    }
-
-    subscriptions.forEach((sub) => {
-      let start = this.parseDateCL(sub.begin);
-      let endOriginal = this.parseDateCL(sub.end);
-
-      // 🔥 recorte por filtro
-      if (from && start < from) start = from;
-      if (to && endOriginal > to) endOriginal = to;
-
-      const end = this.isCurrentlyActive(sub) ? today : endOriginal;
-
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const current = this.parseDateCL(d);
-
-        // 🚫 fuera de rango
-        if (from && current < from) continue;
-        if (to && current > to) continue;
-
-        // 🚫 futuro
-        if (current > today) continue;
-
-        const dateStr = this.formatDateCL(current);
-
-        const ingreso = result.find(
-          (r) =>
-            this.formatDateCL(r.register_datetime) === dateStr &&
-            r.type === 'ING',
-        );
-
-        const salida = result.find(
-          (r) =>
-            this.formatDateCL(r.register_datetime) === dateStr &&
-            r.type === 'SAL',
-        );
-
-        if (!ingreso) {
-          const dIng = new Date(current);
-          dIng.setHours(0, 0, 0);
-
-          result.push({
-            register_datetime: dIng,
-            type: 'ING',
-            isVirtual: true,
-          });
-        }
-
-        if (!salida) {
-          const dSal = new Date(current);
-          dSal.setHours(0, 0, 0);
-
-          result.push({
-            register_datetime: dSal,
-            type: 'SAL',
-            isVirtual: true,
-          });
-        }
-      }
-    });
-
-    // 🔥 filtro final (doble seguridad)
-    return result
-      .filter((r) => {
-        const d = this.parseDateCL(r.register_datetime);
-
-        if (from && d < from) return false;
-        if (to && d > to) return false;
-
-        return true;
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.register_datetime).getTime() -
-          new Date(b.register_datetime).getTime(),
-      );
-  }
-
   formatTimeCL(date: any, isVirtual?: boolean): string {
     if (isVirtual) return '00:00';
 
@@ -1098,34 +1050,52 @@ export class TeleworkReportComponent {
     this.clearResults(); // 🔥 limpieza completa
   }
 
-  onDateChange(): void {
-    this.hasSearched = false; // 🔥 CLAVE
-    if (!this.dateFrom && !this.dateTo) return;
+  syncMonthYearFromDate(): void {
+    if (!this.dateFrom) return;
 
-    if (this.dateFrom) {
+    const d = new Date(this.dateFrom);
+
+    this.month = d.getMonth() + 1; // 🔥 1-12
+    this.year = d.getFullYear();
+  }
+
+  onDateChange(type: 'from' | 'to'): void {
+    this.hasSearched = false;
+
+    if (type === 'from' && this.dateFrom) {
       const from = new Date(this.dateFrom);
-
-      this.month = from.getMonth() + 1;
-      this.year = from.getFullYear();
-
       from.setHours(0, 0, 0, 0);
       this.dateFrom = from;
+
+      if (!this.dateTo) {
+        const to = new Date(from);
+        to.setHours(23, 59, 59, 999);
+        this.dateTo = to;
+      }
+
+      this.syncMonthYearFromDate();
     }
 
-    if (this.dateTo) {
+    if (type === 'to' && this.dateTo) {
       const to = new Date(this.dateTo);
       to.setHours(23, 59, 59, 999);
       this.dateTo = to;
+
+      if (!this.dateFrom) {
+        const from = new Date(to);
+        from.setHours(0, 0, 0, 0);
+        this.dateFrom = from;
+
+        this.syncMonthYearFromDate();
+      }
     }
 
-    this.clearResults();
+    this.validateRange();
   }
 
   clearResults(): void {
     this.selectedUser = null;
     this.selectedGroup = null;
-
-    this.selectedUser = null;
 
     this.users = [];
     this.registers = [];
@@ -1133,10 +1103,6 @@ export class TeleworkReportComponent {
 
     this.works = [];
     this.selectedDay = null;
-
-    this.allRegisters = [];
-    this.allSubscriptions = [];
-    this.allWorks = [];
   }
 
   // ===============================
@@ -1180,48 +1146,38 @@ export class TeleworkReportComponent {
     return cuerpo + '-' + dv.toUpperCase();
   }
 
- private setupUserFilter() {
-  this.userSearch.valueChanges
-    .pipe(debounceTime(200), distinctUntilChanged())
-    .subscribe((value: any) => {
-      const term = (value || '').toString().trim();
+  private setupUserFilter() {
+    this.userSearch.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged())
+      .subscribe((value: any) => {
+        const term = (value || '').toString().trim();
 
-      // 🔥 SIN TEXTO → NO MOSTRAR NADA
-      if (!term) {
-        this.filteredUsers = [];
-        this.users = [];
-        this.groups = [...this.allGroups];
-        return;
-      }
+        // 🔥 SOLO AUTOCOMPLETE
+        if (!term) {
+          this.filteredUsers = [];
+          return;
+        }
 
-      const result = filterByRutOrName(this.allUsers, term, {
-        nameKey: 'fullName',
-        rutKey: 'rut',
+        this.filteredUsers = filterByRutOrName(this.allUsers, term, {
+          nameKey: 'fullName',
+          rutKey: 'rut',
+        });
       });
-
-      this.filteredUsers = result;
-
-      // 🔥 SOLO PREPARA, NO MUESTRA EN TABLA
-      this.users = [];
-      this.selectedGroup = null;
-
-      this.rebuildGroups(result);
-    });
-}
+  }
 
   selectUserFromSearch(user: any) {
     if (!user) return;
+    console.log('ALL SUBSCRIPTIONS:', this.allSubscriptions);
     this.selectedUser = user;
-    this.registers = [];
-    this.subscriptions = [];
-    this.works = [];
-    this.selectedDay = null;
+    this.selectUser(user);
   }
 
   limpiarBusqueda() {
     this.userSearch.setValue('');
 
-    this.filteredUsers = [...this.allUsers];
+    this.filteredUsers = [];
+    this.users = [...this.allUsers];
+    this.groups = [...this.allGroups];
 
     this.selectedUser = null;
 
@@ -1233,5 +1189,279 @@ export class TeleworkReportComponent {
 
   displayUser(user: any): string {
     return user ? user.fullName : '';
+  }
+
+  generateFullRegisters(subs: any[], regs: any[]) {
+    const result: any[] = [];
+
+    const mapByDay = new Map<string, any[]>();
+
+    // 🔹 AGRUPAR REGISTROS REALES POR DÍA
+    regs.forEach((r) => {
+      const date = this.parseDateTime(r.register_datetime);
+      const key = this.getKeyFromDate(date);
+
+      if (!mapByDay.has(key)) mapByDay.set(key, []);
+
+      mapByDay.get(key)!.push({
+        ...r,
+        register_datetime: date,
+        type: r.type || r.state,
+        isVirtual: false,
+      });
+    });
+
+    const usedDays = new Set<string>();
+
+    // 🔹 HOY NORMALIZADO
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 🔹 RECORRER SUSCRIPCIONES
+    subs.forEach((s: any) => {
+      // 🔥 FIX CRÍTICO (FECHAS)
+      const start = this.parseDateLocal(s.begin);
+      const end = this.parseDateLocal(s.end);
+
+      if (!start || !end) return;
+
+      let current = new Date(start);
+      const endDate = new Date(end);
+
+      while (current.getTime() <= endDate.getTime()) {
+        const key = this.getKeyFromDate(current);
+
+        // 🔥 EVITA DUPLICAR DÍAS ENTRE SUBS
+        if (usedDays.has(key)) {
+          current = new Date(
+            current.getFullYear(),
+            current.getMonth(),
+            current.getDate() + 1,
+          );
+          continue;
+        }
+
+        usedDays.add(key);
+
+        const dayRegs = mapByDay.get(key) || [];
+
+        // 🔹 LIMPIAR DUPLICADOS POR TIPO
+        const uniqueByType = new Map<string, any>();
+
+        dayRegs.forEach((r) => {
+          if (!uniqueByType.has(r.type)) {
+            uniqueByType.set(r.type, r);
+          }
+        });
+
+        const cleanedRegs = Array.from(uniqueByType.values());
+
+        const hasIng = cleanedRegs.some((r) => r.type === 'ING');
+        const hasSal = cleanedRegs.some((r) => r.type === 'SAL');
+
+        // 🔹 AGREGAR REALES
+        result.push(...cleanedRegs);
+
+        const base = new Date(current);
+        base.setHours(0, 0, 0, 0);
+
+        const isPastDay = current < today;
+
+        // 🔥 GENERAR VIRTUALES SOLO SI FALTAN
+        if (isPastDay) {
+          if (!hasIng) {
+            result.push({
+              register_datetime: new Date(base),
+              type: 'ING',
+              isVirtual: true,
+            });
+          }
+
+          if (!hasSal) {
+            result.push({
+              register_datetime: new Date(base),
+              type: 'SAL',
+              isVirtual: true,
+            });
+          }
+        }
+
+        // 🔁 SIGUIENTE DÍA
+        current = new Date(
+          current.getFullYear(),
+          current.getMonth(),
+          current.getDate() + 1,
+        );
+      }
+    });
+
+    // 🔥 ORDEN FINAL PRO (ING → SAL)
+    return result.sort((a, b) => {
+      const d1 = a.register_datetime.getTime();
+      const d2 = b.register_datetime.getTime();
+
+      if (d1 !== d2) return d1 - d2;
+
+      if (a.type === b.type) return 0;
+      return a.type === 'ING' ? -1 : 1;
+    });
+  }
+
+  parseDateLocal(date: string | Date): Date {
+    if (!date) return null as any;
+
+    if (date instanceof Date) {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    const clean = date.replace('Z', '');
+    const d = new Date(clean);
+    d.setHours(0, 0, 0, 0);
+
+    return d;
+  }
+
+  parseDateCLOnlyDate(dateStr: any): Date {
+    if (!dateStr) return null as any;
+
+    const str = String(dateStr);
+    const datePart = str.split('T')[0];
+
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    // 🔥 crear fecha LOCAL SIN timezone
+    return new Date(year, month - 1, day);
+  }
+
+  isSameOrBefore(a: Date, b: Date): boolean {
+    return (
+      a.getFullYear() < b.getFullYear() ||
+      (a.getFullYear() === b.getFullYear() && a.getMonth() < b.getMonth()) ||
+      (a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() <= b.getDate())
+    );
+  }
+
+  parseDateTime(date: any): Date {
+    if (!date) return new Date();
+
+    if (typeof date === 'string') {
+      return new Date(date); // 🔥 mantiene hora real
+    }
+
+    if (date instanceof Date) {
+      return new Date(date);
+    }
+
+    return new Date(date);
+  }
+
+  isSameOrBeforeDay(a: Date, b: Date): boolean {
+    return (
+      (a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() <= b.getDate()) ||
+      (a.getFullYear() === b.getFullYear() && a.getMonth() < b.getMonth()) ||
+      a.getFullYear() < b.getFullYear()
+    );
+  }
+
+  getKeyFromDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+
+    return `${y}-${m}-${d}`; // 🔥 evita toISOString (bug clásico)
+  }
+
+  onFilterFocus(): void {
+    this.clearResults();
+    this.hasSearched = false;
+  }
+
+  async onBuscarClick(): Promise<void> {
+    // 🔵 1. cargar datos primero
+    await this.search();
+
+    // 🔍 2. ver si hay texto
+    const raw: any = this.userSearch.value;
+
+    const term =
+      typeof raw === 'string' ? raw.trim() : raw?.fullName?.trim() || '';
+
+    // 🟡 3. SOLO si hay texto → filtrar
+    if (term) {
+      this.filterByName();
+    } else {
+      // 🔥 sin filtro → mostrar todo
+      this.isFiltering = false;
+      this.filteredUsers = [];
+      this.filteredGroups = [];
+    }
+  }
+
+  filterByName(): void {
+    console.log('🟡 INICIO FILTRO');
+
+    const raw: any = this.userSearch.value;
+    console.log('👉 valor input:', raw);
+
+    const term =
+      typeof raw === 'string'
+        ? raw.toLowerCase().trim()
+        : raw?.fullName?.toLowerCase().trim() || '';
+
+    console.log('👉 término normalizado:', term);
+
+    // 🔥 SIN TEXTO → MOSTRAR TODO
+    if (!term) {
+      console.log('⚠️ término vacío → mostrar todo');
+
+      this.isFiltering = false;
+      this.filteredUsers = [];
+      this.filteredGroups = [];
+      this.noResults = false;
+
+      return;
+    }
+
+    const matches = this.allUsers.filter((u: any) =>
+      (u.fullName || '').toLowerCase().includes(term),
+    );
+
+    console.log('✅ matches encontrados:', matches.length);
+
+    // 🔥 SOLO marcar noResults si hay texto
+    this.noResults = matches.length === 0;
+
+    // 🔴 SIN RESULTADOS
+    if (this.noResults) {
+      console.log('❌ NO HAY RESULTADOS');
+
+      this.isFiltering = true;
+      this.filteredUsers = [];
+      this.filteredGroups = [];
+
+      return;
+    }
+
+    // 🟢 CON RESULTADOS
+    this.isFiltering = true;
+
+    this.filteredUsers = matches;
+    console.log('👤 filteredUsers:', this.filteredUsers);
+
+    const groupIds = [...new Set(matches.map((u: any) => u.groupId))];
+
+    this.filteredGroups = this.groups.filter((g: any) =>
+      groupIds.includes(g.id),
+    );
+
+    console.log('🟦 filteredGroups:', this.filteredGroups);
+
+    console.log('🟢 FIN FILTRO');
   }
 }

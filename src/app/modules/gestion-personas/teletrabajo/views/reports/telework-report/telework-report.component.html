@@ -9,112 +9,116 @@
 
 <div class="hint filter-hint">
   <mat-icon>filter_alt</mat-icon>
-  <span>Filtra por período o RUT para obtener los marcajes</span>
+  <span>Filtra nombre por período para obtener los marcajes</span>
 </div>
 
 <div class="filters">
-  <!-- IZQUIERDA -->
   <div class="filters-left">
-    <!-- RUT -->
-    <mat-form-field appearance="outline" class="full-width" floatLabel="always">
+    <!-- USUARIO -->
+    <mat-form-field appearance="outline" class="f-user">
       <input
         matInput
-        type="text"
         placeholder="Nombre o RUT"
         [formControl]="userSearch"
         [matAutocomplete]="auto"
-        autocomplete="off"
-        (focus)="onSearchFocus()"  
+        (focus)="onFilterFocus()"
       />
     </mat-form-field>
 
+    <!-- AUTOCOMPLETE -->
     <mat-autocomplete
       #auto="matAutocomplete"
       [displayWith]="displayUser"
       (optionSelected)="selectUserFromSearch($event.option.value)"
     >
       <mat-option *ngFor="let u of filteredUsers" [value]="u">
-        <div class="user-option">
-          <span class="name">{{ u.fullName }}</span>
-          <span class="rut">{{ u.rut }}</span>
+        <div class="option-user">
+          <div class="name">{{ u.fullName }}</div>
+          <div class="rut">{{ u.rut }}</div>
         </div>
       </mat-option>
     </mat-autocomplete>
 
-    <!-- Mes -->
-    <select
-      class="input"
-      [(ngModel)]="month"
-      (change)="onMonthYearChange()"
-      (focus)="onMonthFocus()"
-    >
-      <option *ngFor="let m of months" [value]="m.value">
-        {{ m.name }}
-      </option>
-    </select>
-
-    <!-- Año -->
-    <select
-      class="input"
-      [(ngModel)]="year"
-      (change)="onMonthYearChange()"
-      (focus)="onMonthFocus()"
-    >
-      <option *ngFor="let y of years" [value]="y">
-        {{ y }}
-      </option>
-    </select>
-
-    <!-- Fechas -->
-    <div class="date-range">
-      <mat-form-field appearance="outline" class="date-field">
-        <input
-          matInput
-          [matDatepicker]="pickerFrom"
-          [(ngModel)]="dateFrom"
-          placeholder="Desde"
-          (dateChange)="onDateChange()"
-        />
-        <mat-datepicker-toggle
-          matIconSuffix
-          [for]="pickerFrom"
-        ></mat-datepicker-toggle>
-        <mat-datepicker #pickerFrom></mat-datepicker>
+    <div class="filters-group month-group">
+      <!-- MES -->
+      <mat-form-field appearance="outline">
+        <mat-select
+          [(ngModel)]="month"
+          (selectionChange)="onMonthYearChange()"
+          (focus)="onFilterFocus()"
+        >
+          <mat-option *ngFor="let m of months" [value]="m.value">
+            {{ m.name }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
-
-      <mat-form-field appearance="outline" class="date-field">
-        <input
-          matInput
-          [matDatepicker]="pickerTo"
-          [(ngModel)]="dateTo"
-          placeholder="Hasta"
-          (dateChange)="onDateChange()"
-        />
-        <mat-datepicker-toggle
-          matIconSuffix
-          [for]="pickerTo"
-        ></mat-datepicker-toggle>
-        <mat-datepicker #pickerTo></mat-datepicker>
+      <!-- año -->
+      <mat-form-field appearance="outline">
+        <mat-select
+          [(ngModel)]="year"
+          (
+          selectionChange)="onMonthYearChange()"
+          (focus)="onFilterFocus()"
+        >
+          <mat-option *ngFor="let y of years" [value]="y">
+            {{ y }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
     </div>
+
+    <!-- DESDE -->
+    <mat-form-field appearance="outline" class="f-date">
+      <input
+        matInput
+        [matDatepicker]="pickerFrom"
+        [(ngModel)]="dateFrom"
+        (dateChange)="onDateChange('from')"
+        (focus)="onFilterFocus()"
+        placeholder="Desde"
+      />
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="pickerFrom"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #pickerFrom></mat-datepicker>
+    </mat-form-field>
+
+    <!-- HASTA -->
+    <mat-form-field appearance="outline" class="f-date">
+      <input
+        matInput
+        [matDatepicker]="pickerTo"
+        [(ngModel)]="dateTo"
+        (dateChange)="onDateChange('to')"
+        (focus)="onFilterFocus()"
+        placeholder="Hasta"
+      />
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="pickerTo"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #pickerTo></mat-datepicker>
+    </mat-form-field>
   </div>
 
-  <!-- DERECHA -->
+  <!-- BOTONES -->
   <div class="filters-actions">
-    <button class="btn-sirus primary" (click)="search()">
-      <mat-icon>search</mat-icon> Buscar
-    </button>
+    <button class="btn-sirus primary" (click)="onBuscarClick()">Buscar</button>
 
-    <button class="btn-sirus ghost" (click)="clearFilters()">
-      <mat-icon>refresh</mat-icon> Limpiar
-    </button>
+    <button class="btn-sirus ghost" (click)="clearFilters()">Limpiar</button>
   </div>
 </div>
 
 <!-- =========================
      TABLAS PRINCIPALES
 ========================== -->
-<div class="tables-row" *ngIf="hasSearched">
+<div class="no-results" *ngIf="hasSearched && noResults">
+  <mat-icon>search_off</mat-icon>
+  <span>No hay información para la búsqueda</span>
+</div>
+
+<div class="tables-row" *ngIf="hasSearched && !noResults">
   <!-- =========================
   🟦 GRUPOS (NUEVA 🔥)
   ========================== -->
@@ -125,13 +129,13 @@
       <span class="counter">{{ groups.length }}</span>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll groups-table">
       <div class="hint subtle">
         <mat-icon>info</mat-icon>
         <span>Haz clic en un grupo para filtrar usuarios</span>
       </div>
 
-      <table mat-table [dataSource]="groups">
+      <table mat-table [dataSource]="isFiltering ? filteredGroups : groups">
         <!-- Nombre -->
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Grupo</th>
@@ -152,7 +156,7 @@
 
         <!-- Cantidad -->
         <ng-container matColumnDef="count">
-          <th mat-header-cell *matHeaderCellDef>Usuarios</th>
+          <th mat-header-cell *matHeaderCellDef>#</th>
           <td mat-cell *matCellDef="let g">
             <span class="badge">{{ g.count }}</span>
           </td>
@@ -180,7 +184,7 @@
       <span class="counter">{{ users.length }}</span>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll users-table">
       <div class="hint subtle">
         <mat-icon>info</mat-icon>
         <span>Haz clic en un usuario para ver detalle</span>
@@ -201,34 +205,36 @@
           <td mat-cell *matCellDef="let u">{{ u.rut }}</td>
         </ng-container>
 
-        <ng-container matColumnDef="activity">
-          <th mat-header-cell *matHeaderCellDef>Actividad</th>
+        <ng-container matColumnDef="marks">
+          <th mat-header-cell *matHeaderCellDef>Marcas</th>
 
           <td mat-cell *matCellDef="let u">
-            <div class="activity-cell">
-              <!-- 🔢 MARCAS -->
-              <span class="badge" [class.zero-marks]="u.marks === 0">
-                {{ u.marks }}
-              </span>
+            <span class="badge" [class.zero-marks]="u.marks === 0">
+              {{ u.marks }}
+            </span>
+          </td>
+        </ng-container>
 
-              <!-- 🔥 WRAPPER NUEVO -->
-              <div class="actions-wrapper">
-                <div class="actions">
-                  <button
-                    mat-icon-button
-                    (click)="printUser(u); $event.stopPropagation()"
-                  >
-                    <mat-icon>print</mat-icon>
-                  </button>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acc</th>
 
-                  <button
-                    mat-icon-button
-                    (click)="exportUser(u); $event.stopPropagation()"
-                  >
-                    <mat-icon>download</mat-icon>
-                  </button>
-                </div>
-              </div>
+          <td mat-cell *matCellDef="let u">
+            <div class="actions">
+              <button
+                mat-icon-button
+                (click)="printUser(u); $event.stopPropagation()"
+                matTooltip="Imprimir"
+              >
+                <mat-icon>print</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                (click)="exportUser(u); $event.stopPropagation()"
+                matTooltip="Exportar"
+              >
+                <mat-icon>download</mat-icon>
+              </button>
             </div>
           </td>
         </ng-container>
@@ -250,7 +256,7 @@
   <!-- =========================
        🟩 REGISTROS
   ========================== -->
-  <div class="card">
+  <div class="card" *ngIf="selectedUser">
     <div class="card-header green">
       <mat-icon>schedule</mat-icon>
       <span>Detalle de marcas </span>
@@ -258,7 +264,7 @@
       <span class="counter">{{ registers.length }}</span>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll registers-table">
       <div class="hint subtle">
         <mat-icon>info</mat-icon>
         <span>Haz clic en un dia para ver actividad diaria</span>
@@ -268,7 +274,7 @@
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
           <td mat-cell *matCellDef="let r">
-            {{ formatDateCL(r.register_datetime) }}
+            {{ formatDateShortCL(r.register_datetime) }}
           </td>
         </ng-container>
 
@@ -325,7 +331,7 @@
   <!-- =========================
        🟧 WORKS (TERCERA CARD 🔥)
   ========================== -->
-  <div class="card works">
+  <div class="card works" *ngIf="selectedUser">
     <div class="card-header orange">
       <mat-icon>notes</mat-icon>
       <span>Actividades</span>
@@ -334,7 +340,7 @@
       <span class="counter">{{ works.length }}</span>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll works-table">
       <!-- 👇 SI NO HAY DÍA SELECCIONADO -->
       <div *ngIf="!selectedDay" class="empty-text">
         <span class="title">Selecciona un día</span>
@@ -353,7 +359,7 @@
             No hay actividades registradas para este día
           </span>
           <span class="date" *ngIf="selectedDay">
-            {{ formatDateCL(selectedDay) }}
+            {{ formatDateShortCL(selectedDay) }}
           </span>
         </div>
       </div>
@@ -368,7 +374,7 @@
         <ng-container matColumnDef="hour">
           <th mat-header-cell *matHeaderCellDef>Hora</th>
           <td mat-cell *matCellDef="let w">
-            {{ formatTimeCL(w.createdAt || w.created_at) }}
+            {{ formatDateShortCL(w.createdAt || w.created_at) }}
           </td>
         </ng-container>
 
@@ -380,7 +386,7 @@
 
               <!-- 🔥 AHORA SÍ BIEN UBICADO -->
               <span class="date" *ngIf="selectedDay">
-                {{ formatDateCL(selectedDay) }}
+                {{ formatDateShortCL(selectedDay) }}
               </span>
             </div>
           </th>
@@ -399,7 +405,7 @@
   <!-- =========================
        🟪 SUSCRIPCIONES
   ========================== -->
-  <div class="card">
+  <div class="card" *ngIf="selectedUser">
     <div class="card-header purple">
       <mat-icon>assignment</mat-icon>
       <span>Suscripciones</span>
@@ -407,13 +413,13 @@
       <span class="counter">{{ subscriptions.length }}</span>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll subscriptions-table">
       <table mat-table [dataSource]="subscriptions">
         <!-- Inicio -->
         <ng-container matColumnDef="start">
           <th mat-header-cell *matHeaderCellDef>Inicio</th>
           <td mat-cell *matCellDef="let s">
-            {{ formatDateCL(s.begin) }}
+            {{ formatDateShortCL(s.begin) }}
           </td>
         </ng-container>
 
@@ -421,7 +427,7 @@
         <ng-container matColumnDef="end">
           <th mat-header-cell *matHeaderCellDef>Fin</th>
           <td mat-cell *matCellDef="let s">
-            {{ formatDateCL(s.end) }}
+            {{ formatDateShortCL(s.end) }}
           </td>
         </ng-container>
 
@@ -436,16 +442,19 @@
         <!-- Estado -->
         <ng-container matColumnDef="state">
           <th mat-header-cell *matHeaderCellDef>Estado</th>
+
           <td mat-cell *matCellDef="let s">
-            <span class="estado-badge" [ngClass]="getEstado(s)">
-              {{
-                getEstado(s) === "vigente"
-                  ? "Vigente"
-                  : getEstado(s) === "pendiente"
-                    ? "Pendiente"
-                    : "Vencido"
-              }}
-            </span>
+            <ng-container *ngIf="getEstado(s) as estado">
+              <span class="state-chip" [ngClass]="'state-' + estado">
+                {{
+                  estado === "vigente"
+                    ? "Vigente"
+                    : estado === "pendiente"
+                      ? "Pendiente"
+                      : "Vencido"
+                }}
+              </span>
+            </ng-container>
           </td>
         </ng-container>
 

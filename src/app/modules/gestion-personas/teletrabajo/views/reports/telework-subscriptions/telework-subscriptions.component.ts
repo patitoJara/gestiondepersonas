@@ -249,21 +249,21 @@ export class TeleworkUserSubscriptionsComponent {
       );
 
       if (this.dateFrom && this.dateTo) {
-        const from = new Date(this.dateFrom);
+        const from = this.parseLocalDate(this.dateFrom);
         from.setHours(0, 0, 0, 0);
 
-        const to = new Date(this.dateTo);
+        const to = this.parseLocalDate(this.dateTo);
         to.setHours(23, 59, 59, 999);
 
         this.subscriptions = mySubscriptions
           .filter((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
             return start <= to && end >= from;
           })
           .map((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
 
             return {
               ...s,
@@ -277,13 +277,13 @@ export class TeleworkUserSubscriptionsComponent {
 
         this.subscriptions = mySubscriptions
           .filter((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
             return start <= to && end >= from;
           })
           .map((s: any) => {
-            const start = new Date(s.begin);
-            const end = new Date(s.end);
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
 
             return {
               ...s,
@@ -292,9 +292,19 @@ export class TeleworkUserSubscriptionsComponent {
             };
           });
       } else {
-        this.subscriptions = mySubscriptions;
+        this.subscriptions = mySubscriptions.map((s: any) => ({
+          ...s,
+          begin: this.parseLocalDate(s.begin),
+          end: this.parseLocalDate(s.end),
+        }));
       }
 
+      // 🔥 ORDEN FINAL (UNA SOLA VEZ)
+      this.subscriptions = this.subscriptions.sort((a: any, b: any) => {
+        const d1 = this.parseLocalDate(a.begin).getTime();
+        const d2 = this.parseLocalDate(b.begin).getTime();
+        return d1 - d2; // ASC
+      });
       // =========================================
       // 🔥 REGISTROS FINALES
       // =========================================
@@ -598,57 +608,39 @@ export class TeleworkUserSubscriptionsComponent {
   generateFullRegisters(subscriptions: any[], registers: any[]) {
     const result = [...registers];
 
-    const today = this.parseDateCL(this.getToday());
+    const today = this.parseLocalDate(this.getToday());
 
     subscriptions.forEach((sub) => {
-      let start = this.parseDateCL(sub.begin);
-      let end = this.parseDateCL(sub.end);
+      let start = this.parseLocalDate(sub.begin);
+      let end = this.parseLocalDate(sub.end);
 
-      // =========================================
-      // 🔥 AJUSTAR POR FILTRO (CLAVE)
-      // =========================================
-
+      // 🔥 AJUSTE POR FILTRO
       if (this.dateFrom && this.dateTo) {
-        const from = this.parseDateCL(this.dateFrom);
-        const to = this.parseDateCL(this.dateTo);
+        const from = this.parseLocalDate(this.dateFrom);
+        const to = this.parseLocalDate(this.dateTo);
 
-        // 🔥 cortar inicio
         if (start < from) start = from;
-
-        // 🔥 cortar fin
         if (end > to) end = to;
       } else {
-        // 🔥 comportamiento normal (solo si NO hay filtro)
         if (this.isCurrentlyActive(sub)) {
           end = today;
         }
       }
 
-      // 🚫 seguridad extra
       if (start > end) return;
 
-      // =========================================
       // 🔁 GENERAR DÍAS
-      // =========================================
-
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const current = this.parseDateCL(d);
+        const current = this.parseLocalDate(d);
 
-        // 🚫 nunca futuro
         if (current > today) continue;
 
-        const dateStr = this.formatDateCL(d);
-
         const ingreso = result.find(
-          (r) =>
-            this.formatDateCL(r.register_datetime) === dateStr &&
-            r.type === 'ING',
+          (r) => this.isSameDaySafe(r.register_datetime, d) && r.type === 'ING',
         );
 
         const salida = result.find(
-          (r) =>
-            this.formatDateCL(r.register_datetime) === dateStr &&
-            r.type === 'SAL',
+          (r) => this.isSameDaySafe(r.register_datetime, d) && r.type === 'SAL',
         );
 
         if (!ingreso) {
@@ -677,8 +669,8 @@ export class TeleworkUserSubscriptionsComponent {
 
     return result.sort(
       (a, b) =>
-        new Date(a.register_datetime).getTime() -
-        new Date(b.register_datetime).getTime(),
+        this.parseLocalDate(a.register_datetime).getTime() -
+        this.parseLocalDate(b.register_datetime).getTime(),
     );
   }
 
@@ -867,5 +859,70 @@ export class TeleworkUserSubscriptionsComponent {
     } finally {
       this.loader.hide();
     }
+  }
+
+  formatDateSafe(value: string | Date): string {
+    if (!value) return '';
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      const d = value.getDate().toString().padStart(2, '0');
+      const m = (value.getMonth() + 1).toString().padStart(2, '0');
+      const y = value.getFullYear();
+
+      return `${d}/${m}/${y}`;
+    }
+
+    // 🔥 si es string ISO
+    const [datePart] = value.split('T');
+    const [y, m, d] = datePart.split('-');
+
+    return `${d}/${m}/${y}`;
+  }
+
+  parseLocalDate(value: string | Date): Date {
+    if (!value) return new Date();
+
+    if (value instanceof Date) return value;
+
+    const [datePart] = value.split('T'); // 🔥 IGNORA TODO LO DEMÁS
+    const [y, m, d] = datePart.split('-').map(Number);
+
+    return new Date(y, m - 1, d);
+  }
+
+  formatToLocalISOString(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+
+    return `${y}-${m}-${d}T${h}:${min}:${s}`;
+  }
+
+  onFilterFocus(): void {
+    // 🔥 limpiar fechas si usas mes/año
+    this.dateFrom = null;
+    this.dateTo = null;
+  }
+
+  onDateFocus(): void {
+    this.month = null;
+    this.year = null;
+
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  isSameDaySafe(value: string | Date, compare: Date): boolean {
+    const d = this.parseLocalDate(value);
+
+    return (
+      d.getFullYear() === compare.getFullYear() &&
+      d.getMonth() === compare.getMonth() &&
+      d.getDate() === compare.getDate()
+    );
   }
 }

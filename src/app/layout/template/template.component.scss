@@ -1,245 +1,186 @@
-.form-wrapper {
-  position: relative;
+/* ============================================
+   🌐 BASE GLOBAL (OBLIGATORIO)
+============================================ */
+html, body {
+  height: 100%;
+  margin: 0;
 }
 
-.form-watermark {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  overflow: visible; // 🔥 CLAVE
+app-root {
+  display: block;
+  height: 100%;
 }
-
-.form-watermark img {
-  position: absolute;
-
-  top: 810px;
-  left: 0px;
-
-  transform: rotate(0deg);
-
-  width: 200px; // 🔥 mismo tamaño del anterior grande
-
-  opacity: 0.50; // 🔥 más fuerte (antes 0.22)
-
-  filter: saturate(1.3) contrast(1.1); // 🔥 colores más vivos
-
-  pointer-events: none;
-  user-select: none;
-  mix-blend-mode: multiply;
-}
-
 
 /* ============================================
-   🎨 LAYOUT GESTIÓN DE PERSONAS — PRO FINAL
+   🧱 CONTENEDOR PRINCIPAL
 ============================================ */
-/* CONTENEDOR GENERAL */
 .sidenav-container {
-  height: 100dvh;
+  height: 100vh;
 }
 
-/* SIDENAV */
+.sidenav-title {
+  background: transparent;
+  color: #1565c0;
+  font-weight: 600;
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #e3f2fd;
+}
+
+.sidenav-header {
+  height: 96px; // 🔥 sube el contenedor
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px;
+
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8fafc;
+}
+
+.sidenav-header img {
+  max-height: 80px; // 🔥 siempre menor que el contenedor
+  width: auto;
+  object-fit: contain;
+}
+
+/* ============================================
+   📂 SIDENAV
+============================================ */
 mat-sidenav {
   width: 250px;
-  background: #fafbfc; /* 👈 solo cambia esto */
+  background: #f8fafc; 
   border-right: 1px solid #e0e0e0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+
+  display: flex;
+  flex-direction: column;
 }
 
-/* CONTENIDO PRINCIPAL */
+/* ============================================
+   📦 CONTENIDO MATERIAL (NO TOCAR FLEX AQUÍ)
+============================================ */
+mat-sidenav-content {
+  height: 100%;
+  background: var(--ssm-surface);
+}
+
+/* ============================================
+   🧠 LAYOUT REAL (AQUÍ VA FLEX)
+============================================ */
 .main-content {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-/* TOPBAR */
+/* ============================================
+   🧭 TOPBAR (HEADER)
+============================================ */
 .topbar {
   height: 56px;
-  background: #1565c0 !important;
+  background: var(--ssm-primary);
   color: #fff;
+
   display: flex;
   align-items: center;
   padding: 0 12px;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* SCROLL SOLO AQUÍ */
+/* IZQUIERDA */
+.topbar-left button {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+  width: 36px;
+  height: 36px;
+
+  mat-icon {
+    color: #fff;
+    font-size: 22px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* TODOS LOS ICON BUTTON DEL TOPBAR */
+.topbar button.mat-mdc-icon-button {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+
+  width: 36px;
+  height: 36px;
+
+  mat-icon {
+    color: #fff;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* DERECHA */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ESPACIADOR */
+.spacer {
+  flex: 1;
+}
+
+/* ============================================
+   📜 CONTENIDO (ÚNICO SCROLL)
+============================================ */
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px;
+  padding: 24px 32px;
+  min-height: 0;
 
-  min-width: 0;
+  display: flex;          // 🔥 ahora sí sirve
+  flex-direction: column;
 }
 
-/* FOOTER SIEMPRE VISIBLE */
+.content > * {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================
+   📌 FOOTER
+============================================ */
 .footer {
   height: 40px;
   flex-shrink: 0;
   text-align: center;
   font-size: 12px;
-  background: #e3f2fd;
+  background: #f9fbfd;
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* MENÚ */
-.menu-section {
-  font-size: 12px;
-  font-weight: 700;
-  color: #607d8b;
-  padding: 10px 14px 4px;
-  margin-top: 8px; /* 👈 este es el cambio */
-}
-
-/* SUBMENU */
-.submenu {
-  margin-left: 16px;
-  padding-left: 10px;
-  border-left: 1px dashed rgba(0, 0, 0, 0.15); 
-}
-
-.submenu-item {
-  position: relative;
-  padding: 6px 12px 6px 28px;
-  margin: 2px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  will-change: transform;
-}
-
-/* TITULOS */
-.submenu-title {
-  padding: 8px 12px;
-  margin: 2px 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.submenu-title:hover {
-  background: #e3f2fd;
-}
-
-/* ITEMS */
-
-.submenu-item:hover {
-  background: #e3f2fd;
-  transform: translateX(3px);
-}
-
-.submenu-title:hover mat-icon {
-  color: #1565c0;
-}
-
-/* DOT */
-.tree-dot {
-  font-size: 8px;
-}
-
-.submenu-item:hover .tree-dot {
-  color: #1565c0;
-}
-
-/* USER */
+/* ============================================
+   👤 USER INFO
+============================================ */
 .user-main {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.spacer {
-  flex: 1;
-}
-
-
-
-
-
-
-
-
-
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-
-/* ===== TITULO ===== */
-.sidenav-title {
-  background: #1565c0;
-  color: #fff;
-  font-weight: 600;
-  text-align: center;
-  padding: 14px;
-  border-bottom: 3px solid #0d47a1;
-}
-
-.sidenav-title.clean {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-}
-
-.logo-ssm {
-  height: 24px;
-  width: auto;
-  object-fit: contain;
-  height: 22px;
-  opacity: 0.9;
-}
-
-/* ============================================
-   🌳 ÁRBOL PROFESIONAL
-============================================ */
-
-
-/* ICONO CARPETA */
-.submenu-title mat-icon {
-  color: #546e7a;
-  font-size: 20px;
-}
-
-/* ACTIVO */
-.submenu-item.active {
-  background: #bbdefb;
-  font-weight: 600;
-}
-
-/* INDICADOR ACTIVO */
-.submenu-item.active::before {
-  content: "";
-  position: absolute;
-  left: 6px;
-  height: 60%;
-  width: 3px;
-  background: #1565c0;
-  border-radius: 4px;
-}
-
-/* ===== NODO ÁRBOL ===== */
-.submenu-item::before {
-  content: "";
-  position: absolute;
-  left: -12px;
-  top: 12px;
-  width: 10px;
-  height: 1px;
-  background: rgba(0, 0, 0, 0.15);
-}
-
-/* ============================================
-   🧭 TOPBAR
-============================================ */
-
-.title {
-  margin-left: 8px;
-  font-weight: 600;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .user-main .name {
@@ -252,7 +193,9 @@ mat-sidenav {
   opacity: 0.7;
 }
 
-/* ===== SESIÓN ===== */
+/* ============================================
+   ⏱️ SESIÓN
+============================================ */
 .session-box {
   display: flex;
   align-items: center;
@@ -266,62 +209,444 @@ mat-sidenav {
   background: #0d47a1;
   border-radius: 999px;
   padding: 4px 12px;
-  font-weight: 500;
   color: #fff;
 }
 
-/* ===== BOTONES ===== */
+.session-timer.warning {
+  color: #d32f2f;
+  font-weight: 600;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* ============================================
+   🚪 BOTÓN SALIR
+============================================ */
 .logout-btn {
   color: #fff !important;
   border-color: #bbdefb !important;
 }
 
 /* ============================================
-   📦 CONTENIDO
+   📂 MENÚ
 ============================================ */
-
-mat-sidenav-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-width: 0;
-  background: var(--ssm-surface);
+.menu-section {
+  font-size: 12px;
+  font-weight: 700;
+  color: #607d8b;
+  padding: 10px 14px 4px;
+  margin-top: 8px;
 }
 
+.submenu {
+  margin-left: 16px;
+  padding-left: 10px;
+  border-left: 1px dashed rgba(0, 0, 0, 0.15);
+}
 
-/* ============================================
-   🔐 LOGIN
-============================================ */
+.submenu-title {
+  padding: 8px 12px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
 
-.login-wrapper {
   display: flex;
-  justify-content: center;
+  gap: 8px;
   align-items: center;
-  height: 100vh;
-  background: linear-gradient(145deg, #e3f2fd, #bbdefb);
 }
 
-.login-card {
-  max-width: 420px;
-  width: 100%;
-  padding: 2rem;
-  border-radius: 1rem;
-  text-align: center;
+.submenu-title:hover {
+  background: #e3f2fd;
+}
+
+.submenu-item {
+  position: relative;
+  padding: 6px 12px 6px 28px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.submenu-item:hover {
+  background: #e3f2fd;
+  padding-left: 31px;
+}
+
+.submenu-item.active {
+  background: #bbdefb;
+  font-weight: 600;
 }
 
 /* ============================================
    📱 RESPONSIVE
 ============================================ */
-
 @media (max-width: 768px) {
   .topbar {
     flex-wrap: wrap;
     height: auto;
   }
+}
+
+
+/* ============================================
+   🔹 ROLE VIEW (AISLADO DEL LOGIN)
+============================================ */
+
+/* CONTENEDOR */
+.role-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 24px;
+  min-height: calc(100vh - 80px);
+
+  background: #f5f7fa;
+}
+
+/* CARD */
+.role-card {
+  width: 100%;
+  max-width: 580px;
+
+  padding: 32px;
+
+  border-radius: 14px;
+  background: #ffffff;
+
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.15);
+
+  text-align: center;
+}
+
+/* HEADER */
+.role-header {
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 8px 0 4px;
+    color: #0d47a1;
+  }
+
+  p {
+    color: #666;
+    font-size: 0.95rem;
+  }
+}
+
+/* INPUT */
+.role-full {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* BOTONES */
+.role-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+
+  button {
+    flex: 1;
+    height: 42px;
+    border-radius: 24px;
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .topbar-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .user-main {
+    border-right: none;
+    padding-right: 0;
+    justify-content: flex-start;
+  }
+
+  .user-text .name {
+    font-size: 12px;
+  }
+
+  .user-text .meta {
+    font-size: 10px;
+  }
+
+  .session-box {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .logout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .spacer {
+    display: none; // 🔥 clave
+  }
+}
+
+@media (max-width: 768px) {
+  .logout-btn span {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .topbar {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .topbar-left {
+    min-height: 36px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .user-main {
+    gap: 4px;
+  }
+
+  .user-main mat-icon {
+    font-size: 20px;
+  }
+
+  .user-text .name {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .session-timer {
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+
+  .session-timer mat-icon {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .logout-btn {
+    height: 34px;
+    font-size: 12px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .content {
+    padding: 12px 10px; // 🔥 antes 24px 32px
+  }
+}
+
+@media (max-width: 768px) {
+
+  .card {
+    padding: 12px;
+  }
+
+  .title-main {
+    font-size: 18px;
+  }
+}
+
+
+/* =====================================================
+   📱 SIRUS MOBILE PATCH (NO ROMPE LO EXISTENTE)
+===================================================== */
+
+@media (max-width: 768px) {
+
+  /* 🔥 TABLAS: permitir scroll horizontal */
+  .table-scroll {
+    overflow-x: auto !important;
+  }
+
+  table {
+    min-width: 420px; // evita que colapse
+  }
+
+  /* 🔥 TEXTO: no cortar en mobile */
+  td {
+    white-space: normal !important;
+  }
+
+  /* 🔥 CARDS: altura flexible */
+  .card {
+    height: auto !important;
+  }
+
+  /* 🔥 CONTENIDO: menos padding */
+  .content {
+    padding: 12px 10px !important;
+  }
+
+  /* 🔥 FILTROS: full width */
+  .filters-left,
+  .filters-actions {
+    width: 100%;
+  }
+
+  .f-small,
+  .f-date,
+  .date-field {
+    width: 100% !important;
+  }
+
+  .date-range {
+    flex-direction: column;
+    width: 100%;
+  }
 
 }
 
-th {
-  background: #e3f2fd;
+@media (max-width: 768px) {
+
+  /* 🔥 ordenar bloque derecho */
+  .topbar-right {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  /* 🔥 usuario + candado en línea */
+  .user-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* 🔥 mover candado */
+  .session-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* 🔥 centrar botón */
+  .logout-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  /* 🔥 título principal */
+  .title {
+    font-size: 14px !important;
+  }
+
+  /* 🔥 nombre usuario */
+  .user-text .name {
+    font-size: 13px !important;
+    font-weight: 600;
+  }
+
+  /* 🔥 rol */
+  .user-text .meta {
+    font-size: 11px !important;
+  }
+
+  /* 🔥 timer */
+  .session-timer {
+    font-size: 12px !important;
+  }
+
+  /* 🔥 botón salir */
+  .logout-btn {
+    font-size: 13px !important;
+  }
+
+  /* 🔥 contenido general */
+  td, th {
+    font-size: 12px !important;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  button {
+    min-height: 36px; // mejor para dedo
+  }
+
+}
+
+.extend-btn {
+  background: #ff9800; // 🔥 naranja SIRUS
+  color: white;
+
+  height: 32px;
+  padding: 0 12px;
+
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  box-shadow: 0 2px 6px rgba(241, 240, 240, 0.2);
+
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f57c00;
+    transform: translateY(-1px);
+  }
+}
+
+.session-timer.warning {
+  background: rgba(255, 254, 254, 0.1);
+  color: #ff5252;
   font-weight: 600;
 }

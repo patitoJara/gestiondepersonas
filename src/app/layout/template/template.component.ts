@@ -75,6 +75,13 @@ export class TemplateComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private timeService = inject(TimeService);
 
+  private warned = false;
+
+  remainingMinutes = 60;
+  showExtendButton = false;
+
+  isRefreshing = false;
+
   userFullName: string = 'Usuario';
   userUsername: string = '';
   userEmail: string = '';
@@ -101,10 +108,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
   menuVisible = false;
   isLoading = false;
 
-  remainingMinutes: number = 0;
-  showExtendButton = false;
-  isRefreshing = false;
-  private timerSub?: Subscription;
+  private timerSub?: ReturnType<typeof setInterval>;
 
   isHandset$: Observable<boolean> = this.breakpointObserver
     .observe([Breakpoints.Handset])
@@ -129,7 +133,10 @@ export class TemplateComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.timerSub?.unsubscribe();
+    if (this.timerSub) {
+      clearInterval(this.timerSub);
+      this.timerSub = undefined; // 🔥 deja el estado limpio
+    }
   }
 
   private loadSessionData(): void {
@@ -289,77 +296,67 @@ export class TemplateComponent implements OnInit, OnDestroy {
   async extendSession(): Promise<void> {
     if (this.isRefreshing) return;
 
+    sessionStorage.setItem('allowRefresh', 'true'); // 🔥 clave
+
+    this.warned = false;
     this.isRefreshing = true;
 
     try {
       const response: any = await firstValueFrom(this.auth.refresh());
 
-      console.log('🔄 Sesión renovada', response);
-
-      // 💥 GUARDAR TOKENS CORRECTOS
       this.tokenService.setAccessToken(response.token);
       this.tokenService.setRefreshToken(response.refreshToken);
-
-      // 💥 ACTUALIZAR EXPIRACIÓN
       this.tokenService.setExpirationFromToken(response.token);
 
-      // reiniciar sesión
       this.sessionService.startSessionFromToken();
 
-      this.timerSub?.unsubscribe();
+      if (this.timerSub) {
+        clearInterval(this.timerSub);
+        this.timerSub = undefined;
+      }
       this.startRealExpirationTimer();
 
       this.snackBar.open('Sesión extendida', '', {
         duration: 2000,
       });
     } catch (error) {
-      console.warn('⚠️ Refresh falló, cerrando sesión');
-
-      this.timerSub?.unsubscribe();
+      if (this.timerSub) {
+        clearInterval(this.timerSub);
+        this.timerSub = undefined;
+      }
       this.tokenService.clear();
 
       this.router.navigate(['/auth/login']);
     } finally {
+      sessionStorage.removeItem('allowRefresh');
+
+      if (this.timerSub) {
+        clearInterval(this.timerSub);
+      }
+
+      this.remainingMinutes = 60; // 🔥 clave
+      this.showExtendButton = false;
+
+      this.startRealExpirationTimer(); // 🔥 reinicia timer
+
       this.isRefreshing = false;
     }
   }
 
-  startRealExpirationTimer(): void {
+  startRealExpirationTimer() {
     if (this.timerSub) {
-      this.timerSub.unsubscribe();
+      clearInterval(this.timerSub);
     }
 
-    const calculate = () => {
-      const exp = this.tokenService.getTokenExpiration();
-
-      if (!exp) return;
-
-      const remainingMs = exp - Date.now();
-
-      this.remainingMinutes = Math.max(0, Math.floor(remainingMs / 60000));
+    this.timerSub = setInterval(() => {
+      this.remainingMinutes--;
 
       this.showExtendButton = this.remainingMinutes <= 5;
 
-      console.log('⏱ Minutos restantes:', this.remainingMinutes);
-
-      // 🔴 SI YA VENCIO
-      if (remainingMs <= 0) {
-        console.warn('⚠️ Token vencido');
-
-        this.timerSub?.unsubscribe();
-        this.tokenService.clear();
-
-        this.router.navigate(['/auth/login']);
-        return;
+      if (this.remainingMinutes <= 0) {
+        this.forceLogout(); // 🔥 SIN modal
       }
-      this.cdr.detectChanges();
-    };
-
-    calculate();
-
-    this.timerSub = interval(60000).subscribe(() => {
-      calculate();
-    });
+    }, 60000);
   }
 
   logout(): void {
@@ -378,12 +375,41 @@ export class TemplateComponent implements OnInit, OnDestroy {
       })
       .afterClosed()
       .subscribe((ok) => {
+        // 🔴 CONFIRMA → logout real
         if (ok) {
-          this.timerSub?.unsubscribe();
-          this.tokenService.clear();
-          this.router.navigate(['/auth/login']);
+          this.forceLogout();
+        }
+
+        // 🟢 CANCELA → seguir con 5 min
+        else {
+          console.log('🔁 Usuario decide continuar');
+
+          if (this.remainingMinutes <= 0) {
+            this.remainingMinutes = 5;
+          }
+
+          this.showExtendButton = true;
+
+          if (this.timerSub) {
+            clearInterval(this.timerSub);
+          }
+
+          this.startRealExpirationTimer();
         }
       });
+  }
+
+  forceLogout(): void {
+    if (this.timerSub) {
+      clearInterval(this.timerSub);
+      this.timerSub = undefined;
+    }
+
+    sessionStorage.removeItem('allowRefresh');
+    this.isRefreshing = false;
+
+    this.tokenService.clear();
+    this.router.navigate(['/auth/login']);
   }
 
   goToProfile(): void {
@@ -408,5 +434,26 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
   isActive(route: string): boolean {
     return this.router.url.includes(route);
+  }
+
+  startSessionTimer() {
+    const totalMinutes = 60;
+
+    setInterval(() => {
+      this.remainingMinutes--;
+
+      // 🔥 mostrar botón cuando queden 5 min
+      this.showExtendButton = this.remainingMinutes <= 5;
+
+      // 🔥 cerrar sesión
+      if (this.remainingMinutes <= 0) {
+        this.logout();
+      }
+    }, 60000); // 1 minuto
+  }
+
+  resetSessionTimer() {
+    this.remainingMinutes = 60;
+    this.showExtendButton = false;
   }
 }

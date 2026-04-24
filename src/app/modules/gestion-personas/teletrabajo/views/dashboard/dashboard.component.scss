@@ -555,3 +555,61 @@ mat-icon.delete {
 .status.vencido {
   color: #c62828;
 }
+/* =========================
+   🟣 META (HORAS ACTIVIDAD)
+========================= */
+
+.meta {
+  display: flex;
+  flex-direction: column; // 🔥 2 líneas
+  gap: 4px;
+  font-size: 12px;
+}
+
+/* 🔹 CREACIÓN */
+.meta .created {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 13px;
+  color: #78909c; // gris suave
+}
+
+/* 🔹 EDICIÓN */
+.meta .edited {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #fb8c00; // 🔥 naranja SIRUS
+}
+
+/* 🔹 ICONOS */
+.meta mat-icon {
+  font-size: 13px;
+}
+
+/* =========================
+   🟢 ESTADOS SUSCRIPCIÓN
+========================= */
+
+.Activo {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.Finalizado {
+  color: #c62828;
+  font-weight: 600;
+}
+
+/* =========================
+   📦 ITEMS (LISTAS)
+========================= */
+
+.item {
+  padding: 6px 10px;
+}

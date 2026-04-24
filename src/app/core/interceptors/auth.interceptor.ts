@@ -11,7 +11,7 @@ import {
 
 import { TokenService } from '../../core/services/token.service';
 import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
-
+import { Router } from '@angular/router';
 
 let isRefreshing = false;
 let refreshSubject = new BehaviorSubject<string | null>(null);
@@ -19,6 +19,7 @@ let refreshSubject = new BehaviorSubject<string | null>(null);
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService = inject(TokenService);
   const authService = inject(AuthLoginService);
+  const router = inject(Router);
 
   const isAuthRequest =
     req.url.includes('/auth/login') ||
@@ -29,15 +30,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  // 🔥 TOKEN REAL
   const token = tokenService.getAccessToken();
 
   if (!token) {
     console.warn('🚨 NO HAY TOKEN');
-    return next(req); // 👈 SOLO ESTO
+    return next(req);
   }
 
-  // 🔐 REQUEST CON TOKEN
   const authReq = req.clone({
     setHeaders: {
       Authorization: `Bearer ${token}`,
@@ -50,7 +49,41 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      console.warn('⚠️ 401 → intentando refresh');
+      console.warn('⚠️ 401 detectado');
+
+      const isRefreshRequest = req.url.endsWith('/auth/refresh');
+
+      // 🔒 ANTI-LOOP REFRESH
+      if (isRefreshRequest) {
+        console.warn('⛔ Refresh falló → logout forzado');
+
+        isRefreshing = false;
+        refreshSubject.next(null); // 🔥 faltaba esto
+
+        tokenService.clear();
+        sessionStorage.removeItem('allowRefresh');
+        router.navigate(['/auth/login']);
+
+        return throwError(() => error);
+      }
+
+      // 🔥 CONTROL DE EXTENSIÓN MANUAL
+      //const allowRefresh = localStorage.getItem('allowRefresh');
+      const allowRefresh = sessionStorage.getItem('allowRefresh');
+
+      if (!allowRefresh) {
+        console.warn('⛔ Refresh bloqueado (usuario no autorizó)');
+
+        isRefreshing = false;
+        refreshSubject.next(null);
+
+        tokenService.clear();
+        router.navigate(['/auth/login']);
+
+        return throwError(() => error);
+      }
+
+      console.warn('🔓 Refresh permitido');
 
       // 🔁 SI YA HAY REFRESH EN CURSO
       if (isRefreshing) {
@@ -79,8 +112,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
           if (!newToken) {
             console.error('❌ Refresh inválido');
+
             tokenService.clear();
-            window.location.href = '/auth/login';
+            isRefreshing = false;
+            sessionStorage.removeItem('allowRefresh');
+
+            router.navigate(['/auth/login']);
+
             return throwError(() => error);
           }
 
@@ -91,7 +129,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           isRefreshing = false;
           refreshSubject.next(newToken);
 
-          // 🔥 ESTE ES EL FIX REAL
+          // 🔥 LIMPIAR FLAG
+          sessionStorage.removeItem('allowRefresh');
+
           const retryReq = authReq.clone({
             setHeaders: {
               Authorization: `Bearer ${newToken}`,
@@ -102,11 +142,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
 
         catchError((refreshError) => {
-          console.error('❌ ERROR EN REFRESH');
+          console.error('❌ ERROR EN REFRESH', refreshError);
 
           isRefreshing = false;
           tokenService.clear();
-          window.location.href = '/auth/login';
+          sessionStorage.removeItem('allowRefresh');
+
+          router.navigate(['/auth/login']);
 
           return throwError(() => refreshError);
         }),

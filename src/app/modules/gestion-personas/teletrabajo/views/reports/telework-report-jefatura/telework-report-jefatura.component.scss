@@ -1,10 +1,10 @@
 /* =====================================================
-   🧠 SIRUS UI - TELEWORK REPORT (LIMPIO FINAL)
+   🧠 SIRUS UI - TELEWORK REPORT FINAL CLEAN (PRO)
    ===================================================== */
 
-/* ============================
-   🟦 CONTENEDOR
-============================ */
+/* =====================================================
+   🟦 01. CONTENEDOR GENERAL
+   ===================================================== */
 .report-container {
   margin-bottom: 20px;
   padding: 14px;
@@ -14,9 +14,9 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* ============================
-   🟦 TITLE
-============================ */
+/* =====================================================
+   🟦 02. HEADER / TITLE
+   ===================================================== */
 .title {
   display: flex;
   align-items: center;
@@ -42,91 +42,66 @@
   color: #607d8b;
 }
 
-.jefe-data {
-  flex: 1;
-}
-//---------------------------------------------
-
-.jefe-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #e3f2fd;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  mat-icon {
-    color: #1565c0;
-    font-size: 28px;
-  }
-}
-
-.label {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.jefatura-nombre {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0d47a1;
-}
-
-.jefe-sub {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #475569;
-}
-
-/* ============================
-   🟦 HINT
-============================ */
+/* =====================================================
+   🟦 03. HINT / MENSAJES
+   ===================================================== */
 .hint {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
-  opacity: 0.85;
+  font-size: 12px;
   color: #78909c;
   margin-bottom: 8px;
 }
 
-.filter-hint {
-  margin-bottom: 10px;
-  padding-left: 4px;
-}
-
-
-.user-icon {
-  font-size: 16px;
-  margin-right: 4px;
-  vertical-align: middle;
+.hint mat-icon {
+  font-size: 18px;
   color: #1565c0;
 }
 
-.row-icon {
-  font-size: 14px;
-  margin-right: 6px;
-  vertical-align: middle;
-  color: #90a4ae;
-  opacity: 0.8;
+.hint.subtle {
+  margin: 0 14px 6px 14px;
 }
 
-.actions {
+/* =====================================================
+   🟦 04. TEXTOS GENERALES
+   ===================================================== */
+.nombre {
+  font-size: 12px;
+  font-weight: 600;
+  color: #455a64;
+}
+
+/* =====================================================
+   🟦 05. EMPTY STATES
+   ===================================================== */
+.empty-text {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  font-size: 12px;
+  color: #78909c;
 }
 
+.empty-text .title {
+  font-weight: 600;
+  color: #546e7a;
+}
 
-/* ============================
-   🟦 FILTROS (🔥 FIX REAL)
-============================ */
+.empty-text .subtitle {
+  font-size: 11px;
+  color: #90a4ae;
+}
+
+/* =====================================================
+   🟦 06. FILTROS (CORE UX)
+   ===================================================== */
+
+/* =====================================================
+   🟦 FILTROS (VERSIÓN ESTABLE SIRUS)
+   ===================================================== */
+
 .filters {
   display: flex;
   justify-content: space-between;
@@ -143,76 +118,225 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* IZQUIERDA */
 .filters-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
+/* 🔥 WRAPPER (CONTROL REAL) */
+
+.user-group mat-form-field {
+  width: 260px;
+}
+
+/* DERECHA */
 .filters-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-/* SELECT */
-.filters-left select.input {
-  height: 40px;
-  width: 120px;
-}
-
-/* ============================
-   🟦 MATERIAL FIX (ÚNICO)
-============================ */
-::ng-deep .mat-mdc-form-field {
-  margin: 0 !important;
-  height: 40px;
-}
-
-::ng-deep .mat-mdc-text-field-wrapper {
-  height: 40px !important;
-  border-radius: 8px !important;
-  border: 1px solid #cbd5e1 !important;
+.filters-group {
   display: flex;
   align-items: center;
+  gap: 10px;
+}
+
+.user-group {
+  flex: 0 0 auto;
+  min-width: 260px;
+}
+
+/* =====================================================
+   🟦 07. INPUTS / SELECTS
+   ===================================================== */
+.input {
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 12px;
+}
+
+/* =====================================================
+   🟦 08. DATEPICKERS
+   ===================================================== */
+
+.date-range {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  padding-left: 12px;
+  border-left: 2px solid #e3f2fd;
+}
+
+.date-range mat-form-field {
+  width: 140px; /* 🔥 cada fecha mide 140, no el contenedor */
+}
+
+.month-group {
+  display: flex;
+  gap: 10px;
+  align-items: center; /* 🔥 CLAVE */
+  position: relative;
+}
+
+/* 🔥 altura uniforme con todo el sistema */
+::ng-deep .month-group .mat-mdc-text-field-wrapper {
+  height: 38px !important;
+}
+
+/* 🔥 centra el contenido */
+::ng-deep .month-group .mat-mdc-form-field-flex {
+  align-items: center !important;
+  height: 38px !important;
+}
+
+/* 🔥 elimina espacio extra */
+::ng-deep .month-group .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+/* 🔥 NORMALIZA TODO EN FILTROS */
+::ng-deep .filters .mat-mdc-text-field-wrapper {
+  height: 38px !important;
+}
+
+/* 🔥 centra contenido */
+::ng-deep .filters .mat-mdc-form-field-flex {
+  height: 38px !important;
+  align-items: center !important;
+}
+
+/* 🔥 elimina padding interno */
+::ng-deep .filters .mat-mdc-form-field-infix {
+  padding: 0 !important;
+  min-height: unset !important;
+}
+
+::ng-deep .filters .mat-mdc-select-value {
+  font-size: 12px !important;
+}
+
+::ng-deep .filters .mat-mdc-floating-label {
+  font-size: 12px !important;
+}
+
+.month-group mat-form-field,
+.date-range mat-form-field {
+  width: fit-content;
+  min-width: 90px;
+}
+
+::ng-deep .filters .mat-mdc-form-field {
+  width: fit-content;
+}
+
+/* 🔥 hace que el contenido defina el ancho */
+::ng-deep .filters .mat-mdc-form-field-infix {
+  width: auto !important;
+  min-width: unset !important;
+}
+
+/* =====================================================
+   🟦 09. MATERIAL FIX (FORM)
+   ===================================================== */
+::ng-deep .mat-mdc-form-field {
+  font-size: 12px !important;
+  min-width: unset !important; /* 🔥 CLAVE */
 }
 
 ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none !important;
 }
 
-::ng-deep .mat-mdc-form-field-infix {
+::ng-deep .filters .mat-mdc-select-value {
+  padding-right: 20px; /* 🔥 espacio para la flecha */
+}
+
+::ng-deep .filters .mat-mdc-select-trigger {
   display: flex;
   align-items: center;
-  height: 40px;
-  padding: 0 !important;
+  justify-content: space-between;
 }
 
-/* ICONO DATE */
-::ng-deep .mat-mdc-icon-button {
-  transform: scale(0.85);
+/* =====================================================
+   🟦 10. AUTOCOMPLETE PANEL
+   ===================================================== */
+::ng-deep .cdk-overlay-pane {
+  z-index: 99999 !important;
 }
 
-/* ============================
-   🟦 BOTONES
-============================ */
+::ng-deep .mat-mdc-autocomplete-panel {
+  background: #ffffff !important;
+  border: 1px solid #dbe5f1;
+  border-radius: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* =====================================================
+   🟦 11. AUTOCOMPLETE OPTIONS
+   ===================================================== */
+::ng-deep .mat-mdc-option {
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 2px 10px !important;
+  font-size: 12px !important;
+}
+
+::ng-deep .mat-mdc-option:hover {
+  background: #e3f2fd;
+}
+
+/* =====================================================
+   🟦 12. AUTOCOMPLETE ITEM (FIX FINAL)
+   ===================================================== */
+.user-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-option .name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: #37474f;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-option .rut {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #90a4ae;
+  white-space: nowrap; /* 🔥 nunca se corta */
+}
+
+/* =====================================================
+   🟦 13. BOTONES
+   ===================================================== */
 .btn-sirus {
   height: 40px;
   padding: 0 16px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
+
   display: flex;
   align-items: center;
   gap: 6px;
 
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.admin-icon {
-  color: #1565c0;
 }
 
 .btn-sirus.primary {
@@ -225,217 +349,143 @@
   color: #455a64;
 }
 
-/* ============================
-   🟦 INPUTS
-============================ */
-.input {
-  height: 40px;
-  padding: 0 8px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  font-size: 12px;
-}
-
-/* ============================
-   🟦 GRID
-============================ */
-.tables-row {
-  display: grid;
-  grid-template-columns: 1.3fr 1.2fr 1.9fr 1.0fr;
-  gap: 6px;
-  margin-top: 20px;
-}
-
-@media (max-width: 1200px) {
-  .tables-row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 700px) {
-  .tables-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================
-   🟦 CARDS
-============================ */
-.card {
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid #e3e8ef;
-  display: flex;
-  flex-direction: column;
-  height: 520px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* ============================
-   🟦 HEADER
-============================ */
+/* =====================================================
+   🟦 15. HEADERS
+   ===================================================== */
 .card-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 42px;
+  justify-content: space-between; /* 🔥 clave */
 
+  gap: 8px;
+  min-height: 42px;
   padding: 10px 14px;
-  border-radius: 14px 14px 0 0;
 
   font-size: 12px;
   font-weight: 600;
 }
 
+/* título izquierda */
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* acciones derecha */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto; /* 🔥 empuja a la derecha */
+}
+
+/* botones */
+.header-actions button {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+/* hover */
+.header-actions button:hover {
+  background: rgba(21, 101, 192, 0.1);
+  transform: scale(1.1);
+}
+
+/* iconos */
+.header-actions mat-icon {
+  font-size: 18px;
+  color: #1565c0;
+}
+
+.card-header.blue {
+  background: rgba(21, 101, 192, 0.06);
+  color: #1565c0;
+}
 .card-header.green {
   background: rgba(46, 125, 50, 0.06);
   color: #2e7d32;
 }
-
 .card-header.orange {
   background: rgba(0, 137, 123, 0.08);
   color: #00897b;
 }
-
 .card-header.purple {
   background: rgba(123, 31, 162, 0.06);
   color: #7b1fa2;
 }
 
-.card-header .counter {
-  margin-left: auto;
-  font-size: 11px;
-}
-
-.card-header .nombre {
+/* =====================================================
+   🟦 17. ACTIVIDADES
+   ===================================================== */
+.activity-cell {
   display: flex;
   align-items: center;
-  gap: 4px;  
-  margin-left: 6px;
-  font-size: 11px;
-  opacity: 0.8;
+  gap: 6px;
 }
 
-.activity-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.activity-cell button {
+  width: 22px;
+  height: 22px;
+  transform: scale(0.85);
 }
 
-.activity-header .date {
-  font-size: 11px;
-  color: #00897b;
-  background: rgba(0, 137, 123, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
+.activity-cell button:hover {
+  transform: scale(1);
 }
 
-.empty-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px;
-  color: #78909c;
-  font-size: 12px;
-}
-
-.empty-text .title {
-  font-weight: 600;
-  color: #546e7a;
-}
-
-.empty-text .subtitle {
-  font-size: 11px;
-  color: #90a4ae;
-}
-
-/* ============================
-   🟦 TABLAS
-============================ */
-
-tbody tr:hover {
-  background: #f1f7ff;
-}
-
-.table-scroll {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-table {
-  width: 100%;
-  font-size: 12px;
-}
-
-th {
-  background: #f1f5f9;
-  font-size: 11px;
-}
-
-td {
-  padding: 6px;
-  font-size: 11px;
-  line-height: 1.2;
-  word-break: break-word;
-  color: #37474f;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ============================
-   🟦 SELECCIÓN
-============================ */
-.clickable-row {
-  cursor: pointer;
-}
-
-.selected-row {
-  background: rgba(21, 101, 192, 0.1);
-  border-left: 3px solid #1565c0;
-}
-
-/* ============================
-   🟦 DATE RANGE (FIJO 🔥)
-============================ */
-.date-range {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.date-field {
-  width: 150px;
-}
-
+/* =====================================================
+   🟦 18. BADGES / ESTADOS
+   ===================================================== */
 .badge {
   min-width: 20px;
   height: 18px;
-
   padding: 0 6px;
   font-size: 10px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 10px;
-
   background: linear-gradient(135deg, #1565c0, #42a5f5);
   color: white;
 }
 
+.estado-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.vencido {
+  background: #fdecea;
+  color: #c62828;
+}
+.pendiente {
+  background: #fff3cd;
+  color: #f57c00;
+}
+
+/* =====================================================
+   🟦 19. TIPO INGRESO / SALIDA
+   ===================================================== */
 .tipo-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-
   padding: 2px 8px;
   border-radius: 12px;
-
   font-size: 10.5px;
   font-weight: 600;
 }
@@ -444,19 +494,12 @@ td {
   background: rgba(46, 125, 50, 0.1);
   color: #2e7d32;
 }
-
 .tipo-badge.sal {
   background: rgba(245, 124, 0, 0.1);
   color: #f57c00;
 }
 
-.tipo-badge mat-icon {
-  font-size: 14px;
-}
 
-/* ============================
-   📱 RESPONSIVE
-============================ */
 @media (max-width: 600px) {
   .filters {
     flex-direction: column;
@@ -466,33 +509,430 @@ td {
   .filters-actions {
     justify-content: space-between;
   }
+}
 
-  .date-range {
+.actions-wrapper {
+  display: flex;
+  margin-left: auto;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #90a4ae;
+}
+
+/* =====================================================
+   🔥 FIX FINAL INPUT MATERIAL (SIN ESPACIO FANTASMA)
+   ===================================================== */
+
+/* 🔥 cuando flota */
+::ng-deep .mat-mdc-form-field-should-float .mat-mdc-floating-label,
+::ng-deep
+  .mat-mdc-form-field.mat-mdc-form-field-should-float
+  .mat-mdc-floating-label,
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  transform: translateY(-120%) scale(0.85) !important;
+}
+
+::ng-deep .mat-mdc-floating-label {
+  transition: transform 0.2s ease !important;
+}
+
+/* =============================
+   🟦 LAYOUT PRINCIPAL (PRO FINAL)
+============================= */
+
+.tables-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, max-content));
+  //justify-content: center;  // 🔥 centra cuando hay 1 card
+  gap: 12px;
+}
+
+.card {
+  width: 100%;
+  max-width: 900px;         // 🔥 evita que se estire
+}
+
+
+/* =============================
+   🟦 CARD
+============================= */y
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 520px;
+
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e3e8ef;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+
+  min-width: 0;
+  overflow: hidden;
+
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =============================
+   🟦 SCROLL SOLO VERTICAL
+============================= */
+
+.table-scroll {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* =============================
+   🟦 TABLAS
+============================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+th {
+  font-size: 12px;
+  color: #546e7a;
+
+  white-space: normal;       /* 🔥 permite 2 líneas */
+  word-break: break-word;    /* 🔥 evita corte feo */
+}
+
+td {
+  padding: 6px 8px;
+  font-size: 11px;
+
+  word-break: break-word;
+}
+
+/* =============================
+   🟦 FILAS INTERACTIVAS
+============================= */
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.clickable-row:hover {
+  background: #eef5ff;
+}
+
+/* =============================
+   🟦 GRUPOS
+============================= */
+
+.groups-table {
+  .mat-column-name { width: 90px; }
+  .mat-column-jefatura { width: 120px; }
+  .mat-column-count { width: 50px; text-align: center; }
+}
+
+/* =============================
+   🟦 USUARIOS
+============================= */
+
+.users-table {
+
+  /* columnas */
+  .mat-column-fullName { 
+    width: 140px; 
+  }
+
+  .mat-column-rut { 
+    width: 90px; 
+  }
+
+.mat-column-marks {
+  min-width: 90px;      // 🔥 ajusta según diseño
+  white-space: nowrap;  // 🚀 NO permitir salto
+  text-align: center;
+}
+
+  /* 🔥 FIX ACCIONES */
+  .mat-column-actions { 
+    width: 50px;
+    min-width: 50px;
+    text-align: center; 
+  }
+
+  /* estilo */
+  td:first-child { 
+    font-weight: 600; 
+  }
+
+}
+/* =============================
+   🟦 REGISTROS
+============================= */
+
+.registers-table {
+  .mat-column-date { width: 70px; }
+  .mat-column-day { width: 50px; }
+  .mat-column-hour { width: 60px; text-align: center; }
+  .mat-column-type { width: 110px; text-align: center; }
+}
+
+/* =============================
+   🟦 ACTIVIDADES
+============================= */
+
+.works-table {
+  .mat-column-hour { width: 60px; }
+  .mat-column-description { width: auto; }
+
+  td:first-child {
+    text-align: center;
+    color: #1565c0;
+  }
+}
+
+/* =============================
+   🟦 SUSCRIPCIONES
+============================= */
+
+.subscriptions-table {
+  .mat-column-start { width: 80px; }
+  .mat-column-end { width: 80px; }
+  .mat-column-duration { width: 80px; }
+  .mat-column-state { width: 100px; }
+}
+
+/* =============================
+   🟦 ACCIONES
+============================= */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; // 🔥 un poco más de espacio
+}
+
+.actions button {
+  width: 32px;   // 🔥 tamaño correcto de click
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.actions mat-icon {
+  font-size: 18px; // 🔥 visible pero compacto
+}
+
+/* =============================
+   📱 RESPONSIVE
+============================= */
+
+@media (max-width: 900px) {
+  .tables-row {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column;
   }
 
-  .date-field {
-    width: 150px;
+  .card {
+    height: auto;
   }
 }
 
-/* ============================
-   🔥 FIX BORDE NEGRO MATERIAL
-============================ */
 
-/* borde normal */
-::ng-deep .mdc-notched-outline {
-  border-color: #cbd5e1 !important;
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 2px 10px;
+  border-radius: 999px; // 🔥 más moderno
+
+  font-size: 11.5px;
+  font-weight: 600;
+
+  white-space: nowrap;
 }
 
-/* hover */
-::ng-deep .mat-mdc-form-field:hover .mdc-notched-outline {
-  border-color: #90caf9 !important;
+.state-pendiente {
+  background: #fff3e0;
+  color: #ef6c00;
 }
 
-/* focus */
-::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline {
-  border-color: #1565c0 !important;
+.state-vigente {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.state-vencido {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* ----------------------------------------------
+    Busqueda dinamica por usuario
+------------------------------------------------- */
+
+.option-user {
+  display: flex;
+  flex-direction: column;
+
+  .name {
+    font-weight: 500;
+  }
+
+  .rut {
+    font-size: 12px;
+    color: #607d8b;
+  }
+}
+
+.f-user {
+  width: 380px; // 🔥 ajusta a gusto (350–450 ideal)
+  min-width: 300px;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel {
+  min-width: 380px !important;
+  max-width: 500px !important;
+}
+
+::ng-deep .mat-mdc-option {
+  white-space: normal; // 🔥 permite salto de línea
+  line-height: 1.2;
+  padding: 8px 12px;
+}
+
+.no-results {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: #757575;
+  font-size: 14px;
+}
+
+.card.blue,
+.card.green,
+.card.orange,
+.card.purple {
+  color: inherit;
+}
+
+.users-table mat-icon {
+  color: #1565c0; // o el color que quieras
+}
+
+.card.blue .users-table {
+  color: #1565c0;
+}
+
+.card.green .registers-table {
+  color: #2e7d32;
+}
+
+.card.orange .works-table {
+  color: #f57c00;
+}
+
+.card.purple .subscriptions-table {
+  color: #7b1fa2;
+}
+
+
+
+
+
+
+
+
+
+
+.card.blue {
+  --card-color: #1565c0;
+}
+
+.card.green {
+  --card-color: #2e7d32;
+}
+
+.card.orange {
+  --card-color: #f57c00;
+}
+
+.card.purple {
+  --card-color: #7b1fa2;
+}
+
+.card {
+  color: #37474f; // base
+}
+
+.card.blue,
+.card.green,
+.card.orange,
+.card.purple {
+  color: var(--card-color);
+}
+
+
+/* =========================
+   🎛️ FILTROS LOCAL (SIRUS)
+========================= */
+
+.filters-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date-range {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 🔥 SELECTS (MES / AÑO) */
+.f-small {
+  width: 110px;
+
+  .mat-mdc-text-field-wrapper {
+    height: 36px !important;
+  }
+
+  .mat-mdc-form-field-infix {
+    min-height: 32px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* 🔥 DATEPICKERS */
+.f-date {
+  width: 140px;
+
+  .mat-mdc-text-field-wrapper {
+    height: 36px !important;
+  }
+
+  .mat-mdc-form-field-infix {
+    min-height: 32px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+/* 🔥 ICONOS */
+.mat-datepicker-toggle {
+  margin-right: -4px;
 }

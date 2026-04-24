@@ -2,9 +2,12 @@
    SELECCIÓN DE ROL
 ====================================== -->
 
-<div *ngIf="selectingRole" class="role-selector">
-  <mat-card class="role-card">
-    <h2>Seleccione un Rol</h2>
+<div class="login-wrapper" *ngIf="selectingRole">
+  <mat-card class="login-card">
+    <div class="login-header">
+      <h2>Seleccione un Rol</h2>
+      <p>Elige el perfil con el cual deseas ingresar</p>
+    </div>
 
     <div class="role-list">
       <button

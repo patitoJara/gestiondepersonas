@@ -12,9 +12,10 @@ import { WorkService } from '@app/modules/gestion-personas/teletrabajo/services/
 
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
-import { SubscribesService } from  '@app/modules/gestion-personas/teletrabajo/services/admin/subscribes.service';
+import { SubscribesService } from '@app/modules/gestion-personas/teletrabajo/services/admin/subscribes.service';
 import { RegistersService } from '@app/modules/gestion-personas/teletrabajo/services/registers.service';
 import { WorkDialogComponent } from './work-dialog.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface TeleworkEvent {
   id: number;
@@ -28,7 +29,7 @@ interface TeleworkEvent {
   standalone: true,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule,MatTooltipModule],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
@@ -47,6 +48,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // eventos filtrados del día
   todayEvents: TeleworkEvent[] = [];
 
+  selectedDay: Date | null = null;
+
+  allWorks: any[] = [];
+
   // suscripciones
   subscriptions: any[] = [];
 
@@ -59,10 +64,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private registersService: RegistersService,
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.timer = setInterval(() => {
       this.now = new Date();
     }, 1000);
+
+    this.selectedDay = new Date(); // 🔥 PRIMERO
+
+    await this.loadWorks(); // 🔥 DESPUÉS carga + filtra
 
     this.initDashboard();
   }
@@ -110,28 +119,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       const data = await firstValueFrom(this.workService.getByUserId(userId));
 
-      console.log('WORKS:', data); // 👈 DEBUG CLAVE
-      const sub = this.subscriptions.find(
-        (s: any) => this.getSubStatus(s) === 'vigente',
-      );
+      this.allWorks = (data || []).map((w: any) => ({
+        ...w,
+        createdAt: w.createdAt || w.created_at,
+      }));
 
-      this.works = (data || [])
-        .map((w: any) => {
-          const fecha = w.createdAt || w.created_at;
-
-          return {
-            ...w,
-            createdAt: fecha,
-            esHoy: this.isHoy(fecha),
-          };
-        })
-        .filter((w: any) => {
-          // 🔥 si no hay suscripción activa → no mostrar nada
-          if (!sub) return false;
-
-          // 🔥 SOLO HOY
-          return w.esHoy;
-        });
+      // 🔥 IMPORTANTE: no bloquear por subs (por ahora)
+      this.filterWorksByDay();
     } catch (e) {
       console.error('Error cargando works', e);
     }
@@ -307,45 +301,54 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async editarWork(w: any): Promise<void> {
-    if (!w.esHoy) return;
-
     const ref = this.openWorkDialog({
       title: 'Editar actividad',
       description: w.description,
     });
 
     const result = await firstValueFrom(ref.afterClosed());
-
     if (!result) return;
 
     const userId = this.tokenService.getUserId();
-
     if (!userId) {
       this.showError('No se pudo identificar el usuario');
       return;
     }
 
+    // 🔥 FALTABA ESTO
     const sub = this.getActiveSubscription();
 
+    if (!sub) {
+      this.showError('No hay suscripción activa');
+      return;
+    }
+
     const payload = {
-      description: result,
+      description: String(result).trim(),
       user: { id: userId },
-      subscribe: sub
-        ? { id: sub.id, active: true } // 🔥 AQUÍ ESTÁ LA MAGIA
-        : null,
+
+      // 🔥 AHORA SÍ EXISTE
+      subscribe: {
+        id: sub.id,
+        active: true,
+      },
     };
 
-    console.log('PAYLOAD UPDATE:', payload);
+    console.log('👉 PAYLOAD FINAL:', payload);
 
-    await firstValueFrom(this.workService.update(w.id, payload));
+    try {
+      await firstValueFrom(this.workService.update(w.id, payload));
 
-    this.showOk('✏️ Actividad actualizada');
-
-    await this.loadWorks();
+      this.showOk('✏️ Actividad actualizada');
+      await this.loadWorks();
+    } catch (e) {
+      console.error('❌ ERROR:', e);
+      this.showError('Error al actualizar');
+    }
   }
 
   async eliminarWork(w: any): Promise<void> {
-    if (!w.esHoy) return;
+    //if (!w.esHoy) return;
 
     const ref = this.dialog.open(ConfirmDialogComponent, {
       panelClass: 'sirus-dialog',
@@ -409,37 +412,46 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   getActiveSubscription(): any | null {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 🔥 ESTE FALTABA
+    const today = new Date().toISOString().split('T')[0]; // 🔥 YYYY-MM-DD
 
     return (
       this.subscriptions.find((s: any) => {
-        const begin = new Date(s.begin);
-        const end = new Date(s.end);
-
-        begin.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999); // 🔥 ESTE TAMBIÉN
+        const begin = s.begin.split('T')[0];
+        const end = s.end.split('T')[0];
 
         return today >= begin && today <= end;
       }) || null
     );
   }
 
-  getSubStatus(s: any): string {
-    const today = new Date();
-    const begin = new Date(s.begin);
-    const end = new Date(s.end);
-
-    // 🔥 normalizar (solo fecha, sin hora)
-    today.setHours(0, 0, 0, 0);
-    begin.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    if (today >= begin && today <= end) return 'vigente';
-    if (today < begin) return 'pendiente';
-    return 'vencido';
+  private normalizeDate(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
+  private toDateOnlyString(date: string | Date): string {
+    if (typeof date === 'string') {
+      return date.split('T')[0]; // 🔥 SOLO YYYY-MM-DD
+    }
+
+    const d = date;
+    return `${d.getFullYear()}-${(d.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+  }
+
+  private toDateOnly(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  getSubStatus(s: any): string {
+    const today = this.toDateOnlyString(new Date());
+    const begin = this.toDateOnlyString(s.begin);
+    const end = this.toDateOnlyString(s.end);
+
+    if (today < begin) return 'pendiente';
+    if (today > end) return 'vencido';
+    return 'vigente';
+  }
   getSubStatusText(s: any): string {
     const status = this.getSubStatus(s);
 
@@ -464,5 +476,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
         message,
       },
     });
+  }
+
+  filterWorksByDay(): void {
+    if (!this.selectedDay) {
+      this.works = this.allWorks;
+      return;
+    }
+
+    const selected = new Date(this.selectedDay);
+
+    this.works = this.allWorks.filter((w: any) => {
+      const d = new Date(w.createdAt);
+
+      return (
+        d.getFullYear() === selected.getFullYear() &&
+        d.getMonth() === selected.getMonth() &&
+        d.getDate() === selected.getDate()
+      );
+    });
+  }
+
+  isSameDay(d1: any, d2: any): boolean {
+    const a = new Date(d1);
+    const b = new Date(d2);
+
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  fixWorkDate(dateStr: string): Date {
+    const d = new Date(dateStr);
+    d.setHours(d.getHours() + 1);
+    return d;
   }
 }
