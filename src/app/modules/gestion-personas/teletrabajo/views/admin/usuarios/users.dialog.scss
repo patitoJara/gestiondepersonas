@@ -57,6 +57,85 @@
    ❌ No romper Angular Material
 
 ===================================================== */
+/* ============================
+   📱 RESPONSIVE FORM SIRUS
+============================ */
+
+.form-layout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* columnas */
+.col-1 {
+  grid-column: span 1;
+}
+
+.col-2 {
+  grid-column: span 2;
+}
+
+.col-4 {
+  grid-column: span 4;
+}
+
+/* ============================
+   📲 TABLET
+============================ */
+@media (max-width: 992px) {
+  .form-layout {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .col-1,
+  .col-2 {
+    grid-column: span 2;
+  }
+
+  .col-4 {
+    grid-column: span 2;
+  }
+}
+
+/* ============================
+   📱 CELULAR
+============================ */
+@media (max-width: 600px) {
+  .form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .col-1,
+  .col-2,
+  .col-4 {
+    grid-column: span 1;
+  }
+
+  /* mejoras visuales */
+  .dialog-header {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .form-card {
+    padding: 10px;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
 
 /* =====================================================
    🔹 BLOQUE 01 — BASE
@@ -517,4 +596,68 @@ mat-icon {
 
 :host ::ng-deep .mat-mdc-dialog-content {
   padding: 16px !important;
+}
+
+/* ============================
+   📱 RESPONSIVE SIRUS FIX
+============================ */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .form-layout {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .col-1,
+  .col-2,
+  .col-3,
+  .col-4 {
+    grid-column: span 2;
+  }
+}
+
+/* Celular */
+@media (max-width: 600px) {
+  .form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .col-1,
+  .col-2,
+  .col-3,
+  .col-4 {
+    grid-column: span 1;
+  }
+
+  /* 🔥 FIX PASSWORD (CLAVE) */
+  .password-actions {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+
+    margin-top: 4px;
+    justify-content: flex-end;
+
+    width: 100%;
+    border-left: none;
+    background: transparent;
+  }
+
+  /* 🔥 ROLES MÁS USABLE */
+  .roles-box {
+    max-height: 180px;
+    overflow: auto;
+  }
+
+  /* 🔥 BOTONES FULL WIDTH */
+  .toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+    }
+  }
 }
