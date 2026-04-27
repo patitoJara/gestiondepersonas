@@ -31,6 +31,18 @@ import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialo
 import { User } from '../../../models/user.model';
 import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { UsuariosDialogComponent } from './users.dialog';
+import { UserSearchService } from '@app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
+import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+interface UserTable {
+  id: number;
+  fullName: string;
+  rut: string;
+  email: string;
+  username: string;
+  deletedAt?: any;
+}
 
 @Component({
   standalone: true,
@@ -64,15 +76,13 @@ export class UsuariosComponent implements AfterViewInit {
     'acciones',
   ];
 
-  dataSource = new MatTableDataSource<User>([]);
+  dataSource = new MatTableDataSource<any>([]);
+
   loading = false;
   total = 0;
 
   /** Filtro búsqueda */
   q = '';
-
-  /** Estado */
-  filterState: 'all' | 'active' | 'deleted' = 'active';
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -81,27 +91,156 @@ export class UsuariosComponent implements AfterViewInit {
   private dialog = inject(MatDialog);
   private cdr = inject(ChangeDetectorRef);
   private search$ = new Subject<string>();
+  private userSearchService = inject(UserSearchService);
+  private lastTerm = '';
+  private allUsers: any[] = []; // 🔥 base real
+  private viewUsers: any[] = []; // 🔥 lo que se muestra
 
   ngAfterViewInit(): void {
     this.paginator.pageIndex = 0;
     this.paginator.pageSize = 10;
 
     this.sort.active = 'id';
-    this.sort.direction = 'asc' as SortDirection;
+    this.sort.direction = 'asc';
 
-    this.sort.sortChange.subscribe(() => this.paginator.firstPage());
-    merge(this.sort.sortChange, this.paginator.page).subscribe(() =>
-      this.load(),
-    );
+    // 🔥 SORT (sin estado vacío)
+    this.sort.sortChange.subscribe((sort) => {
+      if (!sort.direction) {
+        this.sort.direction = 'asc';
+      }
 
+      this.paginator.firstPage();
+      this.applyCurrentView();
+    });
+
+    // 🔥 PAGINACIÓN (esto te faltaba)
+    this.paginator.page.subscribe(() => {
+      this.applyCurrentView();
+    });
+
+    // 🔥 BÚSQUEDA
     this.search$
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe((term) => {
-        this.applyFilter(term);
+      .pipe(
+        debounceTime(300),
+        map((term: string) => (term ?? '').toString().trim().toLowerCase()),
+        distinctUntilChanged(),
+      )
+      .subscribe((clean) => {
+        if (clean.length < 3) {
+          this.dataSource.data = [];
+          this.allUsers = [];
+          this.viewUsers = [];
+          this.lastTerm = '';
+          return;
+        }
+
+        if (this.lastTerm && clean.startsWith(this.lastTerm)) {
+          this.filterLocal(clean);
+        } else {
+          this.search(clean);
+        }
+
+        this.lastTerm = clean;
       });
 
-    this.load();
     this.cdr.detectChanges();
+  }
+
+  applyCurrentView(): void {
+    if (!this.allUsers.length) return;
+
+    let data = [...this.allUsers];
+
+    // 🔥 NORMALIZAR
+    data = data.map((u) => ({
+      ...u,
+      roles: (u.roles || []).map((r: any) =>
+        typeof r === 'string' ? r : r?.name,
+      ),
+    }));
+
+    // 🔹 FILTRO
+    if (this.q && this.q.length >= 3) {
+      const term = this.q.toLowerCase();
+
+      data = data.filter((u: any) => {
+        const full = this.buildFullName(u).toLowerCase();
+        const rut = (u.rut || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+
+        return (
+          full.includes(term) || rut.includes(term) || email.includes(term)
+        );
+      });
+    }
+
+    // 🔹 SORT
+    if (this.sort?.active && this.sort.direction) {
+      data.sort((a: any, b: any) => {
+        let valueA = this.getSortValue(a, this.sort.active);
+        let valueB = this.getSortValue(b, this.sort.active);
+
+        valueA = (valueA ?? '').toString().toLowerCase();
+        valueB = (valueB ?? '').toString().toLowerCase();
+
+        let result = valueA.localeCompare(valueB, 'es', {
+          sensitivity: 'base',
+          numeric: true,
+        });
+
+        if (result === 0) {
+          result = (a.id ?? 0) - (b.id ?? 0);
+        }
+
+        return this.sort.direction === 'asc' ? result : -result;
+      });
+    }
+
+    // 🔹 PAGINACIÓN
+    const start = this.paginator.pageIndex * this.paginator.pageSize;
+    const end = start + this.paginator.pageSize;
+
+    this.total = data.length;
+
+    // 🔥 CLAVE FINAL (te faltaba esto)
+    this.dataSource.data = data.slice(start, end);
+  }
+
+  getSortValue(item: any, field: string): any {
+    switch (field) {
+      case 'fullName':
+        return this.buildFullName(item).toLowerCase(); // 🔥 CLAVE
+
+      case 'email':
+        return (item.email || '').toLowerCase();
+
+      case 'username':
+        return (item.username || '').toLowerCase();
+
+      case 'rut':
+        return (item.rut || '').replace(/\./g, '');
+
+      case 'id':
+        return Number(item.id) || 0;
+
+      default:
+        return item[field];
+    }
+  }
+
+  filterLocal(term: string): void {
+    this.viewUsers = this.allUsers.filter((u: any) => {
+      const full = this.buildFullName(u).toLowerCase();
+      const rut = (u.rut || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+
+      return full.includes(term) || rut.includes(term) || email.includes(term);
+    });
+
+    this.total = this.viewUsers.length;
+
+    this.paginator.firstPage();
+    this.applyCurrentView();
   }
 
   onSearchChange(value: string): void {
@@ -135,115 +274,93 @@ export class UsuariosComponent implements AfterViewInit {
 
   /** Cargar usuarios */
   async load(): Promise<void> {
+    // 🔒 No hacer nada
+    this.dataSource.data = [];
+    this.total = 0;
+  }
+
+  async search(term: string): Promise<void> {
     this.loading = true;
 
-    const page = this.paginator?.pageIndex ?? 0;
-    const size = this.paginator?.pageSize ?? 10;
-
-    const active = this.sort?.active;
-    const direction = (this.sort?.direction as '' | 'asc' | 'desc') || 'asc';
-    const sortField = this.mapSortField(active);
-
     try {
-      const res: any = await firstValueFrom(
-        this.api.getAllPaginated(page, size),
+      const result = await firstValueFrom(
+        this.userSearchService.search(of(term)),
       );
 
-      const rawRows = Array.isArray(res) ? res : (res?.content ?? []);
+      const baseUsers: any[] = Array.isArray(result)
+        ? result
+        : result?.[0] || [];
 
-      let filtered = rawRows;
+      // 🔥 traer datos completos
+      const fullUsers = await Promise.all(
+        baseUsers.map(async (u: any) => {
+          const user = await firstValueFrom(this.api.getById(u.id));
 
-      // 🔹 estado
-      if (this.filterState === 'active') {
-        filtered = rawRows.filter((r: any) => !r.deletedAt);
-      } else if (this.filterState === 'deleted') {
-        filtered = rawRows.filter((r: any) => !!r.deletedAt);
-      }
+          const rolesRes = await firstValueFrom(this.api.getUserRoles(u.id));
 
-      // 🔹 búsqueda
-      const term = this.normalize(this.q || '');
+          const roles = rolesRes
+            .filter((r) => !r.deletedAt)
+            .map((r) => r.role?.name);
 
-      if (term) {
-        filtered = filtered.filter((r: any) => {
-          const fullName = this.normalize(
-            [r.firstName, r.secondName, r.firstLastName, r.secondLastName]
-              .filter(Boolean)
-              .join(' '),
-          );
-
-          const username = this.normalize(r.username ?? '');
-          const email = this.normalize(r.email ?? '');
-          const rut = this.normalize(r.rut ?? '');
-
-          return (
-            fullName.includes(term) ||
-            username.includes(term) ||
-            email.includes(term) ||
-            rut.includes(term)
-          );
-        });
-      }
-
-      // 🔹 orden
-      filtered.sort((a: any, b: any) => {
-        const va = this.getFieldValue(a, sortField);
-        const vb = this.getFieldValue(b, sortField);
-
-        let cmp = 0;
-
-        if (va == null && vb != null) cmp = -1;
-        else if (va != null && vb == null) cmp = 1;
-        else if (typeof va === 'number' && typeof vb === 'number')
-          cmp = va - vb;
-        else
-          cmp = String(va ?? '').localeCompare(String(vb ?? ''), 'es', {
-            numeric: true,
-            sensitivity: 'base',
-          });
-
-        return direction === 'asc' ? cmp : -cmp;
-      });
-
-      // 🔹 paginación
-      const start = page * size;
-      const slice = filtered.slice(start, start + size);
-
-      // =========================================
-      // 🔥 AQUÍ CARGAS LOS ROLES (CORRECTO)
-      // =========================================
-
-      const usersWithRoles = await Promise.all(
-        slice.map(async (u: any) => {
-          try {
-            const resRoles: any = await firstValueFrom(
-              this.api.getUserRoles(u.id),
-            );
-
-            const roles = (resRoles || [])
-              .filter((r: any) => !r.deletedAt)
-              .map((r: any) => r.role?.name)
-              .filter(Boolean);
-
-            return {
-              ...u,
-              roles: roles.map((name: string) => ({ name })),
-            };
-          } catch {
-            return {
-              ...u,
-              roles: [],
-            };
-          }
+          return {
+            ...user,
+            roles, // 🔥 AHORA SÍ
+            fullName: this.buildFullName(user),
+          };
         }),
       );
 
-      this.dataSource.data = usersWithRoles;
-      this.total = filtered.length;
+      // 🔥 base + vista
+      this.allUsers = fullUsers;
+      this.viewUsers = [...fullUsers];
+
+      this.total = this.viewUsers.length;
+
+      // 🔥 una sola vez
+      this.paginator.firstPage();
+      this.applyCurrentView();
     } catch (err) {
-      console.error('Error cargando usuarios:', err);
+      console.error(err);
     } finally {
       this.loading = false;
     }
+  }
+
+  clearSearch(input: HTMLInputElement): void {
+    this.q = '';
+    input.value = '';
+
+    // 🔹 limpiar datos
+    this.allUsers = [];
+    this.viewUsers = [];
+    this.dataSource.data = [];
+    this.total = 0;
+
+    // 🔹 reset paginador
+    this.paginator.firstPage();
+
+    // 🔹 reset orden (opcional pero recomendado)
+    this.sort.active = 'id';
+    this.sort.direction = 'asc';
+
+    // 🔹 limpiar estado interno
+    this.lastTerm = '';
+  }
+
+  buildFullName(u: any): string {
+    // 🔹 usar fullName si viene bien formado
+    if (typeof u.fullName === 'string' && u.fullName.trim().length > 0) {
+      return u.fullName.trim();
+    }
+
+    // 🔹 construir desde campos
+    const name = [u.firstName, u.secondName, u.firstLastName, u.secondLastName]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return name || '—';
   }
 
   private normalize(text: string): string {
@@ -272,20 +389,22 @@ export class UsuariosComponent implements AfterViewInit {
       // 🔥 nombre completo
       case 'fullName':
         return [
-          row.firstLastName,
-          row.secondLastName,
           row.firstName,
           row.secondName,
+          row.firstLastName,
+          row.secondLastName,
         ]
           .filter(Boolean)
           .join(' ');
 
       // 🔥 roles
       case 'roles':
-        return (row.roles || [])
-          .map((r: any) => r.name)
+        const roles = (row.roles || [])
+          .map((r: any) => (typeof r === 'string' ? r : r?.name))
           .filter(Boolean)
           .join(', ');
+
+        return roles || '—';
 
       default:
         return row.id;
@@ -306,7 +425,7 @@ export class UsuariosComponent implements AfterViewInit {
   getRoles(row: User): string {
     return (
       (row.roles || [])
-        .map((r: any) => r?.name)
+        .map((r: any) => (typeof r === 'string' ? r : r?.name))
         .filter(Boolean)
         .join(', ') || '—'
     );
@@ -314,38 +433,55 @@ export class UsuariosComponent implements AfterViewInit {
 
   applyFilter(term: string): void {
     this.q = term.trim();
-    this.paginator.firstPage();
-    this.load();
-  }
-
-  setState(state: 'all' | 'active' | 'deleted'): void {
-    this.q = '';
-    this.filterState = state;
-    this.paginator.firstPage();
-    this.load();
   }
 
   refresh(): void {
-    this.load();
+    if (this.q && this.q.length >= 3) {
+      this.search(this.q);
+    } else {
+      this.clearSearch({ value: '' } as HTMLInputElement);
+    }
   }
 
   openDialog(row?: User): void {
-    setTimeout(() => {
-      const ref = this.dialog.open(UsuariosDialogComponent, {
-        panelClass: 'sirus-dialog',
-        width: '680px',
-        maxWidth: '95vw',
-        height: 'auto',
-        //panelClass: 'usuarios-dialog',
-        backdropClass: 'app-backdrop',
-        data: row ?? null,
-        disableClose: true,
-      });
-
-      ref.afterClosed().subscribe((result?: User) => {
-        if (result) queueMicrotask(() => this.load());
-      });
+    const ref = this.dialog.open(UsuariosDialogComponent, {
+      panelClass: 'sirus-dialog',
+      width: '680px',
+      maxWidth: '95vw',
+      backdropClass: 'app-backdrop',
+      data: row ?? null,
+      disableClose: true,
     });
+
+    ref.afterClosed().subscribe((updated?: User) => {
+      if (updated) {
+        this.updateLocalUser(updated);
+      }
+    });
+  }
+
+  updateLocalUser(updated: User) {
+    // 🔥 asegurar estructura consistente
+    const normalized = {
+      ...updated,
+      fullName: this.buildFullName(updated),
+    };
+
+    let found = false;
+
+    this.allUsers = this.allUsers.map((u) => {
+      if (u.id === normalized.id) {
+        found = true;
+        return normalized;
+      }
+      return u;
+    });
+
+    if (!found) {
+      this.allUsers = [normalized, ...this.allUsers];
+    }
+
+    this.applyCurrentView();
   }
 
   softDelete(row: User): void {

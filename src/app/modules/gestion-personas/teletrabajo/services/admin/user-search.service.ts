@@ -57,14 +57,14 @@ export class UserSearchService {
 
               this.prefixCache.set(prefix, mapped);
 
-              return this.filterLocal(mapped, clean).slice(0, 10);
+              return this.filterLocal(mapped, clean).slice(0, 50);
             }),
           );
         }
 
         // 🔥 MISMO PREFIJO → LOCAL
         const cached = this.prefixCache.get(prefix) || [];
-        return of(this.filterLocal(cached, clean).slice(0, 10));
+        return of(this.filterLocal(cached, clean).slice(0, 50));
       }),
     );
   }

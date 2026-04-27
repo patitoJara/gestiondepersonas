@@ -153,8 +153,11 @@ export class UsuariosDialogComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    if (this.form.invalid) return;
+  if (this.form.invalid) return;
 
+  this.form.disable();
+
+  try {
     const v = this.form.getRawValue();
 
     const userPayload: any = { ...v };
@@ -164,124 +167,81 @@ export class UsuariosDialogComponent implements OnInit {
       delete userPayload.password;
     }
 
-    try {
-      // =========================================
-      // 🔹 CREAR / ACTUALIZAR USUARIO
-      // =========================================
-      const savedUser: any = await firstValueFrom(
-        v.id
-          ? this.usersService.updateUser(v.id, userPayload)
-          : this.usersService.createUser(userPayload),
-      );
+    // 🔹 guardar usuario
+    const savedUser: any = await firstValueFrom(
+      v.id
+        ? this.usersService.updateUser(v.id, userPayload)
+        : this.usersService.createUser(userPayload),
+    );
 
-      const userId = savedUser.id ?? v.id;
+    const userId = savedUser.id ?? v.id;
 
-      const currentUser = JSON.parse(sessionStorage.getItem('profile') || '{}');
-      const currentUserId = currentUser?.id;
+    // 🔹 sync roles
+    await this.syncRoles(userId, v.roles);
 
-      // =========================================
-      // 🔥 VALIDAR SELF EDIT (NO PERDER ROL ACTIVO)
-      // =========================================
-      if (userId === currentUserId) {
-        const activeRole = (
-          sessionStorage.getItem('activeRole') || ''
-        ).toUpperCase();
+    // 🔹 traer datos actualizados
+    const userFromApi = await firstValueFrom(
+      this.usersService.getById(userId)
+    );
 
-        const newRoles = this.roles
-          .filter((r) => v.roles.includes(r.id))
-          .map((r) => r.name.toUpperCase());
+    const rolesRes: any[] = await firstValueFrom(
+      this.usersService.getUserRoles(userId)
+    );
 
-        if (!newRoles.includes(activeRole)) {
-          this.dialog.open(ErrorConfirmDialogComponent, {
-            width: '420px',
-            data: {
-              title: 'Acción no permitida',
-              message: 'No puedes quitarte el rol con el que ingresaste.',
-              confirmText: 'Aceptar',
-              icon: 'warning',
-            },
-          });
-          return;
-        }
-      }
+    // 🔥 usar mapper
+    const fullUser = this.mapUserToUI(userFromApi, rolesRes);
 
-      // =========================================
-      // 🔥 SINCRONIZAR ROLES (CLAVE)
-      // =========================================
+    // 🔥 cerrar UNA VEZ con data correcta
+    this.ref.close(fullUser);
 
-      // 🔹 obtener roles actuales
-      const currentRolesRes: any[] = await firstValueFrom(
-        this.usersService.getUserRoles(userId),
-      );
-
-      const currentRoleIds = currentRolesRes
-        .filter((r: any) => !r.deletedAt)
-        .map((r: any) => r.role?.id);
-
-      const newRoleIds: number[] = v.roles || [];
-
-      // 🔥 diferencias
-      const rolesToAdd = newRoleIds.filter(
-        (id) => !currentRoleIds.includes(id),
-      );
-
-      const rolesToRemove = currentRoleIds.filter(
-        (id) => !newRoleIds.includes(id),
-      );
-
-      // ➕ AGREGAR
-      for (const roleId of rolesToAdd) {
-        await firstValueFrom(this.usersService.addUserRole(userId, roleId));
-      }
-
-      // ➖ ELIMINAR
-      for (const roleId of rolesToRemove) {
-        await firstValueFrom(this.usersService.deleteUserRole(userId, roleId));
-      }
-
-      console.log('✅ Roles sincronizados correctamente');
-
-      // =========================================
-      // 🔥 SELF EDIT → RELOGIN
-      // =========================================
-      if (userId === currentUserId) {
-        this.dialog.open(ErrorConfirmDialogComponent, {
-          width: '420px',
-          disableClose: true,
-          data: {
-            title: 'Sesión actualizada',
-            message: 'Debes iniciar sesión nuevamente.',
-            confirmText: 'Aceptar',
-            icon: 'warning',
-          },
-        });
-
-        setTimeout(() => {
-          sessionStorage.clear();
-          window.location.href = '/auth/login';
-        }, 1200);
-
-        return;
-      }
-
-      // =========================================
-      // ✅ CIERRE NORMAL
-      // =========================================
-      this.ref.close(true);
-    } catch (err) {
-      console.error('❌ ERROR', err);
-
-      this.dialog.open(ErrorConfirmDialogComponent, {
-        width: '420px',
-        data: {
-          title: 'Error',
-          message: 'No se pudieron guardar los cambios',
-          confirmText: 'Aceptar',
-          icon: 'error',
-        },
-      });
-    }
+  } catch (err) {
+    this.form.enable();
+    console.error(err);
   }
+}
+
+private mapUserToUI(user: any, rolesRes?: any[]): any {
+  const roles = rolesRes
+    ? rolesRes
+        .filter(r => !r.deletedAt)
+        .map(r => r.role?.name)
+    : user.roles || [];
+
+  return {
+    ...user,
+    roles,
+    fullName: [
+      user.firstName,
+      user.secondName,
+      user.firstLastName,
+      user.secondLastName,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  };
+}
+
+async syncRoles(userId: number, newRoleIds: number[]) {
+  const currentRolesRes: any[] = await firstValueFrom(
+    this.usersService.getUserRoles(userId)
+  );
+
+  const currentRoleIds = currentRolesRes
+    .filter(r => !r.deletedAt)
+    .map(r => r.role?.id);
+
+  const rolesToAdd = newRoleIds.filter(id => !currentRoleIds.includes(id));
+  const rolesToRemove = currentRoleIds.filter(id => !newRoleIds.includes(id));
+
+  await Promise.all([
+    ...rolesToAdd.map(id =>
+      firstValueFrom(this.usersService.addUserRole(userId, id))
+    ),
+    ...rolesToRemove.map(id =>
+      firstValueFrom(this.usersService.deleteUserRole(userId, id))
+    ),
+  ]);
+}
 
   cancel(): void {
     this.ref.close();

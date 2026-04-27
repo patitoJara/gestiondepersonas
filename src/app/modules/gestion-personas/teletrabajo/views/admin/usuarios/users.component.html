@@ -8,32 +8,19 @@
 <!-- Toolbar -->
 <div class="list-toolbar">
   <div class="filters">
-    <input
-      #search
-      type="text"
-      placeholder="Buscar Usuario..."
-      [value]="q"
-      (keyup)="onSearchChange(search.value)"
-      (keyup.enter)="applyFilter(search.value)"
-    />
+    <div class="search-box">
+      <span class="icon">🔍</span>
 
-    <button
-      [class.active]="filterState === 'active'"
-      (click)="setState('active')"
-    >
-      Activos
-    </button>
+      <input
+        #search
+        type="text"
+        placeholder="Buscar usuario..."
+        [(ngModel)]="q"
+        (keyup)="onSearchChange(q)"
+      />
 
-    <button
-      [class.active]="filterState === 'deleted'"
-      (click)="setState('deleted')"
-    >
-      Eliminados
-    </button>
-
-    <button [class.active]="filterState === 'all'" (click)="setState('all')">
-      Todos
-    </button>
+      <button *ngIf="q" (click)="clearSearch(search)">✕</button>
+    </div>
   </div>
 
   <div class="right-actions">
@@ -43,8 +30,6 @@
     </button>
   </div>
 </div>
-
-<mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
 
 <div class="table-wrapper" style="overflow: auto">
   <table
@@ -64,7 +49,7 @@
     <ng-container matColumnDef="fullName">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
       <td mat-cell *matCellDef="let row">
-        {{ getFullName(row) }}
+        {{ buildFullName(row) || "—" }}
       </td>
     </ng-container>
 
@@ -79,7 +64,9 @@
     <!-- Email -->
     <ng-container matColumnDef="email">
       <th mat-header-cell *matHeaderCellDef>Email</th>
-      <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+      <td mat-cell *matCellDef="let row">
+        {{ row.email || "—" }}
+      </td>
     </ng-container>
 
     <!-- username -->
@@ -94,7 +81,15 @@
     <ng-container matColumnDef="roles">
       <th mat-header-cell *matHeaderCellDef>Roles</th>
       <td mat-cell *matCellDef="let row">
-        {{ getRoles(row) }}
+        <div class="roles">
+          <span
+            class="badge"
+            [ngClass]="'badge-' + r.toLowerCase()"
+            *ngFor="let r of row.roles || []"
+          >
+            {{ r }}
+          </span>
+        </div>
       </td>
     </ng-container>
 
@@ -122,6 +117,7 @@
         </button>
 
         <!-- (click)="softDelete(row)" -->
+        <!--
         <button
           *ngIf="!row.deletedAt"
           mat-icon-button
@@ -130,6 +126,7 @@
         >
           <mat-icon>delete</mat-icon>
         </button>
+
 
         <button
           *ngIf="row.deletedAt"
@@ -140,6 +137,7 @@
         >
           <mat-icon>settings_backup_restore</mat-icon>
         </button>
+        -->
       </td>
     </ng-container>
 

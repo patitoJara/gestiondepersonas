@@ -1,4 +1,4 @@
-@use '../../../../../../shared/styles/base-list.scss' as *;
+@use "../../../../../../shared/styles/base-list.scss" as *;
 
 /* ==============================
 TÍTULO
@@ -42,7 +42,6 @@ ACCIONES TABLA
 ============================== */
 
 @media (max-width: 768px) {
-
   /* Título */
   .titulo-genero {
     font-size: 1rem !important;
@@ -53,25 +52,6 @@ ACCIONES TABLA
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  /* Filtros */
-  .filters {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  /* Buscador */
-  .filters input {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-  }
-
-  /* Botones filtro */
-  .filters button {
-    width: 100%;
   }
 
   /* Botón nuevo */
@@ -98,7 +78,6 @@ ACCIONES TABLA
   td.mat-cell button {
     margin-right: 4px;
   }
-
 }
 
 /* ==============================
@@ -124,7 +103,6 @@ td.mat-cell {
 }
 
 @media (max-width: 768px) {
-
   .table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -133,7 +111,6 @@ td.mat-cell {
   table {
     min-width: 900px;
   }
-
 }
 
 /* ==============================
@@ -149,7 +126,6 @@ RESPONSIVE TABLA / TARJETAS
 /* Celular */
 
 @media (max-width: 768px) {
-
   .table-wrapper {
     display: none;
   }
@@ -158,7 +134,6 @@ RESPONSIVE TABLA / TARJETAS
     display: block;
     margin-top: 10px;
   }
-
 }
 
 .role-card {
@@ -166,7 +141,7 @@ RESPONSIVE TABLA / TARJETAS
   border-radius: 8px;
   padding: 14px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .card-row {
@@ -178,4 +153,93 @@ RESPONSIVE TABLA / TARJETAS
   display: flex;
   gap: 10px;
   margin-top: 10px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.hint.warning {
+  color: #d32f2f;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-field {
+  width: 280px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+
+  border: 2px solid #1565c0;
+  border-radius: 10px;
+
+  padding: 4px 6px;
+  width: 380px;
+
+  background: #fff;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 6px;
+}
+
+.search-box button {
+  border: none;
+  background: #e0e0e0;
+  border-radius: 10%;
+
+  width: 14px;
+  height: 28px;
+
+  cursor: pointer;
+}
+
+.search-box button:hover {
+  background: #d32f2f;
+  color: white;
+}
+
+.search-box .icon {
+  margin-left: 4px;
+  margin-right: 6px;
+  color: #f3e4e4;
+}
+
+.badge-admin {
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+}
+
+.badge-supervisor {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+.badge-administrativo {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+
+.badge-jefatura {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
 }

@@ -147,10 +147,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /*displayUser(user: any): string {
-    return user ? `${user.fullName} (${user.rut})` : '';
-  }*/
-
   displayUser(user: any): string {
     return user ? `${user.fullName}` : '';
   }
@@ -538,21 +534,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     // fallback seguro
     return new Date(date);
   }
-
-  /*
-  private setupUserFilter() {
-    this.userSearch.valueChanges
-      .pipe(debounceTime(200), distinctUntilChanged())
-      .subscribe((value: any) => {
-        const term = typeof value === 'string' ? value : value?.fullName;
-
-        this.filteredUsers = filterByRutOrName(this.users, term, {
-          nameKey: 'fullName',
-          rutKey: 'rut',
-        });
-      });
-  }
-  */
 
   canGoNext(): boolean {
     switch (this.currentStep) {
