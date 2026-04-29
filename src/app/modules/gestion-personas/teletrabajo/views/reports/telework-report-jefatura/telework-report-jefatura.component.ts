@@ -302,6 +302,21 @@ export class TeleworkReportJefaturaComponent {
 
         return true;
       });
+
+      // ===============================
+      // 🔍 VALIDAR SI HAY DATOS
+      // ===============================
+      const hasRegisters = this.allRegisters.length > 0;
+      const hasSubscriptions = this.allSubscriptions.length > 0;
+      const hasWorks = this.allWorks.length > 0;
+
+      if (!hasRegisters && !hasSubscriptions && !hasWorks) {
+        this.showWarning(
+          'No se encontró información para el rango seleccionado',
+        );
+      }
+
+      
     } catch (error) {
       console.error(error);
       this.showWarning('Error al cargar reporte');
@@ -1158,7 +1173,7 @@ export class TeleworkReportJefaturaComponent {
     return `${day}/${month}`; // 🔥 SOLO dd/MM
   }
 
-    toLocalDate(date: any): Date {
+  toLocalDate(date: any): Date {
     if (!date) return new Date();
 
     // 🔥 si viene ISO (backend)

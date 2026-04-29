@@ -57,15 +57,25 @@ export class UsersService {
     );
   }
 
-  searchUsers(term: string, limit: number = 10) {
+  resetPassword(userId: number, newPassword: string) {
+    return this.http.post(
+      `${environment.apiUrl}/users/${userId}/reset-password`,
+      {
+        newPassword,
+        confirmPassword: newPassword,
+      },
+    );
+  }
+
+  searchUsers(term: string, size: number = 1000) {
     const clean = term?.trim();
 
     if (!clean) {
-      return this.http.get<any[]>(`${this.api}?limit=${limit}`);
+      return this.http.get<any>(`${this.api}?size=${size}`);
     }
 
-    return this.http.get<any[]>(
-      `${this.api}/search?term=${encodeURIComponent(clean)}&limit=${limit}`,
+    return this.http.get<any>(
+      `${this.api}/search?term=${encodeURIComponent(clean)}&size=${size}`,
     );
   }
 
@@ -99,5 +109,22 @@ export class UsersService {
 
   existeRut(rut: string) {
     return this.http.get<boolean>(`${this.api}/exists-rut/${rut}`);
+  }
+
+  // =========================================
+  // 🔍 PREVIEW (TEMPORAL)
+  // =========================================
+  // =========================================
+  // 🔍 PREVIEW (SIMULADO)
+  // =========================================
+  previewNormalization() {
+    return this.getAll();
+  }
+
+  // =========================================
+  // ⚙️ NORMALIZE (DESACTIVADO)
+  // =========================================
+  normalizeUsers(payload: any) {
+    return this.http.post(`${this.api}/normalize`, payload);
   }
 }

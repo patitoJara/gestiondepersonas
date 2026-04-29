@@ -3,6 +3,7 @@ import { LoginComponent } from './core/auth/login/login.component';
 import { TemplateComponent } from './layout/template/template.component';
 import { AboutPublicComponent } from './public/about/about-public/about-public.component';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // =====================================================
@@ -60,6 +61,7 @@ export const routes: Routes = [
           title: 'Inicio',
           icon: 'home',
           roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -75,6 +77,7 @@ export const routes: Routes = [
           title: 'Registro de jornada',
           icon: 'access_time',
           roles: ['ADMIN', 'ADMINISTRATIVO'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -90,6 +93,7 @@ export const routes: Routes = [
           title: 'Mi Control de Teletrabajo',
           icon: 'assignment_ind',
           roles: ['ADMIN', 'ADMINISTRATIVO'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -105,6 +109,7 @@ export const routes: Routes = [
           title: 'Mis Suscripciones',
           icon: 'event',
           roles: ['ADMIN', 'ADMINISTRATIVO'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -120,6 +125,7 @@ export const routes: Routes = [
           title: 'Funcionarios por Jefatura',
           icon: 'groups',
           roles: ['ADMIN', 'JEFATURA'],
+          iconColor: '#ef6c00', // naranjo
         },
       },
 
@@ -135,6 +141,7 @@ export const routes: Routes = [
           title: 'Reporte Jefatura',
           icon: 'assessment',
           roles: ['ADMIN', 'JEFATURA'],
+          iconColor: '#ef6c00', // naranjo
         },
       },
 
@@ -154,6 +161,7 @@ export const routes: Routes = [
           title: 'Auditoría de Grupos',
           icon: 'groups',
           roles: ['ADMIN', 'SUPERVISOR'],
+          iconColor: '#1565c0', //azul
         },
       },
 
@@ -169,9 +177,10 @@ export const routes: Routes = [
           title: 'Auditoría Teletrabajo',
           icon: 'assessment',
           roles: ['ADMIN', 'SUPERVISOR'],
+          iconColor: '#1565c0', //azul
         },
       },
-            
+
       {
         path: 'admin/subscribe',
         loadComponent: () =>
@@ -184,6 +193,7 @@ export const routes: Routes = [
           title: 'Suscripción Teletrabajo',
           icon: 'event',
           roles: ['ADMIN', 'SUPERVISOR'],
+          iconColor: '#1565c0', //azul
         },
       },
 
@@ -199,6 +209,7 @@ export const routes: Routes = [
           title: 'Usuarios',
           icon: 'person',
           roles: ['ADMIN', 'SUPERVISOR'],
+          iconColor: '#1565c0', //azul
         },
       },
 
@@ -214,9 +225,26 @@ export const routes: Routes = [
           title: 'Roles',
           icon: 'security',
           roles: ['ADMIN'],
+          iconColor: '#bb3540', //rojo
         },
       },
+      {
+        path: 'admin/tools/users',
+        loadComponent: () =>
+          import('./modules/gestion-personas/admin/user-maintenance/user-maintenance.component').then(
+            (m) => m.UserMaintenanceComponent,
+          ),
 
+        data: {
+          module: 'teletrabajo',
+          section: 'admin',
+          title: 'Conf. General',
+          icon: 'security',
+          roles: ['ADMIN'], // ✅ CORRECTO
+          iconColor: '#bb3540', // 🔥 ahora sí funciona
+        },
+      },
+      
       {
         path: 'manual',
         loadComponent: () =>
@@ -229,6 +257,7 @@ export const routes: Routes = [
           title: 'Manual',
           icon: 'menu_book',
           roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -244,6 +273,7 @@ export const routes: Routes = [
           title: 'Acerca del sistema',
           icon: 'info',
           roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          iconColor: '#2e7d32', // verde
         },
       },
 
@@ -263,6 +293,7 @@ export const routes: Routes = [
           title: 'Postulación Estudios',
           icon: 'school',
           roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          iconColor: '#2e7d32', // verde
         },
       },
       // 👤 PERFIL (OCULTO)

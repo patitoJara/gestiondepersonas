@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, switchMap, catchError } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  switchMap,
+  catchError,
+} from 'rxjs/operators';
 import { UsersService } from './users.service';
 
 @Injectable({
@@ -40,18 +46,20 @@ export class UserSearchService {
           return this.usersService.searchUsers(prefix).pipe(
             catchError(() => of([])),
             map((resp: any) => {
-              const users = resp.data || resp.content || resp;
+              const users = resp?.data || resp?.content || resp || [];
 
-              const mapped = (users || []).map((u: any) => ({
+              const mapped = users.map((u: any) => ({
                 id: u.id,
-                fullName: [
-                  u.firstName,
-                  u.secondName,
-                  u.firstLastName,
-                  u.secondLastName,
-                ]
-                  .filter(Boolean)
-                  .join(' '),
+                fullName:
+                  u.full_name ||
+                  [
+                    u.firstName,
+                    u.secondName,
+                    u.firstLastName,
+                    u.secondLastName,
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
                 rut: u.rut,
               }));
 

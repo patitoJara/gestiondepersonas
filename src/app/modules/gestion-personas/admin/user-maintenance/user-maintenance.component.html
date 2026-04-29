@@ -1,0 +1,115 @@
+<mat-card>
+  <h2>🔧 Centro de Mantenimiento de Usuarios</h2>
+
+  <p class="intro">
+    Herramienta para analizar y corregir inconsistencias en usuarios.
+  </p>
+
+  <!-- EJEMPLO -->
+  <div class="example-box">
+    <h4>🧪 Ejemplo</h4>
+
+    <div class="example-row">Patricio Iván Jara Garcés — 11799136-9</div>
+
+    <div class="example-result">
+      Username → <b>pjara</b><br />
+      Password → <b>patricio1369</b>
+    </div>
+  </div>
+
+  <!-- OPCIONES -->
+  <div class="options">
+    <div class="option">
+      <mat-checkbox [(ngModel)]="fixUsername">
+        Normalizar username
+      </mat-checkbox>
+    </div>
+
+    <div class="option">
+      <mat-checkbox [(ngModel)]="fixPassword">
+        Generar password faltante
+      </mat-checkbox>
+    </div>
+
+    <div class="option">
+      <mat-checkbox [(ngModel)]="forceReset">
+        Forzar cambio de contraseña
+      </mat-checkbox>
+    </div>
+
+    <button mat-button (click)="backupUsers()">💾 Backup</button>
+  </div>
+
+  <!-- ACCIONES -->
+  <div class="actions">
+    <button mat-stroked-button color="primary" (click)="preview()">
+      🔍 Analizar
+    </button>
+
+    <button *ngIf="summary" mat-raised-button color="warn" (click)="execute()">
+      ⚡ Ejecutar
+    </button>
+
+    <button *ngIf="summary" mat-raised-button color="warn" (click)="fixUser228()">
+      ⚡ Ejecutar fixUser228
+    </button>
+
+    
+  </div>
+
+  <!-- LOADING -->
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- RESUMEN -->
+  <div *ngIf="summary" class="summary">
+    <div class="box info">👤 {{ summary.processed }}</div>
+    <div class="box warn">🔴 Username: {{ summary.usernameIssues }}</div>
+    <div class="box warn">🔐 Password: {{ summary.passwordIssues }}</div>
+  </div>
+
+  <!-- TABLA -->
+  <table *ngIf="auditUsers.length">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Username actual</th>
+        <th>Username esperado</th>
+        <th>Password sugerida</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let u of auditUsers">
+        <td>{{ u.firstName }} {{ u.firstLastName }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.locked ? u.username : u.expectedUsername }}</td>
+        <td>
+          {{ u.locked ? "🔒 no aplica" : u.generatedPassword || "-" }}
+        </td>
+
+        <td>
+          <!-- 🔒 PROTEGIDO -->
+          <span *ngIf="u.protected" class="protected"> 🔒 protegido </span>
+
+          <!-- 🔒 CORRECTO -->
+          <span *ngIf="!u.protected && u.locked" class="locked">
+            🔒 correcto
+          </span>
+
+          <!-- 🔧 OTROS -->
+          <span *ngIf="!u.protected && !u.locked" [ngClass]="u.status">
+            {{ u.status }}
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- RESULTADO -->
+  <div *ngIf="result" class="result">
+    <p>👤 Procesados: {{ result.processed }}</p>
+    <p>🔧 Actualizados: {{ result.updated }}</p>
+    <p *ngIf="result.simulated">⚠️ Simulación</p>
+  </div>
+</mat-card>

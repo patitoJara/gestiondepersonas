@@ -153,95 +153,94 @@ export class UsuariosDialogComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-  if (this.form.invalid) return;
+    if (this.form.invalid) return;
 
-  this.form.disable();
+    this.form.disable();
 
-  try {
-    const v = this.form.getRawValue();
+    try {
+      const v = this.form.getRawValue();
 
-    const userPayload: any = { ...v };
-    delete userPayload.roles;
+      const userPayload: any = { ...v };
+      delete userPayload.roles;
 
-    if (!userPayload.password) {
-      delete userPayload.password;
+      if (!userPayload.password) {
+        delete userPayload.password;
+      }
+
+      // 🔹 guardar usuario
+      const savedUser: any = await firstValueFrom(
+        v.id
+          ? this.usersService.updateUser(v.id, userPayload)
+          : this.usersService.createUser(userPayload),
+      );
+
+      const userId = savedUser.id ?? v.id;
+
+      // 🔹 sync roles
+      await this.syncRoles(userId, v.roles);
+
+      // 🔹 traer datos actualizados
+      const userFromApi = await firstValueFrom(
+        this.usersService.getById(userId),
+      );
+
+      const rolesRes: any[] = await firstValueFrom(
+        this.usersService.getUserRoles(userId),
+      );
+
+      // 🔥 usar mapper
+      const fullUser = this.mapUserToUI(userFromApi, rolesRes);
+
+      // 🔥 cerrar UNA VEZ con data correcta
+      this.ref.close(fullUser);
+    } catch (err) {
+      this.form.enable();
+      console.error(err);
     }
-
-    // 🔹 guardar usuario
-    const savedUser: any = await firstValueFrom(
-      v.id
-        ? this.usersService.updateUser(v.id, userPayload)
-        : this.usersService.createUser(userPayload),
-    );
-
-    const userId = savedUser.id ?? v.id;
-
-    // 🔹 sync roles
-    await this.syncRoles(userId, v.roles);
-
-    // 🔹 traer datos actualizados
-    const userFromApi = await firstValueFrom(
-      this.usersService.getById(userId)
-    );
-
-    const rolesRes: any[] = await firstValueFrom(
-      this.usersService.getUserRoles(userId)
-    );
-
-    // 🔥 usar mapper
-    const fullUser = this.mapUserToUI(userFromApi, rolesRes);
-
-    // 🔥 cerrar UNA VEZ con data correcta
-    this.ref.close(fullUser);
-
-  } catch (err) {
-    this.form.enable();
-    console.error(err);
   }
-}
 
-private mapUserToUI(user: any, rolesRes?: any[]): any {
-  const roles = rolesRes
-    ? rolesRes
-        .filter(r => !r.deletedAt)
-        .map(r => r.role?.name)
-    : user.roles || [];
+  private mapUserToUI(user: any, rolesRes?: any[]): any {
+    const roles = rolesRes
+      ? rolesRes.filter((r) => !r.deletedAt).map((r) => r.role?.name)
+      : user.roles || [];
 
-  return {
-    ...user,
-    roles,
-    fullName: [
-      user.firstName,
-      user.secondName,
-      user.firstLastName,
-      user.secondLastName,
-    ]
-      .filter(Boolean)
-      .join(' '),
-  };
-}
+    return {
+      ...user,
+      roles,
+      fullName: [
+        user.firstName,
+        user.secondName,
+        user.firstLastName,
+        user.secondLastName,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    };
+  }
 
-async syncRoles(userId: number, newRoleIds: number[]) {
-  const currentRolesRes: any[] = await firstValueFrom(
-    this.usersService.getUserRoles(userId)
-  );
+  async syncRoles(userId: number, newRoleIds: number[]) {
+    const currentRolesRes: any[] = await firstValueFrom(
+      this.usersService.getUserRoles(userId),
+    );
 
-  const currentRoleIds = currentRolesRes
-    .filter(r => !r.deletedAt)
-    .map(r => r.role?.id);
+    const currentRoleIds = currentRolesRes
+      .filter((r) => !r.deletedAt)
+      .map((r) => r.role?.id);
 
-  const rolesToAdd = newRoleIds.filter(id => !currentRoleIds.includes(id));
-  const rolesToRemove = currentRoleIds.filter(id => !newRoleIds.includes(id));
+    const rolesToAdd = newRoleIds.filter((id) => !currentRoleIds.includes(id));
+    const rolesToRemove = currentRoleIds.filter(
+      (id) => !newRoleIds.includes(id),
+    );
 
-  await Promise.all([
-    ...rolesToAdd.map(id =>
-      firstValueFrom(this.usersService.addUserRole(userId, id))
-    ),
-    ...rolesToRemove.map(id =>
-      firstValueFrom(this.usersService.deleteUserRole(userId, id))
-    ),
-  ]);
-}
+    await Promise.all([
+      ...rolesToAdd.map((id) =>
+        firstValueFrom(this.usersService.addUserRole(userId, id)),
+      ),
+      ...rolesToRemove.map((id) =>
+        firstValueFrom(this.usersService.deleteUserRole(userId, id)),
+      ),
+    ]);
+  }
 
   cancel(): void {
     this.ref.close();

@@ -276,6 +276,9 @@ export class TemplateComponent implements OnInit, OnDestroy {
         title: data.title || route.path,
         icon: data.icon || 'chevron_right',
         route: '/' + route.path,
+
+        // 🔥 NUEVO
+        iconColor: data.iconColor || '#1565c0',
       };
 
       if (!grouped[module]) grouped[module] = [];
@@ -433,7 +436,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
   }
 
   isActive(route: string): boolean {
-    return this.router.url.includes(route);
+    return this.router.url.split('?')[0] === route;
   }
 
   startSessionTimer() {

@@ -35,13 +35,16 @@ import { UserSearchService } from '@app/modules/gestion-personas/teletrabajo/ser
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-interface UserTable {
+interface UserFull {
   id: number;
-  fullName: string;
-  rut: string;
+  firstName: string;
+  secondName?: string;
+  firstLastName: string;
+  secondLastName?: string;
+  full_name?: string;
   email: string;
   username: string;
-  deletedAt?: any;
+  rut: string;
 }
 
 @Component({
@@ -77,6 +80,7 @@ export class UsuariosComponent implements AfterViewInit {
   ];
 
   dataSource = new MatTableDataSource<any>([]);
+  private rolesCache = new Map<number, any[]>();
 
   loading = false;
   total = 0;
@@ -95,6 +99,8 @@ export class UsuariosComponent implements AfterViewInit {
   private lastTerm = '';
   private allUsers: any[] = []; // 🔥 base real
   private viewUsers: any[] = []; // 🔥 lo que se muestra
+  private currentPrefix = '';
+  private hasFocus = false;
 
   ngAfterViewInit(): void {
     this.paginator.pageIndex = 0;
@@ -103,7 +109,6 @@ export class UsuariosComponent implements AfterViewInit {
     this.sort.active = 'id';
     this.sort.direction = 'asc';
 
-    // 🔥 SORT (sin estado vacío)
     this.sort.sortChange.subscribe((sort) => {
       if (!sort.direction) {
         this.sort.direction = 'asc';
@@ -113,97 +118,90 @@ export class UsuariosComponent implements AfterViewInit {
       this.applyCurrentView();
     });
 
-    // 🔥 PAGINACIÓN (esto te faltaba)
     this.paginator.page.subscribe(() => {
       this.applyCurrentView();
     });
 
-    // 🔥 BÚSQUEDA
-    this.search$
-      .pipe(
-        debounceTime(300),
-        map((term: string) => (term ?? '').toString().trim().toLowerCase()),
-        distinctUntilChanged(),
-      )
-      .subscribe((clean) => {
-        if (clean.length < 3) {
-          this.dataSource.data = [];
+    // 🔥 BÚSQUEDA INTELIGENTE
+    this.search$.pipe(debounceTime(300)).subscribe(async (term) => {
+      const clean = (term || '').trim().toLowerCase();
+      this.q = clean;
+
+      if (!clean || clean.length < 3) {
+        this.applyCurrentView();
+        return;
+      }
+
+      const prefix = clean.substring(0, 3);
+
+      if (prefix !== this.currentPrefix) {
+        this.currentPrefix = prefix;
+
+        try {
+          const response: any = await firstValueFrom(
+            this.api.searchUsers(prefix),
+          );
+
+          const baseUsers = response?.content || [];
+
+          // 🔥 TRAER USUARIO COMPLETO + ROLES (COMO EL DIALOG)
+          const fullUsers = await Promise.all(
+            baseUsers.map(async (u: any) => {
+              const user = await firstValueFrom(this.api.getById(u.id));
+
+              const rolesRes: any[] = await firstValueFrom(
+                this.api.getUserRoles(u.id),
+              );
+
+              const roles = rolesRes
+                .filter((r) => !r.deletedAt)
+                .map((r) => r.role?.name);
+
+              return {
+                ...user,
+                roles,
+                fullName: (user as any).full_name || this.buildFullName(user),
+              };
+            }),
+          );
+
+          console.log('FULL USERS:', fullUsers);
+
+          // 🔥 NO MAPEAR DE NUEVO → YA TIENE ROLES
+          this.allUsers = fullUsers;
+        } catch (e) {
+          console.error(e);
           this.allUsers = [];
-          this.viewUsers = [];
-          this.lastTerm = '';
-          return;
         }
+      }
 
-        if (this.lastTerm && clean.startsWith(this.lastTerm)) {
-          this.filterLocal(clean);
-        } else {
-          this.search(clean);
-        }
-
-        this.lastTerm = clean;
-      });
+      this.applyCurrentView();
+    });
 
     this.cdr.detectChanges();
   }
 
   applyCurrentView(): void {
-    if (!this.allUsers.length) return;
+    if (!this.allUsers.length) {
+      this.dataSource.data = [];
+      return;
+    }
 
     let data = [...this.allUsers];
 
-    // 🔥 NORMALIZAR
-    data = data.map((u) => ({
-      ...u,
-      roles: (u.roles || []).map((r: any) =>
-        typeof r === 'string' ? r : r?.name,
-      ),
-    }));
-
-    // 🔹 FILTRO
     if (this.q && this.q.length >= 3) {
       const term = this.q.toLowerCase();
 
+      const words = term.split(' ').filter((w: string) => w.length > 1);
+
       data = data.filter((u: any) => {
-        const full = this.buildFullName(u).toLowerCase();
-        const rut = (u.rut || '').toLowerCase();
-        const email = (u.email || '').toLowerCase();
+        const full = (u.fullName || this.buildFullName(u)).toLowerCase();
 
-        return (
-          full.includes(term) || rut.includes(term) || email.includes(term)
-        );
+        return words.some((w: string) => full.includes(w));
       });
     }
 
-    // 🔹 SORT
-    if (this.sort?.active && this.sort.direction) {
-      data.sort((a: any, b: any) => {
-        let valueA = this.getSortValue(a, this.sort.active);
-        let valueB = this.getSortValue(b, this.sort.active);
-
-        valueA = (valueA ?? '').toString().toLowerCase();
-        valueB = (valueB ?? '').toString().toLowerCase();
-
-        let result = valueA.localeCompare(valueB, 'es', {
-          sensitivity: 'base',
-          numeric: true,
-        });
-
-        if (result === 0) {
-          result = (a.id ?? 0) - (b.id ?? 0);
-        }
-
-        return this.sort.direction === 'asc' ? result : -result;
-      });
-    }
-
-    // 🔹 PAGINACIÓN
-    const start = this.paginator.pageIndex * this.paginator.pageSize;
-    const end = start + this.paginator.pageSize;
-
-    this.total = data.length;
-
-    // 🔥 CLAVE FINAL (te faltaba esto)
-    this.dataSource.data = data.slice(start, end);
+    this.dataSource.data = data;
   }
 
   getSortValue(item: any, field: string): any {
@@ -228,23 +226,32 @@ export class UsuariosComponent implements AfterViewInit {
     }
   }
 
-  filterLocal(term: string): void {
-    this.viewUsers = this.allUsers.filter((u: any) => {
-      const full = this.buildFullName(u).toLowerCase();
-      const rut = (u.rut || '').toLowerCase();
-      const email = (u.email || '').toLowerCase();
-
-      return full.includes(term) || rut.includes(term) || email.includes(term);
-    });
-
-    this.total = this.viewUsers.length;
-
-    this.paginator.firstPage();
-    this.applyCurrentView();
+  async onSearchChange(value: string) {
+    this.search$.next(value);
   }
 
-  onSearchChange(value: string): void {
-    this.search$.next(value);
+  resetSearch(): void {
+    this.q = '';
+    this.currentPrefix = '';
+    this.allUsers = [];
+    this.viewUsers = [];
+    this.dataSource.data = [];
+    this.total = 0;
+
+    this.paginator.firstPage();
+  }
+
+  onSearchBlur(event: FocusEvent, input: HTMLInputElement): void {
+    setTimeout(() => {
+      const active = document.activeElement as HTMLElement;
+
+      // 🔥 si el foco sigue dentro del componente → NO limpiar
+      if (active && active.closest('.list-toolbar')) {
+        return;
+      }
+
+      this.clearSearch();
+    }, 120);
   }
 
   private mapSortField(active?: string): string {
@@ -272,63 +279,9 @@ export class UsuariosComponent implements AfterViewInit {
     }
   }
 
-  /** Cargar usuarios */
-  async load(): Promise<void> {
-    // 🔒 No hacer nada
-    this.dataSource.data = [];
-    this.total = 0;
-  }
-
-  async search(term: string): Promise<void> {
-    this.loading = true;
-
-    try {
-      const result = await firstValueFrom(
-        this.userSearchService.search(of(term)),
-      );
-
-      const baseUsers: any[] = Array.isArray(result)
-        ? result
-        : result?.[0] || [];
-
-      // 🔥 traer datos completos
-      const fullUsers = await Promise.all(
-        baseUsers.map(async (u: any) => {
-          const user = await firstValueFrom(this.api.getById(u.id));
-
-          const rolesRes = await firstValueFrom(this.api.getUserRoles(u.id));
-
-          const roles = rolesRes
-            .filter((r) => !r.deletedAt)
-            .map((r) => r.role?.name);
-
-          return {
-            ...user,
-            roles, // 🔥 AHORA SÍ
-            fullName: this.buildFullName(user),
-          };
-        }),
-      );
-
-      // 🔥 base + vista
-      this.allUsers = fullUsers;
-      this.viewUsers = [...fullUsers];
-
-      this.total = this.viewUsers.length;
-
-      // 🔥 una sola vez
-      this.paginator.firstPage();
-      this.applyCurrentView();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  clearSearch(input: HTMLInputElement): void {
+  clearSearch(): void {
     this.q = '';
-    input.value = '';
+    this.currentPrefix = '';
 
     // 🔹 limpiar datos
     this.allUsers = [];
@@ -339,13 +292,32 @@ export class UsuariosComponent implements AfterViewInit {
     // 🔹 reset paginador
     this.paginator.firstPage();
 
-    // 🔹 reset orden (opcional pero recomendado)
+    // 🔹 reset orden
     this.sort.active = 'id';
     this.sort.direction = 'asc';
 
-    // 🔹 limpiar estado interno
     this.lastTerm = '';
   }
+
+  /*
+  onSearchFocus(input: HTMLInputElement): void {
+    this.q = '';
+    input.value = '';
+
+    this.allUsers = [];
+    this.viewUsers = [];
+    this.dataSource.data = [];
+    this.total = 0;
+
+    this.currentPrefix = ''; // 🔥 CLAVE (evita que quede pegado)
+
+    this.paginator.firstPage();
+
+    // opcional
+    this.sort.active = 'id';
+    this.sort.direction = 'asc';
+  }
+*/
 
   buildFullName(u: any): string {
     // 🔹 usar fullName si viene bien formado
@@ -361,15 +333,6 @@ export class UsuariosComponent implements AfterViewInit {
       .trim();
 
     return name || '—';
-  }
-
-  private normalize(text: string): string {
-    return (text || '')
-      .toLowerCase()
-      .replace(/\./g, '')
-      .replace(/-/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
   }
 
   private getFieldValue(row: User, field: string): any {
@@ -437,26 +400,51 @@ export class UsuariosComponent implements AfterViewInit {
 
   refresh(): void {
     if (this.q && this.q.length >= 3) {
-      this.search(this.q);
+      this.search$.next(this.q);
     } else {
-      this.clearSearch({ value: '' } as HTMLInputElement);
+      this.clearSearch();
     }
   }
 
-  openDialog(row?: User): void {
-    const ref = this.dialog.open(UsuariosDialogComponent, {
-      panelClass: 'sirus-dialog',
-      width: '680px',
-      maxWidth: '95vw',
-      backdropClass: 'app-backdrop',
-      data: row ?? null,
-      disableClose: true,
-    });
+  private normalize(text: string): string {
+    return (text || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
 
-    ref.afterClosed().subscribe((updated?: User) => {
-      if (updated) {
-        this.updateLocalUser(updated);
-      }
+  openDialog(row?: User): void {
+    if (!row?.id) {
+      // 👉 nuevo usuario
+      const ref = this.dialog.open(UsuariosDialogComponent, {
+        data: null,
+        width: '680px',
+        disableClose: true,
+      });
+
+      ref.afterClosed().subscribe((updated?: User) => {
+        if (updated) this.updateLocalUser(updated);
+      });
+
+      return;
+    }
+
+    // 🔥 EDITAR → traer full desde backend
+    this.api.getById(row.id).subscribe((fullUser) => {
+      const ref = this.dialog.open(UsuariosDialogComponent, {
+        width: '680px',
+        maxWidth: '95vw',
+        backdropClass: 'app-backdrop',
+        data: fullUser, // 🔥 ahora sí completo
+        disableClose: true,
+      });
+
+      ref.afterClosed().subscribe((updated?: User) => {
+        if (updated) {
+          this.updateLocalUser(updated);
+        }
+      });
     });
   }
 
@@ -488,7 +476,6 @@ export class UsuariosComponent implements AfterViewInit {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       width: '420px',
       disableClose: true,
-
       data: {
         title: 'Eliminar usuario',
         message: `¿Seguro que deseas eliminar “${row.username}” (ID: ${row.id})?`,
@@ -501,11 +488,25 @@ export class UsuariosComponent implements AfterViewInit {
     });
 
     ref.afterClosed().subscribe((ok: boolean) => {
-      if (ok) this.api.deleteUser(Number(row.id)).subscribe(() => this.load());
+      if (!ok) return;
+
+      this.api.deleteUser(Number(row.id)).subscribe(() => {
+        if (this.q && this.q.length >= 3) {
+          this.search$.next(this.q);
+        } else {
+          this.clearSearch(); // 🔥 FIX
+        }
+      });
     });
   }
 
   restore(row: User): void {
-    this.api.restore(Number(row.id)).subscribe(() => this.load());
+    this.api.restore(Number(row.id)).subscribe(() => {
+      if (this.q && this.q.length >= 3) {
+        this.search$.next(this.q);
+      } else {
+        //this.normalize(); // 🔥 FIX
+      }
+    });
   }
 }

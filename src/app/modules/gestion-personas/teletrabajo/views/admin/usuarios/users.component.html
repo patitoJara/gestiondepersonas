@@ -10,16 +10,9 @@
   <div class="filters">
     <div class="search-box">
       <span class="icon">🔍</span>
+      <input type="text" [(ngModel)]="q" (input)="onSearchChange(q)" />
 
-      <input
-        #search
-        type="text"
-        placeholder="Buscar usuario..."
-        [(ngModel)]="q"
-        (keyup)="onSearchChange(q)"
-      />
-
-      <button *ngIf="q" (click)="clearSearch(search)">✕</button>
+      <button *ngIf="q" (click)="clearSearch()">✕</button>
     </div>
   </div>
 
@@ -85,7 +78,7 @@
           <span
             class="badge"
             [ngClass]="'badge-' + r.toLowerCase()"
-            *ngFor="let r of row.roles || []"
+            *ngFor="let r of (row.roles && row.roles.length ? row.roles : ['Sin rol'])"
           >
             {{ r }}
           </span>

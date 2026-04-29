@@ -70,7 +70,6 @@
           <!-- 👇 SOLO mostrar carpeta si NO es Operación -->
           <ng-container *ngIf="group.label !== 'Operación'; else flatGroup">
             <div class="submenu-title" (click)="toggleGroup(group)">
-              <mat-icon>{{ group.open ? "folder_open" : "folder" }}</mat-icon>
               {{ group.label }}
             </div>
 
@@ -82,6 +81,9 @@
                 [class.active]="isActive(item.route)"
                 (click)="isMobile() && drawer?.close()"
               >
+                <mat-icon [style.color]="item.iconColor">{{
+                  group.open ? "folder_open" : "folder"
+                }}</mat-icon>
                 <mat-icon>{{ item.icon }}</mat-icon>
                 <span>{{ item.title }}</span>
               </div>
@@ -97,7 +99,9 @@
               [class.active]="isActive(item.route)"
               (click)="isMobile() && drawer?.close()"
             >
-              <mat-icon>{{ item.icon }}</mat-icon>
+              <mat-icon [style.color]="item.iconColor">{{
+                item.icon
+              }}</mat-icon>
               <span>{{ item.title }}</span>
             </div>
           </ng-template>
@@ -125,7 +129,9 @@
               [class.active]="isActive(item.route)"
               (click)="isMobile() && drawer?.close()"
             >
-              <mat-icon class="tree-dot">fiber_manual_record</mat-icon>
+              <mat-icon [style.color]="item.iconColor">
+                {{ item.icon }}
+              </mat-icon>
               <span>{{ item.title }}</span>
             </div>
           </div>

@@ -249,39 +249,67 @@ mat-sidenav-content {
   border-left: 1px dashed rgba(0, 0, 0, 0.15);
 }
 
+/* 🔥 TÍTULO */
 .submenu-title {
-  padding: 8px 12px;
+  padding: 8px 12px; /* ✅ corregido */
   margin: 2px 6px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
 
   display: flex;
-  gap: 8px;
+  gap: 14px;
   align-items: center;
 }
 
-.submenu-title:hover {
-  background: #e3f2fd;
-}
-
+/* 🔥 ITEM */
 .submenu-item {
-  position: relative;
-  padding: 6px 12px 6px 28px;
+  display: flex;
+  align-items: center;
+
+  padding: 6px 8px; /* 👈 más pegado a la izquierda */
   margin: 2px 6px;
   border-radius: 6px;
+
   font-size: 12px;
   cursor: pointer;
+
+  gap: 14px; /* 👈 mejor separación */
 }
 
+/* 🔥 ICONO */
+.submenu-item mat-icon {
+  font-size: 22px;      /* 🔥 más grande */
+  width: 26px;          /* 🔥 espacio real */
+  min-width: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 🔥 HOVER LIMPIO */
 .submenu-item:hover {
   background: #e3f2fd;
-  padding-left: 31px;
 }
 
+/* 🔥 ACTIVO */
 .submenu-item.active {
   background: #bbdefb;
   font-weight: 600;
+}
+
+/* 🎨 COLORES ICONOS */
+.submenu-item:nth-child(1) mat-icon {
+  color: #1565c0;
+}
+
+.submenu-item:nth-child(2) mat-icon {
+  color: #2e7d32;
+}
+
+.submenu-item:nth-child(3) mat-icon {
+  color: #ef6c00;
 }
 
 /* ============================================
