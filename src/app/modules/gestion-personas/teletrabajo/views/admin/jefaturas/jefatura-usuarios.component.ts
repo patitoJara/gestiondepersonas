@@ -17,6 +17,7 @@ import { GroupService } from '@app/modules/gestion-personas/teletrabajo/services
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
 import { LoaderService } from '@app/core/services/loader.service';
+import { Location } from '@angular/common';
 
 import { Router } from '@angular/router';
 
@@ -39,6 +40,7 @@ import { Router } from '@angular/router';
 export class JefaturaUsuariosComponent implements OnInit {
   loader = inject(LoaderService);
   private router = inject(Router);
+  private location = inject(Location);
   private SISTEMA_USERS = ['Admin', 'Operador', 'Supervisor', 'Jefatura'];
 
   private initialized = false;
@@ -54,6 +56,7 @@ export class JefaturaUsuariosComponent implements OnInit {
 
   selectedDisponibles: any[] = [];
   selectedAsignados: any[] = [];
+  usuariosAsignadosOriginal: any[] = [];
 
   sinUsuariosAsignados = false;
 
@@ -235,13 +238,19 @@ export class JefaturaUsuariosComponent implements OnInit {
   // ============================
 
   async guardar() {
-    this.loader.lock(); // 🔒 bloquea loader global
+    if (!this.hayCambios()) {
+      this.showWarning('⚠️ No hay cambios para guardar');
+      return;
+    }
+
+    this.loader.lock();
+
     try {
       this.loading = true;
 
-      // =========================================
+      // =========================
       // 🟦 GROUP
-      // =========================================
+      // =========================
       const groups = await firstValueFrom(this.groupService.getAll());
 
       const existingGroup = (groups as any[]).find(
@@ -275,22 +284,22 @@ export class JefaturaUsuariosComponent implements OnInit {
 
       if (!groupId) throw new Error('Group no creado');
 
-      // =========================================
+      // =========================
       // 🧹 LIMPIEZA FRONT
-      // =========================================
+      // =========================
       const ids = new Set();
 
       this.usuariosAsignados = this.usuariosAsignados
-        .filter((u) => u.id !== this.jefe.id) // ❌ evitar auto-asignación
+        .filter((u) => u.id !== this.jefe.id)
         .filter((u) => {
           if (ids.has(u.id)) return false;
           ids.add(u.id);
           return true;
         });
 
-      // =========================================
-      // 🟩 BORRAR RELACIONES REALES DEL GRUPO
-      // =========================================
+      // =========================
+      // 🟩 BORRAR RELACIONES
+      // =========================
       const relaciones = await firstValueFrom(this.usersGroupService.getAll());
 
       const relacionesDelGrupo = (relaciones as any[]).filter(
@@ -303,9 +312,9 @@ export class JefaturaUsuariosComponent implements OnInit {
         ),
       );
 
-      // =========================================
+      // =========================
       // 🟢 CREAR RELACIONES
-      // =========================================
+      // =========================
       if (this.usuariosAsignados.length > 0) {
         await Promise.all(
           this.usuariosAsignados.map((u) =>
@@ -319,9 +328,9 @@ export class JefaturaUsuariosComponent implements OnInit {
         );
       }
 
-      // =========================================
-      // 🔄 RECARGA REAL
-      // =========================================
+      // =========================
+      // 🔄 RECARGA
+      // =========================
       await this.cargarDatos();
 
       this.showWarning('✅ Guardado completo');
@@ -329,7 +338,7 @@ export class JefaturaUsuariosComponent implements OnInit {
       console.error('❌ ERROR', error);
       this.showWarning('❌ Error al guardar');
     } finally {
-      this.loader.unlock(); // 🔓 SIEMPRE liberar
+      this.loader.unlock();
       this.loading = false;
     }
   }
@@ -390,37 +399,34 @@ export class JefaturaUsuariosComponent implements OnInit {
     return true;
   }
 
+  cancel(): void {
+    this.dialog
+      .open(ConfirmDialogOkComponent, {
+        width: '420px',
+        disableClose: true,
+        data: {
+          title: 'Salir sin guardar',
+          message: 'Tienes cambios sin guardar. ¿Deseas salir?',
+          confirmText: 'Salir',
+          cancelText: 'Quedarme',
+          icon: 'warning',
+          color: 'warn',
+        },
+      })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (ok) {
+          this.location.back(); // 🔥 vuelve al menú real
+        }
+      });
+  }
+
   hayCambios(): boolean {
     const estadoActual = JSON.stringify({
       grupo: this.grupo,
-      asignados: this.usuariosAsignados.map((u) => u.id),
+      asignados: this.usuariosAsignados.map((u: any) => u.id),
     });
 
     return estadoActual !== this.estadoInicial;
-  }
-
-  
-  cancel(): void {
-    if (!this.hayCambios()) {
-      this.router.navigate(['/inicio']); 
-      return;
-    }
-
-    const dialogRef = this.dialog.open(ConfirmDialogOkComponent, {
-      width: '420px',
-      disableClose: true,
-      data: {
-        title: 'Confirmación',
-        message: '¿Deseas salir sin guardar los cambios?',
-        icon: 'warning',
-        confirmText: 'Salir',
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.router.navigate(['/telework']);
-      }
-    });
   }
 }

@@ -1,281 +1,81 @@
-.jefatura-wrapper {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+/* =====================================================
+   🧠 SIRUS UI - JEFATURA FINAL LIMPIO
+   ===================================================== */
+
+/* 🟦 CONTENEDOR */
+.report-container {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f8fd 100%);
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* 🟦 HEADER */
-.jefatura-header {
+.title {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid #e0e6ed;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.jefe-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #e3f2fd;
+.title mat-icon {
+  font-size: 26px;
+  color: #1565c0;
+}
 
+.title-main {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+/* 👤 USUARIO */
+.hint {
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  mat-icon {
-    color: #1565c0;
-    font-size: 28px;
-  }
-}
-
-.jefe-data {
-  flex: 1;
-}
-//---------------------------------------------
-
-.jefe-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #e3f2fd;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  mat-icon {
-    color: #1565c0;
-    font-size: 28px;
-  }
-}
-
-.label {
-  font-size: 12px;
-  color: #64748b;
+  gap: 8px;
+  font-size: 14px;
   font-weight: 500;
+  color: #37474f;
+  margin-bottom: 10px;
 }
 
-.jefatura-nombre {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0d47a1;
+.hint mat-icon {
+  color: #1565c0; /* 🔥 color institucional */
+  font-size: 20px;
 }
 
-.jefe-sub {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #475569;
+.nombre {
+  background: rgba(21, 101, 192, 0.12);
+  color: #1565c0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-/* BOTÓN */
-.jefatura-actions {
-  display: flex;
-  align-items: center;
+/* eliminar borde negro */
+.mat-mdc-text-field-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* label más chico */
+.mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.hint mat-icon {
+  color: #1565c0;
+  font-size: 18px;
 }
 
 /* 🟦 FORM */
-/* 🔥 FORM COMPACTO */
-.jefatura-form {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-/* ancho */
-.jefatura-form mat-form-field {
-  flex: 1;
-  min-width: 280px;
-}
-
-/* 🔻 reducir altura general */
-.jefatura-form .mat-mdc-form-field {
-  --mdc-outlined-text-field-container-height: 44px; // 🔥 clave
-}
-
-/* input */
-.jefatura-form input.mat-mdc-input-element {
-  font-size: 14px;
-  padding: 6px 0;
-}
-
-/* textarea (descripcion) */
-.jefatura-form textarea.mat-mdc-input-element {
-  font-size: 14px;
-  padding: 6px 0;
-  resize: none;
-}
-
-/* label más compacto */
-.jefatura-form .mat-mdc-floating-label {
-  font-size: 13px;
-}
-
-/* quitar espacio innecesario abajo */
-.jefatura-form .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-/* 🔄 DUAL */
-.dual-container {
-  margin-top: 24px;
-  display: grid;
-  grid-template-columns: 1fr 80px 1fr;
-  gap: 16px;
-}
-
-/* LISTAS */
-.list-box {
-  display: flex;
-  flex-direction: column;
-  height: 400px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 12px;
-  background: #ffffff;
-
-  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-  transition: all 0.2s ease;
-}
-
-.list-box h4 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #475569;
-}
-
-.list-box:hover {
-  transform: translateY(-2px);
-}
-
-.list-box h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-/* CONTENIDO */
-.list-content {
-  flex: 1;
-  overflow: auto;
-}
-
-/* BOTONES */
-.dual-actions {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-}
-
-/* EMPTY */
-.empty-list {
-  text-align: center;
-  color: #94a3b8;
-  font-size: 13px;
-  margin-top: 40px;
-
-  mat-icon {
-    font-size: 40px;
-    opacity: 0.5;
-    display: block;
-    margin-bottom: 6px;
-  }
-}
-
-/* ✨ HOVER */
-mat-list-option {
-  border-radius: 8px;
-  margin-bottom: 4px;
-  transition: all 0.15s ease;
-}
-
-mat-list-option:hover {
-  background: rgba(21, 101, 192, 0.1);
-}
-
-.mat-mdc-list-option.mdc-list-item--selected {
-  background: rgba(21, 101, 192, 0.18);
-}
-
-.dual-actions button {
-  box-shadow: 0 4px 10px rgba(21, 101, 192, 0.3);
-  transition: all 0.2s ease;
-}
-
-.dual-actions button:hover {
-  transform: scale(1.1);
-}
-
-
-/* 📱 RESPONSIVE */
-@media (max-width: 900px) {
-
-  .jefatura-form {
-    grid-template-columns: 1fr;
-  }
-
-  .dual-container {
-    grid-template-columns: 1fr;
-  }
-
-  .dual-actions {
-    flex-direction: row;
-    justify-content: center;
-  }
-
-}
-
-/* 🔥 FORZAR ALTURA REAL */
-.jefatura-form .mat-mdc-text-field-wrapper {
-  height: 44px !important;
-}
-
-.jefatura-form .mdc-text-field--outlined {
-  height: 44px !important;
-}
-
-/* input centrado vertical */
-.jefatura-form .mat-mdc-input-element {
-  height: 44px;
-  line-height: 44px;
-  padding: 0 !important;
-}
-
-/* label */
-.jefatura-form .mat-mdc-floating-label {
-  top: 50% !important;
-  transform: translateY(-50%) scale(1);
-}
-
-/* cuando está activo (flotando arriba) */
-.jefatura-form .mdc-floating-label--float-above {
-  transform: translateY(-130%) scale(0.75) !important;
-}
-
-/* textarea (IMPORTANTE 👇) */
-.jefatura-form textarea.mat-mdc-input-element {
-  height: auto;
-  min-height: 44px;
-  line-height: normal;
-  padding: 6px 0 !important;
-}
-
-
-/* 🟦 FORM PRO */
 .jefatura-form {
   display: flex;
   gap: 16px;
@@ -283,7 +83,6 @@ mat-list-option:hover {
   flex-wrap: wrap;
 }
 
-/* grupo */
 .input-group {
   flex: 1;
   min-width: 280px;
@@ -292,15 +91,12 @@ mat-list-option:hover {
   gap: 6px;
 }
 
-/* label institucional */
 .input-group label {
   font-size: 12px;
   font-weight: 600;
-  color: #1565c0; // 🔥 institucional
-  letter-spacing: 0.3px;
+  color: #1565c0;
 }
 
-/* input */
 .input-group input {
   height: 42px;
   border-radius: 10px;
@@ -308,18 +104,249 @@ mat-list-option:hover {
   padding: 0 12px;
   font-size: 14px;
   background: #f8fafc;
-  transition: all 0.2s ease;
 }
 
-/* focus */
 .input-group input:focus {
   outline: none;
   border-color: #1565c0;
-  background: #ffffff;
+  background: #fff;
   box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
 }
 
-/* hover */
-.input-group input:hover {
-  border-color: #90caf9;
+/* 🔄 DUAL */
+.dual-container {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  gap: 16px;
+}
+
+/* 📦 CAJAS */
+.list-box {
+  display: flex;
+  flex-direction: column;
+  height: 520px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e3e8ef;
+  background: #ffffff;
+}
+
+/* 🔶 DISPONIBLES */
+.disponibles-header {
+  background: linear-gradient(90deg, #fff3e0, #ffe0b2);
+  color: #ef6c00;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.disponibles-search {
+  padding: 12px 16px; /* 👈 aire parejo */
+  background: #fff8f1;
+  border-bottom: 1px solid #f1e0d0;
+}
+
+/* 🔥 el input ocupa todo el ancho útil */
+.disponibles-search .f-user {
+  width: 100%;
+  margin: 0;
+}
+
+/* 🔥 arregla el corte interno */
+.disponibles-search .mat-mdc-text-field-wrapper,
+.disponibles-search .mat-mdc-form-field-flex,
+.disponibles-search .mat-mdc-form-field-infix {
+  width: 100%;
+}
+
+/* 🔥 estética fina */
+.disponibles-search input {
+  height: 32px;
+  font-size: 13px;
+}
+
+/* 🔥 elimina fondo negro raro */
+.mat-mdc-text-field-wrapper {
+  background: transparent !important;
+}
+
+
+.disponibles-list {
+  padding: 8px;
+}
+
+/* 🟣 ASIGNADOS */
+.asignados-header {
+  background: linear-gradient(90deg, #ede7f6, #d1c4e9);
+  color: #6a1b9a;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.asignados-list {
+  padding: 8px;
+}
+
+/* 📄 ITEMS */
+mat-list-option {
+  border-radius: 10px;
+  margin-bottom: 6px;
+  border: 1px solid #f1f3f5;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+mat-list-option:hover {
+  background: #f4f8fd;
+}
+
+.mat-mdc-list-option.mdc-list-item--selected {
+  background: #e3f2fd !important;
+}
+
+/* 🔘 BOTONES CENTRO */
+.dual-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dual-actions button:first-child {
+  background: linear-gradient(135deg, #1565c0, #1976d2);
+  color: white;
+}
+
+.dual-actions button:last-child {
+  background: linear-gradient(135deg, #ef5350, #e53935);
+  color: white;
+}
+
+.dual-actions button {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transition: 0.2s;
+}
+
+.dual-actions button:hover {
+  transform: scale(1.1);
+}
+
+/* 🔥 BOTONES FINALES */
+.actions-bar {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #1565c0, #1e88e5);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(21, 101, 192, 0.35);
+
+  box-shadow:
+    0 6px 14px rgba(21, 101, 192, 0.35),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+
+  transition: 0.2s;
+}
+
+.btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 18px rgba(21, 101, 192, 0.45),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-save:disabled {
+  background: #cfd8dc;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #fff, #fce4ec);
+  border: 2px solid #ef5350;
+  color: #ef5350;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: 0.2s;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+  transition: 0.2s;
+}
+
+.btn-cancel:hover {
+  background: linear-gradient(135deg, #fff, #ffcdd2);
+}
+
+.f-user.compact .mat-mdc-form-field-infix {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+.f-user.compact input {
+  height: 32px;
+  font-size: 13px;
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #1565c0, #1e88e5);
+}
+
+.btn-remove {
+  background: linear-gradient(135deg, #ef5350, #e53935);
+}
+
+
+@media (max-width: 768px) {
+  .dual-container {
+    grid-template-columns: 1fr; /* 🔥 una sola columna */
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dual-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .list-box {
+    height: 320px; /* 🔥 antes 520px */
+  }
+}
+
+@media (max-width: 768px) {
+  .disponibles-search {
+    justify-content: center;
+  }
+
+  .disponibles-search .f-user {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-save,
+  .btn-cancel {
+    width: 100%;
+    justify-content: center;
+  }
 }

@@ -124,8 +124,10 @@ export class UsuariosComponent implements AfterViewInit {
 
     // 🔥 BÚSQUEDA INTELIGENTE
     this.search$.pipe(debounceTime(300)).subscribe(async (term) => {
-      const clean = (term || '').trim().toLowerCase();
-      this.q = clean;
+      const raw = (term || '').toLowerCase(); // 👈 mantiene espacios
+      const clean = raw.trim(); // 👈 solo valida
+
+      this.q = raw; // 🔥 NO usar clean
 
       if (!clean || clean.length < 3) {
         this.applyCurrentView();
@@ -178,6 +180,8 @@ export class UsuariosComponent implements AfterViewInit {
       this.applyCurrentView();
     });
 
+    this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
     this.cdr.detectChanges();
   }
 
@@ -190,18 +194,21 @@ export class UsuariosComponent implements AfterViewInit {
     let data = [...this.allUsers];
 
     if (this.q && this.q.length >= 3) {
-      const term = this.q.toLowerCase();
-
-      const words = term.split(' ').filter((w: string) => w.length > 1);
+      const words = this.q
+        .toLowerCase()
+        .split(' ')
+        .filter((w) => w.trim().length > 0);
 
       data = data.filter((u: any) => {
         const full = (u.fullName || this.buildFullName(u)).toLowerCase();
 
-        return words.some((w: string) => full.includes(w));
+        // 🔥 TODAS las palabras deben estar
+        return words.every((w) => full.includes(w));
       });
     }
 
     this.dataSource.data = data;
+    this.paginator.length = data.length;
   }
 
   getSortValue(item: any, field: string): any {

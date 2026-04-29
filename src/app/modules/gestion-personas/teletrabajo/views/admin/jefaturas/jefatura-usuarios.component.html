@@ -1,54 +1,29 @@
-<mat-card class="jefatura-wrapper">
-  <!-- 🟦 HEADER PRO -->
-  <div class="jefatura-header">
-    <div class="jefe-avatar">
-      <mat-icon>badge</mat-icon>
-    </div>
+<div class="report-container">
+  <!-- 🟦 HEADER -->
+  <div class="title">
+    <mat-icon>badge</mat-icon>
 
-    <div class="jefe-data">
-      <span class="label">Funcionarios por Jefatura</span>
-      <h2 class="jefatura-nombre">{{ grupo.name || "Sin nombre" }}</h2>
+    <div class="title-main">Funcionarios por Jefatura</div>
+  </div>
 
-      <div class="jefe-sub">
-        <mat-icon>person</mat-icon>
-        <span>{{ jefe?.fullName }}</span>
-      </div>
-    </div>
-
-    <div class="jefatura-actions">
-      <button mat-raised-button color="primary" (click)="guardar()">
-        <mat-icon>save</mat-icon>
-        Guardar
-      </button>
-    </div>
-
-    <div class="jefatura-actions">
-      <button mat-raised-button color="secundary" (click)="cancel()">
-        <mat-icon>logout</mat-icon>
-        Salir
-      </button>
-    </div>
-
+  <!-- 👤 USUARIO -->
+  <div class="hint">
+    <mat-icon>person</mat-icon>
+    <span class="nombre">
+      {{ jefe?.fullName || "Sin jefe" }}
+    </span>
   </div>
 
   <!-- 🟦 FORM -->
   <div class="jefatura-form">
     <div class="input-group">
       <label>Nombre de Jefatura</label>
-      <input
-        type="text"
-        [(ngModel)]="grupo.name"
-        placeholder="Ingrese nombre"
-      />
+      <input class="input" [(ngModel)]="grupo.name" />
     </div>
 
     <div class="input-group">
       <label>Descripción</label>
-      <input
-        type="text"
-        [(ngModel)]="grupo.description"
-        placeholder="Ingrese descripción"
-      />
+      <input class="input" [(ngModel)]="grupo.description" />
     </div>
   </div>
 
@@ -56,19 +31,19 @@
   <div class="dual-container">
     <!-- DISPONIBLES -->
     <div class="list-box">
-      <h4>Disponibles ({{ usuariosDisponibles.length }})</h4>
+      <div class="card-header disponibles-header">
+        <span>Disponibles</span>
+        <small>({{ usuariosDisponibles.length }})</small>
+      </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Buscar</mat-label>
-        <input matInput [(ngModel)]="filtroDisponible" />
-      </mat-form-field>
+      <div class="disponibles-search">
+        <mat-form-field appearance="fill" class="f-user">
+          <mat-label>Buscar</mat-label>
+          <input matInput [(ngModel)]="filtroDisponible" />
+        </mat-form-field>
+      </div>
 
-      <div class="list-content">
-        <div *ngIf="!usuariosDisponibles.length" class="empty-list">
-          <mat-icon>group_off</mat-icon>
-          <span>Sin usuarios disponibles</span>
-        </div>
-
+      <div class="list-content disponibles-list">
         <mat-selection-list [(ngModel)]="selectedDisponibles">
           <mat-list-option
             *ngFor="let u of usuariosDisponiblesFiltrados()"
@@ -82,25 +57,23 @@
 
     <!-- BOTONES -->
     <div class="dual-actions">
-      <button mat-fab color="primary" (click)="agregar()">
+      <button mat-fab class="btn-add" (click)="agregar()">
         <mat-icon>chevron_right</mat-icon>
       </button>
 
-      <button mat-fab color="warn" (click)="quitar()">
+      <button mat-fab class="btn-remove" (click)="quitar()">
         <mat-icon>chevron_left</mat-icon>
       </button>
     </div>
 
     <!-- ASIGNADOS -->
     <div class="list-box">
-      <h4>Asignados ({{ usuariosAsignados.length }})</h4>
+      <div class="card-header asignados-header">
+        <span>Asignados</span>
+        <small>({{ usuariosAsignados.length }})</small>
+      </div>
 
-      <div class="list-content">
-        <div *ngIf="!usuariosAsignados.length" class="empty-list">
-          <mat-icon>person_off</mat-icon>
-          <span>Sin usuarios asignados</span>
-        </div>
-
+      <div class="list-content asignados-list">
         <mat-selection-list [(ngModel)]="selectedAsignados">
           <mat-list-option *ngFor="let u of usuariosAsignados" [value]="u">
             {{ u.fullName }}
@@ -109,4 +82,16 @@
       </div>
     </div>
   </div>
-</mat-card>
+
+  <div class="actions-bar">
+    <button class="btn-cancel" (click)="cancel()">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+
+    <button class="btn-save" [disabled]="!hayCambios()" (click)="guardar()">
+      <mat-icon>save</mat-icon>
+      Guardar
+    </button>
+  </div>
+</div>

@@ -357,9 +357,30 @@ export class TemplateComponent implements OnInit, OnDestroy {
       this.showExtendButton = this.remainingMinutes <= 5;
 
       if (this.remainingMinutes <= 0) {
-        this.forceLogout(); // 🔥 SIN modal
+        this.showSessionExpiredModal();
       }
     }, 60000);
+  }
+
+  showSessionExpiredModal(): void {
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        width: '420px',
+        disableClose: true,
+        data: {
+          title: 'Sesión expirada',
+          message:
+            'Tu sesión ha expirado por seguridad. Debes volver a iniciar sesión.',
+          confirmText: 'Ir a login',
+          cancelText: '',
+          icon: 'warning',
+          color: 'warn',
+        },
+      })
+      .afterClosed()
+      .subscribe(() => {
+        this.forceLogout(); // 🔥 AQUÍ recién
+      });
   }
 
   logout(): void {
