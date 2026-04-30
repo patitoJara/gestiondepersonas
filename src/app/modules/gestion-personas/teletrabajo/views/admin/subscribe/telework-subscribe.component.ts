@@ -49,6 +49,11 @@ interface UserRoleResponse {
   deletedAt?: any;
 }
 
+type DateRange = {
+  from: Date;
+  to: Date;
+};
+
 @Component({
   selector: 'app-telework-subscribe',
   standalone: true,
@@ -116,15 +121,39 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   today = new Date();
   selectedFile: File | null = null;
   fileName: string | null = null;
+  calendar: { date: Date }[] = [];
+  groupedMonths: any[] = [];
+
+  selectedDates: Date[] = [];
+
+  dateFrom: Date | null = null;
+  dateTo: Date | null = null;
+  month: number | null = null;
+  year: number | null = null;
+  tempStart: Date | null = null;
+  ranges: DateRange[] = [];
+
+  months = [
+    { name: 'Ene' },
+    { name: 'Feb' },
+    { name: 'Mar' },
+    { name: 'Abr' },
+    { name: 'May' },
+    { name: 'Jun' },
+    { name: 'Jul' },
+    { name: 'Ago' },
+    { name: 'Sep' },
+    { name: 'Oct' },
+    { name: 'Nov' },
+    { name: 'Dic' },
+  ];
 
   steps: Step[] = [
     { id: 1, title: 'Funcionario', completed: false },
-    { id: 2, title: 'Fecha inicio', completed: false },
-    { id: 3, title: 'Fecha término', completed: false },
-    { id: 4, title: 'Validación', completed: false },
-    { id: 5, title: 'Documento', completed: false },
-    { id: 6, title: 'Confirmación', completed: false },
-    { id: 7, title: 'Registro', completed: false },
+    { id: 2, title: 'Fechas', completed: false }, // 🔥 TODO AQUÍ
+    { id: 3, title: 'Documento', completed: false },
+    { id: 4, title: 'Confirmación', completed: false },
+    { id: 5, title: 'Registro', completed: false },
   ];
 
   currentStep = 1;
@@ -145,6 +174,9 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     this.form.valueChanges.subscribe(() => {
       this.checkOverlapDates();
     });
+
+    this.generateCalendar();
+    this.groupCalendar();
   }
 
   displayUser(user: any): string {
@@ -257,24 +289,24 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   nextStep() {
-    if (this.currentStep === 1 && !this.form.get('userId')?.value) return;
-    if (this.currentStep === 2 && !this.form.get('begin')?.value) return;
-    if (this.currentStep === 3 && !this.form.get('end')?.value) return;
+    if (!this.canGoNext()) return;
 
-    if (this.currentStep < this.steps.length) {
-      this.steps[this.currentStep - 1].completed = true;
-      this.currentStep++;
+    this.steps[this.currentStep - 1].completed = true;
+    this.currentStep++;
 
-      this.scrollToActiveStep(); // 🔥 AQUÍ
-    }
+    this.scrollToActiveStep();
   }
 
   previousStep() {
     if (this.currentStep > 1) {
-      this.steps[this.currentStep - 2].completed = false;
+      // limpiar pasos futuros
+      for (let i = this.currentStep - 1; i < this.steps.length; i++) {
+        this.steps[i].completed = false;
+      }
+
       this.currentStep--;
 
-      this.scrollToActiveStep(); // 🔥 AQUÍ
+      this.scrollToActiveStep();
     }
   }
 
@@ -294,25 +326,37 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   async createSubscription() {
-    const begin = this.form.get('begin')?.value;
-    const end = this.form.get('end')?.value;
-
-    if (!begin || !end) {
-      this.showWarning('Debe seleccionar fechas válidas');
+    if (!this.ranges || this.ranges.length === 0) {
+      this.showWarning('Debe seleccionar al menos un rango');
       return;
     }
 
-    const payload = {
-      begin: this.toBackendDate(begin), // 🔥 CLAVE
-      end: this.toBackendDate(end), // 🔥 CLAVE
-      user: { id: this.form.value.userId },
-      active: this.calculateActive(begin, end),
-    };
+    const userId = this.form.value.userId;
 
-    await firstValueFrom(this.subscribeService.create(payload));
+    try {
+      for (const r of this.ranges) {
+        const begin = r.from;
+        const end = r.to;
 
-    this.steps.forEach((step) => (step.completed = true));
-    this.currentStep = 7;
+        const payload = {
+          begin: this.toBackendDate(begin), // mismo formato que usabas
+          end: this.toBackendDate(end),
+          user: { id: userId },
+          active: this.calculateActive(begin, end), // misma lógica
+        };
+
+        console.log('🚀 guardando rango:', payload);
+
+        await firstValueFrom(this.subscribeService.create(payload));
+      }
+
+      // ✔️ éxito total
+      this.steps.forEach((s) => (s.completed = true));
+      this.currentStep = 5; // último paso ahora
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error al guardar uno de los rangos');
+    }
   }
 
   reset() {
@@ -541,18 +585,15 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
         return !!this.form.value.userId;
 
       case 2:
-        return !!this.form.value.begin && !this.hasDateConflict;
+        return this.ranges.length > 0; // 🔥 CLAVE
 
       case 3:
-        return !!this.form.value.end && !this.hasDateConflict;
+        return true; // documento opcional
 
       case 4:
         return true;
 
       case 5:
-        return true;
-
-      case 6:
         return true;
 
       default:
@@ -562,11 +603,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
 
   handleNext() {
     switch (this.currentStep) {
-      case 3:
-        this.validatePeriod();
-        break;
-
-      case 6:
+      case 4:
         this.createSubscription();
         break;
 
@@ -633,5 +670,257 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
         });
       }
     }, 100);
+  }
+
+  /*--------------------------------------------------------------------------------------------------
+  ---------------------------------------------------------------------------------------------------*/
+
+  formatDateSafe(value: string | Date): string {
+    if (!value) return '';
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      const d = value.getDate().toString().padStart(2, '0');
+      const m = (value.getMonth() + 1).toString().padStart(2, '0');
+      const y = value.getFullYear();
+
+      return `${d}/${m}/${y}`;
+    }
+
+    // 🔥 si es string ISO
+    const [datePart] = value.split('T');
+    const [y, m, d] = datePart.split('-');
+
+    return `${d}/${m}/${y}`;
+  }
+
+  formatToLocalISOString(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+
+    return `${y}-${m}-${d}T${h}:${min}:${s}`;
+  }
+
+  onFilterFocus(): void {
+    // 🔥 limpiar fechas si usas mes/año
+    this.dateFrom = null;
+    this.dateTo = null;
+  }
+
+  onDateFocus(): void {
+    this.month = null;
+    this.year = null;
+
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  isSameDay(a: Date, b: Date): boolean {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  parseLocalDate(value: string | Date): Date {
+    if (!value) return new Date();
+
+    if (value instanceof Date) return value;
+
+    const [datePart] = value.split('T'); // 🔥 IGNORA TODO LO DEMÁS
+    const [y, m, d] = datePart.split('-').map(Number);
+
+    return new Date(y, m - 1, d);
+  }
+
+  toggleDate(d: Date) {
+    const exists = this.selectedDates.some((date) => this.isSameDay(date, d));
+
+    if (exists) {
+      this.selectedDates = this.selectedDates.filter(
+        (date) => !this.isSameDay(date, d),
+      );
+    } else {
+      this.selectedDates.push(d);
+    }
+
+    this.generateRanges(); // 🔥 CLAVE
+  }
+
+  getWeekKey(d: Date) {
+    const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const day = date.getDay() || 7; // domingo = 7
+    date.setDate(date.getDate() + 4 - day);
+
+    const yearStart = new Date(date.getFullYear(), 0, 1);
+
+    const week = Math.ceil(
+      ((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+    );
+
+    return `${date.getFullYear()}-W${week}`;
+  }
+
+  generateRanges() {
+    if (!this.selectedDates.length) {
+      this.ranges = [];
+      return;
+    }
+
+    const sorted = [...this.selectedDates].sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
+
+    const result: { from: Date; to: Date }[] = [];
+
+    let start = sorted[0];
+    let prev = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const current = sorted[i];
+
+      const isNextDay = current.getTime() === prev.getTime() + 86400000;
+
+      const sameWeek = this.getWeekKey(current) === this.getWeekKey(prev);
+
+      if (isNextDay && sameWeek) {
+        prev = current;
+      } else {
+        result.push({ from: start, to: prev });
+        start = current;
+        prev = current;
+      }
+    }
+
+    result.push({ from: start, to: prev });
+
+    this.ranges = result;
+  }
+
+  getDays(range: DateRange): number {
+    const diff =
+      (range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24);
+
+    return diff + 1;
+  }
+
+  isOverlapping(newRange: DateRange): boolean {
+    return this.ranges.some(
+      (r) => newRange.from <= r.to && newRange.to >= r.from,
+    );
+  }
+
+  getTotalDays(): number {
+    return this.ranges.reduce((acc, r) => acc + this.getDays(r), 0);
+  }
+  generateCalendar() {
+    const today = new Date();
+
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), 11, 31);
+
+    const days = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push({
+        date: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+      });
+    }
+
+    this.calendar = days;
+  }
+
+  groupCalendar() {
+    const groups: any = {};
+
+    this.calendar.forEach((item) => {
+      const d = item.date;
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+
+      if (!groups[key]) {
+        groups[key] = {
+          label: this.months[d.getMonth()].name.toUpperCase(),
+          year: d.getFullYear(),
+          days: [],
+        };
+      }
+
+      groups[key].days.push(d);
+    });
+
+    this.groupedMonths = Object.values(groups);
+  }
+
+  isSelected(date: Date): boolean {
+    return this.selectedDates.some((d) => this.isSameDay(d, date));
+  }
+
+  clearResults() {
+    this.selectedDates = [];
+    this.ranges = [];
+  }
+
+  getMonthDaysWithOffset(month: any): (Date | null)[] {
+    const days = month.days;
+
+    if (!days.length) return [];
+
+    const first = days[0];
+    const dayOfWeek = first.getDay() === 0 ? 7 : first.getDay(); // L=1 ... D=7
+
+    const offset = dayOfWeek - 1;
+
+    const result: (Date | null)[] = [];
+
+    // espacios vacíos
+    for (let i = 0; i < offset; i++) {
+      result.push(null);
+    }
+
+    return [...result, ...days];
+  }
+
+  isInRange(d: Date): boolean {
+    return this.ranges.some((r) => d >= r.from && d <= r.to);
+  }
+
+  isStart(d: Date): boolean {
+    return this.ranges.some((r) => this.isSameDay(d, r.from));
+  }
+
+  isEnd(d: Date): boolean {
+    return this.ranges.some((r) => this.isSameDay(d, r.to));
+  }
+
+  isSingle(d: Date): boolean {
+    return this.ranges.some(
+      (r) => this.isSameDay(r.from, r.to) && this.isSameDay(d, r.from),
+    );
+  }
+
+  isMiddle(d: Date): boolean {
+    return this.ranges.some((r) => d > r.from && d < r.to);
+  }
+
+  canContinue(): boolean {
+    return this.ranges && this.ranges.length > 0;
+  }
+
+  isSameWeek(d1: Date, d2: Date): boolean {
+    const start = new Date(d1);
+    const day = start.getDay() || 7; // lunes inicio
+
+    start.setDate(d1.getDate() - day + 1);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    return d2 >= start && d2 <= end;
   }
 }

@@ -5,6 +5,10 @@
 .transfer-container {
   padding: 12px;
   padding-bottom: 80px;
+
+  height: 100%;        // 🔥 AGREGAR
+  display: flex;       // 🔥 AGREGAR
+  flex-direction: column; // 🔥 AGREGAR  
 }
 
 /* =========================
@@ -354,10 +358,9 @@ button.mat-mdc-raised-button {
 
 /* botones */
 .confirm-actions {
-  margin-top: 18px;
-
+  margin-top: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -511,6 +514,10 @@ button.mat-mdc-raised-button {
 .step-content {
   margin-top: 24px;
   animation: stepEnter 0.35s ease;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;  
 }
 
 @keyframes stepEnter {
@@ -593,5 +600,326 @@ button.mat-mdc-raised-button:hover {
   .stepper::-webkit-scrollbar-thumb {
     background: #cfd8dc;
     border-radius: 10px;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------  
+  nuevo paso 2
+  -------------------------------------------------------------------------------------------------------*/
+/* CARD */
+.card-elegante,
+.card-form {
+  width: 100%;
+  max-width: none;
+}
+
+/* FLEX BASE */
+mat-card.card-form {
+  display: flex;
+  flex-direction: column;
+   flex: 1;
+}
+
+/* HEADER / INFO / ACTIONS */
+.card-header,
+.top-info,
+.top-actions {
+  flex: 0 0 auto;
+}
+
+/* BODY */
+.card-body {
+  flex: 1;
+  overflow: hidden; // 🔥 evita scroll global
+}
+
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+  width: 100%;
+}
+
+/* CALENDARIO (SCROLL REAL) */
+.calendar-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+
+  height: 100%;        // 🔥 CAMBIA ESTO
+  overflow-y: auto;
+}
+
+/* SCROLL BONITO */
+.calendar-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.calendar-container::-webkit-scrollbar-thumb {
+  background: #cfd8dc;
+  border-radius: 10px;
+}
+
+/* PANEL STICKY */
+.ranges-panel {
+  width: 280px;
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 12px;
+
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+}
+
+/* MES */
+.month-block {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+}
+
+/* TITULO */
+.month-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0d47a1;
+  margin-bottom: 6px;
+}
+
+/* HEADER SEMANA */
+.week-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 11px;
+  color: #90a4ae;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+/* GRID */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+/* DIA */
+.day {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  background: #e3f2fd;
+  transition: all 0.15s ease;
+}
+
+.day:hover {
+  background: #bbdefb;
+  transform: scale(1.05);
+}
+
+.day:active {
+  transform: scale(0.95);
+}
+
+/* VACIO */
+.empty-day {
+  height: 30px;
+}
+
+/* BLOQUES CONTINUOS */
+.day.range {
+  background: #90caf9;
+}
+
+.day.start {
+  background: #1565c0;
+  color: #fff;
+  border-radius: 20px 0 0 20px;
+}
+
+.day.end {
+  background: #1565c0;
+  color: #fff;
+  border-radius: 0 20px 20px 0;
+}
+
+.day.middle {
+  background: #90caf9;
+}
+
+.day.single {
+  background: #1565c0;
+  color: #fff;
+  border-radius: 50%;
+}
+
+/* PANEL */
+.ranges-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.range-item {
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.total {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.total.active {
+  color: #1565c0;
+}
+
+/* ESTADOS */
+.hint {
+  font-size: 12px;
+  color: #d32f2f;
+}
+
+.empty-state {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+/* INFO */
+.rules-box {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f1f8ff;
+  border-left: 4px solid #1565c0;
+  font-size: 13px;
+}
+
+/* ACCIONES */
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-actions {
+  margin-top: auto; // 🔥 empuja al fondo
+  padding-top: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-actions button {
+  width: 100%; // 🔥 botones full ancho
+}
+
+.ranges-panel {
+  display: flex;
+  flex-direction: column;
+
+  max-height: 70vh; // 🔥 igual que calendario
+}
+
+.ranges-panel .range-item {
+  overflow: hidden;
+}
+
+.ranges-panel {
+  overflow: hidden;
+}
+
+.ranges-panel .range-list {
+  overflow-y: auto;
+}
+
+
+.confirm-item {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.value {
+  font-weight: 500;
+}
+
+.ranges-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.range-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  background: #f5f7fa;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.range-index {
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.range-days {
+  color: #546e7a;
+}
+
+.total {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+
+.centered-step {
+  display: flex;
+  justify-content: center; // 🔥 centra horizontal
+  align-items: flex-start; // opcional (arriba)
+}
+
+/* solo afecta a este paso */
+.centered-step .card-form {
+  width: 100%;
+  max-width: 900px; // 🔥 controla el ancho
+}
+
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+  .calendar-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .calendar-container {
+    grid-template-columns: 1fr;
   }
 }

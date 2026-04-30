@@ -1,3 +1,5 @@
+//C:\Users\pjara\Documents\DESARROLLO\ANGULAR\gestion-personas\src\app\modules\gestion-personas\teletrabajo\views\reports\telework-subscriptions\telework-subscriptions.component.ts
+
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -62,6 +64,9 @@ export class TeleworkUserSubscriptionsComponent {
 
   month: number | null = null;
   year: number | null = null;
+
+  selectedDates: Date[] = [];
+  ranges: { from: Date; to: Date }[] = [];
 
   months = [
     { value: 1, name: 'Enero' },
@@ -924,5 +929,78 @@ export class TeleworkUserSubscriptionsComponent {
       d.getMonth() === compare.getMonth() &&
       d.getDate() === compare.getDate()
     );
+  }
+
+  toggleDate(date: Date) {
+    const exists = this.selectedDates.some((d) => this.isSameDay(d, date));
+
+    if (exists) {
+      this.selectedDates = this.selectedDates.filter(
+        (d) => !this.isSameDay(d, date),
+      );
+    } else {
+      this.selectedDates.push(date);
+    }
+
+    this.generateRanges(); // 🔥 automático
+  }
+
+  isSameDay(a: Date, b: Date) {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  getWeekKey(d: Date) {
+    const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const day = date.getDay() || 7; // domingo = 7
+    date.setDate(date.getDate() + 4 - day);
+
+    const yearStart = new Date(date.getFullYear(), 0, 1);
+
+    const week = Math.ceil(
+      ((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+    );
+
+    return `${date.getFullYear()}-W${week}`;
+  }
+
+  generateRanges() {
+    if (!this.selectedDates.length) {
+      this.ranges = [];
+      return;
+    }
+
+    const sorted = [...this.selectedDates].sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
+
+    const result: { from: Date; to: Date }[] = [];
+
+    let start = sorted[0];
+    let prev = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const current = sorted[i];
+
+      const isNextDay = current.getTime() === prev.getTime() + 86400000;
+
+      const sameWeek = this.getWeekKey(current) === this.getWeekKey(prev);
+
+      if (isNextDay && sameWeek) {
+        prev = current;
+      } else {
+        result.push({ from: start, to: prev });
+        start = current;
+        prev = current;
+      }
+    }
+
+    result.push({ from: start, to: prev });
+
+    this.ranges = result;
   }
 }

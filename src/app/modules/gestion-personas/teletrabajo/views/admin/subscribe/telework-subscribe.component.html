@@ -9,67 +9,52 @@
     <!-- STEPPER -->
     <div class="stepper" [style.--progress]="progress / 100">
       <div
-        *ngFor="let step of steps; let i = index"
-        #stepItem
+        *ngFor="let step of steps"
         class="step"
         [class.active]="step.id === currentStep"
         [class.completed]="step.completed"
       >
+        <!-- CÍRCULO -->
         <div class="circle">
-          <!-- número del paso -->
-          <span
-            *ngIf="!step.completed && !(step.id === 6 && currentStep === 6)"
-          >
+          <span *ngIf="!step.completed">
             {{ step.id }}
           </span>
 
-          <!-- check -->
-          <mat-icon
-            *ngIf="step.completed || (step.id === 6 && currentStep === 6)"
-          >
-            check
-          </mat-icon>
+          <mat-icon *ngIf="step.completed"> check </mat-icon>
         </div>
 
+        <!-- TÍTULO -->
         <div class="label">
           {{ step.title }}
         </div>
 
-        <div
-          class="value"
-          *ngIf="step.completed || (step.id === 6 && currentStep === 6)"
-        >
+        <!-- VALORES -->
+        <div class="value" *ngIf="step.completed">
+          <!-- STEP 1 -->
           <span *ngIf="step.id === 1">
             {{ getUserName() }}
           </span>
 
+          <!-- STEP 2 🔥 NUEVO -->
           <span *ngIf="step.id === 2">
-            {{ getDate("begin") }}
+            {{ ranges.length }} rangos / {{ getTotalDays() }} días
           </span>
 
+          <!-- STEP 3 -->
           <span *ngIf="step.id === 3">
-            {{ getDate("end") }}
-          </span>
-
-          <span *ngIf="step.id === 4">
-            {{ getDate("begin") }} → {{ getDate("end") }}
-          </span>
-
-          <span *ngIf="step.id === 5">
             <span *ngIf="fileName; else noDoc">
               Documento: {{ fileName }}
             </span>
-
-            <ng-template #noDoc> Documento: No adjunto </ng-template>
+            <ng-template #noDoc>Sin documento</ng-template>
           </span>
 
-          <span *ngIf="step.id === 6">
-            Usuario: {{ getUserName() }}<br />
-            Periodo: {{ getDate("begin") }} →
-            {{ getDate("end") }}
+          <!-- STEP 4 -->
+          <span *ngIf="step.id === 4">
+            {{ ranges.length }} rangos / {{ getTotalDays() }} días
           </span>
 
-          <span *ngIf="step.id === 7 && currentStep === 7">
+          <!-- STEP 5 -->
+          <span *ngIf="step.id === 5 && currentStep === 5">
             Suscripción registrada
           </span>
         </div>
@@ -148,56 +133,101 @@
     </div>
 
     <!-- PASO 2  FECHA INICIO -->
-
     <div *ngIf="currentStep === 2" class="step-content" @stepAnimation>
       <mat-card class="card-elegante card-form">
+        <!-- HEADER -->
         <div class="card-header blue">
           <mat-icon>calendar_today</mat-icon>
           <div>
-            <div class="title">Fecha de Inicio</div>
-            <div class="subtitle">Seleccione la fecha</div>
+            <div class="title">Selección de fechas</div>
+            <div class="subtitle">Seleccione los días</div>
           </div>
         </div>
 
-        <div class="card-body">
-          <mat-form-field appearance="outline" class="full-width">
-            <input
-              matInput
-              [matDatepicker]="pickerBegin"
-              formControlName="begin"
-              readonly
-              (click)="pickerBegin.open()"
-              (focus)="pickerBegin.open()"
-              (dateChange)="onDateChange('begin', $event)"
-            />
+        <!-- INFO -->
+        <div class="top-info">
+          <div *ngIf="!canContinue()" class="hint error">
+            Seleccione al menos un rango para continuar
+          </div>
 
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="pickerBegin"
-            ></mat-datepicker-toggle>
-            <mat-datepicker #pickerBegin></mat-datepicker>
-          </mat-form-field>
+          <div class="rules-box">
+            Seleccione los días que desea asignar. El sistema agrupará
+            automáticamente los rangos respetando las semanas. No se permiten
+            cruces de semana ni rangos superpuestos.
+          </div>
         </div>
 
-        <div class="card-actions">
-          <button
-            mat-stroked-button
-            class="volver-btn"
-            (click)="previousStep()"
-          >
-            <mat-icon>arrow_back</mat-icon>
-            Volver
-          </button>
+        <!-- BODY -->
+        <div class="card-body">
+          <div class="layout">
+            <!-- CALENDARIO -->
+            <div class="calendar-container">
+              <div *ngFor="let m of groupedMonths" class="month-block">
+                <div class="month-title">{{ m.label }}</div>
 
-          <button
-            mat-raised-button
-            color="primary"
-            class="continuar-btn"
-            (click)="handleNext()"
-            [disabled]="!canGoNext()"
-          >
-            Continuar
-          </button>
+                <div class="week-header">
+                  <span>L</span><span>M</span><span>M</span> <span>J</span
+                  ><span>V</span><span>S</span><span>D</span>
+                </div>
+
+                <div class="days-grid">
+                  <ng-container *ngFor="let d of getMonthDaysWithOffset(m)">
+                    <div
+                      *ngIf="d; else empty"
+                      class="day"
+                      [class.range]="isInRange(d)"
+                      [class.start]="isStart(d)"
+                      [class.end]="isEnd(d)"
+                      [class.middle]="isMiddle(d)"
+                      [class.single]="isSingle(d)"
+                      (click)="toggleDate(d)"
+                    >
+                      {{ d.getDate() }}
+                    </div>
+
+                    <ng-template #empty>
+                      <div class="empty-day"></div>
+                    </ng-template>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL -->
+            <div class="ranges-panel">
+              <div class="ranges-title">Rangos seleccionados</div>
+
+              <div *ngIf="ranges.length === 0" class="empty-state">
+                No hay rangos seleccionados
+              </div>
+
+              <div *ngFor="let r of ranges" class="range-item">
+                {{ formatDateCL(r.from) }} - {{ formatDateCL(r.to) }}
+                <span>({{ getDays(r) }} días)</span>
+              </div>
+
+              <div class="total" [class.active]="getTotalDays() > 0">
+                Total: {{ getTotalDays() }} días
+              </div>
+
+              <!-- 🔥 BOTONES AQUÍ -->
+              <div class="panel-actions">
+                <button mat-stroked-button (click)="previousStep()">
+                  <mat-icon>arrow_back</mat-icon>
+                  Volver
+                </button>
+
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="handleNext()"
+                  [disabled]="!canContinue()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </mat-card>
     </div>
@@ -205,114 +235,6 @@
     <!-- PASO 3  FECHA HASTA -->
 
     <div *ngIf="currentStep === 3" class="step-content" @stepAnimation>
-      <mat-card class="card-elegante card-form">
-        <div class="card-header blue">
-          <mat-icon>calendar_today</mat-icon>
-          <div>
-            <div class="title">Fecha de Término</div>
-            <div class="subtitle">Seleccione la fecha</div>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <mat-form-field appearance="outline" class="full-width">
-            <input
-              matInput
-              [matDatepicker]="pickerEnd"
-              formControlName="end"
-              readonly
-              (click)="pickerEnd.open()"
-              (focus)="pickerEnd.open()"
-              (dateChange)="onDateChange('end', $event)"
-            />
-
-            <mat-datepicker-toggle
-              matSuffix
-              [for]="pickerEnd"
-            ></mat-datepicker-toggle>
-            <mat-datepicker #pickerEnd></mat-datepicker>
-          </mat-form-field>
-        </div>
-
-        <div class="card-actions">
-          <button
-            mat-stroked-button
-            class="volver-btn"
-            (click)="previousStep()"
-          >
-            <mat-icon>arrow_back</mat-icon>
-            Volver
-          </button>
-
-          <button
-            mat-raised-button
-            color="primary"
-            class="continuar-btn"
-            (click)="handleNext()"
-            [disabled]="!canGoNext()"
-          >
-            Continuar
-          </button>
-        </div>
-      </mat-card>
-    </div>
-
-    <!-- PASO 4 -->
-
-    <div *ngIf="currentStep === 4" class="step-content" @stepAnimation>
-      <div class="confirm-box">
-        <div class="confirm-header">
-          <mat-icon>rule</mat-icon>
-          <div>
-            <div class="title">Validación del Periodo</div>
-            <div class="subtitle">Revisa las fechas antes de continuar</div>
-          </div>
-        </div>
-
-        <div class="confirm-grid">
-          <div class="confirm-item">
-            <span class="label">Fecha de inicio</span>
-            <span class="value">{{ getDate("begin") }}</span>
-          </div>
-
-          <div class="confirm-item">
-            <span class="label">Fecha de término</span>
-            <span class="value">{{ getDate("end") }}</span>
-          </div>
-        </div>
-
-        <!-- ⚠️ MENSAJE SIN POPUP -->
-        <div *ngIf="hasDateConflict" class="warning-box">
-          <mat-icon>warning</mat-icon>
-          <span> Este periodo se superpone con una suscripción existente </span>
-        </div>
-
-        <div class="card-actions">
-          <button
-            mat-stroked-button
-            class="volver-btn"
-            (click)="previousStep()"
-          >
-            <mat-icon>arrow_back</mat-icon>
-            Volver
-          </button>
-
-          <button
-            mat-raised-button
-            color="primary"
-            class="continuar-btn"
-            (click)="handleNext()"
-            [disabled]="!canGoNext()"
-          >
-            Continuar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PASO 5 DOCUMENTO -->
-
-    <div *ngIf="currentStep === 5" class="step-content" @stepAnimation>
       <mat-card class="card-elegante">
         <div class="card-title">
           <mat-icon>upload_file</mat-icon>
@@ -376,58 +298,82 @@
       </mat-card>
     </div>
 
-    <!-- PASO 6 CONFIRMACION -->
+    <!-- PASO 4 CONFIRMACION -->
 
-    <div *ngIf="currentStep === 6" class="step-content" @stepAnimation>
-      <div class="confirm-box">
-        <div class="confirm-header">
-          <mat-icon>verified</mat-icon>
+    <div
+      *ngIf="currentStep === 4"
+      class="step-content centered-step"
+      @stepAnimation
+    >
+      <mat-card class="card-elegante card-form">
+        <div class="card-header blue">
+          <mat-icon>fact_check</mat-icon>
           <div>
-            <div class="title">Confirmar Suscripción</div>
-            <div class="subtitle">Verifica los datos antes de guardar</div>
+            <div class="title">Confirmación</div>
+            <div class="subtitle">Revise la información antes de registrar</div>
           </div>
         </div>
 
-        <div class="confirm-grid">
+        <div class="card-body">
+          <!-- Usuario -->
           <div class="confirm-item">
             <span class="label">Funcionario</span>
             <span class="value">{{ getUserName() }}</span>
           </div>
 
+          <!-- Rangos -->
           <div class="confirm-item">
-            <span class="label">Periodo</span>
+            <span class="label">Rangos seleccionados</span>
+
+            <div class="ranges-list" *ngIf="ranges.length > 0; else noRanges">
+              <div *ngFor="let r of ranges; let i = index" class="range-row">
+                <span class="range-index">#{{ i + 1 }}</span>
+
+                <span class="range-dates">
+                  {{ formatDateCL(r.from) }} → {{ formatDateCL(r.to) }}
+                </span>
+
+                <span class="range-days"> ({{ getDays(r) }} días) </span>
+              </div>
+            </div>
+
+            <ng-template #noRanges>
+              <span class="empty-state">No hay rangos seleccionados</span>
+            </ng-template>
+          </div>
+
+          <!-- Total -->
+          <div class="confirm-item total">
+            <span class="label">Total días</span>
+            <span class="value">{{ getTotalDays() }}</span>
+          </div>
+
+          <!-- Documento -->
+          <div class="confirm-item">
+            <span class="label">Documento</span>
             <span class="value">
-              {{ getDate("begin") }} → {{ getDate("end") }}
+              <span *ngIf="fileName; else noDoc">{{ fileName }}</span>
+              <ng-template #noDoc>No adjunto</ng-template>
             </span>
           </div>
         </div>
 
-        <div class="card-actions">
-          <button
-            mat-stroked-button
-            class="volver-btn"
-            (click)="previousStep()"
-          >
+        <div class="card-actions confirm-actions">
+          <button mat-stroked-button (click)="previousStep()">
             <mat-icon>arrow_back</mat-icon>
             Volver
           </button>
 
-          <button
-            mat-raised-button
-            color="primary"
-            class="continuar-btn"
-            (click)="handleNext()"
-            [disabled]="!canGoNext()"
-          >
+          <button mat-raised-button color="primary" (click)="handleNext()">
             Confirmar
           </button>
         </div>
-      </div>
+      </mat-card>
     </div>
 
-    <!-- PASO 7 REGISTRO -->
+    <!-- PASO 5 REGISTRO -->
 
-    <div *ngIf="currentStep === 7" class="step-content" @stepAnimation>
+    <div *ngIf="currentStep === 5" class="step-content" @stepAnimation>
       <div class="confirm-box success">
         <mat-icon class="success-icon"> check_circle </mat-icon>
 
@@ -445,7 +391,7 @@
 
     <!-- HISTORIAL -->
     <div
-      *ngIf="subscriptions.length > 0 && currentStep !== 7"
+      *ngIf="subscriptions.length > 0 && currentStep !== 5"
       class="history-wrapper"
     >
       <div class="history-box">
