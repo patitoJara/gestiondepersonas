@@ -275,8 +275,8 @@ export class TemplateComponent implements OnInit, OnDestroy {
       const item = {
         title: data.title || route.path,
         icon: data.icon || 'chevron_right',
-        route: '/' + route.path,
-
+        //route: '/' + route.path,
+        route: '/gestion-personas/' + route.path,
         // 🔥 NUEVO
         iconColor: data.iconColor || '#1565c0',
       };

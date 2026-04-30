@@ -3,13 +3,16 @@ import { LoginComponent } from './core/auth/login/login.component';
 import { TemplateComponent } from './layout/template/template.component';
 import { AboutPublicComponent } from './public/about/about-public/about-public.component';
 import { authGuard } from './core/guards/auth.guard';
-import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // =====================================================
+  // 🔁 REDIRECCIÓN INICIAL
+  // =====================================================
+  { path: '', redirectTo: 'gestion-personas', pathMatch: 'full' },
+
+  // =====================================================
   // 🔐 AUTH
   // =====================================================
-
   { path: 'auth/login', component: LoginComponent },
 
   {
@@ -31,20 +34,17 @@ export const routes: Routes = [
   // =====================================================
   // 🌍 PUBLICO
   // =====================================================
-
   { path: 'about-public', component: AboutPublicComponent },
 
   // =====================================================
-  // 🔐 SISTEMA
+  // 🔥 SISTEMA (ÚNICO)
   // =====================================================
-
   {
-    path: '',
+    path: 'gestion-personas',
     component: TemplateComponent,
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
-
       // =====================================================
       // 🟦 TELETRABAJO (MAIN)
       // =====================================================
@@ -244,7 +244,7 @@ export const routes: Routes = [
           iconColor: '#bb3540', // 🔥 ahora sí funciona
         },
       },
-      
+
       {
         path: 'manual',
         loadComponent: () =>
@@ -292,7 +292,8 @@ export const routes: Routes = [
           group: 'Postulación', // 🔥 ESTE ES EL CAMBIO
           title: 'Postulación Estudios',
           icon: 'school',
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          roles: ['ADMIN', 'JEFATURA'],
           iconColor: '#2e7d32', // verde
         },
       },
