@@ -296,20 +296,19 @@ export const routes: Routes = [
           roles: ['ADMIN', 'JEFATURA'],
           iconColor: '#2e7d32', // verde
         },
-      },
-      // 👤 PERFIL (OCULTO)
-
-      {
-        path: 'profile',
-        loadComponent: () =>
-          import('./modules/gestion-personas/teletrabajo/views/profile/profile.component').then(
-            (m) => m.ProfileComponent,
-          ),
-        data: { hidden: true },
-      },
+      },      
     ],
   },
 
+  // 👤 PERFIL (OCULTO)
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./modules/gestion-personas/teletrabajo/views/profile/profile.component').then(
+        (m) => m.ProfileComponent,
+      ),
+    data: { hidden: true },
+  },
   // =====================================================
   // ❌ FALLBACK
   // =====================================================

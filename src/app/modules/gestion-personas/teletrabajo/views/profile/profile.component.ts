@@ -1,3 +1,5 @@
+// C:\Users\pjara\Documents\DESARROLLO\ANGULAR\gestion-personas\src\app\modules\gestion-personas\teletrabajo\views\profile\profile.component.ts
+
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -180,16 +182,27 @@ export class ProfileComponent implements OnInit {
         next: () => {
           this.loading = false;
           this.passwordForm.reset();
-
-          this.dialog.open(ConfirmDialogOkComponent, {
+          const dialogRef = this.dialog.open(ConfirmDialogOkComponent, {
             width: '420px',
+            disableClose: true,
             data: {
               title: 'Contraseña actualizada',
-              message: 'Tu contraseña fue actualizada correctamente.',
+              message: 'Debes iniciar sesión nuevamente.',
               icon: 'check_circle',
               color: 'primary',
-              confirmText: 'Aceptar',
+              confirmText: 'Ir a login',
             },
+          });
+
+          dialogRef.afterClosed().subscribe(() => {
+            // 🔐 limpiar sesión
+            this.tokenService.clear();
+            sessionStorage.clear();
+
+            // 🚀 AQUÍ VA EL returnUrl
+            this.router.navigate(['/auth/login'], {
+              queryParams: { returnUrl: '/gestion-personas/inicio' },
+            });
           });
         },
         error: (err) => {
@@ -213,6 +226,6 @@ export class ProfileComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/inicio']);
+    this.router.navigate(['/gestion-personas/inicio']);
   }
 }

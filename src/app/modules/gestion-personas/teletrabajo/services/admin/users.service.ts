@@ -18,7 +18,9 @@ export class UsersService {
       confirmPassword: string;
     },
   ) {
-    return this.http.patch(`${this.api}/${userId}/change-password`, data);
+    return this.http.patch(`${this.api}/${userId}/change-password`, data, {
+      responseType: 'text' as 'json', // 🔥 ESTA LÍNEA ES LA CLAVE
+    });
   }
 
   getAllPaginated(page: number, size: number) {

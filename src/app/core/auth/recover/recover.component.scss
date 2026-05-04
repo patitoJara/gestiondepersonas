@@ -4,3 +4,13 @@
 
 @use '../login/login.component.scss' as login;
 
+.confirmation {
+  margin-top: 20px;
+  padding: 16px;
+  background: #E3F2FD;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}

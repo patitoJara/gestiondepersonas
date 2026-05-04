@@ -13,10 +13,11 @@
 
     <h3 class="form-title">Recuperar Contraseña</h3>
     <p class="subtitle">
-      Ingresa tu correo electrónico. Se enviará un mensaje al soporte con copia a tu correo.
+      Ingresa tu correo electrónico. Si está registrado, recibirás instrucciones
+      para recuperar tu contraseña.
     </p>
 
-    <form [formGroup]="form" (ngSubmit)="recover()" novalidate>
+    <form *ngIf="!sent" [formGroup]="form" (ngSubmit)="recover()" novalidate>
       <!-- 📧 Correo electrónico -->
       <mat-form-field appearance="fill" class="full">
         <mat-label>Correo electrónico</mat-label>
@@ -43,21 +44,14 @@
         type="submit"
         [disabled]="loading || form.invalid"
       >
-        <ng-container *ngIf="!loading; else loadingTpl">Enviar correo</ng-container>
+        <ng-container *ngIf="!loading; else loadingTpl">
+          Enviar correo
+        </ng-container>
       </button>
 
       <ng-template #loadingTpl>
         <mat-spinner diameter="18"></mat-spinner>&nbsp; Enviando...
       </ng-template>
-
-      <!-- ✅ Confirmación -->
-      <div *ngIf="sent" class="confirmation">
-        <mat-icon color="primary">mark_email_read</mat-icon>
-        <p>
-          ✅ Correo enviado a soporte y copia a tu dirección.
-          Conserva el mensaje como respaldo hasta recibir respuesta del equipo TIC.
-        </p>
-      </div>
 
       <!-- 🔗 Volver -->
       <div class="links-row">
@@ -66,6 +60,20 @@
         </a>
       </div>
     </form>
+  </div>
+
+  <!-- ✅ Confirmación -->
+  <div *ngIf="sent" class="confirmation">
+    <mat-icon color="primary">mark_email_read</mat-icon>
+
+    <p>
+      📩 Si el correo está registrado, recibirás instrucciones para recuperar tu
+      contraseña.
+    </p>
+
+    <small>Serás redirigido automáticamente...</small>
+
+    <button mat-button (click)="backToLogin()">Volver ahora</button>
   </div>
 
   <!-- 🦶 Sello Gobierno -->

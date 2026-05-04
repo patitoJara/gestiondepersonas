@@ -21,11 +21,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { A11yModule } from '@angular/cdk/a11y';
 
 // Servicios
-import { AuthLoginService } from '@app/core/auth/services/auth.login.service'; 
+import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { TokenService } from '@app/core/services/token.service';
 import { SessionService } from '@app/core/services/session.service';
 // Dialog
-import { ErrorConfirmDialogComponent } from '../../../../shared/confirm-dialog/errorConfirmDialogComponent';
+import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 
 @Component({
   standalone: true,
@@ -135,7 +135,8 @@ export class LoginComponent implements AfterViewInit {
         }
 
         const returnUrl =
-          this.route.snapshot.queryParamMap.get('returnUrl') || '/';
+          this.route.snapshot.queryParamMap.get('returnUrl') ||
+          '/gestion-personas/inicio';
 
         console.log('[login] ⏳ Navegando y reiniciando sesión...');
 

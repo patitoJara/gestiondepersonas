@@ -13,8 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Servicio de correo
-import { EmailService } from '@app/core/services/email.service';
-
+import { UsersService } from '@app/core/services/email.service';
 
 @Component({
   standalone: true,
@@ -38,7 +37,7 @@ export class RecoverComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
-  private emailService = inject(EmailService);
+  private usersService = inject(UsersService);
 
   loading = false;
   sent = false;
@@ -56,6 +55,12 @@ export class RecoverComponent implements OnInit {
     if (emailParam) this.form.patchValue({ email: emailParam });
   }
 
+  /** 🔹 Volver al login conservando el email */
+  backToLogin(): void {
+    const email = this.form.get('email')?.value;
+    this.router.navigate(['/auth/login'], { queryParams: { email } });
+  }
+
   /** 🔹 Envía correo a soporte con copia al usuario */
   recover(): void {
     if (this.form.invalid) {
@@ -63,34 +68,43 @@ export class RecoverComponent implements OnInit {
       return;
     }
 
-    const userEmail = this.form.value.email!;
+    const email = this.form.value.email!;
     this.loading = true;
 
-    console.log(`[Recover] ✉️ Enviando correo de recuperación para: ${userEmail}`);
-
-    this.emailService
-      .sendRecoveryEmail(userEmail)
-      .then(() => {
+    this.usersService.recoverPassword(email).subscribe({
+      next: () => {
         this.loading = false;
         this.sent = true;
-        this.snackBar.open('✅ Correo enviado correctamente.', 'Cerrar', {
-          duration: 4000,
-          panelClass: ['success-snackbar'],
-        });
-      })
-      .catch((error) => {
-        console.error('[Recover] ❌ Error al enviar correo:', error);
+
+        this.showSuccess();
+
+        // 🔥 AQUÍ ESTÁ LA CLAVE
+        setTimeout(() => {
+          console.log('REDIRIGIENDO...');
+          this.router.navigateByUrl('/auth/login');
+        }, 8000);
+      },
+
+      error: (err) => {
         this.loading = false;
-        this.snackBar.open('⚠️ No se pudo enviar el correo.', 'Cerrar', {
-          duration: 4000,
-          panelClass: ['warn-snackbar'],
-        });
-      });
+
+        // 🔥 DA LO MISMO si es 401 o 500
+        this.showSuccess();
+
+        // 👀 pero log interno
+        console.warn('[Recover] ERROR COMPLETO:', err);
+      },
+    });
   }
 
-  /** 🔹 Volver al login conservando el email */
-  backToLogin(): void {
-    const email = this.form.get('email')?.value;
-    this.router.navigate(['/auth/login'], { queryParams: { email } });
+  private showSuccess() {
+    this.snackBar.open(
+      '📩 Si el correo está registrado, recibirás instrucciones.',
+      'Cerrar',
+      {
+        duration: 4000,
+        panelClass: ['success-snackbar'],
+      },
+    );
   }
 }
