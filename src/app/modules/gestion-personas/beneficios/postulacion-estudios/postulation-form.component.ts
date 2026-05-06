@@ -350,48 +350,11 @@ export class PostulationFormComponent {
       typePropertyId: [null],
       typeHousingId: [null],
       stablishmentId: [null],
-      /*
-      nombre: ['', Validators.required],
-      apellido: ['', Validators.required],
-      rut: ['', Validators.required],
-      telefono: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      planta: ['', Validators.required],
-      grado: [null, Validators.required],
-      establecimiento: ['', Validators.required],
-      esPostulante: ['si', Validators.required],
-      beneficiado: ['no', Validators.required],
-
-      // 🔥 PASO 3
-      ingresoJefe: [null, Validators.required],
-      ingresoOtros: [0],
-      otrosIngresos: [0],
-
-      // 🔥 PASO 4
-      arriendo: [0],
-      luz: [0],
-      agua: [0],
-      gas: [0],
-      telefonoGasto: [0],
-      creditos: [0],
-      matricula: [0],
-      mensualidad: [0],
-      alojamiento: [0],
-      otrosGastos: [''],
-
-      // 🔥 PASO 5
-      tipoVivienda: ['', Validators.required],
-      tipoPropiedad: ['', Validators.required],
-      infoVivienda: [''],
-      otrosAntecedentes: [''],
-
-      // 🔥 AQUÍ VA
-      typePropertyId: [null, Validators.required],
-      typeHousingId: [null, Validators.required],
-      stablishmentId: [null, Validators.required],
-      */
     });
   }
+
+  afiliadoValido = false;
+  afiliado: any = null;
 
   tipoSolicitante: string = '';
   comentario_postulante?: string;
@@ -429,7 +392,7 @@ export class PostulationFormComponent {
     this.loadData();
 
     // 🔥 ASEGURAR AL MENOS 1 REGISTRO
-    if (this.saludArray.length === 0) {
+    if (this.salud.length === 0) {
       this.agregarSalud();
     }
 
@@ -485,16 +448,26 @@ export class PostulationFormComponent {
   cargarGrades() {
     this.gradeService.getAll().subscribe({
       next: (data) => {
-        if (!data || !data.length) {
+        const safeData = data ?? []; // 🔥 clave
+
+        if (safeData.length === 0) {
           this.grades = Array.from({ length: 25 }, (_, i) => ({
             id: i + 1,
-            name: `Grado ${i + 1}`,
+            name: `Grado ${i + 1}`, // 👈 mejor nombre
           }));
         } else {
-          this.grades = data;
+          this.grades = safeData;
         }
       },
-      error: () => console.error('Error cargando grados'),
+      error: () => {
+        console.error('Error cargando grados');
+
+        // 🔥 fallback también en error
+        this.grades = Array.from({ length: 25 }, (_, i) => ({
+          id: i + 1,
+          name: `Grado ${i + 1}`,
+        }));
+      },
     });
   }
 
@@ -681,6 +654,25 @@ export class PostulationFormComponent {
 
   eliminarSalud(i: number) {
     this.salud.splice(i, 1);
+  }
+
+  get totalGastosBasicos(): number {
+    return this.camposGastosBasicos.reduce((acc, campo) => {
+      const valor = Number(
+        String(this.form.get(campo.key)?.value || 0).replace(/\./g, ''),
+      );
+      return acc + (isNaN(valor) ? 0 : valor);
+    }, 0);
+  }
+
+  // 🔹 TOTAL GASTOS EDUCACIÓN
+  get totalGastosEducacion(): number {
+    return this.camposGastosEducacion.reduce((acc, campo) => {
+      const valor = Number(
+        String(this.form.get(campo.key)?.value || 0).replace(/\./g, ''),
+      );
+      return acc + (isNaN(valor) ? 0 : valor);
+    }, 0);
   }
 
   get totalGastos(): number {
@@ -1461,6 +1453,30 @@ export class PostulationFormComponent {
     return this.otrosGastos.reduce((acc, g) => acc + (g.monto || 0), 0);
   }
 
+  // 🔹 AGREGAR
+  agregarIngreso() {
+    this.ingresosFamiliares.push({
+      familiarId: null,
+      monto: 0,
+      open: true,
+    });
+  }
+
+  // 🔹 ELIMINAR
+  eliminarIngreso(index: number) {
+    this.ingresosFamiliares.splice(index, 1);
+  }
+
+  // 🔹 TOGGLE
+  toggleIngreso(index: number) {
+    this.ingresosFamiliares[index].open = !this.ingresosFamiliares[index].open;
+  }
+
+  // 🔹 TOTAL
+  get totalIngresosFamiliares(): number {
+    return this.ingresosFamiliares.reduce((acc, i) => acc + (i.monto || 0), 0);
+  }
+
   // 🔹 FORMATEO
   formatearMontoOtro(event: any, item: OtroGasto) {
     let valor = event.target.value.replace(/\D/g, '');
@@ -1555,8 +1571,8 @@ export class PostulationFormComponent {
 
     <hr/>
 
-    <div><strong>Total ingresos:</strong> $${(this.totalIngresos * 1000).toLocaleString('es-CL')}</div>
-    <div><strong>Total gastos:</strong> $${(this.totalGastos * 1000).toLocaleString('es-CL')}</div>
+    <div><strong>Total ingresos:</strong> $${this.totalIngresos.toLocaleString('es-CL')}</div>
+    <div><strong>Total gastos:</strong> $${this.totalGastos.toLocaleString('es-CL')}</div>
 
     <div style="margin-top:20px; text-align:center; color:#2e7d32; font-weight:bold;">
       ✔ POSTULACIÓN RECIBIDA
@@ -1688,16 +1704,9 @@ export class PostulationFormComponent {
     return f?.nombre || 'Sin nombre';
   }
 
-  agregarIngreso() {
-    this.ingresosFamiliares.push({
-      familiarId: null,
-      monto: 0,
-      open: true,
-    });
-  }
-
-  get totalIngresosFamiliares(): number {
-    return this.ingresosFamiliares.reduce((acc, i) => acc + (i.monto || 0), 0);
+  ngAfterViewChecked() {
+    const el = document.querySelector('.step.active');
+    el?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
   }
 
   getStepState(stepId: number) {
@@ -1725,5 +1734,43 @@ export class PostulationFormComponent {
       'file-opc-' + key,
     ) as HTMLInputElement;
     input?.click();
+  }
+
+  onRutCompleto() {
+    const rut = this.form.get('rut')?.value;
+
+    if (!rut) return;
+
+    // 🔥 usa tu lógica real
+    if (!this.validarRutValue(rut)) {
+      this.showWarning('RUT inválido');
+      return;
+    }
+
+    this.buscarAfiliado(rut);
+  }
+
+  buscarAfiliado(rut: string) {
+    console.log('🔍 Buscando afiliado:', rut);
+
+    // 🔥 MOCK REALISTA
+    const data = {
+      nombre: 'ABAD PETIGNANI MARIO ANDRES',
+      telefono: '968397670',
+      mail: 'abadmarioandres@gmail.com',
+    };
+
+    this.afiliado = data;
+
+    const partes = data.nombre.split(' ');
+
+    this.form.patchValue({
+      nombre: partes.slice(2).join(' '),
+      apellido: partes.slice(0, 2).join(' '),
+      telefono: data.telefono,
+      email: data.mail,
+    });
+
+    this.afiliadoValido = true;
   }
 }

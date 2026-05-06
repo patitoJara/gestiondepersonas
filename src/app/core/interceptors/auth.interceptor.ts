@@ -1,4 +1,5 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpContextToken } from '@angular/common/http';
 import { inject } from '@angular/core';
 import {
   catchError,
@@ -7,40 +8,42 @@ import {
   BehaviorSubject,
   filter,
   take,
+  finalize,
 } from 'rxjs';
 
 import { TokenService } from '../../core/services/token.service';
 import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
-import { Router } from '@angular/router';
 
-
-// 🔥 👉 AQUÍ (ARRIBA DE TODO)
+// 🔓 Rutas públicas (NO pasan por interceptor)
 const PUBLIC_URLS = [
   '/auth/login',
   '/auth/refresh',
   '/auth/register',
-  '/users/recover-password'
+  '/users/recover-password',
 ];
 
+// 🔁 Control refresh concurrente
 let isRefreshing = false;
 let refreshSubject = new BehaviorSubject<string | null>(null);
+
+// 🧠 Para evitar loop infinito
+const RETRY = new HttpContextToken<boolean>(() => false);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService = inject(TokenService);
   const authService = inject(AuthLoginService);
-  const router = inject(Router);
 
-  // 🔥 👉 AQUÍ LO USAS
-  const isPublic = PUBLIC_URLS.some(url => req.url.includes(url));
+  const isPublic = PUBLIC_URLS.some((url) => req.url.includes(url));
 
+  // 🚫 No tocar endpoints públicos
   if (isPublic) {
     return next(req);
   }
 
   const token = tokenService.getAccessToken();
 
+  // ⚠️ Si no hay token, deja pasar (no romper flujo)
   if (!token) {
-    console.warn('🚨 NO HAY TOKEN');
     return next(req);
   }
 
@@ -52,56 +55,52 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+      // 🔁 evitar retry infinito
+      if (req.context.get(RETRY)) {
+        console.warn('🔁 Retry fallido → logout lógico');
+        tokenService.clear();
+        return throwError(() => error);
+      }
+
+      // 🌐 errores de red o CORS (NO hacer refresh)
+      if (error.status === 0) {
+        console.error('🌐 Error de red o CORS');
+        return throwError(() => error);
+      }
+
+      // ❌ no es 401 → no hacer nada
       if (error.status !== 401) {
         return throwError(() => error);
       }
 
-      console.warn('⚠️ 401 detectado');
+      const isRefreshRequest = req.url.includes('/auth/refresh');
 
-      const isRefreshRequest = req.url.endsWith('/auth/refresh');
-
+      // 💣 si falló el refresh → cerrar sesión
       if (isRefreshRequest) {
-        console.warn('⛔ Refresh falló → logout forzado');
-
         isRefreshing = false;
         refreshSubject.next(null);
-
         tokenService.clear();
-        sessionStorage.removeItem('allowRefresh');
-        router.navigate(['/auth/login']);
-
         return throwError(() => error);
       }
 
-      const allowRefresh = sessionStorage.getItem('allowRefresh');
-
-      if (!allowRefresh) {
-        console.warn('⛔ Refresh bloqueado');
-
-        isRefreshing = false;
-        refreshSubject.next(null);
-
-        tokenService.clear();
-        router.navigate(['/auth/login']);
-
-        return throwError(() => error);
-      }
-
+      // 🔄 si ya hay refresh en curso → esperar
       if (isRefreshing) {
         return refreshSubject.pipe(
           filter((t): t is string => t !== null),
           take(1),
           switchMap((newToken) => {
-            const retryReq = authReq.clone({
+            const retryReq = req.clone({
               setHeaders: {
                 Authorization: `Bearer ${newToken}`,
               },
+              context: req.context.set(RETRY, true),
             });
             return next(retryReq);
           }),
         );
       }
 
+      // 🚀 iniciar refresh
       isRefreshing = true;
       refreshSubject.next(null);
 
@@ -111,36 +110,38 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           const newRefreshToken = response?.refreshToken;
 
           if (!newToken) {
+            refreshSubject.next(null);
             tokenService.clear();
-            isRefreshing = false;
-            sessionStorage.removeItem('allowRefresh');
-            router.navigate(['/auth/login']);
-
             return throwError(() => error);
           }
 
+          // 💾 guardar tokens nuevos
           tokenService.setTokens(newToken, newRefreshToken);
 
-          isRefreshing = false;
+          // 🔔 liberar requests en espera
           refreshSubject.next(newToken);
-          sessionStorage.removeItem('allowRefresh');
 
-          const retryReq = authReq.clone({
+          const retryReq = req.clone({
             setHeaders: {
               Authorization: `Bearer ${newToken}`,
             },
+            context: req.context.set(RETRY, true),
           });
 
           return next(retryReq);
         }),
 
         catchError((refreshError) => {
-          isRefreshing = false;
+          console.error('❌ Refresh falló → logout');
+          refreshSubject.next(null); // 🔥 libera a los que esperan
+          isRefreshing = false; // 🔥 por si acaso (además del finalize)
           tokenService.clear();
-          sessionStorage.removeItem('allowRefresh');
-          router.navigate(['/auth/login']);
-
+          authService.logout?.(); // opcional si tienes método de logout
           return throwError(() => refreshError);
+        }),
+
+        finalize(() => {
+          isRefreshing = false;
         }),
       );
     }),

@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Grade } from '../models/grade.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GradeService {
-  private apiUrl = '/api/v1/grades';
+  private apiUrl = `${environment.apiUrl}/grades`;
 
   constructor(private http: HttpClient) {}
 
@@ -34,7 +35,7 @@ export class GradeService {
   update(id: number, data: Partial<Grade>): Observable<Grade> {
     return this.http.put<Grade>(`${this.apiUrl}/${id}`, data);
   }
-
+ 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

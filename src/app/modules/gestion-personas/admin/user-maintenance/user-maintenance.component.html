@@ -50,11 +50,20 @@
       ⚡ Ejecutar
     </button>
 
-    <button *ngIf="summary" mat-raised-button color="warn" (click)="fixUser228()">
+    <button
+      *ngIf="summary"
+      mat-raised-button
+      color="warn"
+      (click)="fixUser228()"
+    >
       ⚡ Ejecutar fixUser228
     </button>
+  </div>
 
-    
+  <div class="actions">
+    <button mat-raised-button color="warn" (click)="loadGrades()">
+      ⚡ Carga Grados
+    </button>
   </div>
 
   <!-- LOADING -->

@@ -21,6 +21,7 @@ import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialo
 import { filterByRutOrName } from '@app/shared/utils/filter.util';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserSearchService } from 'src/app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 import {
   AfterViewInit,
@@ -107,6 +108,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   private dialog = inject(MatDialog);
   private overlapWarningShown = false;
   private timeService = inject(TimeService);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(private userSearchService: UserSearchService) {}
 
@@ -114,10 +116,12 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   filteredUsers: User[] = [];
   selectedUser: User | null = null;
   hasDateConflict = false;
+  isSaving = false;
 
   userSearch = new FormControl('');
 
   subscriptions: any[] = [];
+
   today = new Date();
   selectedFile: File | null = null;
   fileName: string | null = null;
@@ -183,35 +187,28 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     return user ? `${user.fullName}` : '';
   }
 
-  selectUserFromSearch(user: any) {
+  async selectUserFromSearch(user: any) {
     if (!user) return;
 
-    this.selectedUser = user;
-
-    // 🔥 ESTO ES LO QUE TE FALTA
-    this.form.patchValue({
-      userId: user.id,
-    });
+    await this.selectUser(user); // 💥 REUTILIZA TODO
 
     console.log('✔️ userId seteado:', user.id);
   }
 
   async selectUser(user: any) {
-    this.overlapWarningShown = false;
-    this.hasDateConflict = false;
     this.selectedUser = user;
 
     this.form.patchValue({
       userId: user.id,
     });
 
-    // 🔥 RESET REAL (CLAVE PARA EL FANTASMA)
-    this.form.get('begin')?.reset();
-    this.form.get('end')?.reset();
-
     this.subscriptions = [];
 
     await this.loadSubscriptions(user.id);
+
+    console.log('🔥 SUBS CARGADAS:', this.subscriptions);
+
+    this.cdr.detectChanges();
   }
 
   hasActiveSubscription(): boolean {
@@ -326,23 +323,28 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   async createSubscription() {
+    if (this.isSaving) return;
+
     if (!this.ranges || this.ranges.length === 0) {
       this.showWarning('Debe seleccionar al menos un rango');
       return;
     }
 
-    const userId = this.form.value.userId;
+    const userId = this.selectedUser?.id;
+
+    if (!userId) {
+      this.showWarning('Debe seleccionar un usuario');
+      return;
+    }
+
+    this.isSaving = true;
 
     try {
       for (const r of this.ranges) {
-        const begin = r.from;
-        const end = r.to;
-
         const payload = {
-          begin: this.toBackendDate(begin), // mismo formato que usabas
-          end: this.toBackendDate(end),
+          begin: this.toBackendDate(r.from),
+          end: this.toBackendDate(r.to),
           user: { id: userId },
-          active: this.calculateActive(begin, end), // misma lógica
         };
 
         console.log('🚀 guardando rango:', payload);
@@ -350,12 +352,19 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
         await firstValueFrom(this.subscribeService.create(payload));
       }
 
-      // ✔️ éxito total
+      // ✔️ éxito
       this.steps.forEach((s) => (s.completed = true));
-      this.currentStep = 5; // último paso ahora
+      this.currentStep = 5;
+
+      await this.loadSubscriptions(userId);
+
+      this.ranges = [];
+      this.selectedDates = [];
     } catch (error) {
       console.error(error);
       this.showWarning('Error al guardar uno de los rangos');
+    } finally {
+      this.isSaving = false;
     }
   }
 
@@ -564,19 +573,28 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   parseDateCL(date: any): Date {
     if (!date) return null as any;
 
+    let d: Date;
+
     // ✅ SI YA ES DATE
     if (date instanceof Date) {
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      d = date;
     }
 
-    // ✅ STRING ISO YYYY-MM-DD
-    if (typeof date === 'string' && date.includes('-')) {
+    // ✅ STRING (YYYY-MM-DD o ISO)
+    else if (typeof date === 'string') {
       const [year, month, day] = date.split('T')[0].split('-');
-      return new Date(+year, +month - 1, +day);
+      d = new Date(+year, +month - 1, +day);
     }
 
-    // fallback seguro
-    return new Date(date);
+    // fallback
+    else {
+      d = new Date(date);
+    }
+
+    // 💥 CLAVE TOTAL: normalizar SIEMPRE
+    d.setHours(0, 0, 0, 0);
+
+    return d;
   }
 
   canGoNext(): boolean {
@@ -773,9 +791,9 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const sorted = [...this.selectedDates].sort(
-      (a, b) => a.getTime() - b.getTime(),
-    );
+    const sorted = [...this.selectedDates]
+      .map((d) => this.parseDateCL(d))
+      .sort((a, b) => a.getTime() - b.getTime());
 
     const result: { from: Date; to: Date }[] = [];
 
@@ -785,8 +803,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     for (let i = 1; i < sorted.length; i++) {
       const current = sorted[i];
 
-      const isNextDay = current.getTime() === prev.getTime() + 86400000;
-
+      const isNextDay = this.isNextDay(current, prev);
       const sameWeek = this.getWeekKey(current) === this.getWeekKey(prev);
 
       if (isNextDay && sameWeek) {
@@ -872,18 +889,26 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     if (!days.length) return [];
 
     const first = days[0];
-    const dayOfWeek = first.getDay() === 0 ? 7 : first.getDay(); // L=1 ... D=7
+    const dayOfWeek = first.getDay() === 0 ? 7 : first.getDay();
 
     const offset = dayOfWeek - 1;
 
     const result: (Date | null)[] = [];
 
-    // espacios vacíos
+    // 🔹 espacios iniciales
     for (let i = 0; i < offset; i++) {
       result.push(null);
     }
 
-    return [...result, ...days];
+    // 🔹 días reales
+    result.push(...days);
+
+    // 🔥 CLAVE: completar hasta 42 celdas
+    while (result.length < 42) {
+      result.push(null);
+    }
+
+    return result;
   }
 
   isInRange(d: Date): boolean {
@@ -922,5 +947,143 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     end.setDate(start.getDate() + 6);
 
     return d2 >= start && d2 <= end;
+  }
+
+  isFutureDay(d: Date): boolean {
+    const today = this.parseDateCL(new Date()).getTime();
+    const day = this.parseDateCL(d).getTime();
+
+    return day > today; // ❌ hoy no se puede
+  }
+
+  isBlockedDay(d: Date): boolean {
+    if (!this.subscriptions.length) {
+      console.log('⚠️ NO HAY SUBS');
+    }
+    const current = this.parseDateCL(d).getTime();
+
+    return this.subscriptions.some((s: any) => {
+      const begin = this.parseDateCL(s.begin).getTime();
+      const end = this.parseDateCL(s.end).getTime();
+
+      return current >= begin && current <= end;
+    });
+  }
+
+  isSubscribedDay(d: Date): boolean {
+    return this.isBlockedDay(d); // reutilizamos lógica
+  }
+
+  onDayClick(d: Date) {
+    if (this.isBlockedDay(d)) {
+      this.showWarning('Este día ya tiene una suscripción');
+      return;
+    }
+
+    if (!this.isFutureDay(d)) {
+      this.showWarning('Solo puedes seleccionar fechas futuras');
+      return;
+    }
+
+    this.toggleDate(d); // 🔥 recién aquí entra
+  }
+
+  isSubStart(d: Date): boolean {
+    return this.subscriptions.some((s: any) =>
+      this.isSameDay(d, this.parseDateCL(s.begin)),
+    );
+  }
+
+  isSubEnd(d: Date): boolean {
+    return this.subscriptions.some((s: any) =>
+      this.isSameDay(d, this.parseDateCL(s.end)),
+    );
+  }
+
+  isSubSingle(d: Date): boolean {
+    return this.subscriptions.some((s: any) => {
+      const b = this.parseDateCL(s.begin);
+      const e = this.parseDateCL(s.end);
+      return this.isSameDay(b, e) && this.isSameDay(d, b);
+    });
+  }
+
+  isSubMiddle(d: Date): boolean {
+    return this.subscriptions.some((s: any) => {
+      const b = this.parseDateCL(s.begin);
+      const e = this.parseDateCL(s.end);
+      return d > b && d < e;
+    });
+  }
+
+  private isNextDay(a: Date, b: Date): boolean {
+    const d1 = this.parseDateCL(a).getTime();
+    const d2 = this.parseDateCL(b).getTime();
+    return (d1 - d2) / 86400000 === 1;
+  }
+
+  isFuture(s: any): boolean {
+    const today = this.parseDateCL(this.timeService.getServerTime()).getTime();
+    const begin = this.parseDateCL(s.begin).getTime();
+
+    return begin > today;
+  }
+
+  isPast(s: any): boolean {
+    const today = this.parseDateCL(this.timeService.getServerTime()).getTime();
+    const end = this.parseDateCL(s.end).getTime();
+
+    return end < today;
+  }
+
+  get groupedSubscriptions() {
+    const today = this.parseDateCL(this.timeService.getServerTime()).getTime();
+
+    const active: any[] = [];
+    const future: any[] = [];
+    const past: any[] = [];
+
+    this.subscriptions.forEach((s) => {
+      const begin = this.parseDateCL(s.begin).getTime();
+      const end = this.parseDateCL(s.end).getTime();
+
+      if (today >= begin && today <= end) {
+        active.push(s);
+      } else if (begin > today) {
+        future.push(s);
+      } else {
+        past.push(s);
+      }
+    });
+
+    return {
+      active,
+      future,
+      past,
+    };
+  }
+
+  get hasActiveSubs(): boolean {
+    return this.subscriptions.some((s) => this.isActive(s));
+  }
+
+  get hasFutureSubs(): boolean {
+    return this.subscriptions.some((s) => this.isFuture(s));
+  }
+
+  get hasPastSubs(): boolean {
+    return this.subscriptions.some((s) => this.isPast(s));
+  }
+
+  get activeSubs() {
+    return this.subscriptions.filter((s) => this.isActive(s));
+  }
+
+  get futureSubs() {
+    return this.subscriptions.filter((s) => this.isFuture(s));
+  }
+
+  get pastSubs() {
+    return this.subscriptions.filter((s) => this.isPast(s));
   }
 }

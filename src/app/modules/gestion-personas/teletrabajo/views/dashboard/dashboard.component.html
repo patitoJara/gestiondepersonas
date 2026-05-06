@@ -40,19 +40,27 @@
         </div>
 
         <div class="toolbar">
+          
           <button
             class="btn btn-green big"
             (click)="mark('ING')"
-            [disabled]="!canMarkToday"
+            [disabled]="!canMarkToday || hasIngreso"
           >
             <mat-icon>login</mat-icon>
             Ingreso
           </button>
 
+          <!--
+          <div style="background: black; color: #0f0; padding: 10px">
+            canMarkToday: {{ canMarkToday }} <br />
+            hasIngreso: {{ hasIngreso }} <br />
+            disabled ING: {{ !canMarkToday || hasIngreso }}
+          </div>
+          -->
           <button
             class="btn btn-orange big"
             (click)="mark('SAL')"
-            [disabled]="!canMarkToday"
+            [disabled]="!canMarkToday || hasSalida"
           >
             <mat-icon>logout</mat-icon>
             Salida

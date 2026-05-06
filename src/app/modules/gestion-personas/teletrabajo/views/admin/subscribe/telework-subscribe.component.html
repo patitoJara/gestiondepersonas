@@ -160,7 +160,7 @@
         <!-- BODY -->
         <div class="card-body">
           <div class="layout">
-            <!-- CALENDARIO -->
+            <!-- 🗓️ CALENDARIO -->
             <div class="calendar-container">
               <div *ngFor="let m of groupedMonths" class="month-block">
                 <div class="month-title">{{ m.label }}</div>
@@ -175,12 +175,17 @@
                     <div
                       *ngIf="d; else empty"
                       class="day"
-                      [class.range]="isInRange(d)"
-                      [class.start]="isStart(d)"
-                      [class.end]="isEnd(d)"
-                      [class.middle]="isMiddle(d)"
-                      [class.single]="isSingle(d)"
-                      (click)="toggleDate(d)"
+                      [class.start]="isStart(d) || isSubStart(d)"
+                      [class.end]="isEnd(d) || isSubEnd(d)"
+                      [class.middle]="isMiddle(d) || isSubMiddle(d)"
+                      [class.single]="isSingle(d) || isSubSingle(d)"
+                      [class.sub]="
+                        isSubStart(d) ||
+                        isSubMiddle(d) ||
+                        isSubEnd(d) ||
+                        isSubSingle(d)
+                      "
+                      (click)="onDayClick(d)"
                     >
                       {{ d.getDate() }}
                     </div>
@@ -193,38 +198,69 @@
               </div>
             </div>
 
-            <!-- PANEL -->
-            <div class="ranges-panel">
-              <div class="ranges-title">Rangos seleccionados</div>
+            <!-- 👉 PANEL DERECHO PRO -->
+            <div class="right-panel">
+              <!-- 🔹 RANGOS -->
+              <div class="ranges-panel">
+                <div class="ranges-title">Rangos seleccionados</div>
 
-              <div *ngIf="ranges.length === 0" class="empty-state">
-                No hay rangos seleccionados
+                <div *ngIf="ranges.length === 0" class="empty-state">
+                  No hay rangos seleccionados
+                </div>
+
+                <div *ngFor="let r of ranges" class="range-item">
+                  {{ formatDateCL(r.from) }} - {{ formatDateCL(r.to) }}
+                  <span>({{ getDays(r) }} días)</span>
+                </div>
+
+                <div class="total" [class.active]="getTotalDays() > 0">
+                  Total: {{ getTotalDays() }} días
+                </div>
+
+                <div class="panel-actions">
+                  <button mat-stroked-button (click)="previousStep()">
+                    <mat-icon>arrow_back</mat-icon>
+                    Volver
+                  </button>
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="handleNext()"
+                    [disabled]="!canContinue()"
+                  >
+                    Continuar
+                  </button>
+                </div>
               </div>
 
-              <div *ngFor="let r of ranges" class="range-item">
-                {{ formatDateCL(r.from) }} - {{ formatDateCL(r.to) }}
-                <span>({{ getDays(r) }} días)</span>
-              </div>
+              <!-- 🔹 CONTEXTO (REEMPLAZA HISTORIAL) -->
+              <div class="context-box">
+                <div class="context-title">Estado del funcionario</div>
 
-              <div class="total" [class.active]="getTotalDays() > 0">
-                Total: {{ getTotalDays() }} días
-              </div>
+                <!-- 🟢 ACTIVA -->
+                <div *ngIf="activeSubs.length" class="context-item active">
+                  <div class="label">Suscripción activa</div>
+                  <div class="value">
+                    {{ formatDateCL(activeSubs[0].begin) }} →
+                    {{ formatDateCL(activeSubs[0].end) }}
+                  </div>
+                </div>
 
-              <!-- 🔥 BOTONES AQUÍ -->
-              <div class="panel-actions">
-                <button mat-stroked-button (click)="previousStep()">
-                  <mat-icon>arrow_back</mat-icon>
-                  Volver
-                </button>
+                <!-- 🔵 FUTURA -->
+                <div *ngIf="futureSubs.length" class="context-item future">
+                  <div class="label">Próxima suscripción</div>
+                  <div class="value">
+                    {{ formatDateCL(futureSubs[0].begin) }} →
+                    {{ formatDateCL(futureSubs[0].end) }}
+                  </div>
+                </div>
 
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="handleNext()"
-                  [disabled]="!canContinue()"
-                >
-                  Continuar
-                </button>
+                <!-- ⚠️ MENSAJE -->
+                <div class="context-warning">
+                  Los días con suscripciones existentes no pueden ser
+                  modificados.
+                </div>
               </div>
             </div>
           </div>
@@ -391,27 +427,38 @@
 
     <!-- HISTORIAL -->
     <div
-      *ngIf="subscriptions.length > 0 && currentStep !== 5"
+      *ngIf="subscriptions.length > 0 && currentStep === 1"
       class="history-wrapper"
     >
       <div class="history-box">
-        <div class="history-title">
-          <mat-icon>history</mat-icon>
-          <span>Suscripciones anteriores</span>
+        <!-- 🟢 ACTIVAS -->
+        <div *ngIf="hasActiveSubs">
+          <div class="group-title active">Activas</div>
+
+          <div *ngFor="let s of activeSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge active">ACTIVA</span>
+          </div>
         </div>
 
-        <div
-          *ngFor="let s of subscriptions"
-          class="history-item"
-          [class.active-sub]="isActive(s)"
-        >
-          <div class="history-dates">
-            {{ formatDateCL(s.begin) }}
-            →
-            {{ formatDateCL(s.end) }}
-          </div>
+        <!-- 🔵 FUTURAS -->
+        <div *ngIf="hasFutureSubs">
+          <div class="group-title future">Próximas</div>
 
-          <div *ngIf="isActive(s)" class="active-label">ACTIVA</div>
+          <div *ngFor="let s of futureSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge future">PENDIENTE</span>
+          </div>
+        </div>
+
+        <!-- 🔴 PASADAS -->
+        <div *ngIf="hasPastSubs">
+          <div class="group-title past">Históricas</div>
+
+          <div *ngFor="let s of pastSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge past">VENCIDA</span>
+          </div>
         </div>
       </div>
     </div>

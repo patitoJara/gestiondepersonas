@@ -10,6 +10,8 @@ import { firstValueFrom } from 'rxjs';
 
 import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
+import { GradeService } from '@app/core/services/grade.service';
+import { Grade } from '@app/core/models/grade.model';
 
 type User = {
   id: number;
@@ -49,6 +51,7 @@ type UserAudit = User & {
 export class UserMaintenanceComponent {
   private usersService = inject(UsersService);
   private dialog = inject(MatDialog);
+  private gradeService = inject(GradeService);
 
   loading = false;
   summary: any = null;
@@ -443,5 +446,45 @@ export class UserMaintenanceComponent {
   async backupUsers() {
     const backup = await firstValueFrom(this.usersService.getAll());
     console.log('🛟 BACKUP USERS:', backup);
+  }
+
+  async loadGrades() {
+    this.loading = true;
+
+    try {
+      let existing: Grade[] = [];
+
+      // 🔥 Intentar obtener datos, pero no romper si falla
+      try {
+        existing = await firstValueFrom(this.gradeService.getAllActive());
+      } catch (e) {
+        console.warn('⚠️ No se pudieron obtener grades');
+        existing = [];
+      }
+
+      const requests: Promise<any>[] = [];
+
+      for (let i = 1; i <= 25; i++) {
+        const name = `Grado ${i}`;
+
+        const found = existing.find(
+          (g) => g.name?.toLowerCase().trim() === name.toLowerCase(),
+        );
+
+        if (!found) {
+          requests.push(firstValueFrom(this.gradeService.create({ name })));
+        } else if (found.deletedAt) {
+          requests.push(firstValueFrom(this.gradeService.restore(found.id!)));
+        }
+      }
+
+      await Promise.all(requests);
+
+      console.log('🚀 Grados sincronizados');
+    } catch (err) {
+      console.error('❌ Error cargando grades', err);
+    } finally {
+      this.loading = false;
+    }
   }
 }

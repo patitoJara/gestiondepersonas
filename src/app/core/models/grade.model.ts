@@ -1,5 +1,7 @@
+// @app/core/models/grade.model.ts
+
 export interface Grade {
-  id: number;
+  id?: number;
   name: string;
-  description?: string;
+  deletedAt?: string | null;
 }

@@ -293,7 +293,7 @@ export const routes: Routes = [
           title: 'Postulación Estudios',
           icon: 'school',
           //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          roles: ['ADMIN', 'JEFATURA'],
+          roles: ['ADMIN', 'JEFATURA', 'SUPERVISOR', 'POSTULACION'],
           iconColor: '#2e7d32', // verde
         },
       },      

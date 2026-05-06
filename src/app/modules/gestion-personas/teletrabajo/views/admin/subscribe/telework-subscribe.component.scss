@@ -6,9 +6,9 @@
   padding: 12px;
   padding-bottom: 80px;
 
-  height: 100%;        // 🔥 AGREGAR
-  display: flex;       // 🔥 AGREGAR
-  flex-direction: column; // 🔥 AGREGAR  
+  height: 100%; // 🔥 AGREGAR
+  display: flex; // 🔥 AGREGAR
+  flex-direction: column; // 🔥 AGREGAR
 }
 
 /* =========================
@@ -144,19 +144,27 @@
   margin-top: 12px; // 🔥 separación real
 }
 
-.acciones-center,
-.card-actions {
+.acciones-center {
   display: flex;
   justify-content: center;
-  gap: 14px; // 🔥 espacio entre botones
+  gap: 10px; // 🔥 espacio entre botones
   margin-top: 18px;
+  justify-content: flex-end; /* o center si quieres centrados */
 }
 
 .card-actions {
   display: flex;
-  justify-content: center;
-  gap: 14px;
+  justify-content: space-between; /* 🔥 PRO */
+  align-items: center;
+  gap: 12px;
   margin-top: 18px;
+}
+
+.card-actions button {
+  flex: 0 0 auto; /* 💥 CLAVE REAL */
+  width: auto;
+  min-width: 120px;
+  max-width: 180px;
 }
 
 /* 🔹 VOLVER (secundario elegante) */
@@ -517,7 +525,7 @@ button.mat-mdc-raised-button {
 
   display: flex;
   flex-direction: column;
-  flex: 1;  
+  flex: 1;
 }
 
 @keyframes stepEnter {
@@ -617,7 +625,7 @@ button.mat-mdc-raised-button:hover {
 mat-card.card-form {
   display: flex;
   flex-direction: column;
-   flex: 1;
+  flex: 1;
 }
 
 /* HEADER / INFO / ACTIONS */
@@ -636,19 +644,73 @@ mat-card.card-form {
 /* LAYOUT */
 .layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 320px;
   gap: 24px;
-  width: 100%;
+  //width: 100%;
 }
+
+
+/* PANEL DERECHO */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  position: sticky;
+  top: 20px;
+
+  height: calc(100vh - 120px);
+}
+
+/* SCROLL INTERNO */
+.ranges-panel,
+.history-box {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+
+  overflow-y: auto;
+  max-height: 50%;
+}
+
+/* HISTORIAL */
+.history-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.history-item {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #ccc;
+}
+
+.badge.active {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+
 
 /* CALENDARIO (SCROLL REAL) */
 .calendar-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 
-  height: 100%;        // 🔥 CAMBIA ESTO
+  height: 100%; // 🔥 CAMBIA ESTO
   overflow-y: auto;
+  align-items: start; 
+  grid-auto-rows: min-content;
 }
 
 /* SCROLL BONITO */
@@ -678,7 +740,9 @@ mat-card.card-form {
   background: #fff;
   border-radius: 12px;
   padding: 10px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  height: auto;       /* 💥 evita estiramiento */
+  align-self: start;  
 }
 
 /* TITULO */
@@ -812,6 +876,7 @@ mat-card.card-form {
 .panel-actions {
   margin-top: auto; // 🔥 empuja al fondo
   padding-top: 12px;
+  align-items: center;
 
   display: flex;
   flex-direction: column;
@@ -819,7 +884,10 @@ mat-card.card-form {
 }
 
 .panel-actions button {
-  width: 100%; // 🔥 botones full ancho
+  width: auto;
+  min-width: 140px;
+  max-width: 200px;
+  align-self: center; /* 🔥 los centra */
 }
 
 .ranges-panel {
@@ -840,7 +908,6 @@ mat-card.card-form {
 .ranges-panel .range-list {
   overflow-y: auto;
 }
-
 
 .confirm-item {
   margin-bottom: 12px;
@@ -887,7 +954,6 @@ mat-card.card-form {
   font-size: 14px;
 }
 
-
 .centered-step {
   display: flex;
   justify-content: center; // 🔥 centra horizontal
@@ -899,7 +965,6 @@ mat-card.card-form {
   width: 100%;
   max-width: 900px; // 🔥 controla el ancho
 }
-
 
 /* RESPONSIVE */
 @media (max-width: 1200px) {
@@ -922,4 +987,162 @@ mat-card.card-form {
   .calendar-container {
     grid-template-columns: 1fr;
   }
+}
+
+.day.blocked {
+  background: #eeeeee;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.day.past {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.day.subscribed {
+  border: 2px solid #1976d2;
+}
+
+
+.sub {
+  opacity: 0.85;
+}
+
+.start, .end, .middle, .single {
+  background: #1976d2; /* selección */
+}
+
+.start.sub, .end.sub, .middle.sub, .single.sub {
+  background: #90caf9; /* suscripciones */
+}
+
+.sub-start {
+  border-radius: 50% 0 0 50%;
+}
+
+.sub-end {
+  border-radius: 0 50% 50% 0;
+}
+
+.sub-middle {
+  border-radius: 0;
+}
+
+.sub-single {
+  border-radius: 50%;
+}
+
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 32px; /* mismo alto siempre */
+}
+
+
+.group-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 10px 0 6px;
+  text-transform: uppercase;
+}
+
+/* COLORES */
+.group-title.active { color: #2e7d32; }
+.group-title.future { color: #1565c0; }
+.group-title.past { color: #c62828; }
+
+/* BADGES */
+.badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.badge.active {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.badge.future {
+  background: #bbdefb;
+  color: #1565c0;
+}
+
+.badge.past {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+
+.side-info {
+  padding: 12px;
+}
+
+.info-card {
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.info-card.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.info-card.future {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.info-warning {
+  font-size: 12px;
+  color: #d32f2f;
+}
+
+
+
+.context-box {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.context-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.context-item {
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.context-item .label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.context-item .value {
+  font-weight: 600;
+}
+
+.context-item.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.context-item.future {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.context-warning {
+  font-size: 12px;
+  color: #d32f2f;
 }

@@ -22,20 +22,21 @@
 
 .form-watermark img {
   position: absolute;
-
   top: 20px;
   left: 10px;
 
   transform: rotate(-18deg);
 
-  width: 300px; // 🔥 mismo tamaño del anterior grande
+  width: 300px;
+  max-width: 30vw; /* 🔥 responsive */
 
-  opacity: 0.26; // 🔥 más fuerte (antes 0.22)
+  opacity: 0.25;
 
-  filter: saturate(1.3) contrast(1.1); // 🔥 colores más vivos
+  filter: saturate(1.2) contrast(1.05); /* 🔥 menos agresivo */
 
   pointer-events: none;
   user-select: none;
+
   mix-blend-mode: multiply;
 }
 
@@ -84,14 +85,6 @@
   margin-top: 2px;
 }
 
-.sirus-stepper {
-  background: #f4f8fd;
-  border: 1px solid #dbe5f1;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
-}
-
 /* ------------------------------------------------------------------------------------------------------------------------------- */
 
 /* ============================
@@ -102,6 +95,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1400px; /* 🔥 más amplio */
+  margin: 0 auto;
 }
 
 /* 🔹 HEADER ESTÁNDAR */
@@ -140,11 +137,6 @@
 }
 
 /* 🔹 BOTONES */
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
 
 /* --------------------------------------------------------------------------------------------------------------------*/
 
@@ -179,35 +171,6 @@ mat-form-field.sirus-field {
 }
 
 /* ---------------------------------------------------------------------------------------------------------------------*/
-.step1-container {
-  .grid-datos-personales {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); // 🔥 FIX REAL
-    gap: 14px 10px;
-    margin-bottom: 8px;
-  }
-
-  .grid-fila3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); // 🔥 FIX REAL
-    gap: 14px 10px;
-    margin-bottom: 8px;
-  }
-}
-
-/* ------------------------------------------------------------------------------------------------------------------------------- */
-
-.step2-container {
-  .family-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .family-card {
-    @extend .dynamic-card;
-  }
-}
 
 .step3-container {
   .textarea-card {
@@ -409,20 +372,83 @@ mat-form-field.sirus-field {
    🚀 STEPPER FIX (SIRUS PRO)
 ============================ */
 
-.steps {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 10px;
+.dynamic-card,
+.family-card,
+.gasto-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
+.final-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+/* -----------------------------------------------------
+todo lo nuevo
+-------------------------------------------------------- */
+
+/* ----------------------------------------------------
+barra del Steps
+------------------------------------------------------*/
+/* 🔷 CONTENEDOR */
+.sirus-stepper {
+  background: #f4f8fd;
+  border: 1px solid #dbe5f1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+/* 🔷 PROGRESS */
+.progress-bar {
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #1565c0;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* 🔷 WRAPPER STEPS */
+.steps {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+
+  overflow-x: auto; /* 🔥 clave mobile */
+  padding-bottom: 6px;
+
+  scroll-behavior: smooth;
+}
+
+/* 🔷 STEP */
 .step {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  flex: 1;
+
+  flex: 0 0 auto; /* 🔥 evita compresión */
+  min-width: 70px;
+
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.step:hover {
+  background: rgba(21, 101, 192, 0.05);
 }
 
 /* 🔵 DOT */
@@ -442,6 +468,8 @@ mat-form-field.sirus-field {
   font-weight: 700;
 
   margin-bottom: 6px;
+
+  transition: all 0.2s ease;
 }
 
 /* 🔵 LABEL */
@@ -449,24 +477,240 @@ mat-form-field.sirus-field {
   font-size: 11px;
   color: #607d8b;
   font-weight: 500;
+
+  white-space: nowrap; /* 🔥 evita quiebre */
 }
 
-/* ✅ ACTIVE */
+/* 🔥 ACTIVE */
 .step.active .dot {
-  background: #1976d2;
-  color: white;
+  background: #1565c0;
+  color: #fff;
+  transform: scale(1.1);
 }
 
-/* ✅ COMPLETED */
+/* 🔥 COMPLETED */
 .step.completed .dot {
   background: #2e7d32;
-  color: white;
+  color: #fff;
 }
 
-/* ❌ ERROR */
+/* 🔥 ERROR */
 .step.error .dot {
-  background: #c62828;
-  color: white;
+  background: #d32f2f;
+  color: #fff;
+}
+
+/* 🔥 DISABLED */
+.step.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 📱 MOBILE AJUSTES */
+@media (max-width: 600px) {
+  .step {
+    min-width: 60px;
+  }
+
+  .step .dot {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .step .label {
+    font-size: 10px;
+  }
+}
+
+.steps::-webkit-scrollbar {
+  height: 6px;
+}
+
+.steps::-webkit-scrollbar-thumb {
+  background: #cfd8e3;
+  border-radius: 4px;
+}
+
+@media (min-width: 901px) {
+  .steps {
+    justify-content: center;
+    gap: 20px; /* 🔥 más aire */
+  }
+
+  .step {
+    flex: 1; /* 🔥 vuelve a distribuir */
+    max-width: 120px; /* opcional para control */
+  }
+}
+
+/*---------------------------------------------------------
+Step 1 - 2 -
+--------------------------------------------------------*/
+
+* {
+  box-sizing: border-box;
+}
+
+/* CONTENEDOR */
+.step1-container {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* CARD PRINCIPAL */
+.ssm-section-main {
+  padding: 16px;
+}
+
+/* HEADER */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0d47a1;
+}
+
+.section-sub {
+  font-size: 12px;
+  color: #5f6b7a;
+  margin-bottom: 12px;
+}
+
+/* SECCIONES */
+.ssm-section {
+  margin-top: 18px;
+  padding: 12px;
+
+  background: #f9fbfd;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* TITULOS */
+.ssm-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+
+  border-left: 4px solid #1565c0;
+  padding-left: 10px;
+  margin-bottom: 12px;
+}
+
+/* GRID AFILIADO */
+.ssm-grid-afiliado {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 130px)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(120px, 140px)
+    minmax(0, 1.5fr);
+  gap: 12px;
+}
+
+/* GRID SIMPLE */
+
+.ssm-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.ssm-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.ssm-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.ssm-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.ssm-grid-6 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.ssm-grid-2 .input {
+  background: #fbfcfe;
+}
+
+.ssm-grid-3 .input {
+  background: #fbfcfe;
+}
+
+.ssm-grid-4 .input {
+  background: #fbfcfe;
+}
+
+.ssm-grid-5 .input {
+  background: #fbfcfe;
+}
+
+.ssm-grid-6 .input {
+  background: #fbfcfe;
+}
+
+/* CAMPOS */
+.ssm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ssm-field label {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* INPUT */
+.input {
+  height: 32px;
+  padding: 5px 8px;
+  font-size: 13px;
+
+  border-radius: 6px;
+  border: 1px solid #d6dde6;
+  background: #fff;
+
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.input:hover {
+  border-color: #b6c2d1;
+}
+
+.input:focus {
+  border-color: #1565c0;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
 }
 
 .input.invalid {
@@ -474,24 +718,1456 @@ mat-form-field.sirus-field {
   background: #fff5f5;
 }
 
-.dynamic-card,
-.family-card,
-.gasto-card {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
+/* READONLY */
+.ssm-readonly {
+  background: #eef3f8;
+  color: #4a5568;
 }
 
-.final-actions {
+/* RADIO */
+.ssm-radio-group {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 25px;
+  margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .ssm-radio-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.ssm-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* BOTÓN */
+.actions {
+  margin-top: 16px;
+  display: flex;
   justify-content: flex-start;
 }
 
-.step11-container img {
-  max-width: 100%;   // 🔥 CLAVE
-  height: auto;
+.btn-primary {
+  background: #1565c0;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #0d47a1;
+}
+
+@media (max-width: 900px) {
+  .ssm-grid-afiliado {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ssm-grid-afiliado {
+    grid-template-columns: 1fr;
+  }
+
+  .ssm-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .ssm-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .ssm-grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .ssm-grid-5 {
+    grid-template-columns: 1fr;
+  }
+
+  .ssm-grid-6 {
+    grid-template-columns: 1fr;
+  }
+
+  .ssm-field label {
+    font-size: 12px;
+  }
+
+  .input {
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+.ssm-select {
+  width: 100%;
+}
+
+/* 🔥 altura igual a input */
+::ng-deep .ssm-select .mat-mdc-form-field-infix {
+  min-height: 32px;
+  padding: 4px 8px;
+}
+
+/* 🔥 borde consistente */
+::ng-deep .ssm-select .mdc-notched-outline {
+  border-radius: 6px;
+}
+
+/* 🔥 alineación texto */
+::ng-deep .ssm-select .mat-mdc-select-trigger {
+  font-size: 13px;
+}
+
+.step-header-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* -------------------------------------------------------------------*/
+
+.family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.family-card {
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.card-header {
+  height: 44px;
+  padding: 0 12px;
+  background: #e3f2fd;
+  border-left: 4px solid #1565c0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+}
+
+.card-header .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.card-body {
+  padding: 14px;
+}
+
+@media (max-width: 600px) {
+  .step-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .step-header-actions .btn-primary {
+    width: 100%;
+  }
+}
+
+.family-card {
+  @extend .dynamic-card;
+}
+
+/* SOLO STEP 2 */
+
+.step2-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+/* CARD PRINCIPAL */
+.step2-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px; /* 🔥 ESTE ES CLAVE */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* LISTA */
+.step2-container .family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* CARDS */
+.step2-container .family-card {
+  padding: 10px;
+}
+
+.step2-container .card-body {
+  padding: 12px;
+}
+
+/* TITULOS */
+.step2-container .ssm-title {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* 🔥 BOTONES */
+.step2-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between; /* 🔥 mejor distribución */
+
+  border-top: 1px solid #eef2f7;
+}
+
+/* 🔥 OPCIONAL (mejora visual) */
+.step2-container .actions button:last-child {
+  margin-left: auto;
+}
+
+.step2-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px; /* 🔥 aire abajo */
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+/* SOLO STEP 3 */
+.step3-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.step3-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* opciones */
+.postulante-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.postulante-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px;
+  border: 1px solid #dbe5f1;
+  border-radius: 12px;
+  background: #f9fbfd;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.postulante-card input {
+  display: none;
+}
+
+.postulante-card:hover {
+  border-color: #1565c0;
+  background: #eef6ff;
+}
+
+.postulante-card.active {
+  border-color: #1565c0;
+  background: #e3f2fd;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.12);
+}
+
+.postulante-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #1565c0;
+  color: white;
+}
+
+.postulante-card strong {
   display: block;
+  font-size: 13px;
+  color: #374151;
+}
+
+.postulante-card span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* grid simple */
+.ssm-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* resumen */
+.step3-container .resume-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 12px;
+  border-radius: 8px;
+
+  background: #eef6ff;
+  border-left: 4px solid #1565c0;
+
+  font-size: 13px;
+  color: #374151;
+}
+
+.step3-container .resume-box mat-icon {
+  color: #1565c0;
+}
+
+/* textarea */
+.ssm-textarea {
+  width: 100%;
+  min-height: 110px;
+
+  padding: 10px;
+  border: 1px solid #d6dde6;
+  border-radius: 8px;
+
+  font-size: 13px;
+  resize: vertical;
+  background: #fff;
+
+  transition: all 0.2s ease;
+}
+
+.ssm-textarea:hover {
+  border-color: #b6c2d1;
+}
+
+.ssm-textarea:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+}
+
+.step3-container .hint {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* botones */
+.step3-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step3-container .actions button:last-child {
+  margin-left: auto;
+}
+
+/* mobile */
+@media (max-width: 700px) {
+  .postulante-options {
+    grid-template-columns: 1fr;
+  }
+
+  .step3-container .actions {
+    flex-direction: column;
+  }
+
+  .step3-container .actions button {
+    width: 100%;
+  }
+}
+
+/* SOLO STEP 4 */
+.step4-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.step4-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.step4-container .resume-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 12px;
+  border-radius: 8px;
+
+  background: #eef6ff;
+  border-left: 4px solid #1565c0;
+
+  font-size: 13px;
+  color: #374151;
+}
+
+.step4-container .resume-box mat-icon {
+  color: #1565c0;
+}
+
+.estado-academico-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+
+  font-size: 13px;
+  color: #374151;
+}
+
+.estado-academico-card mat-icon {
+  color: #f97316;
+}
+
+.estado-academico-card.ok {
+  background: #ecfdf5;
+  border-left-color: #16a34a;
+}
+
+.estado-academico-card.ok mat-icon {
+  color: #16a34a;
+}
+
+.estado-academico-card.error {
+  background: #fff7ed;
+  border-left-color: #f97316;
+}
+
+.estado-academico-card.error mat-icon {
+  color: #f97316;
+}
+
+.estado-academico-card strong {
+  display: block;
+}
+
+.estado-academico-card span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.step4-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step4-container .actions button:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .step4-container .ssm-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .step4-container .actions {
+    flex-direction: column;
+  }
+
+  .step4-container .actions button {
+    width: 100%;
+  }
+}
+
+/* SOLO STEP 5 */
+.step5-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.step5-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.estado-verificacion-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+
+  font-size: 13px;
+  color: #374151;
+}
+
+.estado-verificacion-card mat-icon {
+  color: #f97316;
+}
+
+.estado-verificacion-card.ok {
+  background: #ecfdf5;
+  border-left-color: #16a34a;
+}
+
+.estado-verificacion-card.ok mat-icon {
+  color: #16a34a;
+}
+
+.estado-verificacion-card.error {
+  background: #fff7ed;
+  border-left-color: #f97316;
+}
+
+.estado-verificacion-card.error mat-icon {
+  color: #f97316;
+}
+
+.estado-verificacion-card strong {
+  display: block;
+}
+
+.estado-verificacion-card span {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.step5-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step5-container .actions button:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .step5-container .ssm-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .step5-container .actions {
+    flex-direction: column;
+  }
+
+  .step5-container .actions button {
+    width: 100%;
+  }
+}
+
+/* SOLO STEP 6 */
+.step6-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.step6-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.step6-container .family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step6-container .ingreso-card {
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.step6-container .card-header {
+  height: 44px;
+  padding: 0 12px;
+  background: #e3f2fd;
+  border-left: 4px solid #1565c0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step6-container .card-header .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.step6-container .card-body {
+  padding: 14px;
+}
+
+.ssm-money-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ssm-money-input span {
+  position: absolute;
+  left: 10px;
+  font-size: 13px;
+  color: #6b7280;
+  z-index: 1;
+}
+
+.ssm-money-input .input {
+  padding-left: 24px;
+}
+
+.total-ingresos-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px;
+  border-radius: 10px;
+
+  background: #ecfdf5;
+  border-left: 4px solid #16a34a;
+
+  color: #374151;
+}
+
+.total-ingresos-card mat-icon {
+  color: #16a34a;
+}
+
+.total-ingresos-card span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.total-ingresos-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  color: #166534;
+}
+
+.step6-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step6-container .actions button:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .step6-container .ssm-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .step6-container .step-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .step6-container .step-header-actions .btn-primary {
+    width: 100%;
+  }
+
+  .step6-container .actions {
+    flex-direction: column;
+  }
+
+  .step6-container .actions button {
+    width: 100%;
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------------------
+  SOLO STEP 7 
+ ------------------------------------------------------------------------------------------------------*/
+
+.step7-container {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+.step7-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* 🔹 BLOQUE SUPERIOR */
+
+.step7-top-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.step7-basicos-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(70px, 1fr));
+  gap: 10px;
+}
+
+.step7-educacion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.step7-basicos-grid .input,
+.step7-educacion-grid .input {
+  height: 30px;
+  font-size: 12px;
+}
+
+.step7-basicos-grid .ssm-field label,
+.step7-educacion-grid .ssm-field label {
+  font-size: 10px;
+}
+
+@media (max-width: 1100px) {
+  .step7-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🔹 GASTOS DINÁMICOS */
+.otros-gastos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+/* 🔹 CARDS */
+.step7-container .gasto-card {
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.step7-container .card-header {
+  height: 44px;
+  padding: 0 12px;
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+}
+
+.step7-container .card-header .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #c2410c;
+}
+
+.step7-container .card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 🔹 INPUT DINERO */
+.ssm-money-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ssm-money-input span {
+  position: absolute;
+  left: 10px;
+  z-index: 1;
+
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ssm-money-input .input {
+  padding-left: 24px;
+}
+
+/* 🔹 TOTALES */
+.total-secundario-card,
+.total-gastos-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 16px;
+  padding: 14px;
+
+  border-radius: 10px;
+  color: #374151;
+}
+
+/* OTROS */
+.total-secundario-card {
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+}
+
+.total-secundario-card mat-icon {
+  color: #f97316;
+}
+
+.total-secundario-card strong {
+  color: #c2410c;
+}
+
+/* GENERAL */
+.total-gastos-card {
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+}
+
+.total-gastos-card mat-icon {
+  color: #dc2626;
+}
+
+.total-gastos-card strong {
+  color: #991b1b;
+}
+
+.total-secundario-card span,
+.total-gastos-card span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.total-secundario-card strong,
+.total-gastos-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+/* 🔹 BOTONES */
+.step7-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step7-container .actions button:last-child {
+  margin-left: auto;
+}
+
+/* 🔹 RESUMEN DE GASTOS */
+.step7-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+/* 🔹 TARJETAS */
+.total-basicos-card,
+.total-educacion-card,
+.total-secundario-card,
+.total-gastos-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px;
+  border-radius: 10px;
+}
+
+/* 🔹 BÁSICOS */
+.total-basicos-card {
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+}
+
+.total-basicos-card mat-icon {
+  color: #2563eb;
+}
+
+.total-basicos-card strong {
+  color: #1d4ed8;
+}
+
+/* 🔹 EDUCACIÓN */
+.total-educacion-card {
+  background: #f0fdf4;
+  border-left: 4px solid #16a34a;
+}
+
+.total-educacion-card mat-icon {
+  color: #16a34a;
+}
+
+.total-educacion-card strong {
+  color: #15803d;
+}
+
+/* 🔹 OTROS */
+.total-secundario-card {
+  background: #fff7ed;
+  border-left: 4px solid #f97316;
+}
+
+.total-secundario-card mat-icon {
+  color: #f97316;
+}
+
+.total-secundario-card strong {
+  color: #c2410c;
+}
+
+/* 🔹 GENERAL */
+.total-gastos-card {
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+}
+
+.total-gastos-card mat-icon {
+  color: #dc2626;
+}
+
+.total-gastos-card strong {
+  color: #991b1b;
+}
+
+/* 🔹 TEXTO */
+.total-basicos-card span,
+.total-educacion-card span,
+.total-secundario-card span,
+.total-gastos-card span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.total-basicos-card strong,
+.total-educacion-card strong,
+.total-secundario-card strong,
+.total-gastos-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+/* 📱 TABLET */
+@media (max-width: 1200px) {
+  .step7-resumen-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 📱 MOBILE */
+@media (max-width: 700px) {
+  .step7-resumen-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 📱 TABLET */
+@media (max-width: 1200px) {
+  .step7-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step7-basicos-grid,
+  .step7-educacion-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+/* 📱 MOBILE */
+@media (max-width: 700px) {
+  .step7-basicos-grid,
+  .step7-educacion-grid,
+  .otros-gastos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step7-container .step-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .step7-container .step-header-actions .btn-primary {
+    width: 100%;
+  }
+
+  .step7-container .actions {
+    flex-direction: column;
+  }
+
+  .step7-container .actions button {
+    width: 100%;
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------------------
+ solo step 8
+ ------------------------------------------------------------------------------------------------------*/
+/* SOLO STEP 8 */
+/* SOLO STEP 8 */
+.step8-container {
+  width: 100%;
+  max-width: 1350px;
+  margin: 0 auto;
+}
+
+.step8-container .ssm-section-main {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  padding-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* 🔹 SALUD EN CARDS */
+.salud-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.step8-container .salud-card {
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.step8-container .card-header {
+  height: 44px;
+  padding: 0 12px;
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+}
+
+.step8-container .card-header .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.step8-container .card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 🔹 TOTAL SALUD */
+.total-salud-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 16px;
+  padding: 14px;
+
+  border-radius: 10px;
+  background: #fef2f2;
+  border-left: 4px solid #dc2626;
+
+  color: #374151;
+}
+
+.total-salud-card mat-icon {
+  color: #dc2626;
+}
+
+.total-salud-card span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.total-salud-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+  color: #991b1b;
+}
+
+/* 🔹 VIVIENDA */
+.step8-vivienda-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.step8-vivienda-textos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+/* 🔹 TEXTAREA */
+.step8-container .ssm-textarea {
+  width: 100%;
+  min-height: 95px;
+
+  padding: 10px;
+  border: 1px solid #d6dde6;
+  border-radius: 8px;
+
+  font-size: 13px;
+  resize: vertical;
+  background: #fff;
+
+  transition: all 0.2s ease;
+}
+
+.step8-container .ssm-textarea:hover {
+  border-color: #b6c2d1;
+}
+
+.step8-container .ssm-textarea:focus {
+  outline: none;
+  border-color: #1565c0;
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.15);
+}
+
+/* 🔹 BOTONES */
+.step8-container .actions {
+  margin-top: 20px;
+  padding-top: 14px;
+  padding-bottom: 6px;
+
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+
+  border-top: 1px solid #eef2f7;
+}
+
+.step8-container .actions button:last-child {
+  margin-left: auto;
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 900px) {
+  .step8-vivienda-grid,
+  .step8-vivienda-textos,
+  .salud-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step8-container .step-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .step8-container .step-header-actions .btn-primary {
+    width: 100%;
+  }
+
+  .step8-container .actions {
+    flex-direction: column;
+  }
+
+  .step8-container .actions button {
+    width: 100%;
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------------------
+ solo step 11 
+ ------------------------------------------------------------------------------------------------------*/
+
+.step11-container img {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.success-hero {
+  display: flex;
+  gap: 24px;
+
+  padding: 32px;
+
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+
+  border: 1px solid #c8e6c9;
+
+  margin-bottom: 24px;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+
+  border-radius: 50%;
+
+  background: #2e7d32;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  mat-icon {
+    color: white;
+    font-size: 42px;
+    width: 42px;
+    height: 42px;
+  }
+}
+
+.success-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.success-sub {
+  margin-top: 6px;
+  color: #4e5d52;
+}
+
+.success-folio {
+  margin-top: 16px;
+
+  display: inline-flex;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  background: white;
+
+  border: 1px solid #c8e6c9;
+
+  font-weight: 700;
+
+  color: #2e7d32;
+}
+
+.resumeStep11-card {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 24px;
+
+  border: 1px solid #e0e0e0;
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+
+  margin-bottom: 24px;
+}
+
+.resume-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  margin-bottom: 24px;
+
+  color: #1565c0;
+}
+
+.resumeStep11-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  gap: 16px;
+}
+
+.item {
+  padding: 16px;
+
+  border-radius: 14px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e3f2fd;
+
+  span {
+    display: block;
+
+    font-size: 13px;
+
+    color: #607d8b;
+
+    margin-bottom: 6px;
+  }
+
+  strong {
+    font-size: 16px;
+    color: #263238;
+  }
+}
+
+.legal-box {
+  display: flex;
+  gap: 12px;
+
+  padding: 18px;
+
+  border-radius: 14px;
+
+  background: #f5f9ff;
+
+  border: 1px solid #d6e4ff;
+
+  color: #455a64;
+
+  margin-bottom: 24px;
+
+  mat-icon {
+    color: #1565c0;
+  }
+}
+
+.finalStep11-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-pdf,
+.btnStep11-primary {
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
 }

@@ -329,20 +329,15 @@ export class TemplateComponent implements OnInit, OnDestroy {
       }
       this.tokenService.clear();
 
-      this.router.navigate(['/auth/login']);
+      //this.router.navigate(['/auth/login']);
+      this.forceLogout();
     } finally {
       sessionStorage.removeItem('allowRefresh');
 
-      if (this.timerSub) {
-        clearInterval(this.timerSub);
-      }
-
-      this.remainingMinutes = 60; // 🔥 clave
+      this.remainingMinutes = 60;
       this.showExtendButton = false;
 
-      this.startRealExpirationTimer(); // 🔥 reinicia timer
-
-      this.isRefreshing = false;
+      this.startRealExpirationTimer();
     }
   }
 
@@ -356,7 +351,13 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
       this.showExtendButton = this.remainingMinutes <= 5;
 
-      if (this.remainingMinutes <= 0) {
+      if (this.remainingMinutes <= 0 && !this.warned) {
+        this.warned = true;
+
+        if (this.timerSub) {
+          clearInterval(this.timerSub);
+        }
+
         this.showSessionExpiredModal();
       }
     }, 60000);
@@ -432,6 +433,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
     sessionStorage.removeItem('allowRefresh');
     this.isRefreshing = false;
 
+    this.warned = false;
     this.tokenService.clear();
     this.router.navigate(['/auth/login']);
   }

@@ -2,7 +2,7 @@
   <form [formGroup]="form">
     <div class="container">
       <div class="form-watermark">
-        <img src="assets/LOGOBIENESTARSSM.png" />
+        <img src="assets/LOGOBIENESTARSSM.webp" />
       </div>
       <!-- 🟦 TITULO -->
       <div class="form-header">
@@ -49,8 +49,8 @@
      🔵 PASO 1: DATOS PERSONALES
       ============================ -->
       <div *ngIf="currentStep === 1" class="step1-container">
-        <div class="section">
-          <!-- 🔹 HEADER ESTÁNDAR -->
+        <div class="ssm-section-main">
+          <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>person</mat-icon>
             Antecedentes afiliado/a
@@ -60,129 +60,154 @@
             Debe tener afiliación mínima de 6 meses y obligaciones al día
           </div>
 
-          <!-- 🔹 FORMULARIO -->
-          <div class="form-block">
-            <!-- GRID PRINCIPAL -->
-            <div class="grid-datos-personales">
-              <input
-                class="input rut"
-                placeholder="RUT"
-                formControlName="rut"
-                maxlength="12"
-                inputmode="numeric"
-                autocomplete="off"
-                [class.invalid]="
-                  form.get('rut')?.touched && form.get('rut')?.invalid
-                "
-                (input)="procesarRut($event)"
-                (blur)="validarRutGeneral()"
-              />
+          <!-- 🔹 IDENTIFICACIÓN -->
+          <div class="ssm-section">
+            <div class="ssm-title">Identificación</div>
 
-              <input
-                class="input"
-                placeholder="Nombres"
-                formControlName="nombre"
-              />
+            <div class="ssm-grid-afiliado">
+              <div class="ssm-field">
+                <label>RUT</label>
+                <input
+                  class="input rut"
+                  formControlName="rut"
+                  maxlength="12"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  [class.invalid]="
+                    form.get('rut')?.touched && form.get('rut')?.invalid
+                  "
+                  (input)="procesarRut($event)"
+                  (blur)="onRutCompleto()"
+                />
+              </div>
 
-              <input
-                class="input"
-                placeholder="Apellidos"
-                formControlName="apellido"
-              />
+              <div class="ssm-field">
+                <label>Nombres</label>
+                <input
+                  class="input ssm-readonly"
+                  formControlName="nombre"
+                  readonly
+                />
+              </div>
 
-              <input
-                class="input"
-                placeholder="Teléfono"
-                formControlName="telefono"
-              />
+              <div class="ssm-field">
+                <label>Apellidos</label>
+                <input
+                  class="input ssm-readonly"
+                  formControlName="apellido"
+                  readonly
+                />
+              </div>
 
-              <input
-                class="input"
-                type="email"
-                placeholder="Correo institucional"
-                formControlName="email"
-                autocomplete="off"
-                (blur)="completarCorreo()"
-              />
+              <div class="ssm-field">
+                <label>Teléfono</label>
+                <input class="input" formControlName="telefono" />
+              </div>
+
+              <div class="ssm-field">
+                <label>Correo institucional</label>
+                <input
+                  class="input"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="off"
+                  (blur)="completarCorreo()"
+                />
+              </div>
             </div>
+            <div class="ssm-grid-3">
+              <div class="ssm-field">
+                <label>Fecha nacimiento</label>
+                <input class="input" />
+              </div>
 
-            <!-- GRID SECUNDARIO -->
-            <div class="grid-fila3">
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Planta</mat-label>
-                <mat-select formControlName="planta">
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option value="planta">Planta</mat-option>
-                  <mat-option value="contrata">Contrata</mat-option>
-                </mat-select>
-              </mat-form-field>
+              <div class="ssm-field">
+                <label>Sexo</label>
+                <input class="input" />
+              </div>
 
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Grado</mat-label>
-                <mat-select formControlName="grado">
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option *ngFor="let g of grades" [value]="g.id">
-                    {{ "Grado " + g.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Establecimiento</mat-label>
-                <mat-select formControlName="stablishmentId">
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option *ngFor="let e of stablishments" [value]="e.id">
-                    {{ e.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </div>
-
-          <!-- 🔹 BLOQUE ADICIONAL -->
-          <div class="form-block">
-            <div class="section-title">Información adicional</div>
-
-            <div class="grid-option">
-              <div class="radio-group">
-                <span class="radio-title">
-                  ¿Ha sido beneficiado anteriormente?
-                </span>
-
-                <div class="datos-row">
-                  <label class="radio-item">
-                    <input
-                      type="radio"
-                      formControlName="beneficiado"
-                      value="si"
-                    />
-                    <span>Sí</span>
-                  </label>
-
-                  <label class="radio-item">
-                    <input
-                      type="radio"
-                      formControlName="beneficiado"
-                      value="no"
-                    />
-                    <span>No</span>
-                  </label>
-                </div>
+              <div class="ssm-field">
+                <label>Dirección</label>
+                <input class="input" />
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
+          <!-- 🔹 DATOS INSTITUCIONALES -->
+          <div class="ssm-section">
+            <div class="ssm-title">Datos institucionales</div>
+
+            <div class="ssm-grid-3">
+              <div class="ssm-field">
+                <label>Tipo afiliado</label>
+                <input
+                  class="input ssm-readonly"
+                  [value]="afiliado?.tipo"
+                  readonly
+                />
+              </div>
+
+              <div class="ssm-field">
+                <label>Establecimiento</label>
+                <input
+                  class="input ssm-readonly"
+                  [value]="afiliado?.estabNombre"
+                  readonly
+                />
+              </div>
+
+              <div class="ssm-field">
+                <label>Fecha afiliación</label>
+                <input
+                  class="input ssm-readonly"
+                  [value]="afiliado?.fechaAfiliacion"
+                  readonly
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 🔹 INFORMACIÓN ADICIONAL -->
+          <div class="ssm-section">
+            <div class="ssm-title">Información adicional</div>
+
+            <div class="ssm-field">
+              <label>¿Ha sido beneficiado anteriormente?</label>
+
+              <div class="ssm-radio-group">
+                <label class="ssm-radio">
+                  <input
+                    type="radio"
+                    formControlName="beneficiado"
+                    [value]="true"
+                  />
+                  <span>Sí</span>
+                </label>
+
+                <label class="ssm-radio">
+                  <input
+                    type="radio"
+                    formControlName="beneficiado"
+                    [value]="false"
+                  />
+                  <span>No</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🔹 BOTÓN (AHORA CORRECTO) -->
+          <div class="actions">
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+              [disabled]="!afiliadoValido || form.invalid"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -190,224 +215,224 @@
            🟣 PASO 2 
       ============================ -->
       <div *ngIf="currentStep === 2" class="step2-container">
-        <div class="section">
-          <!-- 🔹 HEADER ESTÁNDAR -->
-          <div class="section-title">
-            <mat-icon>groups</mat-icon>
-            Grupo Familiar
-          </div>
+        <div class="step-header-actions">
+          <div>
+            <div class="section-title">
+              <mat-icon>groups</mat-icon>
+              Grupo Familiar
+            </div>
 
-          <div class="section-sub">
-            Ingrese los integrantes del grupo familiar
-          </div>
-
-          <!-- 🔹 ACCIÓN -->
-          <div class="form-block">
-            <button
-              mat-stroked-button
-              class="btn-primary"
-              (click)="agregarFamiliar()"
-            >
-              <mat-icon>add</mat-icon>
-              Agregar integrante
-            </button>
-          </div>
-
-          <!-- 🔹 LISTA DINÁMICA -->
-          <div class="family-list">
-            <div
-              class="family-card"
-              *ngFor="let f of grupoFamiliar; let i = index"
-            >
-              <!-- HEADER -->
-              <div
-                class="card-header"
-                [class.active]="f.open"
-                (click)="toggleFamiliar(i)"
-              >
-                <div class="title">
-                  <mat-icon>person</mat-icon>
-                  <span>Integrante {{ i + 1 }}</span>
-                </div>
-
-                <button
-                  mat-icon-button
-                  color="warn"
-                  (click)="eliminarFamiliar(i); $event.stopPropagation()"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-
-              <!-- RESUMEN -->
-              <div *ngIf="!f.open" class="mini-summary">
-                <mat-icon>info</mat-icon>
-                <span>
-                  {{ f.nombre || "Sin nombre" }} -
-                  {{ getParentTypeName(f.parentTypeId) }}
-                </span>
-              </div>
-
-              <!-- FORM -->
-              <div *ngIf="f.open" class="card-body">
-                <!-- 🔹 DATOS -->
-                <div class="group-title">Datos básicos</div>
-
-                <div class="datos-row">
-                  <input
-                    class="input rut"
-                    [(ngModel)]="f.rut"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Rut"
-                    (input)="procesarRut($event, f)"
-                    (blur)="validarRutGeneral(f)"
-                  />
-
-                  <input
-                    class="input nombre"
-                    [(ngModel)]="f.nombre"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Nombre completo"
-                  />
-
-                  <input
-                    class="input edad"
-                    [(ngModel)]="f.edad"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Edad"
-                    type="number"
-                  />
-                </div>
-
-                <!-- 🔹 PERSONAL -->
-                <div class="group-title">Información personal</div>
-
-                <div class="grid-2">
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.parentTypeId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Parentesco"
-                    >
-                      <mat-option *ngFor="let p of parentTypes" [value]="p.id">
-                        {{ p.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.civilStateId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Estado civil"
-                    >
-                      <mat-option *ngFor="let c of civilStates" [value]="c.id">
-                        {{ c.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-
-                <!-- 🔹 ACTIVIDAD -->
-                <div class="group-title">Actividad / Estudios</div>
-
-                <div class="grid-4">
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.activityId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Actividad"
-                    >
-                      <mat-option *ngFor="let a of activities" [value]="a.id">
-                        {{ a.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.workPlaceId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Lugar de trabajo"
-                    >
-                      <mat-option *ngFor="let w of workPlaces" [value]="w.id">
-                        {{ w.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.studyId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Estudios"
-                    >
-                      <mat-option *ngFor="let e of studies" [value]="e.id">
-                        {{ e.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <select
-                    class="input"
-                    [(ngModel)]="f.estudiaRegion"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option value="" disabled>Estudia en la Región</option>
-                    <option *ngFor="let r of estudiaenlaRegion" [value]="r">
-                      {{ r }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- 🔹 INGRESOS -->
-                <div class="group-title">Previsión e Ingresos</div>
-
-                <div class="grid-2">
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.previtionId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Previsión"
-                    >
-                      <mat-option *ngFor="let p of previtions" [value]="p.id">
-                        {{ p.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-select
-                      [(ngModel)]="f.contractTypeId"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Tipo de ingreso"
-                    >
-                      <mat-option
-                        *ngFor="let c of contractTypes"
-                        [value]="c.id"
-                      >
-                        {{ c.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
+            <div class="section-sub">
+              Ingrese los integrantes del grupo familiar
             </div>
           </div>
-        </div>
-
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
 
           <button
             type="button"
             mat-raised-button
             class="btn-primary"
-            (click)="nextStep()"
+            (click)="agregarFamiliar()"
           >
-            Continuar
+            <mat-icon>add</mat-icon>
+            Agregar integrante
           </button>
+        </div>
+        <!-- 🔹 LISTA DINÁMICA -->
+        <div class="family-list">
+          <div
+            class="family-card"
+            *ngFor="let f of grupoFamiliar; let i = index"
+          >
+            <!-- HEADER -->
+            <div
+              class="card-header"
+              [class.active]="f.open"
+              (click)="toggleFamiliar(i)"
+            >
+              <div class="title">
+                <mat-icon>person</mat-icon>
+                <span>Integrante {{ i + 1 }}</span>
+              </div>
+
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="eliminarFamiliar(i); $event.stopPropagation()"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <!-- RESUMEN -->
+            <div *ngIf="!f.open" class="mini-summary">
+              <mat-icon>info</mat-icon>
+              <span>
+                {{ f.nombre || "Sin nombre" }} -
+                {{ getParentTypeName(f.parentTypeId) }}
+              </span>
+            </div>
+
+            <!-- FORM -->
+            <div *ngIf="f.open" class="card-body">
+              <!-- 🔹 DATOS -->
+              <div class="ssm-title">Datos básicos / Ingresos</div>
+              <div class="ssm-grid-6">
+                <div class="ssm-field">
+                  <label>RUT</label>
+                  <input
+                    class="input rut"
+                    [(ngModel)]="f.rut"
+                    [ngModelOptions]="{ standalone: true }"
+                    (input)="procesarRut($event, f)"
+                    (blur)="validarRutGeneral(f)"
+                  />
+                </div>
+                <div class="ssm-field">
+                  <label>Nombres</label>
+                  <input
+                    class="input nombre"
+                    [(ngModel)]="f.nombre"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </div>
+                <div class="ssm-field">
+                  <label>Apellidos</label>
+                  <input
+                    class="input edad"
+                    [(ngModel)]="f.edad"
+                    [ngModelOptions]="{ standalone: true }"
+                    type="number"
+                  />
+                </div>
+
+                <div class="ssm-field">
+                  <label>Previsión</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.previtionId"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Previsión"
+                  >
+                    <mat-option *ngFor="let p of previtions" [value]="p.id">
+                      {{ p.name }}
+                    </mat-option>
+                  </select>
+                </div>
+                <div class="ssm-field">
+                  <label>Tipo de Ingreso</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.contractTypeId"
+                    [ngModelOptions]="{ standalone: true }"
+                    placeholder="Tipo de ingreso"
+                  >
+                    <mat-option *ngFor="let c of contractTypes" [value]="c.id">
+                      {{ c.name }}
+                    </mat-option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 🔹 PERSONAL -->
+              <div class="ssm-title">Información personal</div>
+              <div class="ssm-grid-6">
+                <div class="ssm-field">
+                  <label>Tipo de Parentesco</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.parentTypeId"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option *ngFor="let p of parentTypes" [value]="p.id">
+                      {{ p.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="ssm-field">
+                  <label>Estado Civil</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.civilStateId"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option *ngFor="let c of civilStates" [value]="c.id">
+                      {{ c.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="ssm-field">
+                  <label>Actividad / Estudios</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.activityId"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option [ngValue]="null">Seleccione</option>
+                    <option *ngFor="let a of activities" [ngValue]="a.id">
+                      {{ a.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="ssm-field">
+                  <label>Lugar de Trabajo</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.workPlaceId"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option [ngValue]="null">Seleccione</option>
+                    <option *ngFor="let w of workPlaces" [ngValue]="w.id">
+                      {{ w.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="ssm-field">
+                  <label>Nivel de Estudios</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.studyId"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option [ngValue]="null">Seleccione</option>
+                    <option *ngFor="let e of studies" [ngValue]="e.id">
+                      {{ e.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="ssm-field">
+                  <label>¿Dónde estudia?</label>
+                  <select
+                    class="input"
+                    [(ngModel)]="f.estudiaRegion"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option [ngValue]="null">Seleccione</option>
+                    <option *ngFor="let r of estudiaenlaRegion" [ngValue]="r">
+                      {{ r }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
+
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -415,8 +440,8 @@
         🟣 PASO 3: POSTULANTE
       ========================= -->
       <div *ngIf="currentStep === 3" class="step3-container">
-        <div class="section">
-          <!-- 🔹 HEADER ESTÁNDAR -->
+        <div class="ssm-section-main">
+          <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>how_to_reg</mat-icon>
             Postulante
@@ -424,11 +449,15 @@
 
           <div class="section-sub">Indique quién realizará la postulación</div>
 
-          <!-- 🔹 CONTENIDO -->
-          <div class="form-block">
-            <!-- OPCIONES -->
-            <div class="radio-group big">
-              <label class="radio-card">
+          <!-- 🔹 OPCIONES -->
+          <div class="ssm-section">
+            <div class="ssm-title">Tipo de postulante</div>
+
+            <div class="postulante-options">
+              <label
+                class="postulante-card"
+                [class.active]="tipoPostulante === 'afiliado'"
+              >
                 <input
                   type="radio"
                   name="tipoPostulante"
@@ -437,16 +466,20 @@
                   [ngModelOptions]="{ standalone: true }"
                 />
 
-                <div class="card-content">
+                <div class="postulante-icon">
                   <mat-icon>person</mat-icon>
-                  <div>
-                    <strong>Yo (afiliado)</strong>
-                    <div class="hint">Se utilizarán sus datos personales</div>
-                  </div>
+                </div>
+
+                <div>
+                  <strong>Yo, afiliado/a</strong>
+                  <span>Se utilizarán sus datos personales</span>
                 </div>
               </label>
 
-              <label class="radio-card">
+              <label
+                class="postulante-card"
+                [class.active]="tipoPostulante === 'familiar'"
+              >
                 <input
                   type="radio"
                   name="tipoPostulante"
@@ -455,36 +488,44 @@
                   [ngModelOptions]="{ standalone: true }"
                 />
 
-                <div class="card-content">
+                <div class="postulante-icon">
                   <mat-icon>groups</mat-icon>
-                  <div>
-                    <strong>Otro integrante del grupo familiar</strong>
-                    <div class="hint">Seleccione un integrante registrado</div>
-                  </div>
+                </div>
+
+                <div>
+                  <strong>Otro integrante del grupo familiar</strong>
+                  <span>Seleccione un integrante registrado</span>
                 </div>
               </label>
             </div>
+          </div>
 
-            <!-- SELECCIÓN -->
-            <div *ngIf="tipoPostulante === 'familiar'" class="field mt-2">
-              <label>Seleccione integrante</label>
+          <!-- 🔹 SELECCIÓN FAMILIAR -->
+          <div *ngIf="tipoPostulante === 'familiar'" class="ssm-section">
+            <div class="ssm-title">Integrante seleccionado</div>
 
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-select
+            <div class="ssm-grid-1">
+              <div class="ssm-field">
+                <label>Seleccione integrante</label>
+
+                <select
+                  class="input"
                   [(ngModel)]="postulanteSeleccionado"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option *ngFor="let f of grupoFamiliar" [value]="f">
+                  <option [ngValue]="null">Seleccione</option>
+                  <option *ngFor="let f of grupoFamiliar" [ngValue]="f">
                     {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }})
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <!-- 🔹 CONTEXTO -->
-          <div class="form-block">
-            <!-- RESUMEN -->
+          <!-- 🔹 RESUMEN -->
+          <div class="ssm-section">
+            <div class="ssm-title">Resumen</div>
+
             <div class="resume-box" *ngIf="tipoPostulante === 'afiliado'">
               <mat-icon>info</mat-icon>
               <span>
@@ -505,46 +546,51 @@
                 <strong>{{ postulanteSeleccionado.nombre }}</strong>
               </span>
             </div>
+          </div>
 
-            <!-- COMENTARIO -->
-            <div class="textarea-card">
-              <label>Comentario de la postulación</label>
+          <!-- 🔹 COMENTARIO -->
+          <div class="ssm-section">
+            <div class="ssm-title">Comentario de la postulación</div>
+
+            <div class="ssm-field">
+              <label>Información adicional</label>
 
               <textarea
+                class="ssm-textarea"
                 [(ngModel)]="comentario"
+                [ngModelOptions]="{ standalone: true }"
                 placeholder="Ingrese información adicional relevante para la postulación..."
-              >
-              </textarea>
+              ></textarea>
 
               <div class="hint">
-                Este campo es opcional, pero puede ayudar en la evaluación
+                Este campo es opcional, pero puede ayudar en la evaluación.
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
 
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-            [disabled]="
-              tipoPostulante === 'familiar' && !postulanteSeleccionado
-            "
-          >
-            Continuar
-          </button>
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+              [disabled]="
+                tipoPostulante === 'familiar' && !postulanteSeleccionado
+              "
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
       <!-- =========================
         🟣 PASO 4: ANTECEDENTES aCEDEMICOS
       ========================= -->
       <div *ngIf="currentStep === 4" class="step4-container">
-        <div class="section">
+        <div class="ssm-section-main">
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>school</mat-icon>
@@ -555,8 +601,10 @@
             Complete la información académica del postulante
           </div>
 
-          <!-- 🔹 CONTEXTO -->
-          <div class="form-block">
+          <!-- 🔹 POSTULANTE -->
+          <div class="ssm-section">
+            <div class="ssm-title">Postulante</div>
+
             <div class="resume-box">
               <mat-icon>person</mat-icon>
               <span>
@@ -572,118 +620,123 @@
             </div>
           </div>
 
-          <!-- 🔹 FORMULARIO -->
-          <div class="form-block">
-            <div class="grid-2">
-              <!-- INSTITUCIÓN -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Institución</mat-label>
+          <!-- 🔹 DATOS ACADÉMICOS -->
+          <div class="ssm-section">
+            <div class="ssm-title">Información académica</div>
+
+            <div class="ssm-grid-2">
+              <div class="ssm-field">
+                <label>Institución</label>
                 <input
-                  matInput
+                  class="input"
                   [(ngModel)]="academico.institucion"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
 
-              <!-- CARRERA -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Carrera</mat-label>
+              <div class="ssm-field">
+                <label>Carrera</label>
                 <input
-                  matInput
+                  class="input"
                   [(ngModel)]="academico.carrera"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
 
-              <!-- NIVEL -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Nivel de estudio</mat-label>
-                <mat-select
+              <div class="ssm-field">
+                <label>Nivel de estudio</label>
+                <select
+                  class="input"
                   [(ngModel)]="academico.nivel"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option value="tecnico">Técnico Profesional</mat-option>
-                  <mat-option value="universitario">Universitario</mat-option>
-                  <mat-option value="postgrado">Postgrado</mat-option>
-                </mat-select>
-              </mat-form-field>
+                  <option [ngValue]="null">Seleccione</option>
+                  <option value="tecnico">Técnico Profesional</option>
+                  <option value="universitario">Universitario</option>
+                  <option value="postgrado">Postgrado</option>
+                </select>
+              </div>
 
-              <!-- SEMESTRE -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Semestre actual</mat-label>
+              <div class="ssm-field">
+                <label>Semestre actual</label>
                 <input
-                  matInput
+                  class="input"
                   type="number"
                   [(ngModel)]="academico.semestre"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
 
-              <!-- DURACIÓN -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Duración carrera (semestres)</mat-label>
+              <div class="ssm-field">
+                <label>Duración carrera (semestres)</label>
                 <input
-                  matInput
+                  class="input"
                   type="number"
                   [(ngModel)]="academico.duracion"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
 
-              <!-- REGIÓN -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Estudia en la región</mat-label>
-                <mat-select
+              <div class="ssm-field">
+                <label>Estudia en la región</label>
+                <select
+                  class="input"
                   [(ngModel)]="academico.region"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option value="si">Sí</mat-option>
-                  <mat-option value="no">No</mat-option>
-                </mat-select>
-              </mat-form-field>
+                  <option [ngValue]="null">Seleccione</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <!-- 🔹 RESULTADO -->
-          <div class="form-block">
-            <div class="estado-box" [ngClass]="estadoAcademico">
+          <div class="ssm-section">
+            <div class="ssm-title">Resultado académico</div>
+
+            <div class="estado-academico-card" [ngClass]="estadoAcademico">
               <mat-icon>
                 {{ cumpleAcademico ? "check_circle" : "cancel" }}
               </mat-icon>
 
-              <span>
-                {{
-                  cumpleAcademico
-                    ? "Cumple requisitos académicos"
-                    : "No cumple requisitos académicos"
-                }}
-              </span>
+              <div>
+                <strong>
+                  {{
+                    cumpleAcademico
+                      ? "Cumple requisitos académicos"
+                      : "No cumple requisitos académicos"
+                  }}
+                </strong>
+                <span
+                  >La evaluación se calcula según los antecedentes
+                  ingresados.</span
+                >
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
 
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
-
       <!-- =========================
         🟣 PASO 5: VERIFICACION
       ========================= -->
-      <div *ngIf="currentStep === 5" class="step5-verificacion">
-        <div class="section">
+      <div *ngIf="currentStep === 5" class="step5-container">
+        <div class="ssm-section-main">
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>fact_check</mat-icon>
@@ -695,51 +748,55 @@
           </div>
 
           <!-- 🔹 FORMULARIO -->
-          <div class="form-block">
-            <div class="grid-2">
-              <!-- TIPO POSTULANTE -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Tipo postulante</mat-label>
-                <mat-select
+          <div class="ssm-section">
+            <div class="ssm-title">Requisitos académicos</div>
+
+            <div class="ssm-grid-3">
+              <div class="ssm-field">
+                <label>Tipo postulante</label>
+                <select
+                  class="input"
                   [(ngModel)]="verificacion.tipo"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option [value]="null">Seleccione</mat-option>
-                  <mat-option value="primer">Primer año</mat-option>
-                  <mat-option value="continuidad">Curso superior</mat-option>
-                </mat-select>
-              </mat-form-field>
+                  <option [ngValue]="null">Seleccione</option>
+                  <option value="primer">Primer año</option>
+                  <option value="continuidad">Curso superior</option>
+                </select>
+              </div>
 
-              <!-- PROMEDIO -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Promedio de notas</mat-label>
+              <div class="ssm-field">
+                <label>Promedio de notas</label>
                 <input
-                  matInput
+                  class="input"
                   type="number"
                   step="0.1"
                   [(ngModel)]="verificacion.promedio"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
 
-              <!-- % APROBACIÓN -->
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>% aprobación</mat-label>
+              <div class="ssm-field">
+                <label>% aprobación</label>
                 <input
-                  matInput
+                  class="input"
                   type="number"
                   [(ngModel)]="verificacion.aprobacion"
                   [ngModelOptions]="{ standalone: true }"
                 />
-              </mat-form-field>
+              </div>
             </div>
           </div>
 
           <!-- 🔹 RESULTADO -->
-          <div class="form-block">
+          <div
+            class="ssm-section"
+            *ngIf="verificacion.promedio || verificacion.aprobacion"
+          >
+            <div class="ssm-title">Resultado de validación</div>
+
             <div
-              class="estado-evaluacion"
-              *ngIf="verificacion.promedio || verificacion.aprobacion"
+              class="estado-verificacion-card"
               [ngClass]="{
                 ok:
                   (verificacion.promedio || 0) >= 5 &&
@@ -758,58 +815,59 @@
                 }}
               </mat-icon>
 
-              <div class="text">
-                <div class="title">
+              <div>
+                <strong>
                   {{
                     (verificacion.promedio || 0) >= 5 &&
                     (verificacion.aprobacion || 0) >= 75
                       ? "Cumple requisitos académicos"
                       : "No cumple requisitos académicos"
                   }}
-                </div>
+                </strong>
 
-                <div class="sub">
-                  Promedio mínimo: 5.0 | Aprobación mínima: 75%
-                </div>
+                <span>Promedio mínimo: 5.0 | Aprobación mínima: 75%</span>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
 
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- =========================
         🟣 PASO 6: INGRESOS GRUPO FAMILIAR
       ========================= -->
+      <!-- 🔹 HEADER + ACCIÓN -->
       <div *ngIf="currentStep === 6" class="step6-container">
-        <div class="section">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>payments</mat-icon>
-            Ingresos del grupo familiar
-          </div>
+        <div class="ssm-section-main">
+          <!-- 🔹 HEADER + ACCIÓN -->
+          <div class="step-header-actions">
+            <div>
+              <div class="section-title">
+                <mat-icon>payments</mat-icon>
+                Ingresos del grupo familiar
+              </div>
 
-          <div class="section-sub">
-            Registre los ingresos de cada integrante del grupo familiar
-          </div>
+              <div class="section-sub">
+                Registre los ingresos de cada integrante del grupo familiar
+              </div>
+            </div>
 
-          <!-- 🔹 ACCIÓN -->
-          <div class="form-block">
             <button
-              mat-stroked-button
+              type="button"
+              mat-raised-button
               class="btn-primary"
               (click)="agregarIngreso()"
             >
@@ -821,80 +879,104 @@
           <!-- 🔹 LISTA DINÁMICA -->
           <div class="family-list">
             <div
-              class="family-card"
+              class="family-card ingreso-card"
               *ngFor="let i of ingresosFamiliares; let idx = index"
             >
-              <div class="card-body">
-                <div class="grid-3">
-                  <!-- FAMILIAR -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Integrante</mat-label>
+              <div class="card-header">
+                <div class="title">
+                  <mat-icon>payments</mat-icon>
+                  <span>Ingreso {{ idx + 1 }}</span>
+                </div>
 
-                    <mat-select
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="eliminarIngreso(idx)"
+                  *ngIf="ingresosFamiliares.length > 1"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+
+              <div class="card-body">
+                <div class="ssm-grid-3">
+                  <div class="ssm-field">
+                    <label>Integrante</label>
+                    <select
+                      class="input"
                       [(ngModel)]="i.familiarId"
                       [ngModelOptions]="{ standalone: true }"
                     >
-                      <mat-option [value]="null">Seleccione</mat-option>
+                      <option [ngValue]="null">Seleccione</option>
 
-                      <mat-option
+                      <option
                         *ngFor="let f of grupoFamiliar"
-                        [value]="f.id"
+                        [ngValue]="f.id"
                         [disabled]="estaSeleccionado(f.id, idx)"
                       >
                         {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }})
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <!-- PARENTESCO -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Parentesco</mat-label>
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Parentesco</label>
                     <input
-                      matInput
+                      class="input ssm-readonly"
                       [value]="getParentescoIngreso(i.familiarId)"
-                      disabled
+                      readonly
                     />
-                  </mat-form-field>
+                  </div>
 
-                  <!-- MONTO -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Monto</mat-label>
+                  <div class="ssm-field">
+                    <label>Monto</label>
 
-                    <div class="money-input">
+                    <div class="ssm-money-input">
                       <span>$</span>
+
                       <input
-                        matInput
+                        class="input"
                         [(ngModel)]="i.monto"
                         [ngModelOptions]="{ standalone: true }"
                         (input)="formatearMontoIngreso($event, idx)"
                       />
                     </div>
-                  </mat-form-field>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 🔹 TOTAL -->
-          <div class="form-block">
-            <div class="total-box">
-              Total ingresos familiares: $
-              {{ totalIngresosFamiliares | number }}
+          <!-- 🔹 TOTAL INGRESOS -->
+          <div class="ssm-section">
+            <div class="ssm-title">Resumen de ingresos</div>
+
+            <div class="total-ingresos-card">
+              <mat-icon>account_balance_wallet</mat-icon>
+
+              <div class="total-content">
+                <span>Total ingresos familiares</span>
+
+                <strong>
+                  $ {{ totalIngresosFamiliares | number: "1.0-0" }}
+                </strong>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
 
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -902,7 +984,7 @@
       PASO 7: Gastos mensuales del grupo familiar
       ========================= -->
       <div *ngIf="currentStep === 7" class="step7-container">
-        <div class="section">
+        <div class="ssm-section-main">
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>receipt_long</mat-icon>
@@ -911,71 +993,85 @@
 
           <div class="section-sub">Ingrese los montos en miles de pesos</div>
 
-          <!-- 🔹 GASTOS BÁSICOS -->
-          <div class="form-block">
-            <div class="group-title">Gastos básicos</div>
+          <!-- 🔹 BLOQUE DOBLE -->
+          <div class="step7-top-grid">
+            <!-- 🔹 GASTOS BÁSICOS -->
+            <div class="ssm-section">
+              <div class="ssm-title">Gastos básicos</div>
 
-            <div class="grid-gastos">
-              <mat-form-field
-                appearance="outline"
-                class="sirus-field"
-                *ngFor="let campo of camposGastosBasicos"
-              >
-                <mat-label>{{ campo.label }}</mat-label>
+              <div class="step7-basicos-grid">
+                <div
+                  class="ssm-field"
+                  *ngFor="let campo of camposGastosBasicos"
+                >
+                  <label>{{ campo.label }}</label>
 
-                <span matPrefix>$&nbsp;</span>
+                  <div class="ssm-money-input">
+                    <span>$</span>
 
-                <input
-                  matInput
-                  type="text"
-                  [formControlName]="campo.key"
-                  (input)="formatearMonto($event, campo.key)"
-                />
-              </mat-form-field>
+                    <input
+                      class="input"
+                      type="text"
+                      [formControlName]="campo.key"
+                      (input)="formatearMonto($event, campo.key)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 🔹 GASTOS EDUCACIÓN -->
+            <div class="ssm-section">
+              <div class="ssm-title">Gastos educación</div>
+
+              <div class="step7-educacion-grid">
+                <div
+                  class="ssm-field"
+                  *ngFor="let campo of camposGastosEducacion"
+                >
+                  <label>{{ campo.label }}</label>
+
+                  <div class="ssm-money-input">
+                    <span>$</span>
+
+                    <input
+                      class="input"
+                      type="text"
+                      [formControlName]="campo.key"
+                      (input)="formatearMonto($event, campo.key)"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 🔹 EDUCACIÓN -->
-          <div class="form-block">
-            <div class="group-title">Gastos educación</div>
+          <!-- 🔹 OTROS GASTOS -->
+          <div class="ssm-section">
+            <div class="step-header-actions">
+              <div>
+                <div class="ssm-title">Otros gastos</div>
 
-            <div class="grid-gastos educacion">
-              <mat-form-field
-                appearance="outline"
-                class="sirus-field"
-                *ngFor="let campo of camposGastosEducacion"
+                <div class="section-sub">Registre gastos extraordinarios</div>
+              </div>
+
+              <button
+                type="button"
+                mat-raised-button
+                class="btn-primary"
+                (click)="agregarGasto()"
               >
-                <mat-label>{{ campo.label }}</mat-label>
-
-                <span matPrefix>$&nbsp;</span>
-
-                <input
-                  matInput
-                  type="text"
-                  [formControlName]="campo.key"
-                  (input)="formatearMonto($event, campo.key)"
-                />
-              </mat-form-field>
+                <mat-icon>add</mat-icon>
+                Agregar gasto
+              </button>
             </div>
-          </div>
 
-          <!-- 🔹 OTROS -->
-          <div class="form-block">
-            <div class="group-title">Otros gastos</div>
-
-            <!-- BOTÓN -->
-            <button mat-stroked-button color="primary" (click)="agregarGasto()">
-              <mat-icon>add</mat-icon>
-              Agregar gasto
-            </button>
-
-            <!-- LISTA -->
-            <div class="family-list">
+            <div class="otros-gastos-grid">
               <div
-                class="family-card"
+                class="family-card gasto-card"
                 *ngFor="let g of otrosGastos; let i = index"
               >
-                <!-- HEADER -->
+                <!-- 🔹 HEADER -->
                 <div class="card-header" (click)="toggleGasto(i)">
                   <div class="title">
                     <mat-icon>receipt</mat-icon>
@@ -992,64 +1088,106 @@
                   </button>
                 </div>
 
-                <!-- FORM -->
+                <!-- 🔹 BODY -->
                 <div class="card-body" *ngIf="g.open">
-                  <div class="grid-2">
-                    <mat-form-field appearance="outline" class="sirus-field">
-                      <mat-label>Glosa</mat-label>
+                  <div class="ssm-field">
+                    <label>Glosa</label>
+
+                    <input
+                      class="input"
+                      [(ngModel)]="g.glosa"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="Ej: medicamentos"
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Monto</label>
+
+                    <div class="ssm-money-input">
+                      <span>$</span>
+
                       <input
-                        matInput
-                        [(ngModel)]="g.glosa"
-                        [ngModelOptions]="{ standalone: true }"
-                        placeholder="Ej: Medicamentos, transporte, etc."
-                      />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="sirus-field">
-                      <mat-label>Monto</mat-label>
-
-                      <span matPrefix>$&nbsp;</span>
-
-                      <input
-                        matInput
+                        class="input"
                         [(ngModel)]="g.monto"
                         [ngModelOptions]="{ standalone: true }"
                         (input)="formatearMontoOtro($event, g)"
                       />
-                    </mat-form-field>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- TOTAL OTROS -->
-            <div class="total-inline" *ngIf="otrosGastos.length">
-              <span>Total otros gastos:</span>
-              <strong>$ {{ totalOtrosGastos | number: "1.0-0" }}</strong>
+          <!-- 🔹 RESUMEN DE GASTOS -->
+          <div class="ssm-section">
+            <div class="ssm-title">Resumen de gastos</div>
+
+            <div class="step7-resumen-grid">
+              <!-- 🔹 TOTAL BÁSICOS -->
+              <div class="total-basicos-card">
+                <mat-icon>home</mat-icon>
+
+                <div>
+                  <span>Total gastos básicos</span>
+
+                  <strong>
+                    $ {{ totalGastosBasicos | number: "1.0-0" }}
+                  </strong>
+                </div>
+              </div>
+
+              <!-- 🔹 TOTAL EDUCACIÓN -->
+              <div class="total-educacion-card">
+                <mat-icon>school</mat-icon>
+
+                <div>
+                  <span>Total gastos educación</span>
+
+                  <strong>
+                    $ {{ totalGastosEducacion | number: "1.0-0" }}
+                  </strong>
+                </div>
+              </div>
+
+              <!-- 🔹 TOTAL OTROS -->
+              <div class="total-secundario-card" *ngIf="otrosGastos.length">
+                <mat-icon>add_card</mat-icon>
+
+                <div>
+                  <span>Total otros gastos</span>
+
+                  <strong> $ {{ totalOtrosGastos | number: "1.0-0" }} </strong>
+                </div>
+              </div>
+
+              <!-- 🔹 TOTAL GENERAL -->
+              <div class="total-gastos-card">
+                <mat-icon>trending_down</mat-icon>
+
+                <div>
+                  <span>Total gastos familiares</span>
+
+                  <strong> $ {{ totalGastos | number: "1.0-0" }} </strong>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 🔹 TOTAL GENERAL -->
-          <div class="form-block">
-            <div class="total-box gastos">
-              <mat-icon>trending_down</mat-icon>
-              Total gastos: ${{ totalGastos | number }}
-            </div>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
+
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
           </div>
-        </div>
-
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
-
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
         </div>
       </div>
 
@@ -1057,7 +1195,7 @@
         PASO 8: SALUD Y VIVIENDA
       ========================= -->
       <div *ngIf="currentStep === 8" class="step8-container">
-        <div class="section">
+        <div class="ssm-section-main">
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>healing</mat-icon>
@@ -1068,179 +1206,202 @@
             Registre antecedentes de salud y vivienda
           </div>
 
-          <!-- 🔹 BOTÓN -->
-          <div class="form-block">
-            <button mat-stroked-button color="primary" (click)="agregarSalud()">
-              <mat-icon>add</mat-icon>
-              {{
-                salud.length
-                  ? "Agregar otro antecedente"
-                  : "Agregar antecedente de salud"
-              }}
-            </button>
-          </div>
-
-          <!-- 🔹 HINT -->
-          <div class="form-block">
-            <div class="hint subtle">
-              <mat-icon>info</mat-icon>
-              <span
-                >Registre enfermedades o gastos médicos del grupo familiar</span
-              >
-            </div>
-          </div>
-
           <!-- 🔹 SALUD -->
-          <div class="family-list">
-            <div class="family-card" *ngFor="let s of salud; let i = index">
-              <!-- HEADER -->
-              <div class="card-header" (click)="toggleSalud(i)">
-                <div class="title">
-                  <mat-icon>healing</mat-icon>
-                  <span>Registro {{ i + 1 }}</span>
-                </div>
+          <div class="ssm-section">
+            <div class="step-header-actions">
+              <div>
+                <div class="ssm-title">Antecedentes de salud</div>
 
-                <button
-                  mat-icon-button
-                  color="warn"
-                  *ngIf="salud.length > 1"
-                  (click)="eliminarSalud(i); $event.stopPropagation()"
-                >
-                  <mat-icon>delete</mat-icon>
-                </button>
+                <div class="section-sub">
+                  Registre enfermedades o gastos médicos del grupo familiar
+                </div>
               </div>
 
-              <!-- FORM -->
-              <div class="card-body" *ngIf="s.open">
-                <div class="grid-salud">
-                  <!-- NOMBRE -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Nombre</mat-label>
+              <button
+                type="button"
+                mat-raised-button
+                class="btn-primary"
+                (click)="agregarSalud()"
+              >
+                <mat-icon>add</mat-icon>
+                {{
+                  salud.length
+                    ? "Agregar otro antecedente"
+                    : "Agregar antecedente de salud"
+                }}
+              </button>
+            </div>
+
+            <!-- 🔹 GRID TIPO OTROS GASTOS -->
+            <div class="salud-grid">
+              <div
+                class="family-card salud-card"
+                *ngFor="let s of salud; let i = index"
+              >
+                <!-- 🔹 HEADER -->
+                <div class="card-header" (click)="toggleSalud(i)">
+                  <div class="title">
+                    <mat-icon>healing</mat-icon>
+                    <span>Registro {{ i + 1 }}</span>
+                  </div>
+
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    *ngIf="salud.length > 1"
+                    (click)="eliminarSalud(i); $event.stopPropagation()"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+
+                <!-- 🔹 BODY -->
+                <div class="card-body" *ngIf="s.open">
+                  <div class="ssm-field">
+                    <label>Nombre</label>
+
                     <input
-                      matInput
+                      class="input"
                       [(ngModel)]="s.nombre"
                       [ngModelOptions]="{ standalone: true }"
                     />
-                  </mat-form-field>
+                  </div>
 
-                  <!-- GRUPO FAMILIAR -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Grupo familiar</mat-label>
-                    <mat-select
+                  <div class="ssm-field">
+                    <label>Grupo familiar</label>
+
+                    <select
+                      class="input"
                       [(ngModel)]="s.parentTypeId"
                       [ngModelOptions]="{ standalone: true }"
                     >
-                      <mat-option [value]="null">Seleccione</mat-option>
-                      <mat-option *ngFor="let p of parentTypes" [value]="p.id">
-                        {{ p.name }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
+                      <option [ngValue]="null">Seleccione</option>
 
-                  <!-- PATOLOGÍA -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Patología</mat-label>
+                      <option *ngFor="let p of parentTypes" [ngValue]="p.id">
+                        {{ p.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Patología</label>
+
                     <input
-                      matInput
+                      class="input"
                       [(ngModel)]="s.patologia"
                       [ngModelOptions]="{ standalone: true }"
                     />
-                  </mat-form-field>
+                  </div>
 
-                  <!-- GASTO -->
-                  <mat-form-field appearance="outline" class="sirus-field">
-                    <mat-label>Gasto mensual</mat-label>
-                    <input
-                      matInput
-                      [(ngModel)]="s.gasto"
-                      [ngModelOptions]="{ standalone: true }"
-                      (input)="formatearMontoSalud($event, s)"
-                    />
-                  </mat-form-field>
+                  <div class="ssm-field">
+                    <label>Gasto mensual</label>
+
+                    <div class="ssm-money-input">
+                      <span>$</span>
+
+                      <input
+                        class="input"
+                        [(ngModel)]="s.gasto"
+                        [ngModelOptions]="{ standalone: true }"
+                        (input)="formatearMontoSalud($event, s)"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 🔹 TOTAL -->
-          <div class="form-block">
-            <div class="total-salud-box">
-              <span>Total gastos salud:</span>
-              <strong>$ {{ totalSalud | number: "1.0-0" }}</strong>
+            <!-- 🔹 TOTAL SALUD -->
+            <div class="total-salud-card" *ngIf="salud.length">
+              <mat-icon>health_and_safety</mat-icon>
+
+              <div>
+                <span>Total gastos salud</span>
+
+                <strong> $ {{ totalSalud | number: "1.0-0" }} </strong>
+              </div>
             </div>
           </div>
 
           <!-- 🔹 VIVIENDA -->
-          <div class="form-block">
-            <div class="group-title">Vivienda</div>
+          <div class="ssm-section">
+            <div class="ssm-title">Vivienda</div>
 
-            <div class="grid-2">
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Tipo de Inmueble</mat-label>
-                <mat-select
+            <div class="step8-vivienda-grid">
+              <!-- TIPO INMUEBLE -->
+              <div class="ssm-field">
+                <label>Tipo de inmueble</label>
+
+                <select
+                  class="input"
                   [(ngModel)]="tipoVivienda"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option [value]="null">Tipo de inmueble</mat-option>
-                  <mat-option *ngFor="let t of typesHousing" [value]="t.id">
-                    {{ t.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+                  <option [ngValue]="null">Seleccione</option>
 
-              <mat-form-field appearance="outline" class="sirus-field">
-                <mat-label>Tipo Tenencia Inmueble</mat-label>
-                <mat-select
+                  <option *ngFor="let t of typesHousing" [ngValue]="t.id">
+                    {{ t.name }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- TIPO TENENCIA -->
+              <div class="ssm-field">
+                <label>Tipo tenencia inmueble</label>
+
+                <select
+                  class="input"
                   [(ngModel)]="tipoPropiedad"
                   [ngModelOptions]="{ standalone: true }"
                 >
-                  <mat-option [value]="null">Tipo de propiedad</mat-option>
-                  <mat-option *ngFor="let t of typesProperties" [value]="t.id">
+                  <option [ngValue]="null">Seleccione</option>
+
+                  <option *ngFor="let t of typesProperties" [ngValue]="t.id">
                     {{ t.name }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 🔹 ANTECEDENTES -->
+            <div class="step8-vivienda-textos">
+              <div class="ssm-field">
+                <label>Antecedentes habitacionales</label>
+
+                <textarea
+                  class="ssm-textarea"
+                  rows="3"
+                  [(ngModel)]="infoVivienda"
+                  [ngModelOptions]="{ standalone: true }"
+                ></textarea>
+              </div>
+
+              <div class="ssm-field">
+                <label>Otros antecedentes</label>
+
+                <textarea
+                  class="ssm-textarea"
+                  rows="3"
+                  [(ngModel)]="otrosAntecedentes"
+                  [ngModelOptions]="{ standalone: true }"
+                ></textarea>
+              </div>
             </div>
           </div>
 
-          <!-- 🔹 TEXTAREAS -->
-          <div class="form-block">
-            <mat-form-field appearance="outline" class="sirus-field">
-              <mat-label>Antecedentes habitacionales</mat-label>
-              <textarea
-                matInput
-                rows="3"
-                [(ngModel)]="infoVivienda"
-                [ngModelOptions]="{ standalone: true }"
-              >
-              </textarea>
-            </mat-form-field>
+          <!-- 🔹 ACTIONS -->
+          <div class="actions">
+            <button mat-stroked-button (click)="previousStep()">Volver</button>
 
-            <mat-form-field appearance="outline" class="sirus-field">
-              <mat-label>Otros antecedentes</mat-label>
-              <textarea
-                matInput
-                rows="3"
-                [(ngModel)]="otrosAntecedentes"
-                [ngModelOptions]="{ standalone: true }"
-              >
-              </textarea>
-            </mat-form-field>
+            <button
+              type="button"
+              mat-raised-button
+              class="btn-primary"
+              (click)="nextStep()"
+            >
+              Continuar
+            </button>
           </div>
-        </div>
-
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()">Volver</button>
-
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
         </div>
       </div>
 
@@ -1457,7 +1618,11 @@
       <!-- =========================
         PASO 10: RESUMEN FINAL
       ========================= -->
-      <div id="resumenPDF" class="section step-final-container">
+      <div
+        *ngIf="currentStep === 10"
+        id="resumenPDF"
+        class="section step-final-container"
+      >
         <div *ngIf="currentStep === 10" class="section step-final-container">
           <div class="section-title">
             <mat-icon>fact_check</mat-icon>
@@ -1522,7 +1687,7 @@
           </div>
 
           <!-- 🔹 VIVIENDA -->
-          <mat-form-field appearance="outline" class="sirus-field">
+          <mat-form-field appearance="outline" class="ssm-select">
             <mat-label>Tipo de vivienda</mat-label>
 
             <mat-select formControlName="typePropertyId">
@@ -1540,7 +1705,7 @@
             Debe seleccionar tipo de vivienda
           </mat-error>
 
-          <mat-form-field appearance="outline" class="sirus-field">
+          <mat-form-field appearance="outline" class="ssm-select">
             <mat-label>Tipo de vivienda (estructura)</mat-label>
 
             <mat-select formControlName="typeHousingId">
@@ -1605,7 +1770,7 @@
         <!-- 🔷 ENCABEZADO -->
         <div class="header">
           <img src="assets/logoGobierno.png" crossorigin="anonymous" />
-          <img src="assets/LOGOBIENESTARSSM.png" class="logo right" />
+          <img src="assets/LOGOBIENESTARSSM.webp" class="logo right" />
 
           <div class="titulo">
             <h2>COMPROBANTE DE POSTULACIÓN</h2>
@@ -1728,20 +1893,108 @@
            🟢 PASO FINAL paso 11
       ============================ -->
       <div *ngIf="currentStep === 11" class="section step11-container">
-        <!-- ✅ MENSAJE -->
-        <div class="success-box">
-          <mat-icon>check_circle</mat-icon>
+        <!-- ✅ HERO -->
+        <div class="success-hero">
+          <div class="success-icon">
+            <mat-icon>verified</mat-icon>
+          </div>
 
-          <div class="text">
-            <div class="title">Postulación enviada con éxito</div>
-            <div class="sub">
-              Tu información fue registrada correctamente en el sistema.
+          <div class="success-content">
+            <div class="success-title">Postulación enviada con éxito</div>
+
+            <div class="success-sub">
+              Tu solicitud fue registrada correctamente en el sistema Bienestar
+              SSM.
+            </div>
+
+            <div class="success-folio">
+              {{ codigoPostulacion }}
             </div>
           </div>
         </div>
 
+        <!-- ✅ RESUMEN -->
+        <div class="resumeStep11-card">
+          <div class="resume-header">
+            <mat-icon>description</mat-icon>
+            Resumen de postulación
+          </div>
+
+          <div class="resumeStep11-grid">
+            <div class="item">
+              <span>Postulante</span>
+              <strong>
+                {{ form.value.nombre }}
+                {{ form.value.apellido }}
+              </strong>
+            </div>
+
+            <div class="item">
+              <span>RUT</span>
+              <strong>{{ form.value.rut }}</strong>
+            </div>
+
+            <div class="item">
+              <span>Grupo familiar</span>
+              <strong>{{ grupoFamiliar.length }}</strong>
+            </div>
+
+            <div class="item">
+              <span>Total ingresos</span>
+              <strong>
+                {{ totalIngresos | currency: "CLP" : "symbol" : "1.0-0" }}
+              </strong>
+            </div>
+
+            <div class="item">
+              <span>Total gastos</span>
+              <strong>
+                {{ totalGastos | currency: "CLP" : "symbol" : "1.0-0" }}
+              </strong>
+            </div>
+
+            <div class="item">
+              <span>Documentos obligatorios</span>
+              <strong>
+                {{ getTotalObligatoriosCargados() }}
+                / {{ documentosObligatorios.length }}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ DOCUMENTOS -->
+        <div class="documents-card">
+          <div class="resume-header">
+            <mat-icon>folder</mat-icon>
+            Documentos adjuntos
+          </div>
+
+          <div class="docs-list">
+            <div class="doc-item" *ngFor="let doc of documentosObligatorios">
+              <mat-icon [class.ok]="tieneArchivoObligatorio(doc.key)">
+                {{
+                  tieneArchivoObligatorio(doc.key) ? "check_circle" : "cancel"
+                }}
+              </mat-icon>
+
+              <span>{{ doc.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ MENSAJE LEGAL -->
+        <div class="legal-box">
+          <mat-icon>info</mat-icon>
+
+          <span>
+            Este comprobante acredita el ingreso de la postulación al sistema
+            Bienestar SSM 2026. La aprobación está sujeta a evaluación.
+          </span>
+        </div>
+
         <!-- ✅ ACCIONES -->
-        <div class="final-actions">
+        <div class="finalStep11-actions">
           <button mat-stroked-button class="btn-pdf" (click)="descargarPDF()">
             <mat-icon>picture_as_pdf</mat-icon>
             Descargar comprobante
@@ -1749,9 +2002,10 @@
 
           <button
             mat-raised-button
-            class="btn-primary"
+            class="btnStep11-primary"
             (click)="nuevaPostulacion()"
           >
+            <mat-icon>add</mat-icon>
             Nueva postulación
           </button>
         </div>
