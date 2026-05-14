@@ -483,26 +483,22 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       // 🔥 EMAIL
       // =====================================================
 
-try {
+      try {
+        const response = await firstValueFrom(
+          this.emailService.sendEmail({
+            to: 'patricio.jara@redsalud.gob.cl',
 
-  const response = await firstValueFrom(
-    this.emailService.sendEmail({
+            subject: 'Prueba Telework-SM',
 
-      to: 'patricio.jara@redsalud.gob.cl',
+            message: 'Correo de prueba sistema teletrabajo.',
+          }),
+        );
 
-      subject: 'Prueba Telework-SM',
-
-      message: 'Correo de prueba sistema teletrabajo.',
-    }),
-  );
-
-  console.log('✅ EMAIL ENVIADO:', response);
-
-} catch (e) {
-
-  console.error('💥 ERROR EMAIL:', e);
-}
-/*      
+        console.log('✅ EMAIL ENVIADO:', response);
+      } catch (e) {
+        console.error('💥 ERROR EMAIL:', e);
+      }
+      /*      
       try {
         console.log('📧 PREPARANDO ENVÍO EMAIL...');
 
@@ -1127,10 +1123,11 @@ try {
   }
 
   isFutureDay(d: Date): boolean {
-    const today = this.parseDateCL(new Date()).getTime();
+    const today = this.parseDateCL(this.timeService.getServerTime()).getTime();
+
     const day = this.parseDateCL(d).getTime();
 
-    return day > today; // ❌ hoy no se puede
+    return day >= today; // ✅ ahora permite HOY
   }
 
   isBlockedDay(d: Date): boolean {
