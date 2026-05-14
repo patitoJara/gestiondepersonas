@@ -47,6 +47,39 @@ import { WorkPlace } from '@app/core/models/work-place.model';
 import { GradeService } from '@app/core/services/grade.service';
 import { Grade } from '@app/core/models/grade.model';
 
+import { firstValueFrom } from 'rxjs';
+
+import { WellbeingPostulationService } from './services/wellbeing-postulation.service';
+import { WellbeingCatalogsService } from './services/wellbeing-catalogs.service';
+import { WellbeingDocumentsService } from './services/wellbeing-documents.service';
+import { WellbeingWorkflowService } from './services/wellbeing-workflow.service';
+import { WellbeingReportService } from './services/wellbeing-report.service';
+import { WellbeingMapperService } from './services/wellbeing-mapper.service';
+import { WellbeingStorageService } from './services/wellbeing-storage.service';
+import { WellbeingStateService } from './services/wellbeing-state.service';
+import { WellbeingValidationService } from './services/wellbeing-validation.service';
+import { WellbeingErrorService } from './services/wellbeing-error.service';
+import { WellbeingFormatService } from './services/wellbeing-format.service';
+import { WellbeingArrayService } from './services/wellbeing-array.service';
+import { WellbeingDialogService } from './services/wellbeing-dialog.service';
+import { WellbeingCalculationService } from './services/wellbeing-calculation.service';
+import { WellbeingStepService } from './services/wellbeing-step.service';
+import { WellbeingLogService } from './services/wellbeing-log.service';
+import { WellbeingLoadingService } from './services/wellbeing-loading.service';
+import { WellbeingDateService } from './services/wellbeing-date.service';
+import { WellbeingCacheService } from './services/wellbeing-cache.service';
+import { WellbeingTextService } from './services/wellbeing-text.service';
+import { WellbeingPermissionService } from './services/wellbeing-permission.service';
+import { WellbeingFileService } from './services/wellbeing-file.service';
+import { WellbeingUiService } from './services/wellbeing-ui.service';
+import { WellbeingAutosaveService } from './services/wellbeing-autosave.service';
+import { WellbeingSummaryService } from './services/wellbeing-summary.service';
+import { WellbeingFormService } from './services/wellbeing-form.service';
+import { WellbeingFilterService } from './services/wellbeing-filter.service';
+import { WellbeingNotificationService } from './services/wellbeing-notification.service';
+import { WellbeingExportService } from './services/wellbeing-export.service';
+import { WellbeingSessionService } from './services/wellbeing-session.service';
+
 interface Step {
   id: number;
   title: string;
@@ -87,9 +120,7 @@ interface Familiar {
 interface Salud {
   id: number;
   nombre: string;
-
-  parentTypeId?: number | null; // 🔥 CAMBIO CLAVE
-
+  familiarId?: number | null;
   patologia: string;
   gasto: number;
   open?: boolean;
@@ -135,7 +166,6 @@ interface IngresoFamiliar {
 export class PostulationFormComponent {
   @ViewChild('fileInputExtra') fileInputExtra!: ElementRef;
   form: FormGroup;
-
   studies: Study[] = [];
   stablishments: Stablishment[] = [];
   previtions: Prevition[] = [];
@@ -316,6 +346,36 @@ export class PostulationFormComponent {
     private activityService: ActivityService,
     private workPlaceService: WorkPlaceService,
     private gradeService: GradeService,
+    private wellbeingPostulationService: WellbeingPostulationService,
+    private wellbeingCatalogsService: WellbeingCatalogsService,
+    private wellbeingDocumentsService: WellbeingDocumentsService,
+    private wellbeingWorkflowService: WellbeingWorkflowService,
+    private wellbeingReportService: WellbeingReportService,
+    private wellbeingMapperService: WellbeingMapperService,
+    private wellbeingStorageService: WellbeingStorageService,
+    private wellbeingStateService: WellbeingStateService,
+    private wellbeingValidationService: WellbeingValidationService,
+    private wellbeingErrorService: WellbeingErrorService,
+    private wellbeingFormatService: WellbeingFormatService,
+    private wellbeingArrayService: WellbeingArrayService,
+    private wellbeingDialogService: WellbeingDialogService,
+    private wellbeingCalculationService: WellbeingCalculationService,
+    private wellbeingStepService: WellbeingStepService,
+    private wellbeingLogService: WellbeingLogService,
+    private wellbeingLoadingService: WellbeingLoadingService,
+    private wellbeingDateService: WellbeingDateService,
+    private wellbeingCacheService: WellbeingCacheService,
+    private wellbeingTextService: WellbeingTextService,
+    private wellbeingPermissionService: WellbeingPermissionService,
+    private wellbeingFileService: WellbeingFileService,
+    private wellbeingUiService: WellbeingUiService,
+    private wellbeingAutosaveService: WellbeingAutosaveService,
+    private wellbeingSummaryService: WellbeingSummaryService,
+    private wellbeingFormService: WellbeingFormService,
+    private wellbeingFilterService: WellbeingFilterService,
+    private wellbeingNotificationService: WellbeingNotificationService,
+    private wellbeingExportService: WellbeingExportService,
+    private wellbeingSessionService: WellbeingSessionService,
   ) {
     this.form = this.fb.group({
       nombre: [''], // antes: ['', Validators.required]
@@ -353,6 +413,12 @@ export class PostulationFormComponent {
     });
   }
 
+  postulationId: number | null = null;
+  summary: any = null;
+  isSaving = false;
+  isLoading = false;
+  currentWorkflowStep = 1;
+
   afiliadoValido = false;
   afiliado: any = null;
 
@@ -371,54 +437,733 @@ export class PostulationFormComponent {
                                             ngOnInit() {
   ------------------------------------------------------------------------------------------------------*/
 
-  ngOnInit() {
-    this.cargarTiposPropiedad();
-    this.cargarTiposVivienda();
-    this.cargarStudies();
-    this.cargarStablishments();
-    this.cargarPrevitions();
-    this.cargarParentTypes();
-    this.cargarContractTypes();
-    this.cargarCivilStates();
-    this.cargarBillTypes();
-    this.cargarActivities();
-    this.cargarWorkPlaces();
-    this.cargarGrades();
+  async ngOnInit() {
+    // =====================================
+    // 🔥 LOAD STORAGE
+    // =====================================
+
+    this.loadWorkflowStorage();
+
+    // =====================================
+    // 🔥 CREATE POSTULATION IF NEEDED
+    // =====================================
+
+    await this.createPostulation();
+
+    // =====================================
+    // 🔥 LOAD CATALOGS
+    // =====================================
+
+    await this.loadCatalogs();
+
+    // =====================================
+    // 🔥 LOAD LOCAL DATA
+    // =====================================
+
+    this.loadData();
+
+    // =====================================
+    // 🔥 FAMILY
+    // =====================================
 
     if (this.grupoFamiliar.length === 0) {
       this.agregarFamiliar();
     }
 
-    this.loadData();
+    // =====================================
+    // 🔥 HEALTH
+    // =====================================
 
-    // 🔥 ASEGURAR AL MENOS 1 REGISTRO
     if (this.salud.length === 0) {
       this.agregarSalud();
     }
 
-    // 🔥 DETECTAR SI HAY DATOS
+    // =====================================
+    // 🔥 HEALTH OPEN STATE
+    // =====================================
+
     const hayDatos = this.salud.some(
-      (s) => s.nombre || s.parentTypeId || s.patologia || s.gasto,
+      (s) => s.nombre || s.familiarId || s.patologia || s.gasto,
     );
 
-    // 🔥 ABRIR SEGÚN CONTEXTO
     this.salud.forEach((s, index) => {
-      const tieneDatos = s.nombre || s.parentTypeId || s.patologia || s.gasto;
+      const tieneDatos = s.nombre || s.familiarId || s.patologia || s.gasto;
 
-      // 👉 si hay datos → abrir solo los que tienen info
+      // ===============================
+      // 🔥 OPEN WITH DATA
+      // ===============================
+
       if (hayDatos) {
         s.open = !!tieneDatos;
       }
-      // 👉 si NO hay datos → abrir el primero
+
+      // ===============================
+      // 🔥 OPEN FIRST
+      // ===============================
       else {
         s.open = index === 0;
       }
     });
 
-    // 🔥 GUARDADO AUTOMÁTICO
+    // =====================================
+    // 🔥 AUTOSAVE
+    // =====================================
+
     this.form.valueChanges.subscribe((value) => {
-      localStorage.setItem('postulacion_form', JSON.stringify(value));
+      this.wellbeingAutosaveService.run(() => {
+        localStorage.setItem('postulacion_form', JSON.stringify(value));
+
+        console.log('💾 AUTOSAVE');
+      }, 1200);
     });
+
+    // =====================================
+    // 🔥 LOAD SUMMARY
+    // =====================================
+
+    if (this.currentStep >= 10) {
+      await this.loadSummary();
+    }
+
+    // =====================================
+    // 🔥 LOG
+    // =====================================
+
+    console.log('🚀 WELLBEING MODULE READY');
+  }
+
+  async saveStep1Affiliate() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = this.wellbeingMapperService.mapAffiliate(this.form.value);
+
+      console.log('🚀 AFFILIATE PAYLOAD:', payload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveAffiliate(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.wellbeingStorageService.saveCurrentStep(2);
+
+      this.currentStep = 2;
+
+      this.wellbeingNotificationService.success(
+        'Antecedentes afiliado guardados',
+      );
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error guardando afiliado');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 WORKFLOW STORAGE
+  // =========================================================
+
+  loadWorkflowStorage() {
+    this.postulationId = this.wellbeingStorageService.getPostulationId();
+
+    this.currentWorkflowStep = this.wellbeingStorageService.getCurrentStep();
+
+    console.log('🔥 STORAGE:', {
+      postulationId: this.postulationId,
+
+      step: this.currentWorkflowStep,
+    });
+  }
+
+  // =========================================================
+  // 🔥 CREATE POSTULATION
+  // =========================================================
+
+  async createPostulation() {
+    try {
+      this.isLoading = true;
+
+      const response = await firstValueFrom(
+        this.wellbeingPostulationService.createPostulation(),
+      );
+
+      this.postulationId = response.id;
+
+      this.wellbeingStorageService.savePostulationId(response.id);
+
+      this.wellbeingNotificationService.success(
+        'Postulación creada correctamente',
+      );
+
+      console.log('✅ POSTULATION:', response);
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error(
+        'No fue posible crear la postulación',
+      );
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 LOAD SUMMARY
+  // =========================================================
+
+  async loadSummary() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.summary = await firstValueFrom(
+        this.wellbeingPostulationService.getSummary(this.postulationId),
+      );
+
+      console.log('📊 SUMMARY:', this.summary);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 2
+  // =========================================================
+
+  async saveStep2FamilyMembers() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = this.wellbeingMapperService.mapFamilyMembers(
+        this.grupoFamiliar,
+      );
+
+      console.log('🚀 FAMILY MEMBERS:', payload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveFamilyMembers(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.wellbeingStorageService.saveCurrentStep(3);
+
+      this.currentStep = 3;
+
+      this.wellbeingNotificationService.success('Grupo familiar guardado');
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error guardando grupo familiar');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 3
+  // =========================================================
+
+  async saveStep3Beneficiary() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = this.wellbeingMapperService.mapBeneficiary({
+        tipoBeneficiario: this.form.value.tipoBeneficiario,
+
+        familiarId: this.form.value.familiarId,
+      });
+
+      console.log('🚀 BENEFICIARY:', payload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveBeneficiary(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.wellbeingStorageService.saveCurrentStep(4);
+
+      this.currentStep = 4;
+
+      this.wellbeingNotificationService.success('Beneficiario guardado');
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error guardando beneficiario');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 4
+  // =========================================================
+
+  async saveStep4AcademicBackground() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = {
+        institution: this.form.value.institutionName,
+
+        career: this.form.value.careerName,
+
+        studyLevel: this.form.value.studyLevel,
+
+        currentSemester: this.form.value.currentSemester,
+
+        careerDurationSemesters: this.form.value.durationSemesters,
+
+        region: this.form.value.region,
+
+        studiesInRegion: this.form.value.studiesInRegion,
+
+        receivedBenefitBefore: this.form.value.hadPreviousBenefit,
+      };
+
+      console.log('🚀 ACADEMIC:', payload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveAcademicBackground(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.wellbeingStorageService.saveCurrentStep(5);
+
+      this.currentStep = 5;
+
+      this.wellbeingNotificationService.success(
+        'Antecedentes académicos guardados',
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 5
+  // =========================================================
+
+  async saveStep5AcademicVerification() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = {
+        academicSituation: this.form.value.situacionAcademica,
+
+        gradeAverage: this.form.value.promedio,
+
+        approvalPercentage: this.form.value.porcentajeAprobacion,
+      };
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveAcademicVerification(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.currentStep = 6;
+
+      this.wellbeingStorageService.saveCurrentStep(6);
+
+      this.wellbeingNotificationService.success(
+        'Antecedentes complementarios guardados',
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 6
+  // =========================================================
+
+  async saveStep6FamilyIncomes() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = this.ingresosFamiliares.map((i: any) => ({
+        familyMemberId: i.familiarId,
+
+        relationshipType: i.nombre,
+
+        amount: i.monto,
+      }));
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveFamilyIncomes(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.currentStep = 7;
+
+      this.wellbeingStorageService.saveCurrentStep(7);
+
+      this.wellbeingNotificationService.success(
+        'Ingresos familiares guardados',
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 7
+  // =========================================================
+
+  async saveStep7FamilyExpenses() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const payload = {
+        rentOrMortgage: this.form.value.dividendo,
+
+        electricity: this.form.value.luz,
+
+        water: this.form.value.agua,
+
+        gas: this.form.value.gas,
+
+        phone: this.form.value.telefono,
+
+        credits: this.form.value.creditos,
+
+        tuition: this.form.value.colegiatura,
+
+        monthlyFee: this.form.value.mensualidad,
+
+        accommodation: this.form.value.arriendo,
+
+        otherExpenses: this.otrosGastos.map((g: any) => ({
+          description: g.nombre,
+          amount: g.valor,
+        })),
+      };
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveFamilyExpenses(
+          this.postulationId,
+          payload,
+        ),
+      );
+
+      this.currentStep = 8;
+
+      this.wellbeingStorageService.saveCurrentStep(8);
+
+      this.wellbeingNotificationService.success('Gastos familiares guardados');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 LOAD CATALOGS
+  // =========================================================
+
+  async loadCatalogs() {
+    try {
+      this.isLoading = true;
+
+      // =====================================
+      // 🔥 STUDIES
+      // =====================================
+
+      this.studies = await firstValueFrom(
+        this.wellbeingCatalogsService.getStudies(),
+      );
+
+      // =====================================
+      // 🔥 STABLISHMENTS
+      // =====================================
+
+      this.stablishments = await firstValueFrom(
+        this.wellbeingCatalogsService.getStablishments(),
+      );
+
+      // =====================================
+      // 🔥 PREVITIONS
+      // =====================================
+
+      this.previtions = await firstValueFrom(
+        this.wellbeingCatalogsService.getPrevitions(),
+      );
+
+      // =====================================
+      // 🔥 PARENT TYPES
+      // =====================================
+
+      this.parentTypes = await firstValueFrom(
+        this.wellbeingCatalogsService.getParentTypes(),
+      );
+
+      // =====================================
+      // 🔥 CONTRACT TYPES
+      // =====================================
+
+      this.contractTypes = await firstValueFrom(
+        this.wellbeingCatalogsService.getContractTypes(),
+      );
+
+      // =====================================
+      // 🔥 CIVIL STATES
+      // =====================================
+
+      this.civilStates = await firstValueFrom(
+        this.wellbeingCatalogsService.getCivilStates(),
+      );
+
+      // =====================================
+      // 🔥 BILL TYPES
+      // =====================================
+
+      this.billTypes = await firstValueFrom(
+        this.wellbeingCatalogsService.getBillTypes(),
+      );
+
+      // =====================================
+      // 🔥 ACTIVITIES
+      // =====================================
+
+      this.activities = await firstValueFrom(
+        this.wellbeingCatalogsService.getActivities(),
+      );
+
+      // =====================================
+      // 🔥 WORK PLACES
+      // =====================================
+
+      this.workPlaces = await firstValueFrom(
+        this.wellbeingCatalogsService.getWorkPlaces(),
+      );
+
+      // =====================================
+      // 🔥 GRADES
+      // =====================================
+
+      this.grades = await firstValueFrom(
+        this.wellbeingCatalogsService.getGrades(),
+      );
+
+      // =====================================
+      // 🔥 TYPE PROPERTIES
+      // =====================================
+
+      this.typesProperties = await firstValueFrom(
+        this.wellbeingCatalogsService.getTypeProperties(),
+      );
+
+      // =====================================
+      // 🔥 TYPE HOUSINGS
+      // =====================================
+
+      this.typesHousing = await firstValueFrom(
+        this.wellbeingCatalogsService.getTypeHousings(),
+      );
+
+      console.log('✅ CATALOGS LOADED');
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error cargando catálogos');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 8
+  // =========================================================
+
+  async saveStep8HealthAndHousing() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      // =====================================
+      // 🔥 HEALTH
+      // =====================================
+
+      const healthPayload = this.salud.map((s: any) => ({
+        name: s.nombre,
+
+        familyMemberId: s.familiarId,
+
+        pathology: s.patologia,
+
+        monthlyExpense: s.gasto,
+      }));
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveHealthRecords(
+          this.postulationId,
+          healthPayload,
+        ),
+      );
+
+      // =====================================
+      // 🔥 HOUSING
+      // =====================================
+
+      const housingPayload = {
+        propertyType: this.form.value.tipoPropiedad,
+
+        propertyTenureType: this.form.value.tipoVivienda,
+
+        housingBackground: this.form.value.antecedentesVivienda,
+
+        otherBackground: this.form.value.otrosAntecedentes,
+      };
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveHousing(
+          this.postulationId,
+          housingPayload,
+        ),
+      );
+
+      this.currentStep = 9;
+
+      this.wellbeingStorageService.saveCurrentStep(9);
+
+      this.wellbeingNotificationService.success('Salud y vivienda guardados');
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error guardando salud/vivienda');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SAVE STEP 9 DOCUMENTS
+  // =========================================================
+
+  async saveStep9Documents() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      console.log('📎 DOCUMENTS READY');
+
+      this.currentStep = 10;
+
+      this.wellbeingStorageService.saveCurrentStep(10);
+
+      this.wellbeingNotificationService.success('Documentos preparados');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 SUBMIT POSTULATION
+  // =========================================================
+
+  async submitPostulation() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      await firstValueFrom(
+        this.wellbeingWorkflowService.submitPostulation(this.postulationId),
+      );
+
+      this.currentStep = 11;
+
+      this.wellbeingStorageService.saveCurrentStep(11);
+
+      await this.loadSummary();
+
+      this.wellbeingNotificationService.success(
+        'Postulación enviada correctamente',
+      );
+    } catch (e) {
+      console.error(e);
+
+      this.wellbeingNotificationService.error('Error enviando postulación');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // =========================================================
+  // 🔥 RESET WORKFLOW
+  // =========================================================
+
+  resetWorkflow() {
+    this.postulationId = null;
+
+    this.summary = null;
+
+    this.currentStep = 1;
+
+    this.currentWorkflowStep = 1;
+
+    this.wellbeingStorageService.clearAll();
+
+    console.log('🧹 WORKFLOW RESET');
   }
 
   /* ---------------------------------------------------------------------------------------------------
@@ -639,7 +1384,7 @@ export class PostulationFormComponent {
     const nuevo = {
       id: Date.now(),
       nombre: '',
-      parentTypeId: undefined,
+      familiarId: undefined,
       patologia: '',
       gasto: 0,
       open: true, // 🔥 ESTE ES CLAVE
@@ -862,7 +1607,7 @@ export class PostulationFormComponent {
 
       salud: this.saludArray.value.map((s: any) => ({
         nombre: s.nombre,
-        parentTypeId: s.parentTypeId,
+        familiarId: s.familiarId,
         patologia: s.patologia,
         gasto: s.gasto,
       })),
@@ -1364,7 +2109,7 @@ export class PostulationFormComponent {
 
       // 🔥 VALIDAR SALUD
       const saludValida = this.salud.every(
-        (s) => s.nombre && s.parentTypeId && s.patologia,
+        (s) => s.nombre && s.familiarId && s.patologia,
       );
 
       if (!saludValida) {
@@ -1372,7 +2117,7 @@ export class PostulationFormComponent {
 
         // 🔥 UX PRO → abrir los incompletos
         this.salud.forEach((s) => {
-          const incompleto = !s.nombre || !s.parentTypeId || !s.patologia;
+          const incompleto = !s.nombre || !s.familiarId || !s.patologia;
           s.open = incompleto;
         });
       }
@@ -1531,7 +2276,7 @@ export class PostulationFormComponent {
     if (!this.salud.length) return true;
 
     const incompletos = this.salud.some(
-      (s) => !s.nombre || !s.parentTypeId || !s.patologia,
+      (s) => !s.nombre || !s.familiarId || !s.patologia,
     );
 
     if (incompletos) {
@@ -1658,7 +2403,7 @@ export class PostulationFormComponent {
   crearSalud(): FormGroup {
     return this.fb.group({
       nombre: [''],
-      parentTypeId: [null],
+      familiarId: [null],
       patologia: [''],
       gasto: [0],
       open: [true],
@@ -1772,5 +2517,13 @@ export class PostulationFormComponent {
     });
 
     this.afiliadoValido = true;
+  }
+
+  getNombreFamiliar(id: number | null | undefined): string {
+    if (!id) return 'No informado';
+
+    const familiar = this.grupoFamiliar.find((f: any) => f.id === id);
+
+    return familiar?.nombre || 'No informado';
   }
 }

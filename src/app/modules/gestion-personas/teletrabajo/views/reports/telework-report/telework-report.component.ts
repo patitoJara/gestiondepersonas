@@ -87,6 +87,7 @@ export class TeleworkReportComponent {
   groups: any[] = [];
   allGroups: any[] = [];
   selectedGroup: any = null;
+  dailyRows: any[] = [];
 
   displayedGroupsColumns = ['name', 'jefatura', 'count'];
 
@@ -140,12 +141,7 @@ export class TeleworkReportComponent {
   displayedUsersColumns = ['fullName', 'rut', 'marks', 'actions'];
   displayedWarningColumns: string[] = ['fullName', 'rut', 'marks'];
 
-  displayedRegistersColumns = [
-    'date',
-    'day',
-    'hour',
-    'type', // 👈 nueva
-  ];
+  displayedRegistersColumns = ['status', 'date', 'entry', 'exit', 'activities'];
 
   displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
 
@@ -554,7 +550,7 @@ export class TeleworkReportComponent {
         const regUserId = r.user?.id ?? r.userId ?? r.usuarioId ?? r.user_id;
         if (Number(regUserId) !== Number(user.id)) return false;
 
-        const d = new Date(r.register_datetime);
+        const d = this.parseDateCLOnlyDate(r.register_datetime);
 
         return (
           (!this.dateFrom || d >= this.dateFrom) &&
@@ -581,20 +577,24 @@ export class TeleworkReportComponent {
     const userSubscriptions = (this.allSubscriptions || [])
       .filter((s: any) => {
         const subUserId = s.user?.id ?? s.userId ?? s.usuarioId ?? s.user_id;
+
         return Number(subUserId) === Number(user.id);
       })
-      .sort((a: any, b: any) => {
-        const dateA = new Date(a.begin).getTime();
-        const dateB = new Date(b.begin).getTime();
 
-        return dateB - dateA; // 🔥 DESC
+      .sort((a: any, b: any) => {
+        const dateA = this.parseDateCL(a.begin).getTime();
+        const dateB = this.parseDateCL(b.begin).getTime();
+
+        return dateB - dateA;
       });
 
     this.subscriptions = userSubscriptions;
 
     console.log(
       'ORDEN FINAL:',
-      userSubscriptions.map((s) => s.begin.toLocaleDateString('es-CL')),
+      userSubscriptions.map((s) =>
+        this.parseDateCL(s.begin).toLocaleDateString('es-CL'),
+      ),
     );
 
     // ===============================
@@ -617,42 +617,54 @@ export class TeleworkReportComponent {
     // ===============================
     // 🔥 FILTRO FINAL (ÚNICO)
     // ===============================
+
     finalRegisters = finalRegisters.filter((r: any) => {
-      const d = new Date(r.register_datetime);
+      const d = this.parseDateCLOnlyDate(r.register_datetime);
+
+      const from = this.dateFrom
+        ? this.parseDateCLOnlyDate(this.dateFrom)
+        : null;
+
+      const to = this.dateTo ? this.parseDateCLOnlyDate(this.dateTo) : null;
 
       return (
-        (!this.dateFrom || d >= this.dateFrom) &&
-        (!this.dateTo || d <= this.dateTo)
+        (!from || d.getTime() >= from.getTime()) &&
+        (!to || d.getTime() <= to.getTime())
       );
     });
 
     this.registers = finalRegisters;
+    this.buildDailyRows(finalRegisters);
 
     console.log('FINAL REGISTERS:', this.registers);
   }
 
   selectDay(date: any): void {
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
+    const targetKey = this.getKeyFromDate(this.parseDateCLOnlyDate(date));
 
-    this.selectedDay = targetDate;
+    this.selectedDay = this.parseDateCLOnlyDate(date);
 
     this.works = this.allWorks
       .filter((w: any) => {
-        const d = new Date(w.createdAt || w.created_at);
-        d.setHours(0, 0, 0, 0);
+        const workKey = this.getKeyFromDate(
+          this.parseDateCLOnlyDate(w.createdAt || w.created_at),
+        );
 
-        const isUser =
-          w.user?.id === this.selectedUser?.id ||
-          w.userId === this.selectedUser?.id;
+        const workUserId = w.user?.id ?? w.userId ?? w.usuarioId ?? w.user_id;
 
-        return isUser && d.getTime() === targetDate.getTime();
+        const isUser = Number(workUserId) === Number(this.selectedUser?.id);
+
+        return isUser && workKey === targetKey;
       })
       .sort(
         (a: any, b: any) =>
           new Date(a.createdAt || a.created_at).getTime() -
           new Date(b.createdAt || b.created_at).getTime(),
       );
+
+    console.log('📅 TARGET:', targetKey);
+
+    console.log('🧾 WORKS:', this.works);
   }
 
   isSameDay(date1: any, date2: any): boolean {
@@ -1380,12 +1392,21 @@ export class TeleworkReportComponent {
   parseDateCLOnlyDate(dateStr: any): Date {
     if (!dateStr) return null as any;
 
+    // 🔥 YA ES DATE
+    if (dateStr instanceof Date) {
+      return new Date(
+        dateStr.getFullYear(),
+        dateStr.getMonth(),
+        dateStr.getDate(),
+      );
+    }
+
     const str = String(dateStr);
+
     const datePart = str.split('T')[0];
 
     const [year, month, day] = datePart.split('-').map(Number);
 
-    // 🔥 crear fecha LOCAL SIN timezone
     return new Date(year, month - 1, day);
   }
 
@@ -1520,5 +1541,85 @@ export class TeleworkReportComponent {
     console.log('🟦 filteredGroups:', this.filteredGroups);
 
     console.log('🟢 FIN FILTRO');
+  }
+
+  buildDailyRows(registers: any[]) {
+    const map = new Map<string, any>();
+
+    registers.forEach((r: any) => {
+      const date = this.getKeyFromDate(
+        this.parseDateCLOnlyDate(r.register_datetime),
+      );
+
+      if (!map.has(date)) {
+        map.set(date, {
+          date,
+
+          entry: null,
+          exit: null,
+
+          entryTime: null,
+          exitTime: null,
+
+          isVirtualEntry: false,
+          isVirtualExit: false,
+
+          worksCount: 0,
+
+          hasActivities: false,
+
+          status: 'OK',
+        });
+      }
+
+      const row = map.get(date);
+
+      if (r.type === 'ING') {
+        row.entry = r;
+        row.entryTime = this.formatTimeCL(r.register_datetime, r.isVirtual);
+
+        row.isVirtualEntry = r.isVirtual;
+      }
+
+      if (r.type === 'SAL') {
+        row.exit = r;
+        row.exitTime = this.formatTimeCL(r.register_datetime, r.isVirtual);
+
+        row.isVirtualExit = r.isVirtual;
+      }
+    });
+
+    // 🔥 ACTIVIDADES
+    map.forEach((row) => {
+      const works = this.allWorks.filter((w: any) => {
+        const workDate = this.getKeyFromDate(
+          this.parseDateCLOnlyDate(w.createdAt || w.created_at),
+        );
+
+        return (
+          workDate === row.date &&
+          (w.user?.id === this.selectedUser?.id ||
+            w.userId === this.selectedUser?.id)
+        );
+      });
+
+      row.worksCount = works.length;
+      row.hasActivities = works.length > 0;
+
+      // 🔥 STATUS
+      const noEntry = !row.entry || row.isVirtualEntry;
+
+      const noExit = !row.exit || row.isVirtualExit;
+
+      if (noEntry && noExit) {
+        row.status = 'CRITICAL';
+      } else if (noEntry || noExit || !row.hasActivities) {
+        row.status = 'REVIEW';
+      } else {
+        row.status = 'OK';
+      }
+    });
+
+    this.dailyRows = Array.from(map.values());
   }
 }

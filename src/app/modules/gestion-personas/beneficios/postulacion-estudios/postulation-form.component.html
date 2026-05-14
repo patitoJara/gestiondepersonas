@@ -53,7 +53,7 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>person</mat-icon>
-            Antecedentes afiliado/a
+            Datos del Afiliado/a
           </div>
 
           <div class="section-sub">
@@ -167,35 +167,6 @@
             </div>
           </div>
 
-          <!-- 🔹 INFORMACIÓN ADICIONAL -->
-          <div class="ssm-section">
-            <div class="ssm-title">Información adicional</div>
-
-            <div class="ssm-field">
-              <label>¿Ha sido beneficiado anteriormente?</label>
-
-              <div class="ssm-radio-group">
-                <label class="ssm-radio">
-                  <input
-                    type="radio"
-                    formControlName="beneficiado"
-                    [value]="true"
-                  />
-                  <span>Sí</span>
-                </label>
-
-                <label class="ssm-radio">
-                  <input
-                    type="radio"
-                    formControlName="beneficiado"
-                    [value]="false"
-                  />
-                  <span>No</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
           <!-- 🔹 BOTÓN (AHORA CORRECTO) -->
           <div class="actions">
             <button
@@ -251,7 +222,7 @@
             >
               <div class="title">
                 <mat-icon>person</mat-icon>
-                <span>Integrante {{ i + 1 }}</span>
+                <span>Integrante familiar {{ i + 1 }}</span>
               </div>
 
               <button
@@ -444,14 +415,14 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>how_to_reg</mat-icon>
-            Postulante
+            Seleccione beneficiario
           </div>
 
-          <div class="section-sub">Indique quién realizará la postulación</div>
+          <div class="section-sub">Indique quién recibirá el beneficio</div>
 
           <!-- 🔹 OPCIONES -->
           <div class="ssm-section">
-            <div class="ssm-title">Tipo de postulante</div>
+            <div class="ssm-title">Tipo de beneficiario</div>
 
             <div class="postulante-options">
               <label
@@ -493,8 +464,8 @@
                 </div>
 
                 <div>
-                  <strong>Otro integrante del grupo familiar</strong>
-                  <span>Seleccione un integrante registrado</span>
+                  <strong>Integrante del grupo familiar</strong>
+                  <span>Seleccione el integrante</span>
                 </div>
               </label>
             </div>
@@ -502,7 +473,7 @@
 
           <!-- 🔹 SELECCIÓN FAMILIAR -->
           <div *ngIf="tipoPostulante === 'familiar'" class="ssm-section">
-            <div class="ssm-title">Integrante seleccionado</div>
+            <div class="ssm-title">Beneficiario seleccionado</div>
 
             <div class="ssm-grid-1">
               <div class="ssm-field">
@@ -518,52 +489,6 @@
                     {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }})
                   </option>
                 </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 RESUMEN -->
-          <div class="ssm-section">
-            <div class="ssm-title">Resumen</div>
-
-            <div class="resume-box" *ngIf="tipoPostulante === 'afiliado'">
-              <mat-icon>info</mat-icon>
-              <span>
-                Postula como:
-                <strong
-                  >{{ form.value.nombre }} {{ form.value.apellido }}</strong
-                >
-              </span>
-            </div>
-
-            <div
-              class="resume-box"
-              *ngIf="tipoPostulante === 'familiar' && postulanteSeleccionado"
-            >
-              <mat-icon>info</mat-icon>
-              <span>
-                Postula como:
-                <strong>{{ postulanteSeleccionado.nombre }}</strong>
-              </span>
-            </div>
-          </div>
-
-          <!-- 🔹 COMENTARIO -->
-          <div class="ssm-section">
-            <div class="ssm-title">Comentario de la postulación</div>
-
-            <div class="ssm-field">
-              <label>Información adicional</label>
-
-              <textarea
-                class="ssm-textarea"
-                [(ngModel)]="comentario"
-                [ngModelOptions]="{ standalone: true }"
-                placeholder="Ingrese información adicional relevante para la postulación..."
-              ></textarea>
-
-              <div class="hint">
-                Este campo es opcional, pero puede ayudar en la evaluación.
               </div>
             </div>
           </div>
@@ -594,21 +519,21 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>school</mat-icon>
-            Datos académicos
+            Antecedentes académicos
           </div>
 
           <div class="section-sub">
-            Complete la información académica del postulante
+            Complete la información académica del beneficiario
           </div>
 
-          <!-- 🔹 POSTULANTE -->
+          <!-- 🔹 Beneficiario -->
           <div class="ssm-section">
-            <div class="ssm-title">Postulante</div>
+            <div class="ssm-title">Beneficiario</div>
 
             <div class="resume-box">
               <mat-icon>person</mat-icon>
               <span>
-                Postulante:
+                Beneficiario:
                 <strong>
                   {{
                     tipoPostulante === "afiliado"
@@ -692,31 +617,37 @@
             </div>
           </div>
 
-          <!-- 🔹 RESULTADO -->
+          <!-- 🔹 INFORMACIÓN ADICIONAL -->
           <div class="ssm-section">
-            <div class="ssm-title">Resultado académico</div>
+            <div class="ssm-title">Información adicional</div>
 
-            <div class="estado-academico-card" [ngClass]="estadoAcademico">
-              <mat-icon>
-                {{ cumpleAcademico ? "check_circle" : "cancel" }}
-              </mat-icon>
+            <div class="ssm-field">
+              <label
+                >¿El beneficiario ha recibido este beneficio
+                anteriormente?</label
+              >
 
-              <div>
-                <strong>
-                  {{
-                    cumpleAcademico
-                      ? "Cumple requisitos académicos"
-                      : "No cumple requisitos académicos"
-                  }}
-                </strong>
-                <span
-                  >La evaluación se calcula según los antecedentes
-                  ingresados.</span
-                >
+              <div class="ssm-radio-group">
+                <label class="ssm-radio">
+                  <input
+                    type="radio"
+                    formControlName="beneficiado"
+                    [value]="true"
+                  />
+                  <span>Sí</span>
+                </label>
+
+                <label class="ssm-radio">
+                  <input
+                    type="radio"
+                    formControlName="beneficiado"
+                    [value]="false"
+                  />
+                  <span>No</span>
+                </label>
               </div>
             </div>
           </div>
-
           <!-- 🔹 ACTIONS -->
           <div class="actions">
             <button mat-stroked-button (click)="previousStep()">Volver</button>
@@ -740,20 +671,20 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>fact_check</mat-icon>
-            Verificación académica
+            Antecedentes académicos complementarios
           </div>
 
           <div class="section-sub">
-            Complete los requisitos para validar la postulación
+            Estos antecedentes serán revisados durante el proceso de evaluación
           </div>
 
           <!-- 🔹 FORMULARIO -->
           <div class="ssm-section">
-            <div class="ssm-title">Requisitos académicos</div>
+            <div class="ssm-title">Información académica adicional</div>
 
             <div class="ssm-grid-3">
               <div class="ssm-field">
-                <label>Tipo postulante</label>
+                <label>Situación académica</label>
                 <select
                   class="input"
                   [(ngModel)]="verificacion.tipo"
@@ -788,48 +719,6 @@
             </div>
           </div>
 
-          <!-- 🔹 RESULTADO -->
-          <div
-            class="ssm-section"
-            *ngIf="verificacion.promedio || verificacion.aprobacion"
-          >
-            <div class="ssm-title">Resultado de validación</div>
-
-            <div
-              class="estado-verificacion-card"
-              [ngClass]="{
-                ok:
-                  (verificacion.promedio || 0) >= 5 &&
-                  (verificacion.aprobacion || 0) >= 75,
-                error:
-                  (verificacion.promedio || 0) < 5 ||
-                  (verificacion.aprobacion || 0) < 75,
-              }"
-            >
-              <mat-icon>
-                {{
-                  (verificacion.promedio || 0) >= 5 &&
-                  (verificacion.aprobacion || 0) >= 75
-                    ? "check_circle"
-                    : "cancel"
-                }}
-              </mat-icon>
-
-              <div>
-                <strong>
-                  {{
-                    (verificacion.promedio || 0) >= 5 &&
-                    (verificacion.aprobacion || 0) >= 75
-                      ? "Cumple requisitos académicos"
-                      : "No cumple requisitos académicos"
-                  }}
-                </strong>
-
-                <span>Promedio mínimo: 5.0 | Aprobación mínima: 75%</span>
-              </div>
-            </div>
-          </div>
-
           <!-- 🔹 ACTIONS -->
           <div class="actions">
             <button mat-stroked-button (click)="previousStep()">Volver</button>
@@ -857,11 +746,11 @@
             <div>
               <div class="section-title">
                 <mat-icon>payments</mat-icon>
-                Ingresos del grupo familiar
+                Ingresos Familiares
               </div>
 
               <div class="section-sub">
-                Registre los ingresos de cada integrante del grupo familiar
+                Registre los ingresos mensuales del grupo familiar
               </div>
             </div>
 
@@ -872,7 +761,7 @@
               (click)="agregarIngreso()"
             >
               <mat-icon>add</mat-icon>
-              Agregar ingreso
+              Agregar ingreso familiar
             </button>
           </div>
 
@@ -899,7 +788,7 @@
               </div>
 
               <div class="card-body">
-                <div class="ssm-grid-3">
+                <div class="step6-grid">
                   <div class="ssm-field">
                     <label>Integrante</label>
                     <select
@@ -930,10 +819,7 @@
 
                   <div class="ssm-field">
                     <label>Monto</label>
-
                     <div class="ssm-money-input">
-                      <span>$</span>
-
                       <input
                         class="input"
                         [(ngModel)]="i.monto"
@@ -988,10 +874,12 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>receipt_long</mat-icon>
-            Gastos mensuales del grupo familiar
+            Gastos Familiares
           </div>
 
-          <div class="section-sub">Ingrese los montos en miles de pesos</div>
+          <div class="section-sub">
+            Registre los gastos mensuales del grupo familiar
+          </div>
 
           <!-- 🔹 BLOQUE DOBLE -->
           <div class="step7-top-grid">
@@ -1007,8 +895,6 @@
                   <label>{{ campo.label }}</label>
 
                   <div class="ssm-money-input">
-                    <span>$</span>
-
                     <input
                       class="input"
                       type="text"
@@ -1032,8 +918,6 @@
                   <label>{{ campo.label }}</label>
 
                   <div class="ssm-money-input">
-                    <span>$</span>
-
                     <input
                       class="input"
                       type="text"
@@ -1105,8 +989,6 @@
                     <label>Monto</label>
 
                     <div class="ssm-money-input">
-                      <span>$</span>
-
                       <input
                         class="input"
                         [(ngModel)]="g.monto"
@@ -1199,7 +1081,7 @@
           <!-- 🔹 HEADER -->
           <div class="section-title">
             <mat-icon>healing</mat-icon>
-            Salud y vivienda
+            Salud y Vivienda
           </div>
 
           <div class="section-sub">
@@ -1268,17 +1150,17 @@
                   </div>
 
                   <div class="ssm-field">
-                    <label>Grupo familiar</label>
+                    <label>Integrante familiar</label>
 
                     <select
                       class="input"
-                      [(ngModel)]="s.parentTypeId"
+                      [(ngModel)]="s.familiarId"
                       [ngModelOptions]="{ standalone: true }"
                     >
                       <option [ngValue]="null">Seleccione</option>
 
-                      <option *ngFor="let p of parentTypes" [ngValue]="p.id">
-                        {{ p.name }}
+                      <option *ngFor="let f of grupoFamiliar" [ngValue]="f.id">
+                        {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }})
                       </option>
                     </select>
                   </div>
@@ -1412,7 +1294,7 @@
       <div *ngIf="currentStep === 9">
         <!-- 🔹 OBLIGATORIOS -->
         <div class="section">
-          <div class="section-title">Documentos obligatorios</div>
+          <div class="section-title">Documentos requeridos</div>
 
           <div class="section-sub">
             <strong>{{ getTotalObligatoriosCargados() }}</strong> de
@@ -1463,7 +1345,7 @@
                   <mat-icon class="doc-icon">upload_file</mat-icon>
 
                   <div>
-                    <div class="file-title">Subir archivos</div>
+                    <div class="file-title">Adjuntar archivos</div>
                     <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
                   </div>
 
@@ -1559,7 +1441,7 @@
                   <mat-icon class="doc-icon">upload_file</mat-icon>
 
                   <div>
-                    <div class="file-title">Subir archivos</div>
+                    <div class="file-title">Adjuntar archivos</div>
                     <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
                   </div>
 
@@ -1623,269 +1505,296 @@
         id="resumenPDF"
         class="section step-final-container"
       >
-        <div *ngIf="currentStep === 10" class="section step-final-container">
-          <div class="section-title">
-            <mat-icon>fact_check</mat-icon>
-            Confirmación de información
+        <!-- 🔹 HEADER -->
+        <div class="section-title">
+          <mat-icon>fact_check</mat-icon>
+          Confirmación
+        </div>
+
+        <div class="section-sub">
+          Revise cuidadosamente antes de enviar su postulación
+        </div>
+
+        <!-- 🔹 DATOS AFILIADO -->
+        <div class="resume-card">
+          <div class="card-header blue">
+            <mat-icon>person</mat-icon>
+
+            <span>Datos del afiliado</span>
+
+            <button mat-icon-button (click)="goToStep(1)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
 
-          <div class="section-sub">
-            Revise cuidadosamente antes de enviar su postulación
-          </div>
-
-          <!-- 🔹 DATOS PERSONALES -->
-          <div class="resume-card">
-            <div class="card-header blue">
-              <mat-icon>person</mat-icon>
-              <span>Datos personales</span>
+          <div class="resume-grid">
+            <div>
+              <strong>Nombre:</strong>
+              {{ form.value.nombre }} {{ form.value.apellido }}
             </div>
 
-            <div class="resume-grid">
-              <div>
-                <strong>Nombre:</strong> {{ form.value.nombre }}
-                {{ form.value.apellido }}
-              </div>
-              <div><strong>RUT:</strong> {{ form.value.rut }}</div>
-              <div><strong>Teléfono:</strong> {{ form.value.telefono }}</div>
-              <div><strong>Email:</strong> {{ form.value.email }}</div>
-              <div><strong>Planta:</strong> {{ form.value.planta }}</div>
-              <div><strong>Grado:</strong> {{ form.value.grado }}</div>
-            </div>
-          </div>
-
-          <!-- 🔹 GRUPO FAMILIAR -->
-          <!-- 🔹 INGRESOS -->
-          <div class="resume-card">
-            <div class="card-header blue">
-              <mat-icon>payments</mat-icon>
-              <span>Ingresos</span>
+            <div>
+              <strong>RUT:</strong>
+              {{ form.value.rut }}
             </div>
 
-            <div class="resume-grid">
-              <div>
-                Jefe hogar: ${{ form.value.ingresoJefe * 1000 | number }}
-              </div>
-              <div>Otros: ${{ form.value.ingresoOtros * 1000 | number }}</div>
-              <div>Extras: ${{ form.value.otrosIngresos * 1000 | number }}</div>
+            <div>
+              <strong>Teléfono:</strong>
+              {{ form.value.telefono }}
             </div>
 
-            <div class="resume-total">
-              Total: ${{ totalIngresos * 1000 | number }}
+            <div>
+              <strong>Email:</strong>
+              {{ form.value.email }}
+            </div>
+
+            <div>
+              <strong>Planta:</strong>
+              {{ form.value.planta }}
+            </div>
+
+            <div>
+              <strong>Grado:</strong>
+              {{ form.value.grado }}
             </div>
           </div>
+        </div>
 
-          <!-- 🔹 GASTOS -->
-          <div class="resume-card">
-            <div class="card-header orange">
-              <mat-icon>receipt_long</mat-icon>
-              <span>Gastos</span>
-            </div>
+        <!-- 🔹 BENEFICIARIO -->
+        <div class="resume-card">
+          <div class="card-header green">
+            <mat-icon>school</mat-icon>
 
-            <div class="resume-total">
-              Total: ${{ totalGastos * 1000 | number }}
-            </div>
+            <span>Beneficiario</span>
+
+            <button mat-icon-button (click)="goToStep(3)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
 
-          <!-- 🔹 VIVIENDA -->
-          <mat-form-field appearance="outline" class="ssm-select">
-            <mat-label>Tipo de vivienda</mat-label>
+          <div class="resume-grid">
+            <div>
+              <strong>Beneficiario:</strong>
 
-            <mat-select formControlName="typePropertyId">
-              <mat-option *ngFor="let t of typesProperties" [value]="t.id">
-                {{ t.name }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-error
-            *ngIf="
-              form.get('typePropertyId')?.touched &&
-              form.get('typePropertyId')?.invalid
-            "
-          >
-            Debe seleccionar tipo de vivienda
-          </mat-error>
-
-          <mat-form-field appearance="outline" class="ssm-select">
-            <mat-label>Tipo de vivienda (estructura)</mat-label>
-
-            <mat-select formControlName="typeHousingId">
-              <mat-option *ngFor="let t of typesHousing" [value]="t.id">
-                {{ t.name }}
-              </mat-option>
-            </mat-select>
-
-            <mat-error
-              *ngIf="
-                form.get('typeHousingId')?.touched &&
-                form.get('typeHousingId')?.invalid
-              "
-            >
-              Debe seleccionar el tipo de vivienda
-            </mat-error>
-          </mat-form-field>
-
-          <!-- 🔹 SALUD -->
-          <div class="resume-card">
-            <div class="card-header red">
-              <mat-icon>healing</mat-icon>
-              <span>Salud</span>
+              {{
+                tipoPostulante === "afiliado"
+                  ? form.value.nombre + " " + form.value.apellido
+                  : postulanteSeleccionado?.nombre
+              }}
             </div>
 
-            <div *ngFor="let s of salud" class="resume-row">
-              {{ s.nombre }} - {{ s.patologia }} - ${{
-                s.gasto * 1000 | number
+            <div>
+              <strong>Tipo:</strong>
+
+              {{
+                tipoPostulante === "afiliado"
+                  ? "Afiliado/a"
+                  : "Integrante grupo familiar"
               }}
             </div>
           </div>
+        </div>
 
-          <div class="resume-card">
-            <div class="card-header blue">
-              <mat-icon>person</mat-icon>
-              <span>Datos personales</span>
+        <!-- 🔹 GRUPO FAMILIAR -->
+        <div class="resume-card">
+          <div class="card-header purple">
+            <mat-icon>groups</mat-icon>
 
-              <button mat-icon-button (click)="goToStep(1)">
-                <mat-icon>edit</mat-icon>
-              </button>
-            </div>
+            <span>Grupo familiar</span>
 
-            <div class="resume-grid">
-              <div><strong>Nombre:</strong> {{ form.value.nombre }}</div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()">Volver</button>
-            <button
-              mat-raised-button
-              class="btn-primary"
-              (click)="guardarFinal()"
-            >
-              Enviar postulación
+            <button mat-icon-button (click)="goToStep(2)">
+              <mat-icon>edit</mat-icon>
             </button>
           </div>
-        </div>
-      </div>
 
-      <div id="comprobantePDF" class="pdf-hidden" *ngIf="currentStep === 11">
-        <!-- 🔷 ENCABEZADO -->
-        <div class="header">
-          <img src="assets/logoGobierno.png" crossorigin="anonymous" />
-          <img src="assets/LOGOBIENESTARSSM.webp" class="logo right" />
-
-          <div class="titulo">
-            <h2>COMPROBANTE DE POSTULACIÓN</h2>
-            <span>Apoyo Estudios Superiores – Bienestar SSM 2026</span>
+          <div *ngFor="let f of grupoFamiliar" class="resume-row">
+            {{ f.nombre }} - {{ getParentTypeName(f.parentTypeId) }} -
+            {{ f.edad }} años
           </div>
         </div>
 
-        <!-- 🔹 INFO GENERAL -->
-        <div class="info-top">
-          <div>
-            <strong>Fecha:</strong> {{ today | date: "dd/MM/yyyy HH:mm" }}
+        <!-- 🔹 ANTECEDENTES ACADÉMICOS -->
+        <div class="resume-card">
+          <div class="card-header blue">
+            <mat-icon>menu_book</mat-icon>
+
+            <span>Antecedentes académicos</span>
+
+            <button mat-icon-button (click)="goToStep(4)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
-          <div><strong>N° Postulación:</strong> {{ codigoPostulacion }}</div>
-        </div>
 
-        <!-- 🧑 DATOS PERSONALES -->
-        <div class="bloque">
-          <div class="bloque-title">Datos del postulante</div>
-
-          <div class="grid">
+          <div class="resume-grid">
             <div>
-              <strong>Nombre:</strong> {{ form.value.nombre }}
-              {{ form.value.apellido }}
+              <strong>Institución:</strong>
+              {{ academico.institucion }}
             </div>
-            <div><strong>RUT:</strong> {{ form.value.rut }}</div>
-            <div><strong>Teléfono:</strong> {{ form.value.telefono }}</div>
-            <div><strong>Email:</strong> {{ form.value.email }}</div>
-            <div><strong>Planta:</strong> {{ form.value.planta }}</div>
-            <div><strong>Grado:</strong> {{ form.value.grado }}</div>
-          </div>
-        </div>
 
-        <!-- 👨‍👩‍👧 GRUPO FAMILIAR -->
-        <div class="bloque">
-          <div class="bloque-title">
-            Grupo familiar ({{ grupoFamiliar.length }})
-          </div>
-
-          <div *ngFor="let f of grupoFamiliar" class="row">
-            {{ f.nombre }} - {{ f.parentTypeId }} - {{ f.edad }} años
-          </div>
-        </div>
-
-        <!-- 💰 INGRESOS -->
-        <div class="bloque">
-          <div class="bloque-title">Ingresos</div>
-
-          <div class="grid">
-            <div>Jefe hogar: ${{ form.value.ingresoJefe * 1000 | number }}</div>
-            <div>Otros: ${{ form.value.ingresoOtros * 1000 | number }}</div>
-            <div>Extras: ${{ form.value.otrosIngresos * 1000 | number }}</div>
-          </div>
-
-          <div class="total">
-            Total ingresos: ${{ totalIngresos * 1000 | number }}
-          </div>
-        </div>
-
-        <!-- 💸 GASTOS -->
-        <div class="bloque">
-          <div class="bloque-title">Gastos</div>
-
-          <div class="total rojo">
-            Total gastos: ${{ totalGastos * 1000 | number }}
-          </div>
-        </div>
-
-        <!-- 🏠 VIVIENDA -->
-        <div class="bloque">
-          <div class="bloque-title">Vivienda</div>
-
-          <div class="grid">
             <div>
-              Tipo:
+              <strong>Carrera:</strong>
+              {{ academico.carrera }}
+            </div>
+
+            <div>
+              <strong>Nivel:</strong>
+              {{ academico.nivel }}
+            </div>
+
+            <div>
+              <strong>Semestre actual:</strong>
+              {{ academico.semestre }}
+            </div>
+
+            <div>
+              <strong>Duración:</strong>
+              {{ academico.duracion }} semestres
+            </div>
+
+            <div>
+              <strong>Estudia en la región:</strong>
+              {{ academico.region === "si" ? "Sí" : "No" }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 🔹 INGRESOS -->
+        <div class="resume-card">
+          <div class="card-header green">
+            <mat-icon>payments</mat-icon>
+
+            <span>Ingresos familiares</span>
+
+            <button mat-icon-button (click)="goToStep(6)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+
+          <div *ngFor="let i of ingresosFamiliares" class="resume-row">
+            {{ getNombreIngreso(i.familiarId) }} - $ {{ i.monto | number }}
+          </div>
+
+          <div class="resume-total">
+            Total ingresos: $ {{ totalIngresosFamiliares | number }}
+          </div>
+        </div>
+
+        <!-- 🔹 GASTOS -->
+        <div class="resume-card">
+          <div class="card-header orange">
+            <mat-icon>receipt_long</mat-icon>
+
+            <span>Gastos familiares</span>
+
+            <button mat-icon-button (click)="goToStep(7)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+
+          <div class="resume-grid">
+            <div>
+              <strong>Gastos básicos:</strong>
+              $ {{ totalGastosBasicos | number }}
+            </div>
+
+            <div>
+              <strong>Educación:</strong>
+              $ {{ totalGastosEducacion | number }}
+            </div>
+
+            <div>
+              <strong>Otros gastos:</strong>
+              $ {{ totalOtrosGastos | number }}
+            </div>
+          </div>
+
+          <div class="resume-total">
+            Total gastos: $ {{ totalGastos | number }}
+          </div>
+        </div>
+
+        <!-- 🔹 VIVIENDA -->
+        <div class="resume-card">
+          <div class="card-header blue">
+            <mat-icon>home</mat-icon>
+
+            <span>Vivienda</span>
+
+            <button mat-icon-button (click)="goToStep(8)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+
+          <div class="resume-grid">
+            <div>
+              <strong>Tipo vivienda:</strong>
+
               {{ getHousingName(form.value.tipoVivienda) || "No informado" }}
             </div>
+
             <div>
-              Propiedad:
+              <strong>Propiedad:</strong>
+
               {{ getPropertyName(form.value.tipoPropiedad) || "No informado" }}
             </div>
           </div>
         </div>
 
-        <!-- ❤️ SALUD -->
-        <div class="bloque">
-          <div class="bloque-title">Salud</div>
+        <!-- 🔹 SALUD -->
+        <div class="resume-card">
+          <div class="card-header red">
+            <mat-icon>healing</mat-icon>
 
-          <div *ngFor="let s of salud" class="row">
-            {{ s.nombre || "Sin nombre" }} -
-            {{ s.patologia || "Sin patología" }} -
-            <span class="money">$ {{ s.gasto * 1000 | number }}</span>
+            <span>Salud</span>
+
+            <button mat-icon-button (click)="goToStep(8)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </div>
 
-          <div class="total rojo">
-            Total salud: ${{ totalSalud * 1000 | number }}
+          <div *ngFor="let s of salud" class="resume-row">
+            {{ getNombreFamiliar(s.familiarId) }} - {{ s.patologia }} - $
+            {{ s.gasto | number }}
+          </div>
+
+          <div class="resume-total">
+            Total salud: $ {{ totalSalud | number }}
           </div>
         </div>
 
-        <!-- 📎 DOCUMENTOS -->
-        <div class="bloque">
-          <div class="bloque-title">Documentos adjuntos</div>
+        <!-- 🔹 DOCUMENTOS -->
+        <div class="resume-card">
+          <div class="card-header purple">
+            <mat-icon>attach_file</mat-icon>
 
-          <div *ngFor="let doc of documentosObligatorios" class="row">
+            <span>Documentos adjuntos</span>
+
+            <button mat-icon-button (click)="goToStep(9)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+
+          <div *ngFor="let doc of documentosObligatorios" class="resume-row">
             ✔ {{ doc.label }}
           </div>
         </div>
 
-        <!-- 🟢 ESTADO -->
-        <div class="estado">✔ POSTULACIÓN RECIBIDA</div>
+        <!-- 🔹 MENSAJE -->
+        <div class="resume-warning">
+          La postulación será revisada conforme a los antecedentes presentados.
+        </div>
 
-        <!-- ⚠️ MENSAJE -->
-        <div class="footer">
-          Este documento certifica que la postulación fue ingresada
-          correctamente al sistema de Bienestar SSM. La aprobación está sujeta a
-          evaluación.
+        <!-- 🔹 ACTIONS -->
+        <div class="actions">
+          <button mat-stroked-button (click)="previousStep()">Volver</button>
+
+          <button
+            mat-raised-button
+            class="btn-primary"
+            (click)="guardarFinal()"
+          >
+            Enviar postulación
+          </button>
         </div>
       </div>
 
@@ -1989,7 +1898,8 @@
 
           <span>
             Este comprobante acredita el ingreso de la postulación al sistema
-            Bienestar SSM 2026. La aprobación está sujeta a evaluación.
+            Bienestar SSM 2026. La postulación será revisada conforme a los
+            antecedentes presentados.
           </span>
         </div>
 

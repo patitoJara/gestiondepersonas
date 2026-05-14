@@ -1,9 +1,12 @@
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
-export class UsersService {
+
+export class EmailService  {
   private api = 'https://teletrabajo.dssm.cl/api/v1/users';
+
+  private notificationApi = 'https://teletrabajo.dssm.cl/api/v1/notifications';
 
   constructor(private http: HttpClient) {}
 
@@ -13,5 +16,9 @@ export class UsersService {
       { email },
       { responseType: 'text' }, // 🔥 ESTA ES LA CLAVE
     );
+  }
+
+  sendEmail(payload: { to: string; subject: string; message: string }) {
+    return this.http.post(`${this.notificationApi}/send-email`, payload);
   }
 }

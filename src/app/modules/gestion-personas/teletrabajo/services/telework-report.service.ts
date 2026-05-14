@@ -48,6 +48,18 @@ export class TeleworkReportService {
     return this.http.get(`${this.apiRegisters}/${id}`);
   }
 
+  
+    // ============================================
+  // 🔥 CREAR REGISTRO OPERACIONAL
+  // ============================================
+
+  createRegister(payload: any) {
+    return this.http.post<any>(
+      this.apiRegisters,
+      payload,
+    );
+  }
+  
   // ============================================
   // 🔥 NUEVO → REGISTROS POR MÚLTIPLES USUARIOS (JEFATURA)
   // ============================================

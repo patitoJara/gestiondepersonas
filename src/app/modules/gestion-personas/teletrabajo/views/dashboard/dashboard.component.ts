@@ -18,6 +18,7 @@ import { WorkDialogComponent } from './work-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
+import { TimeService } from '@app/core/services/time.service';
 
 interface TeleworkEvent {
   id: number;
@@ -37,9 +38,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private workService = inject(WorkService);
   private cdr = inject(ChangeDetectorRef);
+  private timeService = inject(TimeService);
 
   works: any[] = [];
-  now: Date = new Date();
   private timer: any;
 
   // 👤 nombre del usuario
@@ -61,6 +62,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // permiso para marcar
   canMarkToday = false;
 
+  serverNow: Date = new Date();
+
+  serverOffset = 0;
+
   constructor(
     private subscribesService: SubscribesService,
     private tokenService: TokenService,
@@ -68,13 +73,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // 🔥 pedir hora servidor
+    this.timeService.loadServerTime();
+
+    // 🔥 obtener diferencia
+    this.timeService.getServerTime$().subscribe((date) => {
+      if (!date) return;
+
+      const serverTime = date.getTime();
+
+      const localTime = Date.now();
+
+      this.serverOffset = serverTime - localTime;
+
+      this.serverNow = new Date(Date.now() + this.serverOffset);
+    });
+
+    // 🔥 reloj vivo usando offset servidor
     this.timer = setInterval(() => {
-      this.now = new Date();
+      this.serverNow = new Date(Date.now() + this.serverOffset);
     }, 1000);
 
-    this.selectedDay = new Date(); // 🔥 PRIMERO
+    this.selectedDay = new Date(this.serverNow);
 
-    await this.loadWorks(); // 🔥 DESPUÉS carga + filtra
+    await this.loadWorks();
 
     this.initDashboard();
   }
@@ -98,15 +120,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.validateToday();
 
       // 🔥 REGISTROS
-      const userRegisters = (regs || []).filter((r) => r.user?.id === userId);
+      const userRegisters = (regs || []).filter(
+        (r) => r.user?.id === userId && !r.deletedAt,
+      );
 
-      this.events = userRegisters.map((r) => ({
-        id: r.id,
-        type: r.state === 'ING' ? 'ING' : 'SAL',
-        origin: 'USER',
-        datetime: r.register_datetime,
-      }));
+      this.events = userRegisters
+        .filter((r) => r.register_datetime)
+        .map((r) => ({
+          id: r.id,
 
+          type: r.state,
+
+          origin: 'USER',
+          datetime: r.register_datetime,
+        }));
       // 🔥 TODO JUNTO
       this.updateTodayEvents();
       this.cdr.detectChanges();
@@ -154,7 +181,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.registersService.getAll().subscribe({
       next: (data: any[]) => {
         const userRegisters = (data || []).filter((r: any) => {
-          return r.user?.id === userId;
+          return r.user?.id === userId  && !r.deletedAt;
         });
 
         this.events = userRegisters
@@ -170,6 +197,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         // 🔥 DIRECTO, SIN PROMESAS RARAS
         this.updateTodayEvents();
+
+    console.log('EVENTS:', this.events);
+    console.log('TODAY:', this.todayEvents);
+    console.log('HAS ING:', this.hasIngreso);
+    console.log('HAS SAL:', this.hasSalida);
+    
+    
         this.cdr.detectChanges();
       },
 
@@ -186,7 +220,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   mark(type: 'ING' | 'SAL') {
     if (!this.canMarkToday) return;
 
-    // 🔥 NUEVA VALIDACIÓN
+    // 🔥 VALIDACIONES
     if (type === 'ING' && this.hasIngreso) {
       this.showWarning('Ya registraste tu ingreso hoy.');
       return;
@@ -199,27 +233,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const userId = this.tokenService.getUserId();
 
+    if (!userId) return;
+
     const payload = {
       user: { id: userId },
       state: type,
-      register_datetime: new Date().toISOString(),
     };
 
     this.registersService.create(payload).subscribe({
       next: () => {
-        const newEvent: TeleworkEvent = {
-          id: Date.now(),
-          type,
-          origin: 'USER',
-          datetime: new Date().toISOString(),
-        };
-
-        this.events.push(newEvent);
-        this.updateTodayEvents();
-        this.cdr.detectChanges();
+        // 🔥 RECARGAR DESDE BACKEND
+        this.loadRegisters(userId);
       },
+
+      
       error: (err) => {
         console.error('Error guardando registro', err);
+
         this.showWarning('No fue posible registrar el marcaje.');
       },
     });
@@ -229,9 +259,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadSubscriptions(userId: number) {
     this.subscribesService.getByUser(userId).subscribe({
       next: (data: any[]) => {
-        this.subscriptions = (data || []).sort((a: any, b: any) => {
-          return new Date(b.begin).getTime() - new Date(a.begin).getTime();
-        });
+        this.subscriptions = [...(data || [])].sort(
+          (a: any, b: any) =>
+            new Date(b.begin).getTime() - new Date(a.begin).getTime(),
+        );
 
         this.validateToday();
 
@@ -255,7 +286,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // validar si hoy está dentro de una suscripción
   validateToday() {
-    const todayStr = this.getLocalDateString(new Date());
+    const todayStr = this.getLocalDateString(this.serverNow);
 
     this.canMarkToday = this.subscriptions.some((s: any) => {
       const begin = s.begin.slice(0, 10);
@@ -398,12 +429,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   updateTodayEvents() {
-    const todayStr = this.getLocalDateString(new Date());
+    const todayStr = this.getLocalDateString(this.serverNow);
 
     console.log('📅 HOY (LOCAL):', todayStr);
 
     this.todayEvents = this.events.filter((e) => {
-      const eventDay = e.datetime.slice(0, 10);
+      if (!e.datetime) {
+        console.warn('⚠️ Evento sin datetime:', e);
+        return false;
+      }
+
+      const eventDay = this.getLocalDateString(new Date(e.datetime));
 
       console.log('➡️ EVENTO:', e.datetime, '→', eventDay);
 
@@ -429,18 +465,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   isHoy(date: string): boolean {
-    const hoy = new Date();
-    const d = new Date(date);
-
     return (
-      hoy.getFullYear() === d.getFullYear() &&
-      hoy.getMonth() === d.getMonth() &&
-      hoy.getDate() === d.getDate()
+      this.getLocalDateString(this.serverNow) ===
+      this.getLocalDateString(new Date(date))
     );
   }
 
   getActiveSubscription(): any | null {
-    const today = new Date().toISOString().split('T')[0]; // 🔥 YYYY-MM-DD
+    const today = this.operationalToday;
 
     return (
       this.subscriptions.find((s: any) => {
@@ -450,10 +482,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return today >= begin && today <= end;
       }) || null
     );
-  }
-
-  private normalizeDate(d: Date): Date {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
   private toDateOnlyString(date: string | Date): string {
@@ -467,12 +495,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
   }
 
-  private toDateOnly(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }
-
   getSubStatus(s: any): string {
-    const today = this.toDateOnlyString(new Date());
+    const today = this.operationalToday;
     const begin = this.toDateOnlyString(s.begin);
     const end = this.toDateOnlyString(s.end);
 
@@ -512,34 +536,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const selected = new Date(this.selectedDay);
+    const selected = this.getLocalDateString(new Date(this.selectedDay));
 
     this.works = this.allWorks.filter((w: any) => {
-      const d = new Date(w.createdAt);
-
-      return (
-        d.getFullYear() === selected.getFullYear() &&
-        d.getMonth() === selected.getMonth() &&
-        d.getDate() === selected.getDate()
-      );
+      return this.getLocalDateString(new Date(w.createdAt)) === selected;
     });
   }
 
   isSameDay(d1: any, d2: any): boolean {
-    const a = new Date(d1);
-    const b = new Date(d2);
-
     return (
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate()
+      this.getLocalDateString(new Date(d1)) ===
+      this.getLocalDateString(new Date(d2))
     );
-  }
-
-  fixWorkDate(dateStr: string): Date {
-    const d = new Date(dateStr);
-    d.setHours(d.getHours() + 1);
-    return d;
   }
 
   canMark(type: 'ING' | 'SAL'): boolean {
@@ -572,5 +580,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const day = d.getDate().toString().padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private get operationalToday(): string {
+    return this.getLocalDateString(this.serverNow);
   }
 }

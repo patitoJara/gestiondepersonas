@@ -84,12 +84,16 @@
   </div>
 
   <div class="actions-bar">
-    <button class="btn-cancel" (click)="cancel()">
+    <button class="btn btn-md btn-gray" (click)="cancel()">
       <mat-icon>close</mat-icon>
       Cancelar
     </button>
 
-    <button class="btn-save" [disabled]="!hayCambios()" (click)="guardar()">
+    <button
+      class="btn btn-md btn-green"
+      [disabled]="!hayCambios()"
+      (click)="guardar()"
+    >
       <mat-icon>save</mat-icon>
       Guardar
     </button>

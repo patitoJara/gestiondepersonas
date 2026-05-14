@@ -273,24 +273,104 @@
         <mat-icon>info</mat-icon>
         <span>Haz clic en un dia para ver actividad diaria</span>
       </div>
-      <table mat-table [dataSource]="registers">
-        <!-- Fecha -->
+
+      <!-- [dataSource]="registers" -->
+      <table mat-table [dataSource]="dailyRows">
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef></th>
+
+          <td mat-cell *matCellDef="let r">
+            <div
+              class="status-indicator"
+              [ngClass]="{
+                critical: r.status === 'CRITICAL',
+                review: r.status === 'REVIEW',
+                ok: r.status === 'OK',
+              }"
+            >
+              <mat-icon>
+                {{
+                  r.status === "CRITICAL"
+                    ? "warning"
+                    : r.status === "REVIEW"
+                      ? "error_outline"
+                      : "check_circle"
+                }}
+              </mat-icon>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+
+          <td mat-cell *matCellDef="let r">
+            {{ formatDateShortCL(r.date) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="entry">
+          <th mat-header-cell *matHeaderCellDef>Entrada</th>
+
+          <td mat-cell *matCellDef="let r">
+            <span class="mark-chip" [class.virtual]="r.isVirtualEntry">
+              {{ r.entryTime || "Sin marca" }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="exit">
+          <th mat-header-cell *matHeaderCellDef>Salida</th>
+
+          <td mat-cell *matCellDef="let r">
+            <span class="mark-chip" [class.virtual]="r.isVirtualExit">
+              {{ r.exitTime || "Sin marca" }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="activities">
+          <th mat-header-cell *matHeaderCellDef>Act.</th>
+
+          <td mat-cell *matCellDef="let r">
+            <span class="activities-badge" [class.empty]="!r.hasActivities">
+              {{ r.worksCount }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- FILAS -->
+        <tr mat-header-row *matHeaderRowDef="displayedRegistersColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedRegistersColumns"
+          (click)="selectDay(row.date)"
+          class="clickable-row"
+          [class.row-critical]="row.status === 'CRITICAL'"
+          [class.row-review]="row.status === 'REVIEW'"
+          [class.row-ok]="row.status === 'OK'"
+        ></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Fecha 
         <ng-container matColumnDef="date">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
           <td mat-cell *matCellDef="let r">
             {{ formatDateShortCL(r.register_datetime) }}
           </td>
         </ng-container>
-
-        <!-- Día -->
+        -->
+  <!-- Día 
         <ng-container matColumnDef="day">
           <th mat-header-cell *matHeaderCellDef>Día</th>
           <td mat-cell *matCellDef="let r">
             {{ getDayOfWeek(r.register_datetime, "short") }}
           </td>
         </ng-container>
+        -->
 
-        <!-- Hora -->
+  <!-- Hora 
         <ng-container matColumnDef="hour">
           <th mat-header-cell *matHeaderCellDef>Hora</th>
           <td mat-cell *matCellDef="let r">
@@ -299,8 +379,9 @@
             </span>
           </td>
         </ng-container>
+        -->
 
-        <!-- Tipo -->
+  <!-- Tipo 
         <ng-container matColumnDef="type">
           <th mat-header-cell *matHeaderCellDef>Tipo</th>
           <td mat-cell *matCellDef="let r">
@@ -318,20 +399,8 @@
             </div>
           </td>
         </ng-container>
-
-        <!-- FILAS -->
-        <tr mat-header-row *matHeaderRowDef="displayedRegistersColumns"></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: displayedRegistersColumns"
-          (click)="selectDay(row.register_datetime); $event.stopPropagation()"
-          class="clickable-row"
-          [class.selected-row]="isSameDay(row.register_datetime, selectedDay)"
-        ></tr>
-      </table>
-    </div>
-  </div>
-
+        -->
+  <!-- (click)="selectDay(row.register_datetime); $event.stopPropagation()" -->
   <!-- =========================
        🟧 WORKS (TERCERA CARD 🔥)
   ========================== -->

@@ -19,14 +19,25 @@
     <!-- IZQUIERDA -->
     <div class="filters-left">
       <!-- Mes -->
-      <select class="input" [(ngModel)]="month" (change)="onMonthYearChange()" (focus)="onMonthFocus()">
+      <!-- MES -->
+      <select
+        class="input"
+        [(ngModel)]="month"
+        (change)="onMonthYearChange()"
+        (focus)="onMonthFocus()"
+      >
         <option *ngFor="let m of months" [value]="m.value">
           {{ m.name }}
         </option>
       </select>
 
-      <!-- Año -->
-      <select class="input" [(ngModel)]="year" (change)="onMonthYearChange()" (focus)="onMonthFocus()">
+      <!-- AÑO -->
+      <select
+        class="input"
+        [(ngModel)]="year"
+        (change)="onMonthYearChange()"
+        (focus)="onMonthFocus()"
+      >
         <option *ngFor="let y of years" [value]="y">
           {{ y }}
         </option>
@@ -70,23 +81,39 @@
 
     <!-- DERECHA -->
     <div class="filters-actions">
-      <button class="btn-sirus primary" (click)="search()">
-        <mat-icon>search</mat-icon> Buscar
+      <button class="btn btn-sm btn-blue" (click)="search()">
+        <mat-icon>search</mat-icon>
+        Buscar
       </button>
 
-      <button class="btn-sirus ghost" (click)="clearFilters()">
-        <mat-icon>refresh</mat-icon> Limpiar
+      <button class="btn btn-sm btn-gray" (click)="clearFilters()">
+        <mat-icon>refresh</mat-icon>
+        Limpiar
       </button>
 
-      <button class="btn-sirus ghost" (click)="generateReport()">
-        <mat-icon>print</mat-icon> Imprimir
+      <button
+        class="btn btn-sm btn-red"
+        *ngIf="subscriptions.length"
+        (click)="generateReport()"
+      >
+        <mat-icon>print</mat-icon>
+        Imprimir
       </button>
 
-      <button class="btn-sirus ghost" (click)="exportUser()">
-        <mat-icon>download</mat-icon> Exportar
+      <button
+        class="btn btn-sm btn-green"
+        *ngIf="subscriptions.length"
+        (click)="exportUser()"
+      >
+        <mat-icon>download</mat-icon>
+        Exportar
       </button>
 
-      <button class="btn-sirus ghost" (click)="printWorksFromSource()">
+      <button
+        class="btn btn-sm btn-purple"
+        *ngIf="subscriptions.length"
+        (click)="printWorksFromSource()"
+      >
         <mat-icon>description</mat-icon>
         Actividades
       </button>

@@ -175,15 +175,38 @@
                     <div
                       *ngIf="d; else empty"
                       class="day"
-                      [class.start]="isStart(d) || isSubStart(d)"
-                      [class.end]="isEnd(d) || isSubEnd(d)"
-                      [class.middle]="isMiddle(d) || isSubMiddle(d)"
-                      [class.single]="isSingle(d) || isSubSingle(d)"
+                      [class.today]="isToday(d)"
+                      [class.start]="
+                        isStart(d) ||
+                        (!isNeutralDay(d) && !isSelectedDay(d) && isSubStart(d))
+                      "
+                      [class.end]="
+                        isEnd(d) ||
+                        (!isNeutralDay(d) && !isSelectedDay(d) && isSubEnd(d))
+                      "
+                      [class.middle]="
+                        isMiddle(d) ||
+                        (!isNeutralDay(d) &&
+                          !isSelectedDay(d) &&
+                          isSubMiddle(d))
+                      "
+                      [class.single]="
+                        isSingle(d) ||
+                        (!isNeutralDay(d) &&
+                          !isSelectedDay(d) &&
+                          isSubSingle(d))
+                      "
                       [class.sub]="
-                        isSubStart(d) ||
-                        isSubMiddle(d) ||
-                        isSubEnd(d) ||
-                        isSubSingle(d)
+                        !isNeutralDay(d) &&
+                        !isSelectedDay(d) &&
+                        (isSubStart(d) ||
+                          isSubMiddle(d) ||
+                          isSubEnd(d) ||
+                          isSubSingle(d))
+                      "
+                      [class.neutral]="isNeutralDay(d)"
+                      [class.replaced-in-range]="
+                        isBlockedDay(d) && isSelectedDay(d)
                       "
                       (click)="onDayClick(d)"
                     >
@@ -394,6 +417,68 @@
           </div>
         </div>
 
+        <!-- 🔥 NOTIFICACIONES -->
+        <div class="confirm-item">
+          <span class="label">Notificaciones</span>
+
+          <div class="notification-section">
+            <!-- 👤 DESTINATARIO PRINCIPAL -->
+            <div class="main-recipient">
+              <div class="recipient-title">Destinatario principal</div>
+
+              <div class="notification-chip principal">
+                <mat-icon>person</mat-icon>
+
+                <span>{{ selectedUser?.email }}</span>
+              </div>
+            </div>
+
+            <!-- 📧 ADICIONALES -->
+            <div class="recipient-title secondary">
+              Notificaciones adicionales
+            </div>
+
+            <!-- LISTA -->
+            <div class="notification-list">
+              <div
+                *ngFor="let email of notificationEmails"
+                class="notification-chip"
+              >
+                <mat-icon>mail</mat-icon>
+
+                <span>{{ email }}</span>
+
+                <button
+                  type="button"
+                  class="remove-chip"
+                  (click)="removeNotificationEmail(email)"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- INPUT -->
+            <div class="notification-add">
+              <input
+                type="email"
+                [(ngModel)]="newEmail"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Agregar correo adicional"
+                (keyup.enter)="addNotificationEmail()"
+              />
+
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="addNotificationEmail()"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="card-actions confirm-actions">
           <button mat-stroked-button (click)="previousStep()">
             <mat-icon>arrow_back</mat-icon>

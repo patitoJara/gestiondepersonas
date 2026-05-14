@@ -18,7 +18,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
 import { LoaderService } from '@app/core/services/loader.service';
 import { Location } from '@angular/common';
-
 import { Router } from '@angular/router';
 
 @Component({
@@ -41,6 +40,10 @@ export class JefaturaUsuariosComponent implements OnInit {
   loader = inject(LoaderService);
   private router = inject(Router);
   private location = inject(Location);
+  
+
+
+
   private SISTEMA_USERS = ['Admin', 'Operador', 'Supervisor', 'Jefatura'];
 
   private initialized = false;
@@ -429,4 +432,5 @@ export class JefaturaUsuariosComponent implements OnInit {
 
     return estadoActual !== this.estadoInicial;
   }
+
 }

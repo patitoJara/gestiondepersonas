@@ -1,6 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+} from '@angular/forms';
 import { FormControl } from '@angular/forms';
 
 import { MatIconModule } from '@angular/material/icon';
@@ -22,6 +27,7 @@ import { filterByRutOrName } from '@app/shared/utils/filter.util';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserSearchService } from 'src/app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { EmailService } from '../../../../../../core/services/email.service';
 
 import {
   AfterViewInit,
@@ -71,6 +77,7 @@ type DateRange = {
     MatDatepickerModule,
     MatAutocompleteModule,
     MatTooltipModule,
+    FormsModule,
   ],
 
   animations: [
@@ -109,6 +116,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   private overlapWarningShown = false;
   private timeService = inject(TimeService);
   private cdr = inject(ChangeDetectorRef);
+  private emailService = inject(EmailService);
 
   constructor(private userSearchService: UserSearchService) {}
 
@@ -118,9 +126,14 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   hasDateConflict = false;
   isSaving = false;
 
+  notificationEmails: string[] = [];
+  newEmail = '';
+
   userSearch = new FormControl('');
+  neutralDates: Date[] = [];
 
   subscriptions: any[] = [];
+  removeDates: Date[] = [];
 
   today = new Date();
   selectedFile: File | null = null;
@@ -168,7 +181,9 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     end: [null as Date | null, Validators.required],
   });
 
-  ngOnInit() {
+  async ngOnInit() {
+    await this.loadUsers();
+
     this.userSearchService
       .search(this.userSearch.valueChanges)
       .subscribe((users) => {
@@ -180,6 +195,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     });
 
     this.generateCalendar();
+
     this.groupCalendar();
   }
 
@@ -196,7 +212,11 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   async selectUser(user: any) {
-    this.selectedUser = user;
+    const fullUser = this.users.find((u) => u.id === user.id);
+
+    console.log('🔍 FULL USER:', fullUser);
+
+    this.selectedUser = fullUser || user;
 
     this.form.patchValue({
       userId: user.id,
@@ -205,6 +225,29 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     this.subscriptions = [];
 
     await this.loadSubscriptions(user.id);
+
+    // =====================================
+    // 🔥 DESTINATARIOS
+    // =====================================
+
+    this.notificationEmails = [
+      'jessie.carcamo.s@redsalud.gob.cl',
+
+      'ley18834ssm@redsalud.gob.cl',
+
+      'paola.munoz.b@redsalud.gob.cl',
+
+      'fanny.ros@redsalud.gob.cl',
+    ];
+
+    // 🔹 agregar funcionario
+    if (this.selectedUser?.email) {
+      if (!this.notificationEmails.includes(this.selectedUser.email)) {
+        this.notificationEmails.push(this.selectedUser.email);
+      }
+    }
+
+    console.log('📧 DESTINATARIOS:', this.notificationEmails);
 
     console.log('🔥 SUBS CARGADAS:', this.subscriptions);
 
@@ -247,6 +290,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
 
     this.users = users;
     this.filteredUsers = users;
+    console.log('👥 USERS COMPLETOS:', this.users);
   }
 
   private buildFullName(u: any): string {
@@ -340,29 +384,162 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     this.isSaving = true;
 
     try {
-      for (const r of this.ranges) {
-        const payload = {
-          begin: this.toBackendDate(r.from),
-          end: this.toBackendDate(r.to),
-          user: { id: userId },
-        };
+      const actions = this.prepareChanges();
 
-        console.log('🚀 guardando rango:', payload);
+      console.group('🧠 PREVIEW CAMBIOS SUSCRIPCIONES');
 
-        await firstValueFrom(this.subscribeService.create(payload));
+      console.log('👤 Usuario:', this.selectedUser);
+
+      console.log(
+        '📅 Hoy:',
+        this.toBackendDate(this.parseDateCL(this.timeService.getServerTime())),
+      );
+
+      console.log('🛠️ UPDATE:', actions.update);
+      console.log('🗑️ DELETE:', actions.delete);
+      console.log('➕ CREATE:', actions.create);
+
+      console.groupEnd();
+
+      /*const confirmar = confirm('¿Aplicar cambios?');
+
+      if (!confirmar) {
+        console.warn('🚫 Cancelado');
+        return;
+      }*/
+
+      console.group('🚀 EJECUTANDO');
+
+      // =====================================================
+      // 🔥 UPDATE
+      // =====================================================
+
+      if (actions.update?.length) {
+        for (const u of actions.update) {
+          console.log('🛠️ PUT UPDATE:', u);
+
+          debugger;
+
+          const response = await firstValueFrom(
+            this.subscribeService.update(u.id, u),
+          );
+
+          console.log('✅ PUT OK:', response);
+        }
       }
 
-      // ✔️ éxito
-      this.steps.forEach((s) => (s.completed = true));
-      this.currentStep = 5;
+      // =====================================================
+      // 🔥 DELETE
+      // =====================================================
+
+      if (actions.delete?.length) {
+        for (const d of actions.delete) {
+          console.log('🗑️ DELETE:', d);
+
+          debugger;
+
+          const response = await firstValueFrom(
+            this.subscribeService.delete(d.id),
+          );
+
+          console.log('✅ DELETE OK:', response);
+        }
+      }
+
+      // =====================================================
+      // 🔥 CREATE
+      // =====================================================
+      if (actions.create?.length) {
+        for (const c of actions.create) {
+          const payload = {
+            ...c,
+            active: true,
+
+            user: {
+              id: userId,
+            },
+          };
+
+          console.log('➕ POST PAYLOAD:', payload);
+
+          const response = await firstValueFrom(
+            this.subscribeService.create(payload),
+          );
+
+          console.log('✅ POST OK:', response);
+        }
+      }
+      //console.groupEnd();
+
+      // =====================================================
+      // 🔥 RECARGAR
+      // =====================================================
+
+      debugger;
 
       await this.loadSubscriptions(userId);
 
+      // =====================================================
+      // 🔥 EMAIL
+      // =====================================================
+
+try {
+
+  const response = await firstValueFrom(
+    this.emailService.sendEmail({
+
+      to: 'patricio.jara@redsalud.gob.cl',
+
+      subject: 'Prueba Telework-SM',
+
+      message: 'Correo de prueba sistema teletrabajo.',
+    }),
+  );
+
+  console.log('✅ EMAIL ENVIADO:', response);
+
+} catch (e) {
+
+  console.error('💥 ERROR EMAIL:', e);
+}
+/*      
+      try {
+        console.log('📧 PREPARANDO ENVÍO EMAIL...');
+
+        const email = this.buildSubscriptionEmail(actions.create);
+
+        console.log('📧 DESTINATARIOS:', this.notificationEmails);
+
+        console.log('📧 EMAIL:', email);
+
+        const response = await firstValueFrom(
+          this.emailService.sendEmail({
+            to: this.notificationEmails.join(','),
+
+            subject: email.subject,
+
+            message: email.message,
+          }),
+        );
+
+        console.log('✅ EMAIL ENVIADO:', response);
+      } catch (e) {
+        console.error('💥 ERROR EMAIL:', e);
+      }
+*/
+      this.steps.forEach((s) => (s.completed = true));
+
+      this.currentStep = 5;
+
       this.ranges = [];
       this.selectedDates = [];
+      this.neutralDates = [];
     } catch (error) {
-      console.error(error);
-      this.showWarning('Error al guardar uno de los rangos');
+      console.error('💥 ERROR GENERAL:', error);
+
+      debugger;
+
+      this.showWarning('Error al guardar cambios');
     } finally {
       this.isSaving = false;
     }
@@ -975,17 +1152,43 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   onDayClick(d: Date) {
-    if (this.isBlockedDay(d)) {
-      this.showWarning('Este día ya tiene una suscripción');
-      return;
-    }
-
     if (!this.isFutureDay(d)) {
-      this.showWarning('Solo puedes seleccionar fechas futuras');
+      this.showWarning('Solo puedes modificar fechas futuras');
       return;
     }
 
-    this.toggleDate(d); // 🔥 recién aquí entra
+    const isBD = this.isBlockedDay(d);
+    const isNeutral = this.isNeutralDay(d);
+    const isSelected = this.isSelectedDay(d);
+
+    // BD → neutral
+    if (isBD && !isNeutral && !isSelected) {
+      this.neutralDates.push(this.parseDateCL(d));
+      return;
+    }
+
+    // neutral → nuevo rango
+    if (isBD && isNeutral && !isSelected) {
+      this.neutralDates = this.neutralDates.filter(
+        (x) => !this.isSameDay(x, d),
+      );
+
+      this.toggleDate(d);
+      return;
+    }
+
+    // nuevo rango → BD original
+    if (isBD && isSelected) {
+      this.selectedDates = this.selectedDates.filter(
+        (x) => !this.isSameDay(x, d),
+      );
+
+      this.generateRanges();
+      return;
+    }
+
+    // día libre normal
+    this.toggleDate(d);
   }
 
   isSubStart(d: Date): boolean {
@@ -1034,6 +1237,10 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     const end = this.parseDateCL(s.end).getTime();
 
     return end < today;
+  }
+
+  isSelectedDay(d: Date): boolean {
+    return this.selectedDates.some((x) => this.isSameDay(x, d));
   }
 
   get groupedSubscriptions() {
@@ -1085,5 +1292,201 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
 
   get pastSubs() {
     return this.subscriptions.filter((s) => this.isPast(s));
+  }
+
+  prepareChanges() {
+    const actions = {
+      cut: null as any,
+      update: [] as any[],
+      delete: [] as any[],
+      create: [] as any[],
+    };
+
+    // 🔥 días que se sacan de la BD:
+    // - días neutralizados
+    // - días BD que ahora entran en nuevo rango
+    const affectedDays = [...this.neutralDates, ...this.selectedDates].map(
+      (d) => this.parseDateCL(d).getTime(),
+    );
+
+    for (const sub of this.subscriptions) {
+      const begin = this.parseDateCL(sub.begin).getTime();
+      const end = this.parseDateCL(sub.end).getTime();
+
+      const daysInSub: number[] = [];
+      let current = begin;
+
+      while (current <= end) {
+        daysInSub.push(current);
+        current += 86400000;
+      }
+
+      const removedDays = daysInSub.filter((d) => affectedDays.includes(d));
+
+      if (removedDays.length === 0) continue;
+
+      // 🔥 Si todo el rango BD fue afectado → DELETE
+      if (removedDays.length === daysInSub.length) {
+        actions.delete.push(sub);
+        continue;
+      }
+
+      // 🔥 Si queda una parte → UPDATE con lo que queda
+      const remaining = daysInSub.filter((d) => !affectedDays.includes(d));
+
+      const first = new Date(remaining[0]);
+      const last = new Date(remaining[remaining.length - 1]);
+
+      actions.update.push({
+        ...sub,
+        begin: this.toBackendDate(first),
+        end: this.toBackendDate(last),
+      });
+    }
+
+    // 🔥 Nuevos rangos seleccionados → POST
+    actions.create = this.ranges.map((r) => ({
+      begin: this.toBackendDate(r.from),
+      end: this.toBackendDate(r.to),
+    }));
+
+    console.group('🧠 ACCIONES PREPARADAS');
+    console.log('🛠️ UPDATE:', actions.update);
+    console.log('🗑️ DELETE:', actions.delete);
+    console.log('➕ CREATE:', actions.create);
+    console.groupEnd();
+
+    return actions;
+  }
+
+  isRemoveDay(d: Date): boolean {
+    return this.removeDates.some((x) => this.isSameDay(x, d));
+  }
+
+  isNeutralDay(d: Date): boolean {
+    return this.neutralDates.some((x) => this.isSameDay(x, d));
+  }
+
+  buildSubscriptionEmail(newRanges: any[]): {
+    subject: string;
+    message: string;
+  } {
+    const activeText = this.activeSubs.length
+      ? this.activeSubs
+          .map(
+            (s) =>
+              `• ${this.formatDateCL(s.begin)} → ${this.formatDateCL(s.end)}`,
+          )
+          .join('\n')
+      : 'Sin suscripción activa';
+
+    const futureText = this.futureSubs.length
+      ? this.futureSubs
+          .map(
+            (s) =>
+              `• ${this.formatDateCL(s.begin)} → ${this.formatDateCL(s.end)}`,
+          )
+          .join('\n')
+      : 'Sin suscripciones futuras';
+
+    const newText = newRanges.length
+      ? newRanges
+          .map(
+            (r) =>
+              `• ${this.formatDateCL(r.begin)} → ${this.formatDateCL(r.end)}`,
+          )
+          .join('\n')
+      : 'Sin nuevos registros';
+
+    return {
+      subject: 'Actualización suscripción Teletrabajo',
+
+      message: `
+            Estimado/a ${this.selectedUser?.fullName},
+
+            Se informa que su configuración de teletrabajo fue actualizada correctamente.
+
+            ━━━━━━━━━━━━━━━━━━
+            🟢 SUSCRIPCIÓN ACTIVA
+            ━━━━━━━━━━━━━━━━━━
+
+            ${activeText}
+
+            ━━━━━━━━━━━━━━━━━━
+            🔵 SUSCRIPCIONES FUTURAS
+            ━━━━━━━━━━━━━━━━━━
+
+            ${futureText}
+
+            ━━━━━━━━━━━━━━━━━━
+            ✨ NUEVOS PERIODOS REGISTRADOS
+            ━━━━━━━━━━━━━━━━━━
+
+            ${newText}
+
+            ⚠️ Si detecta información incorrecta,
+            contacte a su jefatura o al Departamento TIC.
+
+            Atentamente,
+            Departamento TIC
+            Servicio de Salud Magallanes
+            `,
+    };
+  }
+
+  removeNotificationEmail(email: string) {
+    this.notificationEmails = this.notificationEmails.filter(
+      (e) => e !== email,
+    );
+  }
+
+  addNotificationEmail() {
+    const email = this.newEmail?.trim();
+
+    console.log('📧 NUEVO EMAIL:', email);
+
+    if (!email) return;
+
+    // 🔥 validar formato básico
+    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!isValid) {
+      console.warn('⚠️ EMAIL INVÁLIDO');
+
+      return;
+    }
+
+    // 🔥 evitar duplicado con adicionales
+    const existsInAdditional = this.notificationEmails.some(
+      (e) => e.toLowerCase() === email.toLowerCase(),
+    );
+
+    if (existsInAdditional) {
+      console.warn('⚠️ EMAIL YA EXISTE');
+
+      return;
+    }
+
+    // 🔥 evitar duplicar principal
+    if (
+      this.selectedUser?.email &&
+      this.selectedUser.email.toLowerCase() === email.toLowerCase()
+    ) {
+      console.warn('⚠️ EMAIL PRINCIPAL YA EXISTE');
+
+      return;
+    }
+
+    this.notificationEmails.push(email);
+
+    console.log('✅ DESTINATARIO AGREGADO:', this.notificationEmails);
+
+    this.newEmail = '';
+  }
+
+  isToday(d: Date): boolean {
+    const today = this.parseDateCL(this.timeService.getServerTime());
+
+    return this.isSameDay(d, today);
   }
 }

@@ -1334,7 +1334,10 @@ Step 1 - 2 -
   }
 }
 
-/* SOLO STEP 6 */
+/* ----------------------------------------------------------------------------------------------------------
+  SOLO STEP 6
+ ------------------------------------------------------------------------------------------------------*/
+
 .step6-container {
   width: 100%;
   max-width: 1350px;
@@ -1351,15 +1354,31 @@ Step 1 - 2 -
 }
 
 .step6-container .family-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-top: 14px;
+}
+
+.step6-container .step6-grid {
+  display: grid;
+
+  grid-template-columns:
+    1.8fr
+    1fr
+    0.7fr;
+
   gap: 12px;
+
+  align-items: end;
 }
 
 .step6-container .ingreso-card {
   border: 1px solid #e3e8ef;
   border-radius: 10px;
   background: #fff;
+  height: fit-content;
   overflow: hidden;
 }
 
@@ -1385,7 +1404,11 @@ Step 1 - 2 -
 }
 
 .step6-container .card-body {
-  padding: 14px;
+  padding: 16px;
+}
+
+.step6-container .input {
+  height: 36px;
 }
 
 .ssm-money-input {
@@ -1451,6 +1474,19 @@ Step 1 - 2 -
 
 .step6-container .actions button:last-child {
   margin-left: auto;
+}
+
+.step6-grid {
+  display: grid;
+
+  grid-template-columns:
+    1.6fr
+    1fr
+    0.8fr;
+
+  gap: 12px;
+
+  align-items: end;
 }
 
 @media (max-width: 700px) {
@@ -1536,8 +1572,8 @@ Step 1 - 2 -
 /* 🔹 GASTOS DINÁMICOS */
 .otros-gastos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
   margin-top: 14px;
 }
 
@@ -1549,8 +1585,17 @@ Step 1 - 2 -
   overflow: hidden;
 }
 
+.step7-container .gasto-card .input {
+  height: 34px;
+}
+
+.step7-container .gasto-card label {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
 .step7-container .card-header {
-  height: 44px;
+  height: 38px;
   padding: 0 12px;
   background: #fff7ed;
   border-left: 4px solid #f97316;
@@ -1573,10 +1618,10 @@ Step 1 - 2 -
 }
 
 .step7-container .card-body {
-  padding: 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* 🔹 INPUT DINERO */

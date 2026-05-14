@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Servicio de correo
-import { UsersService } from '@app/core/services/email.service';
+import { EmailService } from '@app/core/services/email.service';
 
 @Component({
   standalone: true,
@@ -37,7 +37,7 @@ export class RecoverComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
-  private usersService = inject(UsersService);
+  private emailService = inject(EmailService);
 
   loading = false;
   sent = false;
@@ -71,7 +71,7 @@ export class RecoverComponent implements OnInit {
     const email = this.form.value.email!;
     this.loading = true;
 
-    this.usersService.recoverPassword(email).subscribe({
+    this.emailService.recoverPassword(email).subscribe({
       next: () => {
         this.loading = false;
         this.sent = true;

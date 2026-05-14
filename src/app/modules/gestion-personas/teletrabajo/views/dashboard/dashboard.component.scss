@@ -1,8 +1,31 @@
+/* =========================================================
+   🟦 DASHBOARD TELETRABAJO — SIRUS UI PRO
+========================================================= */
+
+/* =========================================================
+   🟣 HOST
+========================================================= */
+
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background-color: #f7f9fc;
+}
+
+.home-wrapper {
+  max-width: 1200px;
+  width: 100%;
+}
+
 .dashboard-container {
   position: relative;
 }
 
-/* CORTINA */
+/* =========================================================
+   🔒 OVERLAY / CORTINA
+========================================================= */
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -17,7 +40,6 @@
   z-index: 10;
 }
 
-/* CONTENIDO */
 .overlay-content {
   text-align: center;
   padding: 20px;
@@ -28,13 +50,11 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* ICONO */
 .overlay-content mat-icon {
   font-size: 40px;
   color: #c62828;
 }
 
-/* TEXTO */
 .overlay-content h3 {
   margin: 10px 0 6px;
   color: #c62828;
@@ -45,14 +65,9 @@
   color: #607d8b;
 }
 
-/*      -------------------------------------------------------------  fin cortina  ------------------------------------------------- */
-
-:host {
-  display: flex;
-  justify-content: center;
-  padding: 3rem 1rem;
-  background-color: #f7f9fc;
-}
+/* =========================================================
+   🟦 TITLE
+========================================================= */
 
 .title {
   display: flex;
@@ -67,31 +82,34 @@
   background: #ffffff;
   border: 1px solid #e3e8f0;
 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-
   border-left: 4px solid #1565c0;
 
-  .title-main {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1565c0;
-  }
-
-  .title-sub {
-    font-size: 12px;
-    color: #607d8b;
-  }
-
-  mat-icon {
-    font-size: 20px;
-    color: #1565c0;
-  }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
+
+.title-main {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.title-sub {
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.title mat-icon {
+  font-size: 20px;
+  color: #1565c0;
+}
+
+/* =========================================================
+   🕒 RELOJ
+========================================================= */
 
 .bloque-reloj {
   text-align: center;
-  margin: 10px 0 16px 0;
-  margin-bottom: 14px;
+  margin: 10px 0 16px;
 }
 
 .fecha {
@@ -100,7 +118,6 @@
   color: #818a07;
 
   letter-spacing: 0.5px;
-
   margin-bottom: 6px;
 
   text-transform: uppercase;
@@ -108,99 +125,130 @@
 
 .fecha::after {
   content: "";
+
   display: block;
+
   width: 40px;
   height: 2px;
-  background: #e3e8f0;
+
   margin: 6px auto 0;
+
   border-radius: 2px;
+
+  background: #e3e8f0;
 }
 
 .hora {
   font-size: 42px;
   font-weight: 700;
   color: #07119b;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
 }
 
-/* ============================
+/* =========================================================
    🟦 GRID
-============================ */
+========================================================= */
+
 .layout-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
-@media (max-width: 1024px) {
-  .layout-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .layout-4 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================
+/* =========================================================
    🟦 CARDS
-============================ */
+========================================================= */
+
 .col {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid #e0e0e0;
   min-height: 320px;
+
+  padding: 16px;
+
+  background: #fff;
+
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: 0.2s;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .col:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-/* ============================
-   🟦 HEADER
-============================ */
+/* =========================================================
+   🟦 NOMBRE USUARIO
+========================================================= */
+
+.user-name {
+  margin-top: 18px;
+
+  text-align: center;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  color: #8e44ad;
+}
+
+/* =========================================================
+   🟦 CARD HEADER
+========================================================= */
+
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+
   padding: 8px 10px;
-  border-radius: 8px;
   margin-bottom: 12px;
+
+  border-radius: 8px;
+
+  font-weight: 600;
 }
 
-/* COLORES */
+/* =========================================================
+   🎨 COLORS
+========================================================= */
+
 .blue {
   background: rgba(21, 101, 192, 0.1);
   color: #1565c0;
 }
+
 .green {
   background: rgba(46, 125, 50, 0.1);
   color: #2e7d32;
 }
+
 .orange {
   background: rgba(245, 124, 0, 0.1);
   color: #f57c00;
 }
+
 .purple {
   background: rgba(123, 31, 162, 0.1);
   color: #7b1fa2;
 }
 
-/* ============================
-   🟦 ITEMS
-============================ */
+/* =========================================================
+   📦 ITEMS
+========================================================= */
+
 .item {
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  padding: 10px;
+  padding: 6px 10px;
+
   border-radius: 8px;
 
   transition: 0.2s;
@@ -210,118 +258,76 @@
   background: rgba(21, 101, 192, 0.08);
 }
 
-.user-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* =========================================================
+   🔘 TOOLBAR
+========================================================= */
 
-/* ============================
-   🟦 BOTONES
-============================ */
 .toolbar {
   display: flex;
-  justify-content: center; // 🔥 ESTA ES LA CLAVE
-  align-items: center;
-
-  gap: 10px;
-  margin: 12px 0;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  border-radius: 8px;
-  padding: 6px 12px;
-
-  font-size: 18px;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-
-  min-width: 110px;
   justify-content: center;
+  gap: 18px;
+
+  margin-top: 20px;
 }
 
-.btn.big {
-  font-weight: 600;
-  transform: scale(1.05);
-}
+/* =========================================================
+   📭 EMPTY
+========================================================= */
 
-/* COLORES BOTÓN */
-.btn-green {
-  background: rgba(46, 125, 50, 0.1);
-  color: #2e7d32;
-}
-.btn-orange {
-  background: rgba(245, 124, 0, 0.1);
-  color: #f57c00;
-}
-.btn-purple {
-  background: rgba(123, 31, 162, 0.1);
-  color: #7b1fa2;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
-
-.btn-green:disabled {
-  background: rgba(46, 125, 50, 0.05);
-  color: #999;
-}
-
-.btn-orange:disabled {
-  background: rgba(245, 124, 0, 0.05);
-  color: #999;
-}
-/* ============================
-   🟦 EMPTY
-============================ */
 .empty {
   text-align: center;
-  opacity: 0.9;
   margin-top: 20px;
+
+  opacity: 0.9;
+
   color: #7b1fa2;
 }
-.home-wrapper {
-  max-width: 1200px;
-  width: 100%;
-}
 
-/* ============================
+/* =========================================================
    🟣 WORKS
-============================ */
+========================================================= */
 
 .work-item {
   display: flex;
+
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+
+  gap: 12px;
+
   min-height: 42px;
-  padding: 10px;
-  border-radius: 8px;
-  transition: 0.2s;
+
+  padding: 12px 10px;
+
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  border: 1px solid #edf2f7;
+
+  background: #ffffff;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .work-item:hover {
-  background: rgba(21, 101, 192, 0.08);
+  transform: translateY(-1px);
+
+  border-color: rgba(126, 87, 194, 0.25);
+
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
-.work-actions {
+.work-left {
   display: flex;
   align-items: center;
-  gap: 6px;
-  opacity: 0;
-  transform: translateX(6px);
-  transition: all 0.2s ease;
-}
+  gap: 8px;
 
-.work-item:hover .work-actions {
-  opacity: 1;
-  transform: translateX(0);
+  min-width: 0;
 }
 
 .work-text {
@@ -333,7 +339,7 @@
 .work-text .desc {
   white-space: pre-line;
   word-break: break-word;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .work-text .meta {
@@ -341,186 +347,94 @@
   color: #90a4ae;
 }
 
+.created,
+.edited {
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  font-size: 11px;
+
+  color: #78909c;
+
+  opacity: 0.85;
+}
+
+.work-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  opacity: 0;
+
+  transform: translateX(6px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.work-item:hover .work-actions {
+  opacity: 1;
+
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+/* =========================================================
+   🔘 ACTION BUTTONS
+========================================================= */
+
 .action-btn {
   display: flex;
   align-items: center;
   gap: 4px;
+
   padding: 4px 8px;
+
+  border: none;
   border-radius: 6px;
+
+  cursor: pointer;
+
   font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
+
   white-space: nowrap;
-}
-
-.action-btn.edit {
-  color: #1565c0;
-}
-
-.action-btn.delete {
-  background: rgba(198, 40, 40, 0.1);
-  color: #c62828;
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-}
-
-/* ============================
-   📱 MOBILE FIX
-============================ */
-
-@media (max-width: 600px) {
-  .work-actions {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .action-btn {
-    padding: 8px 10px;
-    min-height: 40px;
-    font-size: 13px;
-  }
-  .overlay {
-    align-items: flex-start;
-    padding-top: 80px;
-  }
-}
-
-/* ============================
-   📱 GAP AJUSTE
-============================ */
-
-@media (max-width: 800px) {
-  .layout-4 {
-    gap: 12px;
-  }
-}
-
-/* IZQUIERDA */
-.work-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  min-width: 0; // 🔥 evita que rompa layout
-}
-
-/* TEXTO */
-.work-left .text {
-  white-space: nowrap; // 🔥 todo en una línea
-  overflow: hidden;
-  text-overflow: ellipsis; // 🔥 si es largo → ...
-  font-size: 14px;
-}
-
-/* ICONOS COLORES */
-mat-icon.check {
-  color: #2e7d32;
-  min-width: 0;
-}
-
-mat-icon.edit {
-  color: #546e7a;
-}
-
-mat-icon.delete {
-  color: #c62828;
-}
-
-/* HOVER ICONOS */
-.work-actions button:hover mat-icon.edit {
-  color: #1565c0;
-}
-
-.work-actions button:hover mat-icon.delete {
-  color: #d32f2f;
-}
-
-/* BOTÓN BASE */
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  padding: 4px 8px;
-  border-radius: 6px;
-
-  font-size: 12px;
-  font-weight: 500;
-
-  cursor: pointer;
-  border: none;
 
   transition: all 0.2s ease;
-  white-space: nowrap; // 🔥 evita salto de línea
 }
 
-/* ✏️ EDITAR */
-
-.action-btn.edit {
-  color: #1565c0;
-}
-
-.action-btn.edit mat-icon {
-  color: inherit;
-}
-
-/* 🗑️ ELIMINAR */
-.action-btn.delete {
-  background: rgba(198, 40, 40, 0.1);
-  color: #c62828;
-}
-
-.action-btn.delete mat-icon {
-  color: #c62828;
-}
-
-/* HOVER */
 .action-btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
 }
 
-.action-btn span {
-  font-size: 11px;
+.action-btn.edit {
+  color: #1565c0;
 }
 
-.work-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.action-btn.delete {
+  background: rgba(198, 40, 40, 0.1);
+  color: #c62828;
 }
 
-.work-text .desc {
-  white-space: pre-line; // 🔥 respeta ENTER
-  word-break: break-word;
-}
-
-.work-text .meta {
-  font-size: 11px;
-  color: #90a4ae;
-}
-
-@media print {
-  .work-item {
-    page-break-inside: avoid;
-  }
-
-  .work-text .desc {
-    white-space: pre-line;
-  }
-}
+/* =========================================================
+   📅 SUSCRIPCIONES
+========================================================= */
 
 .subs-item {
-  padding: 10px;
-  border-radius: 8px;
-
   display: flex;
   align-items: center;
+
+  padding: 10px;
+
+  border-radius: 8px;
 
   transition: 0.2s;
 }
@@ -542,8 +456,8 @@ mat-icon.delete {
 }
 
 .range {
-  font-weight: 500;
   font-size: 13px;
+  font-weight: 500;
   color: #263238;
 }
 
@@ -552,7 +466,6 @@ mat-icon.delete {
   font-weight: 600;
 }
 
-/* Estados */
 .status.vigente {
   color: #2e7d32;
 }
@@ -564,62 +477,41 @@ mat-icon.delete {
 .status.vencido {
   color: #c62828;
 }
-/* =========================
-   🟣 META (HORAS ACTIVIDAD)
-========================= */
 
-.meta {
-  display: flex;
-  flex-direction: column; // 🔥 2 líneas
-  gap: 4px;
-  font-size: 12px;
+/* =========================================================
+   📱 RESPONSIVE
+========================================================= */
+
+@media (max-width: 1024px) {
+  .layout-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-/* 🔹 CREACIÓN */
-.meta .created {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  font-size: 13px;
-  color: #78909c; // gris suave
+@media (max-width: 800px) {
+  .layout-4 {
+    gap: 12px;
+  }
 }
 
-/* 🔹 EDICIÓN */
-.meta .edited {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+@media (max-width: 600px) {
+  .layout-4 {
+    grid-template-columns: 1fr;
+  }
 
-  font-size: 12px;
-  font-weight: 600;
-  color: #fb8c00; // 🔥 naranja SIRUS
+  .work-actions {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .action-btn {
+    padding: 8px 10px;
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .overlay {
+    align-items: flex-start;
+    padding-top: 80px;
+  }
 }
-
-/* 🔹 ICONOS */
-.meta mat-icon {
-  font-size: 13px;
-}
-
-/* =========================
-   🟢 ESTADOS SUSCRIPCIÓN
-========================= */
-
-.Activo {
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-.Finalizado {
-  color: #c62828;
-  font-weight: 600;
-}
-
-/* =========================
-   📦 ITEMS (LISTAS)
-========================= */
-
-.item {
-  padding: 6px 10px;
-}
-

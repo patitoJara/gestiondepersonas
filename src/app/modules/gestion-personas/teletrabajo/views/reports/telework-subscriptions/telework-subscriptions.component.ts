@@ -885,15 +885,50 @@ export class TeleworkUserSubscriptionsComponent {
     return `${d}/${m}/${y}`;
   }
 
-  parseLocalDate(value: string | Date): Date {
-    if (!value) return new Date();
+  parseLocalDate(
+    value?: string | Date | number,
+    month?: number,
+    day?: number,
+    hour: number = 0,
+    minute: number = 0,
+    second: number = 0,
+    ms: number = 0,
+  ): Date {
+    // 🔥 sin argumentos → hoy
+    if (value === undefined) {
+      return new Date();
+    }
 
-    if (value instanceof Date) return value;
+    // 🔥 overload tipo new Date(y,m,d)
+    if (typeof value === 'number') {
+      return new Date(value, month || 0, day || 1, hour, minute, second, ms);
+    }
 
-    const [datePart] = value.split('T'); // 🔥 IGNORA TODO LO DEMÁS
+    // 🔥 Date
+    if (value instanceof Date) {
+      return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours(),
+        value.getMinutes(),
+        value.getSeconds(),
+        value.getMilliseconds(),
+      );
+    }
+
+    // 🔥 ISO/string
+    const [datePart, timePart] = value.split('T');
+
     const [y, m, d] = datePart.split('-').map(Number);
 
-    return new Date(y, m - 1, d);
+    if (!timePart) {
+      return new Date(y, m - 1, d);
+    }
+
+    const [h, min, s] = timePart.split(':').map(Number);
+
+    return new Date(y, m - 1, d, h || 0, min || 0, s || 0);
   }
 
   formatToLocalISOString(date: Date): string {

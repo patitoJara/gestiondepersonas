@@ -138,7 +138,7 @@ export const routes: Routes = [
         data: {
           module: 'teletrabajo',
           section: 'main',
-          title: 'Reporte Jefatura',
+          title: 'Supervisión Operacional',
           icon: 'assessment',
           roles: ['ADMIN', 'JEFATURA'],
           iconColor: '#ef6c00', // naranjo
@@ -246,6 +246,23 @@ export const routes: Routes = [
       },
 
       {
+        path: 'admin/tools/users/import',
+        loadComponent: () =>
+          import('./modules/gestion-personas/admin/user-maintenance/affiliated-import/affiliated-import.component').then(
+            (m) => m.AffiliatedImportComponent,
+          ),
+
+        data: {
+          module: 'teletrabajo',
+          section: 'admin',
+          title: 'Importador afiliados',
+          icon: 'upload_file',
+          roles: ['ADMIN'],
+          iconColor: '#bb3540',
+        },
+      },
+
+      {
         path: 'manual',
         loadComponent: () =>
           import('./modules/gestion-personas/teletrabajo/views/manual/manual.component').then(
@@ -293,10 +310,10 @@ export const routes: Routes = [
           title: 'Postulación Estudios',
           icon: 'school',
           //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          roles: ['ADMIN', 'JEFATURA', 'SUPERVISOR', 'POSTULACION'],
+          roles: ['ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR', 'POSTULACION'],
           iconColor: '#2e7d32', // verde
         },
-      },      
+      },
     ],
   },
 

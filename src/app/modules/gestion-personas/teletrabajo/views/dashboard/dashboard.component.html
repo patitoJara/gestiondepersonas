@@ -31,18 +31,17 @@
 
         <div class="bloque-reloj">
           <div class="fecha">
-            {{ now | date: "fullDate" | uppercase }}
+            {{ serverNow | date: "fullDate" | uppercase }}
           </div>
 
           <div class="hora">
-            {{ now | date: "HH:mm:ss" }}
+            {{ serverNow | date: "HH:mm:ss" }}
           </div>
         </div>
 
         <div class="toolbar">
-          
           <button
-            class="btn btn-green big"
+            class="btn btn-big btn-green"
             (click)="mark('ING')"
             [disabled]="!canMarkToday || hasIngreso"
           >
@@ -50,15 +49,8 @@
             Ingreso
           </button>
 
-          <!--
-          <div style="background: black; color: #0f0; padding: 10px">
-            canMarkToday: {{ canMarkToday }} <br />
-            hasIngreso: {{ hasIngreso }} <br />
-            disabled ING: {{ !canMarkToday || hasIngreso }}
-          </div>
-          -->
           <button
-            class="btn btn-orange big"
+            class="btn btn-big btn-orange"
             (click)="mark('SAL')"
             [disabled]="!canMarkToday || hasSalida"
           >
@@ -67,7 +59,9 @@
           </button>
         </div>
 
-        <div class="empty">{{ userName }}</div>
+        <div class="user-name">
+          {{ userName }}
+        </div>
       </div>
 
       <!-- 🔵 EVENTOS DEL DÍA -->
@@ -107,7 +101,7 @@
         </div>
 
         <div class="toolbar">
-          <button class="btn btn-purple" (click)="crearWork()">
+          <button class="btn btn-md btn-purple" (click)="crearWork()">
             <mat-icon>add</mat-icon>
             Nueva
           </button>
@@ -122,19 +116,17 @@
               <!-- 🕒 CREACIÓN -->
               <span class="created">
                 <mat-icon>schedule</mat-icon>
-                {{ fixWorkDate(w.createdAt) | date: "HH:mm" }}
+                {{ w.createdAt | date: "HH:mm" }}
               </span>
 
               <!-- ✏️ EDICIÓN -->
               <span
                 *ngIf="w.updatedAt && w.updatedAt !== w.createdAt"
                 class="edited"
-                matTooltip="Editado a las {{
-                  fixWorkDate(w.updatedAt) | date: 'HH:mm'
-                }}"
+                [matTooltip]="'Editado a las ' + (w.updatedAt | date: 'HH:mm')"
               >
                 <mat-icon>edit</mat-icon>
-                {{ fixWorkDate(w.updatedAt) | date: "HH:mm" }}
+                {{ w.updatedAt | date: "HH:mm" }}
               </span>
             </div>
           </div>

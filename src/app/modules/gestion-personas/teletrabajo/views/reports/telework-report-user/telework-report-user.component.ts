@@ -25,6 +25,7 @@ import { TokenService } from '@app/core/services/token.service';
 import { WorkService } from '@app/modules/gestion-personas/teletrabajo/services/work.service';
 import { Work } from '@app/modules/gestion-personas/teletrabajo/models/work.model';
 import { MatTableDataSource } from '@angular/material/table';
+import { TimeService } from '@app/core/services/time.service';
 
 @Component({
   selector: 'app-telework-report-user',
@@ -52,6 +53,7 @@ export class TeleworkReportUserComponent {
   private tokenService = inject(TokenService);
   private registersService = inject(RegistersService);
   private workService = inject(WorkService);
+  private timeService = inject(TimeService);
 
   // ===============================
   // FILTROS
@@ -164,14 +166,14 @@ export class TeleworkReportUserComponent {
     this.loadUserData();
 
     // 🔥 3. inicializar filtros
-    const currentYear = new Date().getFullYear();
+    const currentYear = this.parseLocalDate().getFullYear();
 
     for (let i = currentYear; i <= currentYear + 10; i++) {
       this.years.push(i);
     }
 
-    this.month = new Date().getMonth() + 1;
-    this.year = new Date().getFullYear();
+    this.month = this.parseLocalDate().getMonth() + 1;
+    this.year = this.parseLocalDate().getFullYear();
 
     this.onMonthYearChange();
   }
@@ -209,8 +211,8 @@ export class TeleworkReportUserComponent {
     }
 
     if (this.dateFrom && this.dateTo) {
-      const from = new Date(this.dateFrom);
-      const to = new Date(this.dateTo);
+      const from = this.parseLocalDate(this.dateFrom);
+      const to = this.parseLocalDate(this.dateTo);
 
       if (to < from) {
         this.showWarning(
@@ -271,19 +273,19 @@ export class TeleworkReportUserComponent {
       // =========================================
 
       if (this.dateFrom && this.dateTo) {
-        const from = new Date(this.dateFrom);
+        const from = this.parseLocalDate(this.dateFrom);
         from.setHours(0, 0, 0, 0);
 
-        const to = new Date(this.dateTo);
+        const to = this.parseLocalDate(this.dateTo);
         to.setHours(23, 59, 59, 999);
 
         filteredRegisters = filteredRegisters.filter((r: any) => {
-          const d = new Date(r.register_datetime);
+          const d = this.parseLocalDate(r.register_datetime);
           return d >= from && d <= to;
         });
       } else if (this.month !== null && this.year !== null) {
         filteredRegisters = filteredRegisters.filter((r: any) => {
-          const d = new Date(r.register_datetime);
+          const d = this.parseLocalDate(r.register_datetime);
           return (
             d.getMonth() + 1 === this.month && d.getFullYear() === this.year
           );
@@ -331,8 +333,24 @@ export class TeleworkReportUserComponent {
             return d1 - d2;
           });
       } else if (this.month !== null && this.year !== null) {
-        const from = new Date(this.year, this.month - 1, 1, 0, 0, 0, 0);
-        const to = new Date(this.year, this.month, 0, 23, 59, 59, 999);
+        const from = this.parseLocalDate(
+          this.year,
+          this.month - 1,
+          1,
+          0,
+          0,
+          0,
+          0,
+        );
+        const to = this.parseLocalDate(
+          this.year,
+          this.month,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
 
         this.subscriptions = mySubscriptions
           .filter((s: any) => {
@@ -379,6 +397,10 @@ export class TeleworkReportUserComponent {
         this.registers = filteredRegisters;
       }
 
+      if (this.registers.length) {
+        this.selectRegisterDay(this.registers[0]);
+      }
+
       // =========================================
       // 🔥 MENSAJE SIN RESULTADOS
       // =========================================
@@ -398,35 +420,23 @@ export class TeleworkReportUserComponent {
     }
   }
 
-  isSameDay(a: Date | string, b: Date | string | null): boolean {
-    if (!a || !b) return false;
-
-    const d1 = new Date(a);
-    const d2 = new Date(b);
-
-    d1.setHours(0, 0, 0, 0);
-    d2.setHours(0, 0, 0, 0);
-
-    return d1.getTime() === d2.getTime();
-  }
-
   selectRegisterDay(register: any) {
-    const targetDate = new Date(register.register_datetime);
+    const targetDate = this.parseLocalDate(register.register_datetime);
     targetDate.setHours(0, 0, 0, 0);
 
     this.selectedDay = targetDate;
 
     this.works = this.allWorks
       .filter((w: any) => {
-        const d = new Date(w.createdAt || w.created_at);
+        const d = this.parseLocalDate(w.createdAt || w.created_at);
         d.setHours(0, 0, 0, 0);
 
         return d.getTime() === targetDate.getTime();
       })
       .sort((a: any, b: any) => {
         return (
-          new Date(a.createdAt || a.created_at).getTime() -
-          new Date(b.createdAt || b.created_at).getTime()
+          this.parseLocalDate(a.createdAt || a.created_at).getTime() -
+          this.parseLocalDate(b.createdAt || b.created_at).getTime()
         );
       });
 
@@ -442,7 +452,7 @@ export class TeleworkReportUserComponent {
     }
 
     // formato normal Date
-    const d = new Date(date);
+    const d = this.parseLocalDate(date);
 
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -468,7 +478,7 @@ export class TeleworkReportUserComponent {
   }
 
   setCurrentMonthYear() {
-    const today = new Date();
+    const today = this.parseLocalDate();
     this.month = today.getMonth() + 1;
     this.year = today.getFullYear();
   }
@@ -488,7 +498,7 @@ export class TeleworkReportUserComponent {
       'Sábado',
     ];
 
-    const d = this.toLocalDate(date);
+    const d = this.parseLocalDate(date);
 
     return days[d.getDay()];
   }
@@ -508,8 +518,8 @@ export class TeleworkReportUserComponent {
       .filter((r: any) => r.user?.id === user.id || r.userId === user.id)
       .sort(
         (a: any, b: any) =>
-          new Date(a.register_datetime).getTime() -
-          new Date(b.register_datetime).getTime(),
+          this.parseLocalDate(a.register_datetime).getTime() -
+          this.parseLocalDate(b.register_datetime).getTime(),
       );
 
     // 🔥 si NO viene tipo desde backend → lo generamos
@@ -599,41 +609,14 @@ export class TeleworkReportUserComponent {
     this.validarRut(); // 👈 agregar
   }
 
-  normalizeDate(date: any): Date {
-    return this.parseDateCL(date);
-  }
-
   formatDateCL(date: any): string {
-    const d = this.toLocalDate(date);
+    const d = this.parseLocalDate(date);
 
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
 
     return `${day}/${month}/${year}`;
-  }
-
-  parseDateCL(date: any): Date {
-    if (!date) return new Date();
-
-    // 🔥 ISO del backend → cortar directo
-    if (typeof date === 'string' && date.includes('T')) {
-      const [y, m, d] = date.split('T')[0].split('-');
-      return new Date(+y, +m - 1, +d);
-    }
-
-    // dd/mm/yyyy
-    if (typeof date === 'string' && date.includes('/')) {
-      const parts = date.split('/');
-      return new Date(+parts[2], +parts[1] - 1, +parts[0]);
-    }
-
-    // datepicker
-    if (date instanceof Date) {
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    }
-
-    return new Date(date);
   }
 
   showMessage(title: string, message: string) {
@@ -684,46 +667,48 @@ export class TeleworkReportUserComponent {
     return alerts;
   }
 
-  onMonthYearChange(): void {
-    if (!this.month || !this.year) {
-      this.dateFrom = null;
-      this.dateTo = null;
-      return;
+  onDateChange(): void {
+    // 🔥 si hay al menos una fecha, trabaja
+    if (this.dateFrom) {
+      const from = new Date(this.dateFrom);
+
+      this.month = from.getMonth() + 1;
+      this.year = from.getFullYear();
+
+      from.setHours(0, 0, 0, 0);
+      this.dateFrom = from;
     }
 
-    const from = new Date(this.year, this.month - 1, 1);
-    from.setHours(0, 0, 0, 0);
+    if (this.dateTo) {
+      const to = new Date(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+      this.dateTo = to;
 
-    const to = new Date(this.year, this.month, 0);
-    to.setHours(23, 59, 59, 999);
-
-    this.dateFrom = from;
-    this.dateTo = to;
+      // 🔥 SI SOLO CAMBIA HASTA → también sincroniza mes/año
+      if (!this.dateFrom) {
+        this.month = to.getMonth() + 1;
+        this.year = to.getFullYear();
+      }
+    }
 
     this.clearResults();
   }
 
-  onDateChange(): void {
-    if (!this.dateFrom) return;
+  onMonthYearChange(): void {
+    if (!this.month || !this.year) {
+      return; // 👈 dejamos pasar, pero no rompemos estado
+    }
 
-    const from = new Date(this.dateFrom);
-
-    // 🔥 sincroniza mes/año
-    this.month = from.getMonth() + 1;
-    this.year = from.getFullYear();
-
-    // 🔥 normaliza rango si existe hasta
-    if (this.dateTo) {
-      const to = new Date(this.dateTo);
-
+    setTimeout(() => {
+      const from = new Date(this.year!, this.month! - 1, 1);
       from.setHours(0, 0, 0, 0);
+
+      const to = new Date(this.year!, this.month!, 0);
       to.setHours(23, 59, 59, 999);
 
       this.dateFrom = from;
       this.dateTo = to;
-    }
-
-    this.clearResults();
+    });
   }
 
   onMonthFocus(): void {
@@ -742,8 +727,8 @@ export class TeleworkReportUserComponent {
   }
 
   getDurationDays(s: any): number {
-    const start = new Date(s.begin);
-    const end = new Date(s.end);
+    const start = this.parseLocalDate(s.begin);
+    const end = this.parseLocalDate(s.end);
 
     const diff = end.getTime() - start.getTime();
 
@@ -751,26 +736,26 @@ export class TeleworkReportUserComponent {
   }
 
   isCurrentlyActive(s: any): boolean {
-    const today = this.parseDateCL(this.getToday());
+    const today = this.parseLocalDate(this.getToday());
     today.setHours(0, 0, 0, 0);
 
-    const start = new Date(s.begin);
+    const start = this.parseLocalDate(s.begin);
     start.setHours(0, 0, 0, 0);
 
-    const end = new Date(s.end);
+    const end = this.parseLocalDate(s.end);
     end.setHours(0, 0, 0, 0);
 
     return today >= start && today <= end;
   }
 
   getEstado(s: any): 'pendiente' | 'vigente' | 'vencido' {
-    const today = this.parseDateCL(this.getToday());
+    const today = this.parseLocalDate(this.getToday());
     today.setHours(0, 0, 0, 0);
 
-    const start = new Date(s.begin);
+    const start = this.parseLocalDate(s.begin);
     start.setHours(0, 0, 0, 0);
 
-    const end = new Date(s.end);
+    const end = this.parseLocalDate(s.end);
     end.setHours(0, 0, 0, 0);
 
     if (today < start) return 'pendiente';
@@ -779,25 +764,25 @@ export class TeleworkReportUserComponent {
   }
 
   getToday(): Date {
-    return new Date();
+    return this.parseLocalDate();
   }
 
   generateFullRegisters(subscriptions: any[], registers: any[]) {
     const result = [...registers];
 
-    const today = this.parseDateCL(this.getToday());
+    const today = this.parseLocalDate(this.getToday());
 
     subscriptions.forEach((sub) => {
-      let start = this.parseDateCL(sub.begin);
-      let end = this.parseDateCL(sub.end);
+      let start = this.parseLocalDate(sub.begin);
+      let end = this.parseLocalDate(sub.end);
 
       // =========================================
       // 🔥 AJUSTAR POR FILTRO (CLAVE)
       // =========================================
 
       if (this.dateFrom && this.dateTo) {
-        const from = this.parseDateCL(this.dateFrom);
-        const to = this.parseDateCL(this.dateTo);
+        const from = this.parseLocalDate(this.dateFrom);
+        const to = this.parseLocalDate(this.dateTo);
 
         // 🔥 cortar inicio
         if (start < from) start = from;
@@ -818,8 +803,12 @@ export class TeleworkReportUserComponent {
       // 🔁 GENERAR DÍAS
       // =========================================
 
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const current = this.parseDateCL(d);
+      for (
+        let d = this.parseLocalDate(start);
+        d <= end;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const current = this.parseLocalDate(d);
 
         // 🚫 nunca futuro
         if (current > today) continue;
@@ -839,7 +828,7 @@ export class TeleworkReportUserComponent {
         );
 
         if (!ingreso) {
-          const dIng = new Date(d);
+          const dIng = this.parseLocalDate(d);
           dIng.setHours(0, 0, 0);
 
           result.push({
@@ -850,7 +839,7 @@ export class TeleworkReportUserComponent {
         }
 
         if (!salida) {
-          const dSal = new Date(d);
+          const dSal = this.parseLocalDate(d);
           dSal.setHours(0, 0, 0);
 
           result.push({
@@ -864,15 +853,15 @@ export class TeleworkReportUserComponent {
 
     return result.sort(
       (a, b) =>
-        new Date(a.register_datetime).getTime() -
-        new Date(b.register_datetime).getTime(),
+        this.parseLocalDate(a.register_datetime).getTime() -
+        this.parseLocalDate(b.register_datetime).getTime(),
     );
   }
 
   formatTimeCL(date: any, isVirtual?: boolean): string {
     if (isVirtual) return '00:00';
 
-    const d = new Date(date); // aquí sí, porque hora real
+    const d = this.parseLocalDate(date); // aquí sí, porque hora real
 
     const h = d.getHours().toString().padStart(2, '0');
     const m = d.getMinutes().toString().padStart(2, '0');
@@ -881,7 +870,7 @@ export class TeleworkReportUserComponent {
   }
 
   formatDateTimeCL(date: any) {
-    const d = new Date(date);
+    const d = this.parseLocalDate(date);
 
     return {
       fecha: d.toLocaleDateString('es-CL'),
@@ -891,18 +880,6 @@ export class TeleworkReportUserComponent {
         hour12: false,
       }),
     };
-  }
-
-  toLocalDate(date: any): Date {
-    if (!date) return new Date();
-
-    // 🔥 si viene ISO (backend)
-    if (typeof date === 'string' && date.includes('T')) {
-      const [y, m, d] = date.split('T')[0].split('-');
-      return new Date(+y, +m - 1, +d);
-    }
-
-    return new Date(date);
   }
 
   trackByFn(index: number, item: any) {
@@ -952,13 +929,13 @@ export class TeleworkReportUserComponent {
       // 🔥 FILTRAR POR PERÍODO (SI EXISTE)
       const worksFiltered = this.allWorks
         .filter((w: any) => {
-          const d = new Date(w.createdAt);
+          const d = this.parseLocalDate(w.createdAt);
 
           if (this.dateFrom && this.dateTo) {
-            const from = new Date(this.dateFrom);
+            const from = this.parseLocalDate(this.dateFrom);
             from.setHours(0, 0, 0, 0);
 
-            const to = new Date(this.dateTo);
+            const to = this.parseLocalDate(this.dateTo);
             to.setHours(23, 59, 59, 999);
 
             return d >= from && d <= to;
@@ -968,7 +945,8 @@ export class TeleworkReportUserComponent {
         })
         .sort((a: any, b: any) => {
           return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            this.parseLocalDate(a.createdAt).getTime() -
+            this.parseLocalDate(b.createdAt).getTime()
           );
         });
 
@@ -979,7 +957,7 @@ export class TeleworkReportUserComponent {
 
       // 🔥 MAPEO
       const data = worksFiltered.map((w: any) => {
-        const d = new Date(w.createdAt);
+        const d = this.parseLocalDate(w.createdAt);
 
         return {
           fecha: this.formatDateCL(d),
@@ -1090,34 +1068,6 @@ export class TeleworkReportUserComponent {
     return `${d}/${m}/${y}`;
   }
 
-  parseLocalDate(value: string | Date): Date {
-    if (!value) return new Date();
-
-    // 🔥 si ya es Date
-    if (value instanceof Date) {
-      return new Date(
-        value.getFullYear(),
-        value.getMonth(),
-        value.getDate(),
-        value.getHours(),
-        value.getMinutes(),
-        value.getSeconds(),
-      );
-    }
-
-    // 🔥 si es string
-    const [datePart, timePart] = value.split('T');
-    const [y, m, d] = datePart.split('-').map(Number);
-
-    if (!timePart) {
-      return new Date(y, m - 1, d);
-    }
-
-    const [h, min, s] = timePart.split(':').map(Number);
-
-    return new Date(y, m - 1, d, h || 0, min || 0, s || 0);
-  }
-
   formatToLocalISOString(date: Date): string {
     const y = date.getFullYear();
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -1136,11 +1086,73 @@ export class TeleworkReportUserComponent {
     this.dateTo = null;
   }
 
-
   onDateFocus(): void {
     this.month = null;
     this.year = null;
 
     this.clearResults(); // 🔥 limpieza completa
-  }  
+  }
+
+  parseLocalDate(
+    value?: string | Date | number,
+    month?: number,
+    day?: number,
+    hour: number = 0,
+    minute: number = 0,
+    second: number = 0,
+    ms: number = 0,
+  ): Date {
+    // 🔥 sin argumentos → ahora
+    if (value === undefined) {
+      return this.timeService.getServerTime();
+    }
+
+    // 🔥 overload tipo new Date(y,m,d)
+    if (typeof value === 'number') {
+      return new Date(value, month || 0, day || 1, hour, minute, second, ms);
+    }
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours(),
+        value.getMinutes(),
+        value.getSeconds(),
+        value.getMilliseconds(),
+      );
+    }
+
+    // 🔥 string ISO
+    const [datePart, timePart] = value.split('T');
+
+    const [y, m, d] = datePart.split('-').map(Number);
+
+    if (!timePart) {
+      return new Date(y, m - 1, d);
+    }
+
+    const [h, min, s] = timePart.split(':').map(Number);
+
+    return new Date(y, m - 1, d, h || 0, min || 0, s || 0);
+  }
+
+  getLocalDateString(date: Date): string {
+    const y = date.getFullYear();
+
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+
+    const d = String(date.getDate()).padStart(2, '0');
+
+    return `${y}-${m}-${d}`;
+  }
+
+  isSameDay(d1: any, d2: any): boolean {
+    return (
+      this.getLocalDateString(this.parseLocalDate(d1)) ===
+      this.getLocalDateString(this.parseLocalDate(d2))
+    );
+  }
 }

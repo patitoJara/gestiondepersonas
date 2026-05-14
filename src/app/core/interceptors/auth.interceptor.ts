@@ -20,6 +20,7 @@ const PUBLIC_URLS = [
   '/auth/refresh',
   '/auth/register',
   '/users/recover-password',
+  '/notifications/send-email',
 ];
 
 // 🔁 Control refresh concurrente
@@ -132,12 +133,37 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
 
         catchError((refreshError) => {
+
+
+  console.error('💥 REFRESH ERROR:', refreshError);
+
+  console.error('💥 STATUS:', refreshError.status);
+
+  console.error('💥 URL:', req.url);
+
+  console.error('💥 BODY:', refreshError.error);
+
+  refreshSubject.next(null);
+
+  isRefreshing = false;
+
+  // 🚫 TEMPORALMENTE DESACTIVADO
+  // tokenService.clear();
+  // authService.logout?.();
+
+  debugger;
+
+  return throwError(() => refreshError);
+  
+  /*
           console.error('❌ Refresh falló → logout');
           refreshSubject.next(null); // 🔥 libera a los que esperan
           isRefreshing = false; // 🔥 por si acaso (además del finalize)
           tokenService.clear();
           authService.logout?.(); // opcional si tienes método de logout
           return throwError(() => refreshError);
+
+*/          
         }),
 
         finalize(() => {

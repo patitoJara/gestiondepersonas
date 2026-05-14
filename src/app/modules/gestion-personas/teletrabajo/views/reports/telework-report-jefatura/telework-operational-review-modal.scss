@@ -1,0 +1,361 @@
+/* =========================================================
+   🔷 MODAL CONTAINER
+========================================================= */
+
+.review-modal-container {
+  display: flex;
+  flex-direction: column;
+
+  gap: 18px;
+
+  padding: 24px;
+
+  min-width: 760px;
+  max-width: 920px;
+
+  background: #f4f7fb;
+}
+
+/* =========================================================
+   🔷 HEADER
+========================================================= */
+
+.review-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding-bottom: 14px;
+
+  border-bottom: 1px solid #dbe5f1;
+}
+
+.review-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  mat-icon {
+    width: 42px;
+    height: 42px;
+
+    font-size: 42px;
+
+    color: #1565c0;
+  }
+
+  h2 {
+    margin: 0;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    color: #0d47a1;
+  }
+
+  span {
+    display: block;
+
+    margin-top: 2px;
+
+    font-size: 13px;
+
+    color: #607d8b;
+  }
+}
+
+/* =========================================================
+   🔷 SECTION
+========================================================= */
+
+.review-section {
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  padding: 18px;
+
+  border: 1px solid #dfe7f1;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+/* =========================================================
+   🔷 SECTION TITLE
+========================================================= */
+
+.section-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 16px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #1565c0;
+
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+
+  mat-icon {
+    color: #1565c0;
+
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* =========================================================
+   🔷 GRID
+========================================================= */
+
+.review-grid {
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
+  gap: 14px;
+}
+
+/* =========================================================
+   🔷 ITEM
+========================================================= */
+
+.review-item {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  padding: 10px;
+
+  border-radius: 12px;
+
+  background: linear-gradient(
+    180deg,
+    #f8fbff 0%,
+    #eef5ff 100%
+  );
+
+  border: 1px solid #d6e6fb;
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    color: #607d8b;
+  }
+
+  strong {
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #0f172a;
+
+    word-break: break-word;
+  }
+}
+
+/* =========================================================
+   🔷 FULL WIDTH
+========================================================= */
+
+.full-width {
+  width: 100%;
+}
+
+/* =========================================================
+   🔷 MATERIAL FIXES
+========================================================= */
+
+::ng-deep .review-modal-container {
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+
+  .mdc-text-field--outlined {
+    border-radius: 14px !important;
+
+    background: #fff;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background: #fff;
+  }
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: #c8d7eb !important;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background: transparent !important;
+  }
+
+  .mat-mdc-select-value {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+}
+
+/* =========================================================
+   🔷 ACTIONS
+========================================================= */
+
+.review-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 12px;
+
+  margin-top: 8px;
+}
+
+/* =========================================================
+   🔷 BUTTONS
+========================================================= */
+
+.btn {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: none;
+  outline: none;
+
+  border-radius: 12px;
+
+  padding: 12px 18px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.btn mat-icon {
+  font-size: 18px;
+
+  width: 18px;
+  height: 18px;
+}
+
+/* =========================================================
+   🔷 BTN GREEN
+========================================================= */
+
+.btn-green {
+  background: linear-gradient(
+    135deg,
+    #2e7d32 0%,
+    #43a047 100%
+  );
+
+  color: white;
+
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+
+  &:hover {
+    transform: translateY(-1px);
+
+    box-shadow: 0 6px 18px rgba(46, 125, 50, 0.35);
+  }
+}
+
+/* =========================================================
+   🔷 BTN GRAY
+========================================================= */
+
+.btn-gray {
+  background: #e2e8f0;
+
+  color: #334155;
+
+  &:hover {
+    background: #cbd5e1;
+  }
+}
+
+/* =========================================================
+   🔷 RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .review-modal-container {
+    min-width: auto;
+
+    width: 100%;
+
+    padding: 18px;
+  }
+
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .review-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+
+.hours-preview {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 12px 16px;
+
+  border-radius: 14px;
+
+  font-weight: 700;
+
+  font-size: 15px;
+
+  width: fit-content;
+
+  &.ok {
+
+    background: #e8f5e9;
+
+    color: #2e7d32;
+  }
+
+  &.low {
+
+    background: #fff3e0;
+
+    color: #ef6c00;
+  }
+}

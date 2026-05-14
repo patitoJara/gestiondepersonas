@@ -2,27 +2,52 @@
 
   <div class="dialog-header">
     <mat-icon>edit</mat-icon>
-    <h2>{{ data?.title || 'Nueva actividad' }}</h2>
+
+    <div class="header-text">
+      <h2>{{ data?.title || 'Nueva actividad' }}</h2>
+
+      <span>
+        Registro de actividad operacional
+      </span>
+    </div>
   </div>
 
-  <div class="sirus-field">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Actividad</mat-label>
+  <div class="dialog-body">
+
+    <div class="ssm-field">
+
+      <label>Actividad</label>
 
       <textarea
         #txtArea
-        matInput
+        class="textarea-pro"
         [(ngModel)]="description"
-        rows="3"
+        rows="2"
         cdkTextareaAutosize
       ></textarea>
 
-    </mat-form-field>
+    </div>
+
   </div>
 
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button (click)="cancelar()">Cancelar</button>
-  <button mat-raised-button color="primary" (click)="guardar()">Guardar</button>
+<mat-dialog-actions class="dialog-actions">
+
+  <button
+    class="btn btn-sm btn-gray"
+    (click)="cancelar()"
+  >
+    <mat-icon>close</mat-icon>
+    Cancelar
+  </button>
+
+  <button
+    class="btn btn-sm btn-blue"
+    (click)="guardar()"
+  >
+    <mat-icon>save</mat-icon>
+    Guardar
+  </button>
+
 </mat-dialog-actions>

@@ -1,0 +1,228 @@
+<div class="import-container">
+  <!-- ========================================================= -->
+  <!-- 🔥 HEADER -->
+  <!-- ========================================================= -->
+
+  <div class="header-card">
+    <div class="header-left">
+      <div class="title">
+        <mat-icon>upload_file</mat-icon>
+        Importador masivo de afiliados
+      </div>
+
+      <div class="subtitle">
+        Carga y validación preliminar de afiliados desde TXT separado por ;
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="processTxt()"
+        [disabled]="loading || !txtContent"
+      >
+        <mat-icon>play_arrow</mat-icon>
+        Procesar
+      </button>
+
+      <button
+        mat-stroked-button
+        color="warn"
+        (click)="clearAll()"
+        [disabled]="loading"
+      >
+        <mat-icon>delete</mat-icon>
+        Limpiar
+      </button>
+    </div>
+  </div>
+
+  <div class="file-actions">
+    #fileInput type="file" accept=".txt,.csv" hidden
+    (change)="onFileSelected($event)" />
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="fileInput.nativeElement.click()"
+    >
+      <mat-icon>upload</mat-icon>
+      Seleccionar TXT
+    </button>
+
+    <!-- 🔥 ARCHIVO -->
+    <div class="selected-file" *ngIf="selectedFileName">
+      <mat-icon>description</mat-icon>
+
+      <span>{{ selectedFileName }}</span>
+    </div>
+
+    <button
+      class="btn-import"
+      (click)="importAll()"
+      [disabled]="loading || !results.length"
+    >
+      <mat-icon>cloud_upload</mat-icon>
+
+      Importar Usuarios
+    </button>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 🔥 TXT INPUT -->
+  <!-- ========================================================= -->
+
+  <mat-card class="panel-card">
+    <div class="panel-title">
+      <mat-icon>description</mat-icon>
+      Archivo TXT
+    </div>
+
+    <div class="panel-subtitle">
+      Pegue aquí el contenido del TXT separado por ;
+    </div>
+
+    <textarea
+      class="txt-area"
+      [(ngModel)]="txtContent"
+      placeholder="RUT;TIPO_AFILIADO;NOMBRE;FIRST_LAST_NAME..."
+    >
+    </textarea>
+
+    <div class="help-box">
+      <div>• Formato UTF-8</div>
+      <div>• Separador ;</div>
+      <div>• Primera línea debe contener headers</div>
+    </div>
+  </mat-card>
+
+  <!-- ========================================================= -->
+  <!-- 🔥 LOADING -->
+  <!-- ========================================================= -->
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- ========================================================= -->
+  <!-- 🔥 RESUMEN -->
+  <!-- ========================================================= -->
+
+  <div class="summary-grid" *ngIf="summary">
+    <div class="summary-card ok">
+      <mat-icon>check_circle</mat-icon>
+
+      <div>
+        <span>Válidos</span>
+        <strong>{{ summary.valid }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card warning">
+      <mat-icon>warning</mat-icon>
+
+      <div>
+        <span>Warnings</span>
+        <strong>{{ summary.warnings }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card error">
+      <mat-icon>cancel</mat-icon>
+
+      <div>
+        <span>Errores</span>
+        <strong>{{ summary.errors }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card total">
+      <mat-icon>groups</mat-icon>
+
+      <div>
+        <span>Total</span>
+        <strong>{{ summary.total }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 🔥 RESULTADOS -->
+  <!-- ========================================================= -->
+
+  <mat-card class="panel-card" *ngIf="results?.length">
+    <div class="panel-title">
+      <mat-icon>fact_check</mat-icon>
+      Resultado validación
+    </div>
+
+    <div class="table-wrapper">
+      <table class="import-table">
+        <thead>
+          <tr>
+            <th>Estado</th>
+
+            <th>RUT</th>
+
+            <th>Usuario</th>
+
+            <th>Password</th>
+
+            <th>Errores</th>
+
+            <th>Warnings</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let r of results">
+            <!-- 🔥 ESTADO -->
+            <td>
+              <div
+                class="status-badge"
+                [ngClass]="{
+                  ok: r.valid,
+                  error: !r.valid,
+                }"
+              >
+                <mat-icon>
+                  {{ r.valid ? "check_circle" : "cancel" }}
+                </mat-icon>
+
+                {{ r.valid ? "OK" : "ERROR" }}
+              </div>
+            </td>
+
+            <!-- 🔥 RUT -->
+            <td>
+              {{ r.rutOriginal }}
+            </td>
+
+            <!-- 🔥 USER -->
+            <td>
+              {{ r.username }}
+            </td>
+
+            <!-- 🔥 PASSWORD -->
+            <td>
+              {{ r.password }}
+            </td>
+
+            <!-- 🔥 ERRORES -->
+            <td>
+              <div class="msg error" *ngFor="let e of r.errors">
+                {{ e }}
+              </div>
+            </td>
+
+            <!-- 🔥 WARNINGS -->
+            <td>
+              <div class="msg warning" *ngFor="let w of r.warnings">
+                {{ w }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-card>
+</div>

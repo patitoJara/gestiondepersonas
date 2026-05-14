@@ -822,3 +822,109 @@ td {
   color: #757575;
   font-size: 14px;
 }
+
+/* --------------------------------------------------------------------------------------------------------
+Validacion por parte de la Jefatura
+------------------------------------------------------------------------------------------------------------------ */
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.critical {
+    color: #d32f2f;
+  }
+
+  &.review {
+    color: #f57c00;
+  }
+
+  &.ok {
+    color: #2e7d32;
+  }
+}
+
+.mark-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 88px;
+
+  padding: 4px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  background: #e8f5e9;
+  color: #2e7d32;
+
+  &.virtual {
+    background: #ffebee;
+    color: #d32f2f;
+  }
+}
+
+.activities-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 32px;
+  height: 28px;
+
+  padding: 0 10px;
+
+  border-radius: 999px;
+
+  background: #e3f2fd;
+  color: #1565c0;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  &.empty {
+    background: #ffebee;
+    color: #d32f2f;
+  }
+}
+
+/* 🔥 FILAS */
+
+.mat-mdc-row {
+  transition: all 0.2s ease;
+}
+
+.mat-mdc-row:hover {
+  background: #f5f9ff !important;
+}
+
+/* 🔥 CRITICAL */
+
+.row-critical {
+  background: #fff5f5 !important;
+  border-left: 4px solid #d32f2f;
+}
+
+/* 🔥 REVIEW */
+
+.row-review {
+  background: #fffaf0 !important;
+  border-left: 4px solid #f57c00;
+}
+
+/* 🔥 OK */
+
+.row-ok {
+  background: #f8fff8 !important;
+  border-left: 4px solid #2e7d32;
+}

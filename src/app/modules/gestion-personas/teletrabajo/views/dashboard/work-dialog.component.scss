@@ -1,113 +1,159 @@
-/* WRAPPER */
-.sirus-field {
-  border-radius: 12px;
-  background: #f5f7fa; /* 👈 más suave que gris */
-  padding: 10px;
-  border: 1px solid #e3e7ed; /* 👈 borde sutil */
-  transition: 0.2s;
-  margin-top: 4px; /* 👈 separa del header */
-}
+/* =========================================================
+   DIALOG
+========================================================= */
 
-.sirus-field:hover {
-  border-color: rgba(21, 101, 192, 0.3);
-}
+.dialog-content {
+  padding: 0 !important;
 
-.sirus-field:focus-within {
-  background: #ffffff;
-  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.15);
-  border-color: rgba(21, 101, 192, 0.4);
-}
+  background: white;
 
-/* MATERIAL FIX */
-.sirus-field .mat-mdc-text-field-wrapper {
-  background: transparent !important;
-}
-/* TEXTAREA */
-.sirus-field textarea {
-  padding: 10px !important;
-}
-
-.dialog-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-mat-dialog-content {
-  padding: 16px 20px 20px 20px !important; /* 👈 top más chico */
-  background: #fafafa;
+  overflow: hidden;
 
   display: flex;
   flex-direction: column;
-  gap: 16px; /* 👈 más aire */
-
-  max-height: 300px;
-  overflow: auto;
-}
-mat-dialog-actions {
-  padding: 16px 20px !important;
-  border-top: 1px solid #eee;
-  background: #fafafa;
 }
 
-/* TEXTAREA PRO */
-textarea.mat-mdc-input-element {
-  padding: 12px 10px !important;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.sirus-dialog .mdc-dialog__surface {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.mat-mdc-form-field {
-  width: 100%;
-}
-
-/* FIX MATERIAL PARA TEXTAREA */
-
-.sirus-field .mat-mdc-text-field-wrapper {
-  background: #f8fafc;
-}
-
-.sirus-dialog .mat-mdc-text-field-wrapper {
-  min-height: 56px;
-  height: auto;
-}
-
-textarea.mat-mdc-input-element {
-  height: auto !important;
-  line-height: 1.4 !important;
-  padding: 10px 0 !important;
-}
-
-.mat-mdc-form-field textarea {
-  margin-top: 6px;
-}
-
-.sirus-dialog .sirus-field .mdc-notched-outline__notch {
-  border-top: none !important;
-}
+/* =========================================================
+   HEADER
+========================================================= */
 
 .dialog-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 
-  padding: 16px 20px;
-  background: #91ad6e;
-  color: rgb(12, 17, 19);
+  padding: 18px 22px;
+
+  background: linear-gradient(
+    135deg,
+    #1565c0,
+    #0d47a1
+  );
+
+  color: white;
 }
 
 .dialog-header mat-icon {
-  color: #bbdefb;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+
+  color: #e3f2fd;
 }
 
-.dialog-header h2 {
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-text h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+
+  font-size: 18px;
+  font-weight: 700;
 }
 
+.header-text span {
+  font-size: 12px;
+
+  opacity: 0.9;
+}
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.dialog-body {
+  padding: 16px 18px 12px 18px;
+}
+
+/* =========================================================
+   FIELD
+========================================================= */
+
+.ssm-field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  gap: 8px;
+}
+
+.ssm-field label {
+  font-size: 13px;
+  font-weight: 700;
+
+  color: #1565c0;
+}
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.textarea-pro {
+  width: 100%;
+
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  min-height: 72px;
+
+  resize: none;
+
+  border: 1px solid #cfd8e3;
+  border-radius: 18px;
+
+  background: white;
+
+  padding: 14px 16px;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.textarea-pro:focus {
+  outline: none;
+
+  border-color: #1565c0;
+
+  box-shadow:
+    0 0 0 3px rgba(21, 101, 192, 0.12);
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.dialog-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 12px;
+
+  padding: 12px 22px !important;
+
+  border-top: 1px solid #edf2f7;
+
+  background: white;
+}
+
+/* =========================================================
+   SURFACE
+========================================================= */
+
+.sirus-dialog .mdc-dialog__surface {
+  border-radius: 24px !important;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.18);
+}
