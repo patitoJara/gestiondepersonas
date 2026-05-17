@@ -39,13 +39,18 @@
   </div>
 
   <div class="file-actions">
-    #fileInput type="file" accept=".txt,.csv" hidden
-    (change)="onFileSelected($event)" />
+    <input
+      #fileInput
+      type="file"
+      accept=".txt,.csv"
+      hidden
+      (change)="onFileSelected($event)"
+    />
 
     <button
       mat-raised-button
       color="primary"
-      (click)="fileInput.nativeElement.click()"
+      (click)="fileInput.click()"
     >
       <mat-icon>upload</mat-icon>
       Seleccionar TXT
@@ -60,7 +65,7 @@
 
     <button
       class="btn-import"
-      (click)="importAll()"
+      (click)="processImport()"
       [disabled]="loading || !results.length"
     >
       <mat-icon>cloud_upload</mat-icon>

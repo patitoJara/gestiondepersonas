@@ -67,17 +67,12 @@
             <div class="ssm-grid-afiliado">
               <div class="ssm-field">
                 <label>RUT</label>
+
                 <input
-                  class="input rut"
+                  class="input ssm-readonly"
                   formControlName="rut"
                   maxlength="12"
-                  inputmode="numeric"
-                  autocomplete="off"
-                  [class.invalid]="
-                    form.get('rut')?.touched && form.get('rut')?.invalid
-                  "
-                  (input)="procesarRut($event)"
-                  (blur)="onRutCompleto()"
+                  readonly
                 />
               </div>
 
@@ -98,7 +93,6 @@
                   readonly
                 />
               </div>
-
               <div class="ssm-field">
                 <label>Teléfono</label>
                 <input class="input" formControlName="telefono" />
@@ -107,28 +101,57 @@
               <div class="ssm-field">
                 <label>Correo institucional</label>
                 <input
-                  class="input"
+                  class="input ssm-readonly"
                   type="email"
                   formControlName="email"
-                  autocomplete="off"
-                  (blur)="completarCorreo()"
+                  readonly
                 />
               </div>
             </div>
             <div class="ssm-grid-3">
+              <!-- ===================================== -->
+              <!-- 🔥 FECHA NACIMIENTO -->
+              <!-- ===================================== -->
+
               <div class="ssm-field">
                 <label>Fecha nacimiento</label>
-                <input class="input" />
+
+                <mat-form-field class="ssm-datepicker">
+                  <input
+                    matInput
+                    [matDatepicker]="birthPicker"
+                    formControlName="fechaNacimiento"
+                    placeholder="Seleccione fecha"
+                  />
+
+                  <mat-datepicker-toggle matIconSuffix [for]="birthPicker">
+                  </mat-datepicker-toggle>
+
+                  <mat-datepicker #birthPicker></mat-datepicker>
+                </mat-form-field>
               </div>
+
+              <!-- ===================================== -->
+              <!-- 🔥 SEXO -->
+              <!-- ===================================== -->
 
               <div class="ssm-field">
                 <label>Sexo</label>
-                <input class="input" />
+
+                <select class="input" formControlName="sexo">
+                  <option *ngFor="let s of sexos" [value]="s.id">
+                    {{ s.name }}
+                  </option>
+                </select>
               </div>
+
+              <!-- ===================================== -->
+              <!-- 🔥 DIRECCIÓN -->
+              <!-- ===================================== -->
 
               <div class="ssm-field">
                 <label>Dirección</label>
-                <input class="input" />
+                <input class="input" formControlName="direccion" />
               </div>
             </div>
           </div>
@@ -137,48 +160,134 @@
           <div class="ssm-section">
             <div class="ssm-title">Datos institucionales</div>
 
-            <div class="ssm-grid-3">
+            <div class="ssm-grid-4">
+              <!-- 🔥 TIPO AFILIADO -->
+
               <div class="ssm-field">
                 <label>Tipo afiliado</label>
-                <input
-                  class="input ssm-readonly"
-                  [value]="afiliado?.tipo"
-                  readonly
-                />
+
+                <select class="input" formControlName="tipoAfiliado">
+                  <option [ngValue]="null">Seleccione</option>
+
+                  <option value="ACTIVO">ACTIVO</option>
+
+                  <option value="PASIVO">PASIVO</option>
+                </select>
               </div>
+
+              <!-- 🔥 CALIDAD CONTRACTUAL -->
+
+              <div class="ssm-field">
+                <label>Calidad contractual</label>
+
+                <select class="input" formControlName="calidadContractual">
+                  <option [ngValue]="null">Seleccione</option>
+
+                  <option value="CONTRATA">CONTRATA</option>
+
+                  <option value="PLANTA">PLANTA</option>
+
+                  <option value="HONORARIOS">HONORARIOS</option>
+                </select>
+              </div>
+
+              <!-- 🔥 ESTABLECIMIENTO -->
 
               <div class="ssm-field">
                 <label>Establecimiento</label>
-                <input
-                  class="input ssm-readonly"
-                  [value]="afiliado?.estabNombre"
-                  readonly
-                />
+
+                <select class="input" formControlName="establecimiento">
+                  <option [ngValue]="null">Seleccione</option>
+
+                  <option *ngFor="let e of establecimientos" [ngValue]="e.id">
+                    {{ e.name }}
+                  </option>
+                </select>
               </div>
+
+              <!-- 🔥 FECHA CONTRATACIÓN -->
+
+              <div class="ssm-field">
+                <label>Fecha contratación</label>
+
+                <mat-form-field class="birth-field">
+                  <input
+                    matInput
+                    [matDatepicker]="contractPicker"
+                    formControlName="fechaContratacion"
+                    placeholder="Seleccione fecha"
+                  />
+
+                  <mat-datepicker-toggle matIconSuffix [for]="contractPicker">
+                  </mat-datepicker-toggle>
+
+                  <mat-datepicker #contractPicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- 🔥 SEGUNDA FILA -->
+
+            <div class="ssm-grid-2">
+              <!-- 🔥 FECHA AFILIACIÓN -->
 
               <div class="ssm-field">
                 <label>Fecha afiliación</label>
-                <input
-                  class="input ssm-readonly"
-                  [value]="afiliado?.fechaAfiliacion"
-                  readonly
-                />
+
+                <mat-form-field class="birth-field">
+                  <input
+                    matInput
+                    [matDatepicker]="affiliatePicker"
+                    formControlName="fechaAfiliacion"
+                    placeholder="Seleccione fecha"
+                  />
+
+                  <mat-datepicker-toggle matIconSuffix [for]="affiliatePicker">
+                  </mat-datepicker-toggle>
+
+                  <mat-datepicker #affiliatePicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+
+              <!-- 🔥 HOGAR MONOPARENTAL -->
+
+              <div class="ssm-field">
+                <label>¿Hogar monoparental?</label>
+
+                <div class="ssm-radio-group">
+                  <label class="ssm-radio">
+                    <input
+                      type="radio"
+                      formControlName="hogarMonoparental"
+                      [value]="true"
+                    />
+
+                    <span>Sí</span>
+                  </label>
+
+                  <label class="ssm-radio">
+                    <input
+                      type="radio"
+                      formControlName="hogarMonoparental"
+                      [value]="false"
+                    />
+
+                    <span>No</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 🔹 BOTÓN (AHORA CORRECTO) -->
-          <div class="actions">
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-              [disabled]="!afiliadoValido || form.invalid"
-            >
-              Continuar
-            </button>
-          </div>
+          <button
+            type="button"
+            mat-raised-button
+            class="btn-primary"
+            (click)="nextStep()"
+          >
+            Continuar
+          </button>
         </div>
       </div>
 
@@ -208,6 +317,10 @@
             Agregar integrante
           </button>
         </div>
+
+        <!-- 🔥 COMPOSICIÓN FAMILIAR -->
+        <!-- 🔥 COMPOSICIÓN FAMILIAR -->
+
         <!-- 🔹 LISTA DINÁMICA -->
         <div class="family-list">
           <div
@@ -223,9 +336,15 @@
               <div class="title">
                 <mat-icon>person</mat-icon>
                 <span>Integrante familiar {{ i + 1 }}</span>
+
+                <div *ngIf="i === 0" class="titular-badge">
+                  Titular / Funcionario
+                </div>
+                <div *ngIf="i > 0" class="pasivo-badge">PASIVO</div>
               </div>
 
               <button
+                *ngIf="!f.titular"
                 mat-icon-button
                 color="warn"
                 (click)="eliminarFamiliar(i); $event.stopPropagation()"
@@ -237,9 +356,14 @@
             <!-- RESUMEN -->
             <div *ngIf="!f.open" class="mini-summary">
               <mat-icon>info</mat-icon>
+
               <span>
-                {{ f.nombre || "Sin nombre" }} -
-                {{ getParentTypeName(f.parentTypeId) }}
+                {{ f.nombre || "Sin nombre" }}
+
+                <ng-container *ngIf="f.parentTypeId">
+                  -
+                  {{ getParentTypeName(f.parentTypeId) }}
+                </ng-container>
               </span>
             </div>
 
@@ -250,57 +374,86 @@
               <div class="ssm-grid-6">
                 <div class="ssm-field">
                   <label>RUT</label>
+
                   <input
                     class="input rut"
                     [(ngModel)]="f.rut"
                     [ngModelOptions]="{ standalone: true }"
-                    (input)="procesarRut($event, f)"
-                    (blur)="validarRutGeneral(f)"
+                    [readonly]="f.titular"
+                    [class.readonly-field]="f.titular"
+                    (keydown.enter)="
+                      $event.preventDefault();
+                      !f.titular && validarRutGeneral(f)
+                    "
+                    (input)="!f.titular && procesarRut($event, f)"
+                    (blur)="!f.titular && validarRutGeneral(f)"
                   />
+
+                  <!-- 🔥 ENCONTRADO -->
+                  <div *ngIf="f.existsInUsers" class="rut-found">
+                    <mat-icon>check_circle</mat-icon>
+                    Datos encontrados en sistema
+                  </div>
+
+                  <!-- 🔥 NO ENCONTRADO -->
+                  <div *ngIf="f.notFound" class="rut-not-found">
+                    <mat-icon>warning</mat-icon>
+                    Usuario no encontrado. Complete antecedentes manualmente.
+                  </div>
                 </div>
                 <div class="ssm-field">
                   <label>Nombres</label>
+
                   <input
-                    class="input nombre"
+                    class="input"
                     [(ngModel)]="f.nombre"
                     [ngModelOptions]="{ standalone: true }"
+                    [readonly]="f.titular"
+                    [class.readonly-field]="f.titular"
                   />
                 </div>
                 <div class="ssm-field">
                   <label>Apellidos</label>
+
                   <input
-                    class="input edad"
-                    [(ngModel)]="f.edad"
+                    class="input"
+                    [(ngModel)]="f.apellido"
                     [ngModelOptions]="{ standalone: true }"
-                    type="number"
+                    [readonly]="f.titular"
+                    [class.readonly-field]="f.titular"
                   />
                 </div>
+                <div class="ssm-field">
+                  <label>Fecha nacimiento</label>
 
+                  <input
+                    class="input"
+                    type="date"
+                    [(ngModel)]="f.birthDate"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </div>
                 <div class="ssm-field">
                   <label>Previsión</label>
+
                   <select
                     class="input"
                     [(ngModel)]="f.previtionId"
                     [ngModelOptions]="{ standalone: true }"
-                    placeholder="Previsión"
                   >
-                    <mat-option *ngFor="let p of previtions" [value]="p.id">
+                    <option *ngFor="let p of previtions" [ngValue]="p.id">
                       {{ p.name }}
-                    </mat-option>
+                    </option>
                   </select>
                 </div>
                 <div class="ssm-field">
-                  <label>Tipo de Ingreso</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.contractTypeId"
-                    [ngModelOptions]="{ standalone: true }"
-                    placeholder="Tipo de ingreso"
-                  >
-                    <mat-option *ngFor="let c of contractTypes" [value]="c.id">
-                      {{ c.name }}
-                    </mat-option>
-                  </select>
+                  <label>Condición integrante</label>
+
+                  <input
+                    class="input ssm-readonly"
+                    [value]="i === 0 ? form.value.calidadContractual : 'PASIVO'"
+                    readonly
+                  />
                 </div>
               </div>
 
@@ -371,20 +524,6 @@
                     <option [ngValue]="null">Seleccione</option>
                     <option *ngFor="let e of studies" [ngValue]="e.id">
                       {{ e.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ssm-field">
-                  <label>¿Dónde estudia?</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.estudiaRegion"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option [ngValue]="null">Seleccione</option>
-                    <option *ngFor="let r of estudiaenlaRegion" [ngValue]="r">
-                      {{ r }}
                     </option>
                   </select>
                 </div>
@@ -1214,11 +1353,7 @@
               <div class="ssm-field">
                 <label>Tipo de inmueble</label>
 
-                <select
-                  class="input"
-                  [(ngModel)]="tipoVivienda"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <select class="input" formControlName="tipoVivienda">
                   <option [ngValue]="null">Seleccione</option>
 
                   <option *ngFor="let t of typesHousing" [ngValue]="t.id">
@@ -1231,11 +1366,7 @@
               <div class="ssm-field">
                 <label>Tipo tenencia inmueble</label>
 
-                <select
-                  class="input"
-                  [(ngModel)]="tipoPropiedad"
-                  [ngModelOptions]="{ standalone: true }"
-                >
+                <select class="input" formControlName="tipoPropiedad">
                   <option [ngValue]="null">Seleccione</option>
 
                   <option *ngFor="let t of typesProperties" [ngValue]="t.id">
@@ -1253,8 +1384,7 @@
                 <textarea
                   class="ssm-textarea"
                   rows="3"
-                  [(ngModel)]="infoVivienda"
-                  [ngModelOptions]="{ standalone: true }"
+                  formControlName="infoVivienda"
                 ></textarea>
               </div>
 
@@ -1264,8 +1394,7 @@
                 <textarea
                   class="ssm-textarea"
                   rows="3"
-                  [(ngModel)]="otrosAntecedentes"
-                  [ngModelOptions]="{ standalone: true }"
+                  formControlName="otrosAntecedentes"
                 ></textarea>
               </div>
             </div>
@@ -1557,6 +1686,21 @@
               <strong>Grado:</strong>
               {{ form.value.grado }}
             </div>
+
+            <div>
+              <strong>Calidad contractual:</strong>
+              {{ form.value.calidadContractual }}
+            </div>
+
+            <div>
+              <strong>Fecha contratación:</strong>
+              {{ form.value.fechaContratacion }}
+            </div>
+
+            <div>
+              <strong>Hogar monoparental:</strong>
+              {{ form.value.hogarMonoparental ? "Sí" : "No" }}
+            </div>
           </div>
         </div>
 
@@ -1607,9 +1751,21 @@
             </button>
           </div>
 
-          <div *ngFor="let f of grupoFamiliar" class="resume-row">
-            {{ f.nombre }} - {{ getParentTypeName(f.parentTypeId) }} -
-            {{ f.edad }} años
+          <div
+            *ngFor="let f of grupoFamiliar; let i = index"
+            class="resume-row"
+          >
+            <strong>
+              {{ f.nombre }}
+            </strong>
+
+            -
+
+            {{ getParentTypeName(f.parentTypeId) }}
+
+            -
+
+            {{ i === 0 ? form.value.calidadContractual : "PASIVO" }}
           </div>
         </div>
 
@@ -1851,7 +2007,9 @@
             <div class="item">
               <span>Total ingresos</span>
               <strong>
-                {{ totalIngresos | currency: "CLP" : "symbol" : "1.0-0" }}
+                {{
+                  totalIngresosFamiliares | currency: "CLP" : "symbol" : "1.0-0"
+                }}
               </strong>
             </div>
 

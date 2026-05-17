@@ -1,11 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,41 +9,29 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDialog } from '@angular/material/dialog';
-import { ViewChild, ElementRef } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import html2pdf from 'html2pdf.js';
-import { FormArray, FormControl } from '@angular/forms';
-
+import { FormArray } from '@angular/forms';
 import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dialog-ok.component';
-
-import { TypePropertyService } from '@app/core/services/type-property.service';
+import { AcademicBackgroundRequest } from '../postulacion-estudios/models/academic-background-request.model';
 import { TypeProperty } from '@app/core/models/type-property.model';
-import { TypeHousingService } from '@app/core/services/type-housing.service';
 import { TypeHousing } from '@app/core/models/type-housing.model';
-import { StudyService } from '@app/core/services/study.service';
 import { Study } from '@app/core/models/study.model';
-import { StablishmentService } from '@app/core/services/stablishment.service';
 import { Stablishment } from '@app/core/models/stablishment.model';
-import { PrevitionService } from '@app/core/services/prevition.service';
 import { Prevition } from '@app/core/models/prevition.model';
-import { ParentTypeService } from '@app/core/services/parent-type.service';
 import { ParentType } from '@app/core/models/parent-type.model';
-import { ContractTypeService } from '@app/core/services/contract-type.service';
 import { ContractType } from '@app/core/models/contract-type.model';
-import { CivilStateService } from '@app/core/services/civil-state.service';
 import { CivilState } from '@app/core/models/civil-state.model';
-import { BillTypeService } from '@app/core/services/bill-type.service';
 import { BillType } from '@app/core/models/bill-type.model';
-import { ActivityService } from '@app/core/services/activity.service';
 import { Activity } from '@app/core/models/activity.model';
-import { WorkPlaceService } from '@app/core/services/work-place.service';
 import { WorkPlace } from '@app/core/models/work-place.model';
-import { GradeService } from '@app/core/services/grade.service';
 import { Grade } from '@app/core/models/grade.model';
-
+import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { firstValueFrom } from 'rxjs';
-
+import { TokenService } from '@app/core/services/token.service';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { WellbeingPostulationService } from './services/wellbeing-postulation.service';
 import { WellbeingCatalogsService } from './services/wellbeing-catalogs.service';
 import { WellbeingDocumentsService } from './services/wellbeing-documents.service';
@@ -60,25 +43,17 @@ import { WellbeingStateService } from './services/wellbeing-state.service';
 import { WellbeingValidationService } from './services/wellbeing-validation.service';
 import { WellbeingErrorService } from './services/wellbeing-error.service';
 import { WellbeingFormatService } from './services/wellbeing-format.service';
-import { WellbeingArrayService } from './services/wellbeing-array.service';
-import { WellbeingDialogService } from './services/wellbeing-dialog.service';
 import { WellbeingCalculationService } from './services/wellbeing-calculation.service';
 import { WellbeingStepService } from './services/wellbeing-step.service';
-import { WellbeingLogService } from './services/wellbeing-log.service';
-import { WellbeingLoadingService } from './services/wellbeing-loading.service';
 import { WellbeingDateService } from './services/wellbeing-date.service';
-import { WellbeingCacheService } from './services/wellbeing-cache.service';
-import { WellbeingTextService } from './services/wellbeing-text.service';
 import { WellbeingPermissionService } from './services/wellbeing-permission.service';
 import { WellbeingFileService } from './services/wellbeing-file.service';
-import { WellbeingUiService } from './services/wellbeing-ui.service';
+
 import { WellbeingAutosaveService } from './services/wellbeing-autosave.service';
 import { WellbeingSummaryService } from './services/wellbeing-summary.service';
 import { WellbeingFormService } from './services/wellbeing-form.service';
-import { WellbeingFilterService } from './services/wellbeing-filter.service';
-import { WellbeingNotificationService } from './services/wellbeing-notification.service';
-import { WellbeingExportService } from './services/wellbeing-export.service';
-import { WellbeingSessionService } from './services/wellbeing-session.service';
+
+import { PostulationResumeDialogComponent } from '../postulacion-estudios/postulation-resume-dialog.component';
 
 interface Step {
   id: number;
@@ -101,20 +76,29 @@ interface DocumentoOpcional {
 interface Familiar {
   id: number;
   rut: string;
-  edad: number | null;
   nombre: string;
-
+  apellido: string;
   parentTypeId?: number;
   civilStateId?: number;
   activityId?: number;
   workPlaceId?: number;
   studyId?: number;
   previtionId?: number;
-  contractTypeId?: number;
-
-  estudiaRegion?: string; // 🔥 ESTE FALTABA
-
+  estudiaRegion?: string;
   open?: boolean;
+  birthDate?: string | null;
+
+  // =====================================
+  // 🔥 NUEVOS FLAGS
+  // =====================================
+
+  titular?: boolean;
+  existsInUsers?: boolean;
+  mustCreatePassive?: boolean;
+  source?: 'AUTH' | 'USERS' | 'MANUAL';
+  searching?: boolean;
+  notFound?: boolean;
+  isComplete?: boolean;
 }
 
 interface Salud {
@@ -159,12 +143,15 @@ interface IngresoFamiliar {
     MatIconModule,
     MatTooltipModule,
     FormsModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
   ],
   templateUrl: './postulation-form.component.html',
   styleUrl: './postulation-form.component.scss',
 })
 export class PostulationFormComponent {
   @ViewChild('fileInputExtra') fileInputExtra!: ElementRef;
+
   form: FormGroup;
   studies: Study[] = [];
   stablishments: Stablishment[] = [];
@@ -179,18 +166,16 @@ export class PostulationFormComponent {
   typesProperties: TypeProperty[] = [];
   grades: Grade[] = [];
 
-  tipoVivienda: any = null;
-  tipoPropiedad: any = null;
-  infoVivienda: string = '';
-  otrosAntecedentes: string = '';
-
   activeIndex: number | null = null;
   salud: Salud[] = [];
+  tipoPostulante: string = '';
 
   today = new Date();
 
   codigoPostulacion = 'POST-' + Date.now();
   comentario: string = '';
+
+  loadingAffiliate = false;
 
   academico = {
     institucion: '',
@@ -327,25 +312,57 @@ export class PostulationFormComponent {
     },
   ];
 
-  tipoPostulante = 'afiliado';
+  sexos = [
+    { id: 1, name: 'Masculino' },
+    { id: 2, name: 'Femenino' },
+  ];
+
+  tiposPostulante = [
+    { id: 1, name: 'Titular' },
+    { id: 2, name: 'Pasivo' },
+  ];
+
+  establecimientos: any[] = [
+    {
+      id: 1,
+      name: 'Hospital Clínico Magallanes',
+    },
+    {
+      id: 2,
+      name: 'Hospital Puerto Natales',
+    },
+    {
+      id: 3,
+      name: 'Hospital Porvenir',
+    },
+    {
+      id: 4,
+      name: 'Hospital Puerto Williams',
+    },
+    {
+      id: 5,
+      name: 'DSSM',
+    },
+  ];
+
+  tipoPostul: any[] = [
+    {
+      id: 1,
+      name: 'Activo',
+    },
+    {
+      id: 2,
+      name: 'Pasivo',
+    },
+  ];
 
   postulanteSeleccionado: any = null;
+
+  loggedUser: any;
 
   constructor(
     private fb: FormBuilder,
     private dialog: MatDialog,
-    private typePropertyService: TypePropertyService,
-    private typeHousingService: TypeHousingService,
-    private studyService: StudyService,
-    private stablishmentService: StablishmentService,
-    private previtionService: PrevitionService,
-    private parentTypeService: ParentTypeService,
-    private contractTypeService: ContractTypeService,
-    private civilStateService: CivilStateService,
-    private billTypeService: BillTypeService,
-    private activityService: ActivityService,
-    private workPlaceService: WorkPlaceService,
-    private gradeService: GradeService,
     private wellbeingPostulationService: WellbeingPostulationService,
     private wellbeingCatalogsService: WellbeingCatalogsService,
     private wellbeingDocumentsService: WellbeingDocumentsService,
@@ -357,25 +374,16 @@ export class PostulationFormComponent {
     private wellbeingValidationService: WellbeingValidationService,
     private wellbeingErrorService: WellbeingErrorService,
     private wellbeingFormatService: WellbeingFormatService,
-    private wellbeingArrayService: WellbeingArrayService,
-    private wellbeingDialogService: WellbeingDialogService,
     private wellbeingCalculationService: WellbeingCalculationService,
     private wellbeingStepService: WellbeingStepService,
-    private wellbeingLogService: WellbeingLogService,
-    private wellbeingLoadingService: WellbeingLoadingService,
     private wellbeingDateService: WellbeingDateService,
-    private wellbeingCacheService: WellbeingCacheService,
-    private wellbeingTextService: WellbeingTextService,
     private wellbeingPermissionService: WellbeingPermissionService,
     private wellbeingFileService: WellbeingFileService,
-    private wellbeingUiService: WellbeingUiService,
     private wellbeingAutosaveService: WellbeingAutosaveService,
     private wellbeingSummaryService: WellbeingSummaryService,
     private wellbeingFormService: WellbeingFormService,
-    private wellbeingFilterService: WellbeingFilterService,
-    private wellbeingNotificationService: WellbeingNotificationService,
-    private wellbeingExportService: WellbeingExportService,
-    private wellbeingSessionService: WellbeingSessionService,
+    private usersService: UsersService,
+    private tokenService: TokenService,
   ) {
     this.form = this.fb.group({
       nombre: [''], // antes: ['', Validators.required]
@@ -383,12 +391,29 @@ export class PostulationFormComponent {
       rut: [''],
       telefono: [''],
       email: [''], // antes: ['', [Validators.required, Validators.email]]
+      direccion: [''],
       planta: [''],
       grado: [null],
+      fechaNacimiento: [null],
       establecimiento: [''],
+      sexo: [''],
+      previtionId: [null],
 
+      tipoAfiliado: [null],
+
+      calidadContractual: [null],
+
+      fechaContratacion: [null],
+
+      tipoVivienda: [null],
+      tipoPropiedad: [null],
+      infoVivienda: [''],
+      otrosAntecedentes: [''],
+
+      fechaAfiliacion: [null],
       esPostulante: ['si'],
       beneficiado: ['no'],
+      hogarMonoparental: [false],
 
       ingresoJefe: [null],
       ingresoOtros: [0],
@@ -404,12 +429,12 @@ export class PostulationFormComponent {
       mensualidad: [0],
       alojamiento: [0],
 
-      tipoVivienda: [''],
-      tipoPropiedad: [''],
-
       typePropertyId: [null],
       typeHousingId: [null],
       stablishmentId: [null],
+
+      tipoBeneficiario: [''],
+      familiarId: [null],
     });
   }
 
@@ -417,7 +442,6 @@ export class PostulationFormComponent {
   summary: any = null;
   isSaving = false;
   isLoading = false;
-  currentWorkflowStep = 1;
 
   afiliadoValido = false;
   afiliado: any = null;
@@ -439,44 +463,36 @@ export class PostulationFormComponent {
 
   async ngOnInit() {
     // =====================================
-    // 🔥 LOAD STORAGE
+    // 🔥 USUARIO LOGEADO
     // =====================================
 
-    this.loadWorkflowStorage();
+    this.loggedUser = this.tokenService.getUserProfile();
+
+    console.log('👤 LOGGED USER:', this.loggedUser);
 
     // =====================================
-    // 🔥 CREATE POSTULATION IF NEEDED
-    // =====================================
-
-    await this.createPostulation();
-
-    // =====================================
-    // 🔥 LOAD CATALOGS
+    // 🔥 LOAD CATALOGS FIRST
     // =====================================
 
     await this.loadCatalogs();
 
     // =====================================
-    // 🔥 LOAD LOCAL DATA
+    // 🔥 CHECK DRAFTS
     // =====================================
 
-    this.loadData();
+    await this.checkDraftPostulation();
 
     // =====================================
-    // 🔥 FAMILY
+    // 🔥 RESTORE WORKFLOW
     // =====================================
 
-    if (this.grupoFamiliar.length === 0) {
-      this.agregarFamiliar();
-    }
+    await this.restoreWorkflow();
 
     // =====================================
-    // 🔥 HEALTH
+    // 🔥 SYNC TITULAR
     // =====================================
 
-    if (this.salud.length === 0) {
-      this.agregarSalud();
-    }
+    this.syncAffiliateToFamily();
 
     // =====================================
     // 🔥 HEALTH OPEN STATE
@@ -489,17 +505,17 @@ export class PostulationFormComponent {
     this.salud.forEach((s, index) => {
       const tieneDatos = s.nombre || s.familiarId || s.patologia || s.gasto;
 
-      // ===============================
+      // =====================================
       // 🔥 OPEN WITH DATA
-      // ===============================
+      // =====================================
 
       if (hayDatos) {
         s.open = !!tieneDatos;
       }
 
-      // ===============================
+      // =====================================
       // 🔥 OPEN FIRST
-      // ===============================
+      // =====================================
       else {
         s.open = index === 0;
       }
@@ -511,7 +527,19 @@ export class PostulationFormComponent {
 
     this.form.valueChanges.subscribe((value) => {
       this.wellbeingAutosaveService.run(() => {
-        localStorage.setItem('postulacion_form', JSON.stringify(value));
+        const data = {
+          form: value,
+
+          grupoFamiliar: this.grupoFamiliar,
+
+          salud: this.salud,
+
+          ingresosFamiliares: this.ingresosFamiliares,
+
+          otrosGastos: this.otrosGastos,
+        };
+
+        //localStorage.setItem('postulacion_full', JSON.stringify(data));
 
         console.log('💾 AUTOSAVE');
       }, 1200);
@@ -526,42 +554,132 @@ export class PostulationFormComponent {
     }
 
     // =====================================
-    // 🔥 LOG
+    // 🔥 READY
     // =====================================
 
     console.log('🚀 WELLBEING MODULE READY');
   }
 
-  async saveStep1Affiliate() {
-    if (!this.postulationId) {
+  async loadLoggedAffiliate() {
+    if (this.afiliadoValido) {
       return;
     }
 
     try {
+      const user: any = await firstValueFrom(
+        this.usersService.getById(this.loggedUser.id),
+      );
+
+      console.log('👤 USER FOUND:', user);
+
+      if (!user) {
+        return;
+      }
+
+      this.afiliado = user;
+
+      this.afiliadoValido = true;
+
+      this.patchAffiliate(user);
+
+      console.log('✅ AFILIADO CARGADO');
+    } catch (e) {
+      console.error('❌ ERROR LOAD AFFILIATE:', e);
+    }
+  }
+
+  private patchAffiliate(user: any) {
+    this.form.patchValue({
+      // 🔹 IDENTIFICACIÓN
+      rut: user.rut || '',
+
+      // 🔹 NOMBRES
+      nombre: `${user.firstName || ''} ${user.secondName || ''}`
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase(),
+
+      apellido: `${user.firstLastName || ''} ${user.secondLastName || ''}`
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase(),
+
+      // 🔹 CONTACTO
+      telefono: user.phone || '',
+      email: user.email || '',
+      sexo: user.sex || '',
+      planta: user.plant || '',
+      grado: user.grade || '',
+      direccion: user.address || '',
+      establecimiento: user.stablishment || '',
+      previtionId: user.previtionId || null,
+      fechaAfiliacion: user.affiliationDate || null,
+      tipoAfiliado: user.contract_type === 'PASIVO' ? 'PASIVO' : 'ACTIVO',
+      calidadContractual: user.contract_type,
+      fechaContratacion: user.contract_date,
+      fechaNacimiento: user.birth_date,
+    });
+  }
+
+  async saveStep1Affiliate() {
+    // =====================================
+    // 🔥 NO POSTULATION
+    // =====================================
+    if (!this.postulationId) {
+      this.showError('No existe postulación activa');
+      return;
+    }
+    try {
       this.isSaving = true;
+      // =====================================
+      // 🔥 UPDATE USER
+      // =====================================
+      const fullUser: any = await firstValueFrom(
+        this.usersService.getById(this.loggedUser.id),
+      );
 
+      await firstValueFrom(
+        this.usersService.updateUser(this.loggedUser.id, {
+          ...fullUser,
+
+          birth_date: this.form.value.fechaNacimiento,
+
+          contract_date: this.form.value.fechaContratacion,
+
+          contract_type: String(
+            this.form.value.calidadContractual || '',
+          ).toUpperCase(),
+        }),
+      );
+      // =====================================
+      // 🔥 PAYLOAD
+      // =====================================
       const payload = this.wellbeingMapperService.mapAffiliate(this.form.value);
-
       console.log('🚀 AFFILIATE PAYLOAD:', payload);
-
+      // =====================================
+      // 🔥 SAVE
+      // =====================================
       await firstValueFrom(
         this.wellbeingPostulationService.saveAffiliate(
           this.postulationId,
           payload,
         ),
       );
-
-      this.wellbeingStorageService.saveCurrentStep(2);
-
-      this.currentStep = 2;
-
-      this.wellbeingNotificationService.success(
-        'Antecedentes afiliado guardados',
-      );
+      // =====================================
+      // 🔥 SYNC TITULAR
+      // =====================================
+      this.syncAffiliateToFamily();
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
+      await this.moveToStep(2);
+      // =====================================
+      // 🔥 SUCCESS
+      // =====================================
+      this.showSuccess('Antecedentes afiliado guardados');
     } catch (e) {
       console.error(e);
-
-      this.wellbeingNotificationService.error('Error guardando afiliado');
+      this.showError('Error guardando afiliado');
     } finally {
       this.isSaving = false;
     }
@@ -574,13 +692,58 @@ export class PostulationFormComponent {
   loadWorkflowStorage() {
     this.postulationId = this.wellbeingStorageService.getPostulationId();
 
-    this.currentWorkflowStep = this.wellbeingStorageService.getCurrentStep();
-
     console.log('🔥 STORAGE:', {
       postulationId: this.postulationId,
-
-      step: this.currentWorkflowStep,
+      step: this.currentStep,
     });
+  }
+
+  private async restoreWorkflow() {
+    // =====================================
+    // 🔥 STORAGE
+    // =====================================
+
+    this.loadWorkflowStorage();
+
+    // =====================================
+    // 🔥 LOAD DATA IF NEEDED
+    // =====================================
+
+    if (this.postulationId) {
+      await this.loadData();
+    }
+
+    // =====================================
+    // 🔥 LOAD AFFILIATE
+    // =====================================
+
+    // 🚨 IMPORTANTE:
+    // Ya NO depende de postulationId
+    // porque ahora puede existir draft
+    // pero NO affiliate restaurado.
+
+    if (!this.afiliadoValido) {
+      await this.loadLoggedAffiliate();
+    }
+
+    console.log('👤 AFILIADO RESTAURADO:', this.afiliado);
+    // =====================================
+    // 🔥 FAMILY
+    // =====================================
+
+    if (this.grupoFamiliar.length === 0) {
+      this.syncAffiliateToFamily();
+    }
+
+    // =====================================
+    // 🔥 HEALTH
+    // =====================================
+
+    if (this.salud.length === 0) {
+      this.agregarSalud();
+    }
+
+    console.log('♻️ WORKFLOW RESTORED');
   }
 
   // =========================================================
@@ -591,25 +754,59 @@ export class PostulationFormComponent {
     try {
       this.isLoading = true;
 
-      const response = await firstValueFrom(
-        this.wellbeingPostulationService.createPostulation(),
+      // =====================================
+      // 🔥 CREATE DRAFT
+      // =====================================
+
+      const response: any = await firstValueFrom(
+        this.wellbeingPostulationService.start({
+          userId: this.loggedUser.id,
+          periodYear: new Date().getFullYear(),
+        }),
       );
+
+      console.log('🚀 DRAFT CREATED:', response);
+
+      // =====================================
+      // 🔥 SAVE IDS
+      // =====================================
 
       this.postulationId = response.id;
 
+      this.codigoPostulacion = response.code;
+
+      // =====================================
+      // 🔥 RESTORE AFFILIATE
+      // =====================================
+
+      this.restoreAffiliateFromResponse(response.affiliate);
+      this.syncAffiliateToFamily();
+
+      // =====================================
+      // 🔥 FALLBACK USER LOGGED
+      // =====================================
+
+      if (!this.afiliadoValido) {
+        console.log('🔥 LOADING LOGGED USER...');
+
+        await this.loadLoggedAffiliate();
+      }
+
+      // =====================================
+      // 🔥 STORAGE
+      // =====================================
+
       this.wellbeingStorageService.savePostulationId(response.id);
 
-      this.wellbeingNotificationService.success(
-        'Postulación creada correctamente',
-      );
+      // =====================================
+      // 🔥 SUCCESS
+      // =====================================
 
-      console.log('✅ POSTULATION:', response);
+      this.showSuccess('Postulación creada correctamente');
     } catch (e) {
-      console.error(e);
+      console.error('❌ ERROR CREATE POSTULATION:', e);
 
-      this.wellbeingNotificationService.error(
-        'No fue posible crear la postulación',
-      );
+      this.showError('No fue posible crear la postulación');
     } finally {
       this.isLoading = false;
     }
@@ -636,10 +833,138 @@ export class PostulationFormComponent {
   }
 
   // =========================================================
+  // 🔥 LOAD CATALOGS
+  // =========================================================
+
+  async loadCatalogs() {
+    try {
+      this.isLoading = true;
+
+      // =====================================
+      // 🔥 STUDIES
+      // =====================================
+
+      this.studies = (
+        await firstValueFrom(this.wellbeingCatalogsService.getStudies())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 STABLISHMENTS
+      // =====================================
+
+      this.stablishments = (
+        await firstValueFrom(this.wellbeingCatalogsService.getStablishments())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 PREVITIONS
+      // =====================================
+
+      this.previtions = (
+        await firstValueFrom(this.wellbeingCatalogsService.getPrevitions())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 PARENT TYPES
+      // =====================================
+
+      this.parentTypes = (
+        await firstValueFrom(this.wellbeingCatalogsService.getParentTypes())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 CONTRACT TYPES
+      // =====================================
+
+      this.contractTypes = (
+        await firstValueFrom(this.wellbeingCatalogsService.getContractTypes())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 CIVIL STATES
+      // =====================================
+
+      this.civilStates = (
+        await firstValueFrom(this.wellbeingCatalogsService.getCivilStates())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 BILL TYPES
+      // =====================================
+
+      this.billTypes = (
+        await firstValueFrom(this.wellbeingCatalogsService.getBillTypes())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 ACTIVITIES
+      // =====================================
+
+      this.activities = (
+        await firstValueFrom(this.wellbeingCatalogsService.getActivities())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 WORK PLACES
+      // =====================================
+
+      this.workPlaces = (
+        await firstValueFrom(this.wellbeingCatalogsService.getWorkPlaces())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 GRADES
+      // =====================================
+
+      this.grades = (
+        await firstValueFrom(this.wellbeingCatalogsService.getGrades())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 TYPE PROPERTIES
+      // =====================================
+
+      this.typesProperties = (
+        await firstValueFrom(this.wellbeingCatalogsService.getTypeProperties())
+      ).filter((r: any) => !r.deletedAt);
+
+      // =====================================
+      // 🔥 TYPE HOUSINGS
+      // =====================================
+
+      this.typesHousing = (
+        await firstValueFrom(this.wellbeingCatalogsService.getTypeHousings())
+      ).filter((r: any) => !r.deletedAt);
+
+      console.log('✅ CATALOGS LOADED');
+    } catch (e) {
+      console.error(e);
+
+      this.showError('Error cargando catálogos');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // =========================================================
   // 🔥 SAVE STEP 2
   // =========================================================
 
   async saveStep2FamilyMembers() {
+    // =====================================
+    // 🔥 VALIDATE
+    // =====================================
+
+    const valid = this.validateFamilyMembers();
+
+    if (!valid) {
+      return;
+    }
+
+    // =====================================
+    // 🔥 NO POSTULATION
+    // =====================================
+
     if (!this.postulationId) {
       return;
     }
@@ -647,11 +972,84 @@ export class PostulationFormComponent {
     try {
       this.isSaving = true;
 
+      // =====================================
+      // 🔥 CREATE PASSIVE USERS
+      // =====================================
+
+      for (const f of this.grupoFamiliar) {
+        // =====================================
+        // 🔥 IGNORE TITULAR
+        // =====================================
+
+        if (f.titular) {
+          continue;
+        }
+
+        // =====================================
+        // 🔥 CREATE PASSIVE
+        // =====================================
+
+        if (f.mustCreatePassive) {
+          // =====================================
+          // 🔥 APELLIDOS
+          // =====================================
+
+          const nombres = String(f.nombre || '')
+            .trim()
+            .split(' ');
+
+          const apellidos = String(f.apellido || '')
+            .trim()
+            .split(' ');
+
+          // =====================================
+          // 🔥 PAYLOAD
+          // =====================================
+
+          const payloadUser: any = {
+            firstName: nombres[0] || '',
+            secondName: nombres.slice(1).join(' ') || '',
+            firstLastName: apellidos[0] || '',
+            secondLastName: apellidos.slice(1).join(' ') || '',
+            full_name: `${f.nombre || ''} ${f.apellido || ''}`
+              .replace(/\s+/g, ' ')
+              .trim(),
+            email: null,
+            username: String(f.rut || '')
+              .replace(/\./g, '')
+              .replace('-', ''),
+            password: null,
+            rut: f.rut || '',
+            birth_date: f.birthDate || null,
+            contract_date: null,
+            contract_type: 'PASIVO',
+          };
+          console.log('🔥 CREATING PASIVO:', payloadUser);
+          const created: any = await firstValueFrom(
+            this.usersService.createUser(payloadUser),
+          );
+          console.log('✅ PASIVO CREATED:', created);
+          f.id = created.id;
+          f.existsInUsers = true;
+          f.mustCreatePassive = false;
+          f.notFound = false;
+          f.source = 'USERS';
+        }
+      }
+
+      // =====================================
+      // 🔥 PAYLOAD
+      // =====================================
+
       const payload = this.wellbeingMapperService.mapFamilyMembers(
         this.grupoFamiliar,
       );
 
       console.log('🚀 FAMILY MEMBERS:', payload);
+
+      // =====================================
+      // 🔥 SAVE
+      // =====================================
 
       await firstValueFrom(
         this.wellbeingPostulationService.saveFamilyMembers(
@@ -660,15 +1058,21 @@ export class PostulationFormComponent {
         ),
       );
 
-      this.wellbeingStorageService.saveCurrentStep(3);
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
 
-      this.currentStep = 3;
+      await this.moveToStep(3);
 
-      this.wellbeingNotificationService.success('Grupo familiar guardado');
+      // =====================================
+      // 🔥 SUCCESS
+      // =====================================
+
+      this.showSuccess('Grupo familiar guardado');
     } catch (e) {
       console.error(e);
 
-      this.wellbeingNotificationService.error('Error guardando grupo familiar');
+      this.showError('Error guardando grupo familiar');
     } finally {
       this.isSaving = false;
     }
@@ -700,16 +1104,17 @@ export class PostulationFormComponent {
           payload,
         ),
       );
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
 
-      this.wellbeingStorageService.saveCurrentStep(4);
+      await this.moveToStep(4);
 
-      this.currentStep = 4;
-
-      this.wellbeingNotificationService.success('Beneficiario guardado');
+      this.showSuccess('Beneficiario guardado');
     } catch (e) {
       console.error(e);
 
-      this.wellbeingNotificationService.error('Error guardando beneficiario');
+      this.showError('Error guardando beneficiario');
     } finally {
       this.isSaving = false;
     }
@@ -727,25 +1132,25 @@ export class PostulationFormComponent {
     try {
       this.isSaving = true;
 
-      const payload = {
-        institution: this.form.value.institutionName,
+      // =====================================
+      // 🔥 PAYLOAD
+      // =====================================
 
-        career: this.form.value.careerName,
-
-        studyLevel: this.form.value.studyLevel,
-
-        currentSemester: this.form.value.currentSemester,
-
-        careerDurationSemesters: this.form.value.durationSemesters,
-
-        region: this.form.value.region,
-
-        studiesInRegion: this.form.value.studiesInRegion,
-
-        receivedBenefitBefore: this.form.value.hadPreviousBenefit,
+      const payload: AcademicBackgroundRequest = {
+        institution: this.academico.institucion,
+        career: this.academico.carrera,
+        studyLevel: this.academico.nivel,
+        currentSemester: Number(this.academico.semestre || 0),
+        careerDurationSemesters: Number(this.academico.duracion || 0),
+        studiesInRegion: String(this.academico.region).toLowerCase() === 'si',
+        receivedBenefitBefore: this.form.value.beneficiado === 'si',
       };
 
       console.log('🚀 ACADEMIC:', payload);
+
+      // =====================================
+      // 🔥 SAVE
+      // =====================================
 
       await firstValueFrom(
         this.wellbeingPostulationService.saveAcademicBackground(
@@ -754,54 +1159,17 @@ export class PostulationFormComponent {
         ),
       );
 
-      this.wellbeingStorageService.saveCurrentStep(5);
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
 
-      this.currentStep = 5;
+      await this.moveToStep(5);
 
-      this.wellbeingNotificationService.success(
-        'Antecedentes académicos guardados',
-      );
-    } catch (e) {
-      console.error(e);
-    } finally {
-      this.isSaving = false;
-    }
-  }
+      // =====================================
+      // 🔥 SUCCESS
+      // =====================================
 
-  // =========================================================
-  // 🔥 SAVE STEP 5
-  // =========================================================
-
-  async saveStep5AcademicVerification() {
-    if (!this.postulationId) {
-      return;
-    }
-
-    try {
-      this.isSaving = true;
-
-      const payload = {
-        academicSituation: this.form.value.situacionAcademica,
-
-        gradeAverage: this.form.value.promedio,
-
-        approvalPercentage: this.form.value.porcentajeAprobacion,
-      };
-
-      await firstValueFrom(
-        this.wellbeingPostulationService.saveAcademicVerification(
-          this.postulationId,
-          payload,
-        ),
-      );
-
-      this.currentStep = 6;
-
-      this.wellbeingStorageService.saveCurrentStep(6);
-
-      this.wellbeingNotificationService.success(
-        'Antecedentes complementarios guardados',
-      );
+      this.showSuccess('Antecedentes académicos guardados');
     } catch (e) {
       console.error(e);
     } finally {
@@ -821,13 +1189,19 @@ export class PostulationFormComponent {
     try {
       this.isSaving = true;
 
-      const payload = this.ingresosFamiliares.map((i: any) => ({
-        familyMemberId: i.familiarId,
+      const payload = this.ingresosFamiliares.map((i: any) => {
+        const familiar = this.grupoFamiliar.find(
+          (f: any) => f.id === i.familiarId,
+        );
 
-        relationshipType: i.nombre,
+        return {
+          familyMemberId: i.familiarId,
 
-        amount: i.monto,
-      }));
+          relationshipType: this.getParentTypeName(familiar?.parentTypeId),
+
+          amount: i.monto,
+        };
+      });
 
       await firstValueFrom(
         this.wellbeingPostulationService.saveFamilyIncomes(
@@ -836,13 +1210,9 @@ export class PostulationFormComponent {
         ),
       );
 
-      this.currentStep = 7;
+      await this.moveToStep(7);
 
-      this.wellbeingStorageService.saveCurrentStep(7);
-
-      this.wellbeingNotificationService.success(
-        'Ingresos familiares guardados',
-      );
+      this.showSuccess('Ingresos familiares guardados');
     } catch (e) {
       console.error(e);
     } finally {
@@ -863,27 +1233,18 @@ export class PostulationFormComponent {
       this.isSaving = true;
 
       const payload = {
-        rentOrMortgage: this.form.value.dividendo,
-
+        rentOrMortgage: this.form.value.arriendo,
         electricity: this.form.value.luz,
-
         water: this.form.value.agua,
-
         gas: this.form.value.gas,
-
-        phone: this.form.value.telefono,
-
+        phone: this.form.value.telefonoGasto,
         credits: this.form.value.creditos,
-
-        tuition: this.form.value.colegiatura,
-
+        tuition: this.form.value.matricula,
         monthlyFee: this.form.value.mensualidad,
-
-        accommodation: this.form.value.arriendo,
-
+        accommodation: this.form.value.alojamiento,
         otherExpenses: this.otrosGastos.map((g: any) => ({
-          description: g.nombre,
-          amount: g.valor,
+          description: g.glosa,
+          amount: g.monto,
         })),
       };
 
@@ -894,129 +1255,17 @@ export class PostulationFormComponent {
         ),
       );
 
-      this.currentStep = 8;
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
 
-      this.wellbeingStorageService.saveCurrentStep(8);
+      await this.moveToStep(8);
 
-      this.wellbeingNotificationService.success('Gastos familiares guardados');
+      this.showSuccess('Gastos familiares guardados');
     } catch (e) {
       console.error(e);
     } finally {
       this.isSaving = false;
-    }
-  }
-
-  // =========================================================
-  // 🔥 LOAD CATALOGS
-  // =========================================================
-
-  async loadCatalogs() {
-    try {
-      this.isLoading = true;
-
-      // =====================================
-      // 🔥 STUDIES
-      // =====================================
-
-      this.studies = await firstValueFrom(
-        this.wellbeingCatalogsService.getStudies(),
-      );
-
-      // =====================================
-      // 🔥 STABLISHMENTS
-      // =====================================
-
-      this.stablishments = await firstValueFrom(
-        this.wellbeingCatalogsService.getStablishments(),
-      );
-
-      // =====================================
-      // 🔥 PREVITIONS
-      // =====================================
-
-      this.previtions = await firstValueFrom(
-        this.wellbeingCatalogsService.getPrevitions(),
-      );
-
-      // =====================================
-      // 🔥 PARENT TYPES
-      // =====================================
-
-      this.parentTypes = await firstValueFrom(
-        this.wellbeingCatalogsService.getParentTypes(),
-      );
-
-      // =====================================
-      // 🔥 CONTRACT TYPES
-      // =====================================
-
-      this.contractTypes = await firstValueFrom(
-        this.wellbeingCatalogsService.getContractTypes(),
-      );
-
-      // =====================================
-      // 🔥 CIVIL STATES
-      // =====================================
-
-      this.civilStates = await firstValueFrom(
-        this.wellbeingCatalogsService.getCivilStates(),
-      );
-
-      // =====================================
-      // 🔥 BILL TYPES
-      // =====================================
-
-      this.billTypes = await firstValueFrom(
-        this.wellbeingCatalogsService.getBillTypes(),
-      );
-
-      // =====================================
-      // 🔥 ACTIVITIES
-      // =====================================
-
-      this.activities = await firstValueFrom(
-        this.wellbeingCatalogsService.getActivities(),
-      );
-
-      // =====================================
-      // 🔥 WORK PLACES
-      // =====================================
-
-      this.workPlaces = await firstValueFrom(
-        this.wellbeingCatalogsService.getWorkPlaces(),
-      );
-
-      // =====================================
-      // 🔥 GRADES
-      // =====================================
-
-      this.grades = await firstValueFrom(
-        this.wellbeingCatalogsService.getGrades(),
-      );
-
-      // =====================================
-      // 🔥 TYPE PROPERTIES
-      // =====================================
-
-      this.typesProperties = await firstValueFrom(
-        this.wellbeingCatalogsService.getTypeProperties(),
-      );
-
-      // =====================================
-      // 🔥 TYPE HOUSINGS
-      // =====================================
-
-      this.typesHousing = await firstValueFrom(
-        this.wellbeingCatalogsService.getTypeHousings(),
-      );
-
-      console.log('✅ CATALOGS LOADED');
-    } catch (e) {
-      console.error(e);
-
-      this.wellbeingNotificationService.error('Error cargando catálogos');
-    } finally {
-      this.isLoading = false;
     }
   }
 
@@ -1059,11 +1308,8 @@ export class PostulationFormComponent {
 
       const housingPayload = {
         propertyType: this.form.value.tipoPropiedad,
-
         propertyTenureType: this.form.value.tipoVivienda,
-
-        housingBackground: this.form.value.antecedentesVivienda,
-
+        housingBackground: this.form.value.infoVivienda,
         otherBackground: this.form.value.otrosAntecedentes,
       };
 
@@ -1074,15 +1320,17 @@ export class PostulationFormComponent {
         ),
       );
 
-      this.currentStep = 9;
+      // =====================================
+      // 🔥 NEXT STEP
+      // =====================================
 
-      this.wellbeingStorageService.saveCurrentStep(9);
+      await this.moveToStep(9);
 
-      this.wellbeingNotificationService.success('Salud y vivienda guardados');
+      this.showSuccess('Salud y vivienda guardados');
     } catch (e) {
       console.error(e);
 
-      this.wellbeingNotificationService.error('Error guardando salud/vivienda');
+      this.showError('Error guardando salud/vivienda');
     } finally {
       this.isSaving = false;
     }
@@ -1099,14 +1347,9 @@ export class PostulationFormComponent {
 
     try {
       this.isSaving = true;
-
       console.log('📎 DOCUMENTS READY');
-
-      this.currentStep = 10;
-
-      this.wellbeingStorageService.saveCurrentStep(10);
-
-      this.wellbeingNotificationService.success('Documentos preparados');
+      await this.moveToStep(10);
+      this.showSuccess('Documentos preparados');
     } catch (e) {
       console.error(e);
     } finally {
@@ -1119,30 +1362,54 @@ export class PostulationFormComponent {
   // =========================================================
 
   async submitPostulation() {
+    // =====================================
+    // 🔥 NO POSTULATION
+    // =====================================
+
     if (!this.postulationId) {
+      return;
+    }
+
+    // =====================================
+    // 🔥 VALIDATE ALL
+    // =====================================
+
+    if (!this.validateAll()) {
       return;
     }
 
     try {
       this.isSaving = true;
 
+      // =====================================
+      // 🔥 SUBMIT
+      // =====================================
+
       await firstValueFrom(
         this.wellbeingWorkflowService.submitPostulation(this.postulationId),
       );
 
-      this.currentStep = 11;
-
-      this.wellbeingStorageService.saveCurrentStep(11);
+      // =====================================
+      // 🔥 LOAD SUMMARY
+      // =====================================
 
       await this.loadSummary();
 
-      this.wellbeingNotificationService.success(
-        'Postulación enviada correctamente',
-      );
+      // =====================================
+      // 🔥 FINAL STEP
+      // =====================================
+
+      await this.moveToStep(11);
+
+      // =====================================
+      // 🔥 SUCCESS
+      // =====================================
+
+      this.showSuccess('Postulación enviada correctamente');
     } catch (e) {
       console.error(e);
 
-      this.wellbeingNotificationService.error('Error enviando postulación');
+      this.showError('Error enviando postulación');
     } finally {
       this.isSaving = false;
     }
@@ -1152,17 +1419,32 @@ export class PostulationFormComponent {
   // 🔥 RESET WORKFLOW
   // =========================================================
 
-  resetWorkflow() {
+  async resetWorkflow() {
+    this.afiliado = null;
+    this.grupoFamiliar = [];
+    this.salud = [];
     this.postulationId = null;
-
     this.summary = null;
-
-    this.currentStep = 1;
-
-    this.currentWorkflowStep = 1;
-
+    this.afiliadoValido = false;
+    await this.moveToStep(1);
     this.wellbeingStorageService.clearAll();
+    this.ingresosFamiliares = [
+      {
+        familiarId: null,
+        monto: 0,
+        open: true,
+      },
+    ];
 
+    this.otrosGastos = [
+      {
+        glosa: '',
+        monto: 0,
+        open: true,
+      },
+    ];
+    this.filesObligatorios = {};
+    this.filesOpcionales = {};
     console.log('🧹 WORKFLOW RESET');
   }
 
@@ -1170,116 +1452,9 @@ export class PostulationFormComponent {
                         FIN ngOnInit() {
   ------------------------------------------------------------------------------------------------------*/
 
-  ngAfterViewInit() {
-    setInterval(() => {
-      this.guardarTodo();
-    }, 5000); // cada 5 seg
-  }
-
-  cargarWorkPlaces() {
-    this.workPlaceService.getAll().subscribe({
-      next: (data) => (this.workPlaces = data),
-      error: () => console.error('Error cargando lugares de trabajo'),
-    });
-  }
-
-  cargarActivities() {
-    this.activityService.getAll().subscribe({
-      next: (data) => (this.activities = data),
-      error: () => console.error('Error cargando actividades'),
-    });
-  }
-
-  cargarGrades() {
-    this.gradeService.getAll().subscribe({
-      next: (data) => {
-        const safeData = data ?? []; // 🔥 clave
-
-        if (safeData.length === 0) {
-          this.grades = Array.from({ length: 25 }, (_, i) => ({
-            id: i + 1,
-            name: `Grado ${i + 1}`, // 👈 mejor nombre
-          }));
-        } else {
-          this.grades = safeData;
-        }
-      },
-      error: () => {
-        console.error('Error cargando grados');
-
-        // 🔥 fallback también en error
-        this.grades = Array.from({ length: 25 }, (_, i) => ({
-          id: i + 1,
-          name: `Grado ${i + 1}`,
-        }));
-      },
-    });
-  }
-
-  cargarBillTypes() {
-    this.billTypeService.getAll().subscribe({
-      next: (data) => (this.billTypes = data),
-      error: () => console.error('Error cargando tipos de gasto'),
-    });
-  }
-
-  cargarCivilStates() {
-    this.civilStateService.getAll().subscribe({
-      next: (data) => (this.civilStates = data),
-      error: () => console.error('Error cargando estados civiles'),
-    });
-  }
-
-  cargarContractTypes() {
-    this.contractTypeService.getAll().subscribe({
-      next: (data) => (this.contractTypes = data),
-      error: () => console.error('Error cargando tipos de ingreso'),
-    });
-  }
-
-  cargarParentTypes() {
-    this.parentTypeService.getAll().subscribe({
-      next: (data) => (this.parentTypes = data),
-      error: () => console.error('Error cargando parentescos'),
-    });
-  }
-
-  cargarPrevitions() {
-    this.previtionService.getAll().subscribe({
-      next: (data) => (this.previtions = data),
-      error: () => console.error('Error cargando previsiones'),
-    });
-  }
-
-  cargarStablishments() {
-    this.stablishmentService.getAll().subscribe({
-      next: (data) => (this.stablishments = data),
-      error: () => console.error('Error cargando establecimientos'),
-    });
-  }
-
-  cargarStudies() {
-    this.studyService.getAll().subscribe({
-      next: (data) => (this.studies = data),
-      error: () => console.error('Error cargando estudios'),
-    });
-  }
-
-  cargarTiposVivienda() {
-    this.typeHousingService.getAll().subscribe({
-      next: (data) => (this.typesHousing = data),
-      error: () => console.error('Error cargando tipos de vivienda'),
-    });
-  }
-
-  cargarTiposPropiedad() {
-    this.typePropertyService.getAll().subscribe({
-      next: (data) => {
-        this.typesProperties = data;
-      },
-      error: () => {
-        console.error('Error cargando tipos de propiedad');
-      },
+  formatearMontoOtro(event: any, item: OtroGasto) {
+    this.formatCurrencyInput(event, (numero) => {
+      item.monto = numero;
     });
   }
 
@@ -1289,77 +1464,104 @@ export class PostulationFormComponent {
   }
 
   eliminarFamiliar(index: number) {
+    const familiar = this.grupoFamiliar[index];
+
+    // =====================================
+    // 🔥 NO ELIMINAR TITULAR
+    // =====================================
+
+    if (familiar?.titular) {
+      this.showWarning('El titular de la postulación no puede eliminarse');
+
+      return;
+    }
+
+    // =====================================
+    // 🔥 VALIDAR USO EN INGRESOS
+    // =====================================
+
+    const usadoEnIngresos = this.ingresosFamiliares.some(
+      (i: any) => i.familiarId === familiar.id,
+    );
+
+    if (usadoEnIngresos) {
+      this.showWarning(
+        'El integrante está siendo utilizado en ingresos familiares',
+      );
+
+      return;
+    }
+
+    // =====================================
+    // 🔥 REMOVE
+    // =====================================
+
     this.grupoFamiliar.splice(index, 1);
 
-    // 🔥 abrir el último automáticamente
+    // =====================================
+    // 🔥 OPEN LAST
+    // =====================================
+
     if (this.grupoFamiliar.length) {
       this.grupoFamiliar[this.grupoFamiliar.length - 1].open = true;
     }
   }
 
-  nextStep() {
-    if (this.currentStep === 1 && this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.showWarning('Debe completar datos personales');
+  async nextStep() {
+    if (!this.validateCurrentStep()) {
       return;
     }
 
-    if (this.currentStep === 2 && this.grupoFamiliar.length === 0) {
-      this.showWarning('Debe agregar al menos un familiar');
-      return;
+    switch (this.currentStep) {
+      case 1:
+        await this.saveStep1Affiliate();
+        break;
+
+      case 2:
+        await this.saveStep2FamilyMembers();
+        break;
+
+      case 3:
+        await this.saveStep3Beneficiary();
+        break;
+
+      case 4:
+        await this.saveStep4AcademicBackground();
+        break;
+
+      case 5:
+        await this.saveStep5AcademicVerification();
+        break;
+
+      case 6:
+        await this.saveStep6FamilyIncomes();
+        break;
+
+      case 7:
+        await this.saveStep7FamilyExpenses();
+        break;
+
+      case 8:
+        await this.saveStep8HealthAndHousing();
+        break;
+
+      case 9:
+        await this.saveStep9Documents();
+        break;
+
+      case 10:
+        await this.submitPostulation();
+        break;
+
+      default:
+        await this.moveToStep(this.currentStep + 1);
     }
-
-    if (this.currentStep === 6 && this.ingresosFamiliares.length === 0) {
-      this.showWarning('Debe ingresar ingresos');
-      return;
-    }
-
-    this.currentStep++;
   }
 
-  markStepTouched() {
-    const map: any = {
-      1: [
-        'nombre',
-        'apellido',
-        'rut',
-        'telefono',
-        'email',
-        'planta',
-        'grado',
-        'establecimiento',
-        'esPostulante',
-        'beneficiado',
-      ],
-      3: ['ingresoJefe'],
-      5: ['tipoVivienda', 'tipoPropiedad'],
-    };
-
-    (map[this.currentStep] || []).forEach((c: string) => {
-      this.form.get(c)?.markAsTouched();
-    });
-  }
-
-  scrollToFirstError() {
-    setTimeout(() => {
-      const el = document.querySelector('.ng-invalid');
-      if (el) {
-        (el as HTMLElement).scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }
-    }, 100);
-  }
-
-  previousStep() {
+  async previousStep() {
     if (this.currentStep > 1) {
-      this.currentStep--;
+      await this.moveToStep(this.currentStep - 1);
     }
-  }
-
-  goToStep(stepId: number) {
-    this.currentStep = stepId;
   }
 
   get progress(): number {
@@ -1438,49 +1640,41 @@ export class PostulationFormComponent {
       .reduce((acc, val) => acc + val, 0);
   }
 
-  warnStep() {}
-
   isStepValid(step: number): boolean {
     switch (step) {
       case 1:
-        return [
-          'nombre',
-          'apellido',
-          'rut',
-          'telefono',
-          'email',
-          'planta',
-          'grado',
-          'establecimiento',
-          'esPostulante',
-          'beneficiado',
-        ].every((c) => this.form.get(c)?.valid);
+        return this.getStep1Errors().length === 0;
 
       case 2:
-        return (
-          this.grupoFamiliar.length > 0 &&
-          this.grupoFamiliar.every(
-            (f) => f.rut && f.nombre && f.edad && f.parentTypeId,
-          )
-        );
+        return this.getStep2Errors().length === 0;
 
       case 3:
-        return this.form.get('ingresoJefe')?.valid ?? false;
+        return !!this.form.value.esPostulante;
 
       case 4:
-        return true; // no obligatorio
+        return true;
 
       case 5:
-        return ['tipoVivienda', 'tipoPropiedad'].every(
-          (c) => this.form.get(c)?.valid,
-        );
+        return true;
 
       case 6:
+        return this.ingresosFamiliares.length > 0;
+
+      case 7:
+        return true;
+
+      case 8:
+        return true;
+
+      case 9:
         return this.documentosObligatorios.every(
           (doc) => this.filesObligatorios[doc.key]?.length,
         );
 
-      case 7:
+      case 10:
+        return this.validateAll();
+
+      case 11:
         return true;
 
       default:
@@ -1488,168 +1682,19 @@ export class PostulationFormComponent {
     }
   }
 
-  irAlPaso(step: number) {
-    this.warnStep();
-
-    this.currentStep = step;
-
-    if (this.currentStep === 6) {
-      this.cerrarTodosDocumentos();
-    }
+  goToStep(step: number) {
+    this.irAlPaso(step);
   }
 
-  // ============================
-  // 💾 GUARDAR FINAL
-  // ============================
-
-  guardarFinal() {
-    const errores: string[] = [];
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-
-      const camposInvalidos = this.getCamposInvalidos();
-
-      this.showWarning(
-        `Debe corregir los siguientes campos:\n\n• ${camposInvalidos.join('\n• ')}`,
-      );
-
+  async irAlPaso(step: number) {
+    if (step > this.currentStep + 1) {
       return;
     }
-
-    // 🔴 FORM
-    if (this.form.invalid) {
-      errores.push('Datos personales incompletos');
-    }
-
-    // 🔴 DOCUMENTOS
-    const faltantes = this.documentosObligatorios
-      .filter((doc) => !this.filesObligatorios[doc.key]?.length)
-      .map((doc) => doc.label);
-
-    if (faltantes.length) {
-      errores.push(...faltantes);
-    }
-
-    // 🔥 BLOQUEO REAL
-    if (errores.length) {
-      this.showWarning(`Debe completar:\n\n• ${errores.join('\n• ')}`);
-      return;
-    }
-
-    // 🧠 🔥 AQUÍ ESTÁ LA MAGIA
-    /*
-    const payload = {
-      ...this.form.value,
-      comentario: this.comentario,
-    };
-    */
-
-    const payload = this.construirPayload();
-
-    console.log('📦 PAYLOAD FINAL:', payload);
-
-    // 🚀 FUTURO (cuando conectes backend)
-    // this.postulationService.create(payload).subscribe({
-    //   next: () => {
-    //     this.showSuccess('Postulación enviada correctamente');
-    //     this.currentStep = 8;
-    //   },
-    //   error: () => {
-    //     this.showWarning('Error al enviar la postulación');
-    //   }
-    // });
-
-    // ✅ POR AHORA
-    this.showSuccess('Postulación enviada correctamente');
-    this.currentStep = 8;
+    await this.moveToStep(step);
   }
 
-  construirPayload() {
-    const f = this.form.value;
-
-    return {
-      datosPersonales: {
-        nombre: f.nombre,
-        apellido: f.apellido,
-        rut: f.rut,
-        telefono: f.telefono,
-        email: f.email,
-        planta: f.planta,
-        grado: f.grado,
-        stablishmentId: f.stablishmentId,
-      },
-
-      vivienda: {
-        typeHousingId: f.typeHousingId,
-        typePropertyId: f.typePropertyId,
-        infoVivienda: f.infoVivienda,
-        otrosAntecedentes: f.otrosAntecedentes,
-      },
-
-      ingresos: {
-        ingresoJefe: f.ingresoJefe,
-        ingresoOtros: f.ingresoOtros,
-        otrosIngresos: f.otrosIngresos,
-      },
-
-      gastos: {
-        arriendo: f.arriendo,
-        luz: f.luz,
-        agua: f.agua,
-        gas: f.gas,
-        telefono: f.telefonoGasto,
-        creditos: f.creditos,
-        matricula: f.matricula,
-        mensualidad: f.mensualidad,
-        alojamiento: f.alojamiento,
-      },
-
-      salud: this.saludArray.value.map((s: any) => ({
-        nombre: s.nombre,
-        familiarId: s.familiarId,
-        patologia: s.patologia,
-        gasto: s.gasto,
-      })),
-
-      grupoFamiliar: this.grupoFamiliar.map((f) => ({
-        rut: f.rut,
-        nombre: f.nombre,
-        edad: f.edad,
-        parentTypeId: f.parentTypeId,
-        civilStateId: f.civilStateId,
-        activityId: f.activityId,
-        workPlaceId: f.workPlaceId, // 🔥 AQUÍ
-        previtionId: f.previtionId,
-        contractTypeId: f.contractTypeId,
-        studyId: f.studyId,
-      })),
-    };
-  }
-
-  validateAll(): boolean {
-    const errores: string[] = [];
-
-    if (this.form.invalid) {
-      errores.push('Completar datos personales');
-    }
-
-    const faltantes = this.documentosObligatorios
-      .filter((doc) => !this.filesObligatorios[doc.key]?.length)
-      .map((doc) => doc.label);
-
-    if (faltantes.length) {
-      errores.push(...faltantes);
-    }
-
-    if (errores.length) {
-      this.showWarning(
-        `Debe completar o adjuntar:\n\n• ${errores.join('\n• ')}`,
-      );
-      return false;
-    }
-
-    return true;
+  tieneArchivoObligatorio(key: string): boolean {
+    return !!this.filesObligatorios[key]?.length;
   }
 
   // ============================
@@ -1746,23 +1791,28 @@ export class PostulationFormComponent {
     });
   }
 
+  showError(message: string) {
+    this.dialog.open(ConfirmDialogOkComponent, {
+      width: '420px',
+      disableClose: true,
+      data: {
+        title: 'Error',
+        message,
+        confirmText: 'Aceptar',
+        icon: 'error',
+        color: 'warn',
+      },
+    });
+  }
+
   // ============================
   // 📤 ENVIAR
   // ============================
   enviar() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      this.showWarning('Formulario incompleto');
+    if (!this.validateAll()) {
       return;
     }
-    /*
-    if (!this.selectedFile) {
-      this.showWarning('Debe adjuntar un archivo');
-      return;
-    }*/
-
     console.log('📤 Enviando...', this.form.value);
-
     this.showSuccess('Formulario enviado correctamente');
   }
 
@@ -1849,10 +1899,6 @@ export class PostulationFormComponent {
     return !!this.filesObligatorios[key]?.length;
   }
 
-  tieneArchivoObligatorio(key: string): boolean {
-    return !!this.filesObligatorios[key]?.length;
-  }
-
   tieneArchivoOpcional(key: string): boolean {
     return !!this.filesOpcionales[key]?.length;
   }
@@ -1909,11 +1955,6 @@ export class PostulationFormComponent {
     doc.open = true;
   }
 
-  cerrarTodosDocumentos() {
-    this.documentosObligatorios.forEach((d) => (d.open = false));
-    this.documentosOpcionales.forEach((d) => (d.open = false));
-  }
-
   validarRut(rut: string): boolean {
     const clean = rut.replace(/\./g, '').replace('-', '');
 
@@ -1959,33 +2000,6 @@ export class PostulationFormComponent {
     return `${formatted}-${dv}`;
   }
 
-  validarRutValue(rut: string): boolean {
-    const clean = rut.replace(/\./g, '').replace('-', '');
-
-    if (clean.length < 2) return false;
-
-    const body = clean.slice(0, -1);
-    const dv = clean.slice(-1).toUpperCase();
-
-    let suma = 0;
-    let multiplo = 2;
-
-    for (let i = body.length - 1; i >= 0; i--) {
-      suma += Number(body[i]) * multiplo;
-      multiplo = multiplo === 7 ? 2 : multiplo + 1;
-    }
-
-    const dvEsperado = 11 - (suma % 11);
-
-    let dvFinal = '';
-
-    if (dvEsperado === 11) dvFinal = '0';
-    else if (dvEsperado === 10) dvFinal = 'K';
-    else dvFinal = dvEsperado.toString();
-
-    return dvFinal === dv;
-  }
-
   procesarRut(event: any, persona?: any) {
     let valor = event.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
 
@@ -2003,26 +2017,168 @@ export class PostulationFormComponent {
     }
   }
 
-  async validarRutGeneral(f?: Familiar): Promise<void> {
-    let rut = '';
+  async validarRutGeneral(f: Familiar) {
+    // =====================================
+    // 🔥 NO RUT
+    // =====================================
 
-    if (f) {
-      rut = f.rut;
-    } else {
-      rut = this.form.get('rut')?.value;
-    }
-
-    if (!rut || rut.length < 7) return;
-
-    if (!this.validarRutValue(rut)) {
-      this.showWarning('RUT inválido');
+    if (!f.rut) {
       return;
     }
 
-    const existe = await this.existeRutLocal(rut);
+    // =====================================
+    // 🔥 EVITAR DOBLE EJECUCIÓN
+    // =====================================
 
-    if (existe) {
-      this.showWarning('RUT ya registrado');
+    if (f.searching) {
+      return;
+    }
+
+    try {
+      f.searching = true;
+
+      // =====================================
+      // 🔥 NORMALIZAR
+      // =====================================
+
+      f.rut = f.rut.trim().toUpperCase();
+
+      // =====================================
+      // 🔥 VALIDAR RUT
+      // =====================================
+
+      const valido = this.validarRut(f.rut);
+
+      if (!valido) {
+        this.showWarning('RUT inválido');
+
+        f.existsInUsers = false;
+
+        f.notFound = false;
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 DUPLICADOS
+      // =====================================
+
+      const currentRut = this.cleanRut((f.rut || '').replace(/\./g, ''));
+
+      const repetido = this.grupoFamiliar.some((x: Familiar) => {
+        if (x === f) {
+          return false;
+        }
+
+        const compareRut = this.cleanRut((x.rut || '').replace(/\./g, ''));
+
+        return compareRut === currentRut;
+      });
+
+      if (repetido) {
+        this.showWarning('El RUT ya existe en el grupo familiar');
+
+        f.rut = '';
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 SEARCH USER
+      // =====================================
+
+      console.log('🚀 SEARCHING:', f.rut);
+
+      const response: any = await firstValueFrom(
+        this.usersService.searchUsers(String(f.rut || '').replace(/\./g, '')),
+      );
+
+      console.log('📦 RESPONSE:', response);
+
+      // =====================================
+      // 🔥 USERS
+      // =====================================
+
+      const users = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.content)
+          ? response.content
+          : Array.isArray(response?.data)
+            ? response.data
+            : response?.id
+              ? [response]
+              : [];
+
+      // =====================================
+      // 🔥 MATCH
+      // =====================================
+
+      const searchRut = this.cleanRut(String(f.rut || '').replace(/\./g, ''));
+
+      const user = users.find((u: any) => {
+        const userRut = this.cleanRut(String(u?.rut || '').replace(/\./g, ''));
+
+        return userRut === searchRut;
+      });
+
+      console.log('👤 USER:', user);
+
+      // =====================================
+      // 🔥 ENCONTRADO
+      // =====================================
+
+      if (user) {
+        f.id = user.id || -1;
+        f.nombre = `${user.firstName || ''} ${user.secondName || ''}`
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toUpperCase();
+
+        f.apellido = `${user.firstLastName || ''} ${user.secondLastName || ''}`
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toUpperCase();
+
+        f.birthDate = user.birth_date || null;
+
+        f.previtionId = user.previtionId || null;
+
+        f.existsInUsers = true;
+
+        f.mustCreatePassive = false;
+
+        f.notFound = false;
+
+        f.source = 'USERS';
+
+        console.log('✅ USER ENCONTRADO:', user);
+
+        this.showSuccess('Integrante encontrado en sistema');
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 NO ENCONTRADO
+      // =====================================
+
+      f.nombre = '';
+      f.apellido = '';
+      f.birthDate = null;
+      f.previtionId = undefined;
+      f.existsInUsers = false;
+      f.mustCreatePassive = true;
+      f.notFound = true;
+      f.source = 'MANUAL';
+      this.showWarning('🔥 VALIDAR RUT GENERAL - Usuario no encontrado');
+    } catch (e) {
+      console.error(e);
+      f.existsInUsers = false;
+      f.mustCreatePassive = true;
+      f.notFound = true;
+      f.source = 'MANUAL';
+    } finally {
+      f.searching = false;
     }
   }
 
@@ -2051,240 +2207,22 @@ export class PostulationFormComponent {
     (html2pdf() as any).set(opt).from(element).save();
   }
 
-  guardarTodo() {
-    const data = {
-      form: this.form.value,
-      grupoFamiliar: this.grupoFamiliar,
-      salud: this.salud,
-    };
+  async loadData() {
+    // =====================================
+    // 🔥 BACKEND ONLY
+    // =====================================
 
-    localStorage.setItem('postulacion_full', JSON.stringify(data));
-  }
+    console.log('♻️ LOAD DATA DESDE BACKEND');
 
-  loadData() {
-    const data = localStorage.getItem('postulacion_full');
+    // =====================================
+    // 🔥 STEP
+    // =====================================
 
-    if (!data) return;
+    const savedStep = this.wellbeingStorageService.getCurrentStep();
 
-    const parsed = JSON.parse(data);
-
-    if (parsed.form) {
-      this.form.patchValue(parsed.form);
+    if (savedStep) {
+      await this.moveToStep(savedStep);
     }
-
-    if (parsed.grupoFamiliar) {
-      this.grupoFamiliar = parsed.grupoFamiliar;
-    }
-
-    if (parsed.salud) {
-      this.salud = parsed.salud;
-    }
-  }
-
-  isCurrentStepValid(): boolean {
-    if (this.currentStep === 1) {
-      return [
-        'nombre',
-        'apellido',
-        'rut',
-        'telefono',
-        'email',
-        'planta',
-        'grado',
-        'establecimiento',
-        'esPostulante',
-        'beneficiado',
-      ].every((c) => this.form.get(c)?.valid);
-    }
-
-    if (this.currentStep === 3) {
-      return this.form.get('ingresoJefe')?.valid ?? false;
-    }
-
-    if (this.currentStep === 5) {
-      // 🔥 VALIDAR FORM
-      const formValido = ['tipoVivienda', 'tipoPropiedad'].every(
-        (c) => this.form.get(c)?.valid,
-      );
-
-      // 🔥 VALIDAR SALUD
-      const saludValida = this.salud.every(
-        (s) => s.nombre && s.familiarId && s.patologia,
-      );
-
-      if (!saludValida) {
-        this.showWarning('Debe completar todos los registros de salud');
-
-        // 🔥 UX PRO → abrir los incompletos
-        this.salud.forEach((s) => {
-          const incompleto = !s.nombre || !s.familiarId || !s.patologia;
-          s.open = incompleto;
-        });
-      }
-
-      return formValido && saludValida;
-    }
-
-    return true;
-  }
-
-  isStep1Valid(): boolean {
-    return [
-      'nombre',
-      'apellido',
-      'rut',
-      'telefono',
-      'email',
-      'planta',
-      'grado',
-      'establecimiento',
-      'esPostulante',
-      'beneficiado',
-    ].every((c) => this.form.get(c)?.valid);
-  }
-
-  isStep3Valid(): boolean {
-    return this.form.get('ingresoJefe')?.valid ?? false;
-  }
-
-  isStep5Valid(): boolean {
-    return ['tipoVivienda', 'tipoPropiedad'].every(
-      (c) => this.form.get(c)?.valid,
-    );
-  }
-
-  formatearMonto(event: any, controlName: string) {
-    let value = event.target.value;
-
-    // limpiar todo excepto números
-    value = value.replace(/\D/g, '');
-
-    if (!value) {
-      this.form.get(controlName)?.setValue(null);
-      event.target.value = '';
-      return;
-    }
-
-    const numero = Number(value);
-
-    // guardar número limpio
-    this.form.get(controlName)?.setValue(numero, { emitEvent: false });
-
-    // mostrar formateado
-    event.target.value = numero.toLocaleString('es-CL');
-  }
-
-  // 🔹 AGREGAR
-  agregarGasto() {
-    this.otrosGastos.push({
-      glosa: '',
-      monto: 0,
-      open: true,
-    });
-  }
-
-  // 🔹 ELIMINAR
-  eliminarGasto(index: number) {
-    this.otrosGastos.splice(index, 1);
-  }
-
-  // 🔹 TOGGLE
-  toggleGasto(index: number) {
-    this.otrosGastos[index].open = !this.otrosGastos[index].open;
-  }
-
-  // 🔹 TOTAL
-  get totalOtrosGastos(): number {
-    return this.otrosGastos.reduce((acc, g) => acc + (g.monto || 0), 0);
-  }
-
-  // 🔹 AGREGAR
-  agregarIngreso() {
-    this.ingresosFamiliares.push({
-      familiarId: null,
-      monto: 0,
-      open: true,
-    });
-  }
-
-  // 🔹 ELIMINAR
-  eliminarIngreso(index: number) {
-    this.ingresosFamiliares.splice(index, 1);
-  }
-
-  // 🔹 TOGGLE
-  toggleIngreso(index: number) {
-    this.ingresosFamiliares[index].open = !this.ingresosFamiliares[index].open;
-  }
-
-  // 🔹 TOTAL
-  get totalIngresosFamiliares(): number {
-    return this.ingresosFamiliares.reduce((acc, i) => acc + (i.monto || 0), 0);
-  }
-
-  // 🔹 FORMATEO
-  formatearMontoOtro(event: any, item: OtroGasto) {
-    let valor = event.target.value.replace(/\D/g, '');
-    item.monto = Number(valor);
-  }
-
-  getClaseMonto(valor: number) {
-    if (!valor) return 'zero';
-    return 'positive';
-  }
-
-  limpiarNumero(v: any): number {
-    return Number(String(v).replace(/\./g, '')) || 0;
-  }
-
-  get totalSalud(): number {
-    return this.salud.reduce((sum, s) => {
-      return sum + this.limpiarNumero(s.gasto);
-    }, 0);
-  }
-
-  formatearMontoSalud(event: any, s: any) {
-    let value = event.target.value;
-
-    // limpiar todo excepto números
-    value = value.replace(/\D/g, '');
-
-    if (!value) {
-      s.gasto = 0;
-      event.target.value = '';
-      return;
-    }
-
-    const numero = Number(value);
-
-    // guardar limpio
-    s.gasto = numero;
-
-    // mostrar formateado
-    event.target.value = numero.toLocaleString('es-CL');
-  }
-
-  trackBySalud(index: number, item: any) {
-    return item.id;
-  }
-
-  trackByFamiliar(index: number, item: Familiar): number {
-    return item.id;
-  }
-
-  validarSalud(): boolean {
-    if (!this.salud.length) return true;
-
-    const incompletos = this.salud.some(
-      (s) => !s.nombre || !s.familiarId || !s.patologia,
-    );
-
-    if (incompletos) {
-      this.showWarning('Debe completar todos los registros de salud');
-      return false;
-    }
-
-    return true;
   }
 
   generarComprobanteHTML(): string {
@@ -2327,12 +2265,47 @@ export class PostulationFormComponent {
   `;
   }
 
-  nuevaPostulacion() {
+  async nuevaPostulacion() {
+    // =====================================
+    // 🔥 BACKUP STEP 1
+    // =====================================
+
+    const affiliateBackup = {
+      rut: this.form.value.rut,
+      nombre: this.form.value.nombre,
+      apellido: this.form.value.apellido,
+      telefono: this.form.value.telefono,
+      email: this.form.value.email,
+      direccion: this.form.value.direccion,
+      sexo: this.form.value.sexo,
+      previtionId: this.form.value.previtionId,
+      fechaNacimiento: this.form.value.fechaNacimiento,
+      fechaAfiliacion: this.form.value.fechaAfiliacion,
+      tipoAfiliado: this.form.value.tipoAfiliado,
+      calidadContractual: this.form.value.calidadContractual,
+      fechaContratacion: this.form.value.fechaContratacion,
+      hogarMonoparental: this.form.value.hogarMonoparental,
+      establecimiento: this.form.value.establecimiento,
+    };
+
+    // =====================================
+    // 🔥 BACKUP FAMILY
+    // =====================================
+
+    const familyBackup = [...this.grupoFamiliar];
+
+    // =====================================
     // 🔥 RESET FORM
+    // =====================================
+
     this.form.reset();
 
-    // 🔥 VALORES POR DEFECTO
+    // =====================================
+    // 🔥 RESTORE STEP 1
+    // =====================================
+
     this.form.patchValue({
+      ...affiliateBackup,
       esPostulante: 'si',
       beneficiado: 'no',
       ingresoOtros: 0,
@@ -2348,52 +2321,122 @@ export class PostulationFormComponent {
       alojamiento: 0,
     });
 
-    // 🔥 LIMPIAR ARRAYS
-    this.grupoFamiliar = [];
+    // =====================================
+    // 🔥 RESTORE FAMILY
+    // =====================================
+
+    this.grupoFamiliar = familyBackup;
+
+    this.syncAffiliateToFamily();
+
+    // =====================================
+    // 🔥 RESET HEALTH
+    // =====================================
+
     this.salud = [];
 
-    // 🔥 REINICIAR CON 1 ITEM
-    this.agregarFamiliar();
+    // =====================================
+    // 🔥 RESET INCOMES
+    // =====================================
+
+    this.ingresosFamiliares = [
+      {
+        familiarId: null,
+        monto: 0,
+        open: true,
+      },
+    ];
+
+    // =====================================
+    // 🔥 RESET OTHER EXPENSES
+    // =====================================
+
+    this.otrosGastos = [
+      {
+        glosa: '',
+        monto: 0,
+        open: true,
+      },
+    ];
+
+    // =====================================
+    // 🔥 HEALTH DEFAULT
+    // =====================================
     this.agregarSalud();
 
-    // 🔥 LIMPIAR ARCHIVOS
+    // =====================================
+    // 🔥 CLEAR FILES
+    // =====================================
     this.filesObligatorios = {};
     this.filesOpcionales = {};
 
-    // 🔥 LIMPIAR STORAGE
-    localStorage.removeItem('postulacion_form');
-    localStorage.removeItem('postulacion_full');
+    // =====================================
+    // 🔥 CLEAR STORAGE
+    // =====================================
+    //localStorage.removeItem('postulacion_full');
 
-    // 🔥 VOLVER AL INICIO
-    this.currentStep = 1;
+    // =====================================
+    // 🔥 CLEAR WORKFLOW
+    // =====================================
+    this.wellbeingStorageService.clearAll();
+    this.postulationId = null;
+    this.summary = null;
+    await this.createPostulation();
+
+    // =====================================
+    // 🔥 STEP 1
+    // =====================================
+    await this.moveToStep(1);
+    console.log('🆕 NUEVA POSTULACIÓN');
   }
 
-  getParentTypeName(id?: number): string {
-    if (!id) return 'Sin parentesco';
-    return this.parentTypes.find((p) => p.id === id)?.name || 'Sin parentesco';
+  getParentTypeName(id: number | undefined): string {
+    if (!id) {
+      return '';
+    }
+
+    const parent = this.parentTypes.find((p: any) => p.id === id);
+
+    return (parent?.name || '').toUpperCase();
   }
 
   agregarFamiliar() {
+    // =====================================
+    // 🔥 CLOSE ALL
+    // =====================================
+    this.grupoFamiliar.forEach((f) => (f.open = false));
+    // =====================================
+    // 🔥 PUSH
+    // =====================================
     this.grupoFamiliar.push({
+      // =====================================
+      // 🔥 UI
+      // =====================================
+      open: true,
+      titular: false,
+      existsInUsers: false,
+      notFound: false,
+      mustCreatePassive: false,
+      source: 'MANUAL',
+      searching: false,
+      isComplete: false,
+      // =====================================
+      // 🔥 DATOS
+      // =====================================
       id: Date.now(),
       rut: '',
       nombre: '',
-      edad: null,
-
+      apellido: '',
+      birthDate: null,
+      previtionId: undefined,
       parentTypeId: undefined,
       civilStateId: undefined,
-
       activityId: undefined,
       workPlaceId: undefined,
       studyId: undefined,
-
       estudiaRegion: '',
-
-      previtionId: undefined,
-      contractTypeId: undefined,
-
-      open: true,
     });
+    console.log('👨‍👩‍👧 Familiar agregado:', this.grupoFamiliar);
   }
 
   get saludArray(): FormArray {
@@ -2417,13 +2460,9 @@ export class PostulationFormComponent {
   }
 
   formatearMontoIngreso(event: any, index: number) {
-    let valor = event.target.value.replace(/\D/g, '');
-
-    const numero = Number(valor) || 0;
-
-    this.ingresosFamiliares[index].monto = numero;
-
-    event.target.value = numero ? numero.toLocaleString('es-CL') : '';
+    this.formatCurrencyInput(event, (numero) => {
+      this.ingresosFamiliares[index].monto = numero;
+    });
   }
 
   getParentescoIngreso(familiarId?: number | null): string {
@@ -2481,42 +2520,114 @@ export class PostulationFormComponent {
     input?.click();
   }
 
-  onRutCompleto() {
-    const rut = this.form.get('rut')?.value;
-
-    if (!rut) return;
-
-    // 🔥 usa tu lógica real
-    if (!this.validarRutValue(rut)) {
-      this.showWarning('RUT inválido');
+  async onRutCompleto() {
+    const rut = this.form.value.rut;
+    console.log('🪪 INPUT RUT:', rut);
+    if (!rut) {
+      console.log('❌ EMPTY RUT');
       return;
     }
+    try {
+      this.loadingAffiliate = true;
+      // =====================================
+      // 🔥 SEARCH USER
+      // =====================================
+      console.log('🚀 SEARCHING USER...');
+      const response: any = await firstValueFrom(
+        this.usersService.searchUsers(String(rut || '').replace(/\./g, '')),
+      );
+      console.log('✅ RESPONSE RECEIVED');
+      console.log('==============================');
+      console.log('🔍 SEARCH RUT:', rut);
+      console.log('📦 RESPONSE:', response);
+      console.log('📦 TYPE:', typeof response);
+      console.log('📦 IS ARRAY:', Array.isArray(response));
+      console.log('📦 CONTENT:', response?.content);
+      console.log('📦 DATA:', response?.data);
+      console.log('==============================');
 
-    this.buscarAfiliado(rut);
-  }
+      // =====================================
+      // 🔥 USERS ARRAY
+      // =====================================
 
-  buscarAfiliado(rut: string) {
-    console.log('🔍 Buscando afiliado:', rut);
+      const users = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.content)
+          ? response.content
+          : Array.isArray(response?.data)
+            ? response.data
+            : response?.id
+              ? [response]
+              : [];
 
-    // 🔥 MOCK REALISTA
-    const data = {
-      nombre: 'ABAD PETIGNANI MARIO ANDRES',
-      telefono: '968397670',
-      mail: 'abadmarioandres@gmail.com',
-    };
+      console.log('👥 USERS:', users);
 
-    this.afiliado = data;
+      // =====================================
+      // 🔥 CLEAN RUT
+      // =====================================
 
-    const partes = data.nombre.split(' ');
+      const cleanRut = this.cleanRut(String(rut).replace(/\./g, ''));
 
-    this.form.patchValue({
-      nombre: partes.slice(2).join(' '),
-      apellido: partes.slice(0, 2).join(' '),
-      telefono: data.telefono,
-      email: data.mail,
-    });
+      console.log('🔎 SEARCH RUT:', cleanRut);
 
-    this.afiliadoValido = true;
+      // =====================================
+      // 🔥 FIND EXACT MATCH
+      // =====================================
+
+      const user = users.find((u: any) => {
+        const userRut = this.cleanRut(String(u?.rut || '').replace(/\./g, ''));
+
+        console.log('🪪 USER RUT:', userRut);
+
+        return userRut === cleanRut;
+      });
+
+      console.log('👤 USER FOUND:', user);
+
+      // =====================================
+      // 🔥 NO USER
+      // =====================================
+      if (!user) {
+        this.afiliado = null;
+        this.afiliadoValido = false;
+        this.grupoFamiliar = this.grupoFamiliar.filter((f) => !f.titular);
+        this.showWarning('Usuario no encontrado');
+        return;
+      }
+      // =====================================
+      // 🔥 AFILIADO OK
+      // =====================================
+      this.afiliado = user;
+      this.afiliadoValido = true;
+      // =====================================
+      // 🔥 PATCH FORM
+      // =====================================
+
+      this.patchAffiliate(user);
+
+      // =====================================
+      // 🔥 SYNC TITULAR
+      // =====================================
+
+      this.syncAffiliateToFamily();
+    } catch (error) {
+      console.error('❌ USER NOT FOUND', error);
+      this.afiliado = null;
+      this.grupoFamiliar = this.grupoFamiliar.filter((f) => !f.titular);
+      this.afiliadoValido = false;
+      this.form.patchValue({
+        nombre: '',
+        apellido: '',
+        telefono: '',
+        email: '',
+        previtionId: null,
+        fechaNacimiento: null,
+        calidadContractual: null,
+        fechaContratacion: null,
+      });
+    } finally {
+      this.loadingAffiliate = false;
+    }
   }
 
   getNombreFamiliar(id: number | null | undefined): string {
@@ -2526,4 +2637,846 @@ export class PostulationFormComponent {
 
     return familiar?.nombre || 'No informado';
   }
+
+  cleanRut(rut?: string | null): string {
+    if (!rut) {
+      return '';
+    }
+
+    return rut.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
+  }
+
+  formatDateSafe(value: string | Date): string {
+    if (!value) return '';
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      const d = value.getDate().toString().padStart(2, '0');
+      const m = (value.getMonth() + 1).toString().padStart(2, '0');
+      const y = value.getFullYear();
+
+      return `${d}/${m}/${y}`;
+    }
+
+    // 🔥 si es string ISO
+    const [datePart] = value.split('T');
+    const [y, m, d] = datePart.split('-');
+
+    return `${d}/${m}/${y}`;
+  }
+
+  toDate(value: any): Date | null {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    return new Date(value);
+  }
+
+  private syncAffiliateToFamily(): void {
+    // =====================================
+    // 🔥 FORM
+    // =====================================
+
+    const formValue = this.form.getRawValue();
+
+    if (!formValue.rut) {
+      return;
+    }
+    // =====================================
+    // 🔥 TITULAR EXISTENTE
+    // =====================================
+
+    let familiar = this.grupoFamiliar.find((f) => f.titular);
+
+    // =====================================
+    // 🔥 CREAR TITULAR
+    // =====================================
+
+    if (!familiar) {
+      familiar = {
+        id: -1,
+        rut: '',
+        nombre: '',
+        apellido: '',
+        birthDate: null,
+        parentTypeId: undefined,
+        civilStateId: undefined,
+        activityId: undefined,
+        workPlaceId: undefined,
+        studyId: undefined,
+        previtionId: undefined,
+        estudiaRegion: '',
+        open: false,
+        titular: true,
+        existsInUsers: true,
+        mustCreatePassive: false,
+        source: 'AUTH',
+        searching: false,
+        notFound: false,
+        isComplete: true,
+      };
+      this.grupoFamiliar.unshift(familiar);
+    }
+
+    // =====================================
+    // 🔥 SOLO ACTUALIZAR CAMPOS BASE
+    // =====================================
+    familiar.id = this.afiliado?.id || -1;
+    familiar.rut = formValue.rut || familiar.rut;
+    familiar.nombre = (formValue.nombre || familiar.nombre || '')
+      .trim()
+      .toUpperCase();
+    familiar.apellido = (formValue.apellido || familiar.apellido || '')
+      .trim()
+      .toUpperCase();
+    familiar.birthDate = formValue.fechaNacimiento || familiar.birthDate;
+    familiar.previtionId = formValue.previtionId || familiar.previtionId;
+    // =====================================
+    // 🔥 FLAGS
+    // =====================================
+
+    familiar.titular = true;
+    familiar.existsInUsers = true;
+    familiar.mustCreatePassive = false;
+    familiar.source = 'AUTH';
+    familiar.notFound = false;
+    familiar.searching = false;
+    familiar.isComplete = true;
+
+    // =====================================
+    // 🔥 PARENTESCO
+    // =====================================
+
+    if (!familiar.parentTypeId) {
+      const titular = this.parentTypes.find((p: any) => {
+        const name = (p.name || '').toLowerCase();
+
+        return name.includes('titular') || name.includes('funcionario');
+      });
+
+      if (titular) {
+        familiar.parentTypeId = titular.id;
+      }
+    }
+
+    console.log('✅ TITULAR SINCRONIZADO');
+  }
+
+  private formatCurrencyInput(event: any, callback: (value: number) => void) {
+    let value = event.target.value;
+
+    value = value.replace(/\D/g, '');
+
+    if (!value) {
+      callback(0);
+
+      event.target.value = '';
+
+      return;
+    }
+
+    const numero = Number(value);
+
+    callback(numero);
+
+    event.target.value = numero.toLocaleString('es-CL');
+  }
+
+  private validateCurrentStep(): boolean {
+    switch (this.currentStep) {
+      case 1:
+        return this.validateStep1();
+
+      case 2:
+        return this.validateStep2();
+
+      case 3:
+        return this.validateStep3();
+
+      case 4:
+        return this.validateStep4();
+
+      case 5:
+        return this.validateStep5();
+
+      case 6:
+        return this.validateStep6();
+
+      case 7:
+        return this.validateStep7();
+
+      case 8:
+        return this.validateStep8();
+
+      default:
+        return true;
+    }
+  }
+
+  private handleStepTransitions() {
+    if (this.currentStep === 1) {
+      this.syncAffiliateToFamily();
+    }
+  }
+
+  agregarIngreso() {
+    this.ingresosFamiliares.forEach((i) => (i.open = false));
+
+    this.ingresosFamiliares.push({
+      familiarId: null,
+
+      monto: 0,
+
+      open: true,
+    });
+  }
+
+  eliminarIngreso(index: number) {
+    this.ingresosFamiliares.splice(index, 1);
+  }
+
+  get totalIngresosFamiliares(): number {
+    return this.ingresosFamiliares.reduce(
+      (sum: number, i: any) => sum + Number(i.monto || 0),
+      0,
+    );
+  }
+
+  formatearMonto(event: any, controlName: string) {
+    this.formatCurrencyInput(event, (numero) => {
+      this.form.get(controlName)?.setValue(numero, {
+        emitEvent: false,
+      });
+    });
+  }
+
+  agregarGasto() {
+    this.otrosGastos.forEach((g) => (g.open = false));
+
+    this.otrosGastos.push({
+      glosa: '',
+
+      monto: 0,
+
+      open: true,
+    });
+  }
+
+  toggleGasto(index: number) {
+    this.otrosGastos[index].open = !this.otrosGastos[index].open;
+  }
+
+  eliminarGasto(index: number) {
+    this.otrosGastos.splice(index, 1);
+  }
+
+  get totalOtrosGastos(): number {
+    return this.otrosGastos.reduce(
+      (sum: number, g: any) => sum + Number(g.monto || 0),
+      0,
+    );
+  }
+
+  formatearMontoSalud(event: any, s: any) {
+    this.formatCurrencyInput(event, (numero) => {
+      s.gasto = numero;
+    });
+  }
+
+  get totalSalud(): number {
+    return this.salud.reduce(
+      (sum: number, s: any) => sum + Number(s.gasto || 0),
+      0,
+    );
+  }
+
+  guardarFinal() {
+    this.enviar();
+  }
+
+  validateAll(): boolean {
+    const errores: string[] = [];
+    // =====================================
+    // 🔥 STEP 1
+    // =====================================
+    errores.push(...this.getStep1Errors());
+    // =====================================
+    // 🔥 STEP 2
+    // =====================================
+    errores.push(...this.getStep2Errors());
+    // =====================================
+    // 🔥 STEP 6
+    // =====================================
+    errores.push(...this.getStep6Errors());
+    // =====================================
+    // 🔥 DOCUMENTOS
+    // =====================================
+    const faltantes = this.documentosObligatorios
+      .filter((doc) => !this.filesObligatorios[doc.key]?.length)
+      .map((doc) => doc.label);
+    errores.push(...faltantes);
+    // =====================================
+    // 🔥 UNIQUE ERRORS
+    // =====================================
+    const erroresUnicos = [...new Set(errores)];
+    // =====================================
+    // 🔥 SHOW WARNING
+    // =====================================
+    if (erroresUnicos.length > 0) {
+      this.showWarning(
+        `Debe completar o adjuntar:\n\n• ${erroresUnicos.join('\n• ')}`,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  private validateStep1(): boolean {
+    const errores = this.getStep1Errors();
+
+    if (errores.length > 0) {
+      this.showWarning(
+        `Faltan o son inválidos los siguientes campos:\n\n• ${errores.join('\n• ')}`,
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private getStep1Errors(): string[] {
+    const errores: string[] = [];
+
+    const form = this.form.value;
+
+    // =====================================
+    // 🔥 CAMPOS OBLIGATORIOS
+    // =====================================
+
+    if (!form.rut) {
+      errores.push('RUT');
+    }
+
+    if (!form.nombre) {
+      errores.push('Nombres');
+    }
+
+    if (!form.apellido) {
+      errores.push('Apellidos');
+    }
+
+    if (!form.telefono) {
+      errores.push('Teléfono');
+    }
+
+    if (!form.email) {
+      errores.push('Correo institucional');
+    }
+
+    if (!form.direccion) {
+      errores.push('Dirección');
+    }
+
+    if (!form.fechaNacimiento) {
+      errores.push('Fecha nacimiento');
+    }
+
+    if (!form.sexo) {
+      errores.push('Sexo');
+    }
+
+    if (!form.establecimiento) {
+      errores.push('Establecimiento');
+    }
+
+    if (!form.tipoPost) {
+      errores.push('Tipo afiliado');
+    }
+
+    if (!form.fechaAfiliacion) {
+      errores.push('Fecha afiliación');
+    }
+
+    // =====================================
+    // 🔥 RUT
+    // =====================================
+
+    if (form.rut && !this.validarRut(form.rut)) {
+      errores.push('RUT válido');
+    }
+
+    // =====================================
+    // 🔥 TELÉFONO
+    // =====================================
+
+    if (form.telefono && String(form.telefono).replace(/\D/g, '').length < 8) {
+      errores.push('Teléfono válido');
+    }
+
+    // =====================================
+    // 🔥 EMAIL
+    // =====================================
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (form.email && !emailRegex.test(form.email)) {
+      errores.push('Correo institucional válido');
+    }
+
+    return errores;
+  }
+
+  private validateStep2(): boolean {
+    const errores = this.getStep2Errors();
+
+    if (errores.length > 0) {
+      this.showWarning(
+        `Grupo familiar incompleto:\n\n• ${errores.join('\n• ')}`,
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private getStep2Errors(): string[] {
+    const errores: string[] = [];
+
+    // =====================================
+    // 🔥 SIN FAMILIARES
+    // =====================================
+
+    if (this.grupoFamiliar.length === 0) {
+      errores.push('Debe agregar al menos un familiar');
+    }
+
+    return errores;
+  }
+
+  private validateStep3(): boolean {
+    return true;
+  }
+  private validateStep4(): boolean {
+    return true;
+  }
+  private validateStep5(): boolean {
+    return true;
+  }
+
+  private validateStep6(): boolean {
+    const errores = this.getStep6Errors();
+
+    if (errores.length > 0) {
+      this.showWarning(
+        `Ingresos familiares incompletos:\n\n• ${errores.join('\n• ')}`,
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private getStep6Errors(): string[] {
+    const errores: string[] = [];
+
+    if (this.ingresosFamiliares.length === 0) {
+      errores.push('Debe ingresar ingresos familiares');
+    }
+
+    return errores;
+  }
+
+  private validateStep7(): boolean {
+    return true;
+  }
+  private validateStep8(): boolean {
+    return true;
+  }
+
+  async moveToStep(step: number) {
+    this.currentStep = step;
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    // =====================================
+    // 🔥 SAVE CURRENT STEP
+    // =====================================
+
+    if (this.postulationId) {
+      try {
+        await firstValueFrom(
+          this.wellbeingPostulationService.updateCurrentStep(
+            this.postulationId,
+            this.currentStep,
+          ),
+        );
+
+        console.log('💾 STEP SAVED:', this.currentStep);
+      } catch (e) {
+        console.error('❌ ERROR SAVING STEP:', e);
+      }
+    }
+
+    // =====================================
+    // 🔥 STORAGE
+    // =====================================
+
+    this.wellbeingStorageService.saveCurrentStep(step);
+  }
+
+  validateFamilyMembers(): boolean {
+    // =====================================
+    // 🔥 SIN FAMILIARES
+    // =====================================
+    if (!this.grupoFamiliar.length) {
+      this.showWarning('Debe ingresar integrantes familiares');
+      return false;
+    }
+    // =====================================
+    // 🔥 VALIDAR TODOS
+    // =====================================
+    for (const f of this.grupoFamiliar) {
+      // =====================================
+      // 🔥 IGNORAR TITULAR
+      // =====================================
+      if (f.titular) {
+        continue;
+      }
+      // =====================================
+      // 🔥 RUT
+      // =====================================
+      if (!f.rut) {
+        this.showWarning('Todos los integrantes deben tener RUT');
+        return false;
+      }
+      // =====================================
+      // 🔥 NOMBRE
+      // =====================================
+      if (!f.nombre?.trim()) {
+        this.showWarning('Todos los integrantes deben tener nombres');
+        return false;
+      }
+      // =====================================
+      // 🔥 APELLIDO
+      // =====================================
+      if (!f.apellido?.trim()) {
+        this.showWarning('Todos los integrantes deben tener apellidos');
+        return false;
+      }
+
+      if (!f.birthDate) {
+        this.showWarning('Debe ingresar fecha de nacimiento');
+
+        return false;
+      }
+      // =====================================
+      // 🔥 PARENTESCO
+      // =====================================
+      if (!f.parentTypeId) {
+        this.showWarning('Debe seleccionar parentesco');
+        return false;
+      }
+      // =====================================
+      // 🔥 ESTADO CIVIL
+      // =====================================
+      if (!f.civilStateId) {
+        this.showWarning('Debe seleccionar estado civil');
+        return false;
+      }
+      // =====================================
+      // 🔥 ACTIVIDAD
+      // =====================================
+      if (!f.activityId) {
+        this.showWarning('Debe seleccionar actividad');
+        return false;
+      }
+      // =====================================
+      // 🔥 ESTUDIOS
+      // =====================================
+      if (!f.studyId) {
+        this.showWarning('Debe seleccionar nivel de estudios');
+        return false;
+      }
+      // =====================================
+      // 🔥 MANUAL / PASIVO
+      // =====================================
+      if (f.mustCreatePassive) {
+        if (
+          !f.nombre?.trim() ||
+          !f.apellido?.trim() ||
+          !f.birthDate ||
+          !f.previtionId
+        ) {
+          this.showWarning(
+            'Complete todos los antecedentes del integrante manual',
+          );
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // =========================================================
+  // 🔥 CHECK DRAFT POSTULATION
+  // =========================================================
+
+  // =========================================================
+  // 🔥 CHECK DRAFT POSTULATION
+  // =========================================================
+
+  async checkDraftPostulation() {
+    try {
+      console.log('🔥 CHECKING DRAFT POSTULATIONS...');
+
+      // =====================================
+      // 🔥 GET MY DRAFTS
+      // =====================================
+
+      const drafts: any[] = await firstValueFrom(
+        this.wellbeingPostulationService.getMyDrafts(),
+      );
+
+      console.log('📦 DRAFTS:', drafts);
+
+      // =====================================
+      // 🔥 NO DRAFTS
+      // =====================================
+
+      if (!drafts?.length) {
+        console.log('⚠️ NO DRAFT FOUND');
+
+        await this.createPostulation();
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 OPEN DIALOG
+      // =====================================
+
+      const dialogRef = this.dialog.open(PostulationResumeDialogComponent, {
+        width: '420px',
+
+        disableClose: true,
+
+        data: drafts,
+      });
+
+      // =====================================
+      // 🔥 RESULT
+      // =====================================
+
+      const result = await firstValueFrom(dialogRef.afterClosed());
+
+      console.log('🔥 DIALOG RESULT:', result);
+
+      // =====================================
+      // 🔥 CLOSED
+      // =====================================
+
+      if (!result) {
+        return;
+      }
+
+      // =====================================
+      // 🔥 CONTINUE
+      // =====================================
+
+      if (result.action === 'continue') {
+        const selectedDraft = result.postulation;
+
+        console.log('♻️ CONTINUING DRAFT:', selectedDraft.id);
+
+        // =====================================
+        // 🔥 LOAD FULL POSTULATION
+        // =====================================
+
+        const fullPostulation: any = await firstValueFrom(
+          this.wellbeingPostulationService.getMyPostulation(selectedDraft.id),
+        );
+
+        console.log('📦 FULL POSTULATION:', fullPostulation);
+
+        // =====================================
+        // 🔥 SET IDS
+        // =====================================
+
+        this.postulationId = fullPostulation.id;
+
+        this.codigoPostulacion = fullPostulation.code;
+
+        // =====================================
+        // 🔥 STORAGE
+        // =====================================
+
+        this.wellbeingStorageService.savePostulationId(fullPostulation.id);
+
+        // =====================================
+        // 🔥 RESTORE AFFILIATE
+        // =====================================
+
+        if (fullPostulation.affiliate) {
+          this.form.patchValue({
+            rut: fullPostulation.affiliate.rut || '',
+
+            nombre: fullPostulation.affiliate.names || '',
+
+            apellido: fullPostulation.affiliate.lastNames || '',
+
+            telefono: fullPostulation.affiliate.phone || '',
+
+            email: fullPostulation.affiliate.email || '',
+
+            direccion: fullPostulation.affiliate.address || '',
+
+            fechaNacimiento: fullPostulation.affiliate.birthDate || '',
+
+            sexo: fullPostulation.affiliate.sex || '',
+
+            tipoAfiliado: fullPostulation.affiliate.affiliateType || '',
+
+            fechaAfiliacion: fullPostulation.affiliate.affiliateDate || '',
+          });
+        }
+
+        // =====================================
+        // 🔥 CURRENT STEP
+        // =====================================
+
+        if (fullPostulation.currentStep) {
+          this.currentStep = fullPostulation.currentStep;
+        }
+
+        // =====================================
+        // 🔥 SUCCESS
+        // =====================================
+
+        this.showSuccess('Postulación restaurada correctamente');
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 NEW DRAFT
+      // =====================================
+
+      if (result.action === 'new') {
+        console.log('🆕 NEW DRAFT');
+
+        await this.createPostulation();
+
+        return;
+      }
+
+      // =====================================
+      // 🔥 DELETE DRAFT
+      // =====================================
+
+      if (result.action === 'delete') {
+        const selectedDraft = result.postulation;
+
+        console.log('🗑️ DELETING DRAFT:', selectedDraft.id);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.deleteMyPostulation(
+            selectedDraft.id,
+          ),
+        );
+
+        this.showSuccess('Borrador eliminado correctamente');
+
+        // =====================================
+        // 🔥 RELOAD
+        // =====================================
+
+        await this.checkDraftPostulation();
+
+        return;
+      }
+    } catch (e) {
+      console.error('❌ ERROR CHECK DRAFT:', e);
+
+      this.showError('Error verificando borradores');
+    }
+  }
+
+  loadDraft(draft: any) {
+    console.log('📦 LOAD DRAFT:', draft);
+
+    this.postulationId = draft.id;
+
+    // =====================================
+    // 🔥 SAVE WORKFLOW
+    // =====================================
+
+    this.saveWorkflow();
+  }
+
+  async startPostulation() {
+    try {
+      console.log('🚀 STARTING POSTULATION...');
+
+      const response: any = await firstValueFrom(
+        this.wellbeingPostulationService.start({
+          userId: this.loggedUser.id,
+          periodYear: new Date().getFullYear(),
+        }),
+      );
+
+      console.log('✅ NEW DRAFT:', response);
+
+      this.postulationId = response.id;
+
+      // =====================================
+      // 🔥 SAVE WORKFLOW
+      // =====================================
+
+      this.saveWorkflow();
+    } catch (e) {
+      console.error('❌ START POSTULATION ERROR:', e);
+    }
+  }
+
+  async deleteDraft(id: number) {
+    console.log('🗑️ DELETE DRAFT:', id);
+  }
+
+  saveWorkflow() {
+    const workflow = {
+      userId: this.loggedUser?.id || null,
+
+      postulationId: this.postulationId,
+
+      step: this.currentStep,
+    };
+
+    localStorage.setItem('wellbeing_workflow', JSON.stringify(workflow));
+
+    console.log('💾 WORKFLOW SAVED:', workflow);
+  }
+
+  private restoreAffiliateFromResponse(affiliate: any) {
+    if (!affiliate?.rut) {
+      console.warn('⚠️ Affiliate vacío');
+
+      return;
+    }
+    this.afiliado = affiliate;
+    this.afiliadoValido = true;
+    this.patchAffiliate(affiliate);
+    this.syncAffiliateToFamily();
+    console.log('✅ AFFILIATE RESTORED');
+  }
+
+  async saveStep5AcademicVerification() {}
 }

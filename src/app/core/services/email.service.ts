@@ -2,8 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
-
-export class EmailService  {
+export class EmailService {
   private api = 'https://teletrabajo.dssm.cl/api/v1/users';
 
   private notificationApi = 'https://teletrabajo.dssm.cl/api/v1/notifications';
@@ -19,6 +18,8 @@ export class EmailService  {
   }
 
   sendEmail(payload: { to: string; subject: string; message: string }) {
-    return this.http.post(`${this.notificationApi}/send-email`, payload);
+    return this.http.post(`${this.notificationApi}/send-email`, payload, {
+      responseType: 'text',
+    });
   }
 }

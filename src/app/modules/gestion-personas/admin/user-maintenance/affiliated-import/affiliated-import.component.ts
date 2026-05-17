@@ -157,7 +157,9 @@ export class AffiliatedImportComponent {
       // 🔥 RESET DUPLICADOS
       this.resetRutMap();
 
-      this.allUsers = await firstValueFrom(this.usersService.getAll());
+      const users = await firstValueFrom(this.usersService.getAll());
+
+      this.allUsers = users.filter((u: any) => !u.deletedAt);
 
       console.log('👥 USERS CARGADOS:', this.allUsers.length);
 
@@ -284,8 +286,12 @@ export class AffiliatedImportComponent {
   // 🔥 CLEAN RUT
   // ====================================================================================
 
-  private cleanRut(rut: string): string {
-    return rut.replace(/\./g, '').replace('-', '').trim();
+  cleanRut(rut?: string | null): string {
+    if (!rut) {
+      return '';
+    }
+
+    return rut.replace(/\./g, '').replace(/-/g, '').trim().toUpperCase();
   }
 
   // ====================================================================================
@@ -376,11 +382,11 @@ export class AffiliatedImportComponent {
 
   async existeRutLocal(rut: string): Promise<boolean> {
     try {
-      const users = await firstValueFrom(this.usersService.getAll());
-
       const normalizado = this.normalizarRut(rut);
 
-      return users.some((u: any) => this.normalizarRut(u.rut) === normalizado);
+      return this.allUsers.some(
+        (u: any) => !u.deletedAt && this.normalizarRut(u.rut) === normalizado,
+      );
     } catch (err) {
       console.error('❌ Error validando RUT', err);
 
@@ -398,91 +404,6 @@ export class AffiliatedImportComponent {
       .replace(/-/g, '')
       .toUpperCase()
       .trim();
-  }
-
-  // ====================================================================================
-  // 🔥 VALIDAR USER EXISTENTE
-  // ====================================================================================
-
-  async validateUserExists(rut: string): Promise<{
-    exists: boolean;
-    user: any | null;
-  }> {
-    try {
-      const normalizado = this.normalizarRut(rut);
-
-      // 🔥 BUSCAR EN CACHE LOCAL
-      const found = this.allUsers.find(
-        (u: any) => this.normalizarRut(u.rut) === normalizado,
-      );
-
-      return {
-        exists: !!found,
-        user: found || null,
-      };
-    } catch (err) {
-      console.error('❌ Error buscando usuario', err);
-
-      return {
-        exists: false,
-        user: null,
-      };
-    }
-  }
-
-  // ====================================================================================
-  // 🔥 VALIDAR SI TIENE ROL
-  // ====================================================================================
-
-  async userHasRole(userId: number, roleId: number): Promise<boolean> {
-    try {
-      const roles: any[] = await firstValueFrom(
-        this.usersService.getUserRoles(userId),
-      );
-
-      return roles
-        .filter((r) => !r.deletedAt)
-        .some((r) => r.role?.id === roleId);
-    } catch (err) {
-      console.error('❌ Error validando roles', err);
-
-      return false;
-    }
-  }
-
-  // ====================================================================================
-  // 🔥 SIMULAR ASIGNACIÓN ROL
-  // ====================================================================================
-
-  async simulateRoleAssign(userId: number): Promise<void> {
-    const hasRole = await this.userHasRole(userId, this.ADMINISTRATIVO_ROLE_ID);
-
-    if (hasRole) {
-      console.log('✅ Usuario ya posee rol ADMINISTRATIVO');
-
-      return;
-    }
-
-    // ====================================================================================
-    // 🔥 PREVIEW
-    // ====================================================================================
-
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    console.log('🔐 READY TO ASSIGN ROLE ADMINISTRATIVO');
-
-    console.log({
-      userId,
-      roleId: this.ADMINISTRATIVO_ROLE_ID,
-    });
-
-    // ====================================================================================
-    // 🔥 REAL
-    // ====================================================================================
-
-    await firstValueFrom(
-      this.usersService.addUserRole(userId, this.ADMINISTRATIVO_ROLE_ID),
-    );
   }
 
   // ====================================================================================
@@ -531,7 +452,7 @@ export class AffiliatedImportComponent {
 
     let existingUser: any = null;
 
-    if (rutValid && !isPasivo) {
+    if (rutValid) {
       const existsUser = await this.validateUserExists(rutOriginal);
 
       if (existsUser.exists) {
@@ -540,10 +461,6 @@ export class AffiliatedImportComponent {
         warnings.push('Usuario ya existe');
 
         console.log('👤 USER EXISTS:', existingUser);
-
-        if (existingUser?.id) {
-          await this.simulateRoleAssign(existingUser.id);
-        }
       }
     }
 
@@ -572,23 +489,35 @@ export class AffiliatedImportComponent {
     // ====================================================================================
     // 🔥 TELEFONO
     // ====================================================================================
-
+    /*
     if (!row.TELEFONO?.trim()) {
       warnings.push('TELEFONO vacío');
     }
+      */
 
     // ====================================================================================
     // 🔥 PASSWORD
     // ====================================================================================
 
-    const password = this.generatePassword(rutOriginal, row.FIRST_NAME || '');
+    //const password = this.generatePassword(rutOriginal, row.FIRST_NAME || '');
 
+    const password = '123456';
     // ====================================================================================
     // 🔥 USERNAME
     // ====================================================================================
 
-    const username = this.generateUsername(row.FIRST_NAME, row.FIRST_LAST_NAME);
+    const baseUsername = this.generateUsername(
+      row.FIRST_NAME,
+      row.FIRST_LAST_NAME,
+    );
 
+    const username = this.generateUniqueUsername(baseUsername);
+
+    if (!existingUser) {
+      this.allUsers.push({
+        username,
+      });
+    }
     // ====================================================================================
     // 🔥 FULL NAME
     // ====================================================================================
@@ -617,6 +546,12 @@ export class AffiliatedImportComponent {
       password,
 
       rut: rutOriginal,
+
+      birth_date: row.FECHA_NACIMIENTO || null,
+
+      contract_date: row.FECHA_AFILIACION || null,
+
+      contract_type: 'CONTRATA',
     };
 
     // ====================================================================================
@@ -626,12 +561,11 @@ export class AffiliatedImportComponent {
     const payloadAffiliated = {
       tipoAfiliado: row.TIPO_AFILIADO || null,
 
-      telefono: row.TELEFONO || null,
+      //telefono: row.TELEFONO || null,
 
-      direccion: row.DIRECCION || null,
+      //direccion: row.DIRECCION || null,
 
-      sexo: row.SEXO || null,
-
+      //sexo: row.SEXO || null,
       fechaAfiliacion: row.FECHA_AFILIACION || null,
 
       fechaNacimiento: row.FECHA_NACIMIENTO || null,
@@ -645,6 +579,10 @@ export class AffiliatedImportComponent {
 
     if (existingUser) {
       actionType = 'USER_EXISTS';
+
+      console.log('👤 USER EXISTS:', existingUser);
+    } else {
+      console.log('🆕 USER NEW:', rutOriginal);
     }
     // ====================================================================================
     // 🔥 RESULT
@@ -741,110 +679,346 @@ export class AffiliatedImportComponent {
     return false;
   }
 
-  async importAll(): Promise<void> {
-    if (!this.results?.length) {
-      console.warn('⚠️ No existen resultados para importar');
+  // ====================================================================================
+  // 🔥 PROCESS IMPORT REAL
+  // ====================================================================================
 
+  async processImport(): Promise<void> {
+    if (!this.results.length) {
+      console.warn('⚠️ No existen registros para importar');
       return;
     }
 
     this.loading = true;
 
+    // =====================================================
+    // 🔥 MÉTRICAS
+    // =====================================================
+
     let created = 0;
-
-    let skipped = 0;
-
-    let failed = 0;
+    let updated = 0;
+    let invalid = 0;
+    let roleAssigned = 0;
+    let errors = 0;
 
     try {
       for (const item of this.results) {
         try {
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-          console.log('🚀 PROCESANDO:', item.rutOriginal);
-
           // =====================================================
-          // 🔥 INVÁLIDOS
+          // 🔥 INVALIDOS
           // =====================================================
 
           if (!item.valid) {
-            skipped++;
+            console.warn('❌ Registro inválido:', item);
 
-            console.warn('⛔ Registro inválido');
+            invalid++;
 
             continue;
           }
 
           // =====================================================
-          // 🔥 USER EXISTE
+          // 🔥 USER YA EXISTE
           // =====================================================
 
           if (item.actionType === 'USER_EXISTS') {
-            skipped++;
+            const existingUser = await this.validateUserExists(
+              item.rutOriginal,
+            );
 
-            console.warn('♻️ Usuario ya existe');
+            if (existingUser?.user?.id) {
+              await this.updateUserIfNeeded(existingUser.user, item);
+
+              updated++;
+            }
 
             continue;
           }
 
           // =====================================================
-          // 🔥 CREAR USER
+          // 🔥 CREATE USER
           // =====================================================
 
-          console.log('👤 CREANDO USER');
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+          console.log('🚀 CREATING USER');
+
+          console.log(item.payloadUser);
 
           const createdUser: any = await firstValueFrom(
             this.usersService.createUser(item.payloadUser),
           );
 
-          console.log('✅ USER CREADO:', createdUser);
-
-          // =====================================================
-          // 🔥 VALIDAR ID
-          // =====================================================
-
-          if (!createdUser?.id) {
-            throw new Error('Usuario creado sin ID');
-          }
-
-          // =====================================================
-          // 🔥 ASIGNAR ROL
-          // =====================================================
-
-          console.log('🔐 ASIGNANDO ROL');
-
-          await firstValueFrom(
-            this.usersService.addUserRole(
-              createdUser.id,
-              item.roleId,
-            ),
-          );
-
-          console.log('✅ ROL ASIGNADO');
+          console.log('✅ USER CREATED:', createdUser);
 
           created++;
-        } catch (err) {
-          failed++;
 
-          console.error('❌ ERROR IMPORTANDO', err);
+          // =====================================================
+          // 🔥 AGREGAR A CACHE LOCAL
+          // =====================================================
+
+          this.allUsers.push(createdUser);
+
+          // =====================================================
+          // 🔥 ASSIGN ROLE
+          // =====================================================
+
+          if (createdUser?.id) {
+            await this.assignRoleIfNeeded(createdUser.id, item.roleId);
+
+            roleAssigned++;
+          }
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR ITEM:', {
+            rut: item.rutOriginal,
+            username: item.username,
+            error,
+          });
         }
       }
 
       // =====================================================
-      // 🔥 RESUMEN
+      // 🔥 RESUMEN FINAL
       // =====================================================
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      console.log('🎯 IMPORTACIÓN FINALIZADA');
+      console.log('✅ IMPORT FINALIZADO');
 
       console.table({
-        creados: created,
-        omitidos: skipped,
-        errores: failed,
+        totalTXT: this.results.length,
+        created,
+        updated,
+        invalid,
+        roleAssigned,
+        errors,
       });
     } finally {
       this.loading = false;
     }
+  }
+
+  // ====================================================================================
+  // 🔥 ASSIGN ROLE IF NEEDED
+  // ====================================================================================
+
+  async assignRoleIfNeeded(userId: number, roleId: number): Promise<void> {
+    try {
+      const hasRole = await this.userHasRole(userId, roleId);
+
+      if (hasRole) {
+        console.log('✅ Usuario ya posee rol');
+
+        return;
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      console.log('🔐 ASSIGNING ROLE');
+
+      console.log({
+        userId,
+        roleId,
+      });
+
+      await firstValueFrom(this.usersService.addUserRole(userId, roleId));
+
+      console.log('✅ ROLE ASSIGNED');
+    } catch (error) {
+      console.error('❌ ERROR ASSIGN ROLE:', error);
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 VALIDATE USER EXISTS
+  // ====================================================================================
+
+  async validateUserExists(rut: string): Promise<any> {
+    try {
+      const cleanRut = this.cleanRut(rut);
+
+      // =====================================================
+      // 🔥 RUT INVALIDO
+      // =====================================================
+
+      if (!cleanRut) {
+        return {
+          exists: false,
+          user: null,
+        };
+      }
+
+      // =====================================================
+      // 🔥 BUSCAR USER
+      // =====================================================
+
+      const user = this.allUsers.find(
+        (u: any) => !u.deletedAt && this.cleanRut(u.rut) === cleanRut,
+      );
+
+      return {
+        exists: !!user,
+        user: user || null,
+      };
+    } catch (error) {
+      console.error('❌ ERROR VALIDANDO USER:', error);
+
+      return {
+        exists: false,
+        user: null,
+      };
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 USER HAS ROLE
+  // ====================================================================================
+
+  async userHasRole(userId: number, roleId: number): Promise<boolean> {
+    try {
+      const roles: any[] = await firstValueFrom(
+        this.usersService.getUserRoles(userId),
+      );
+
+      return roles.some((r: any) => r.role?.id === roleId);
+    } catch (error) {
+      console.error('❌ ERROR VALIDANDO ROLE:', error);
+
+      return false;
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 UPDATE USER IF NEEDED
+  // ====================================================================================
+
+  async updateUserIfNeeded(
+    existingUser: any,
+    item: ImportPreview,
+  ): Promise<void> {
+    try {
+      // =====================================================
+      // 🔥 GET FULL USER
+      // =====================================================
+
+      const fullUser: any = await firstValueFrom(
+        this.usersService.getById(existingUser.id),
+      );
+
+      // =====================================================
+      // 🔥 BUILD UPDATE
+      // =====================================================
+
+      const payload: any = {
+        ...fullUser,
+      };
+
+      // =====================================================
+      // 🔥 NOMBRES
+      // =====================================================
+
+      payload.firstName = item.payloadUser.firstName || fullUser.firstName;
+
+      payload.secondName = item.payloadUser.secondName || fullUser.secondName;
+
+      payload.firstLastName =
+        item.payloadUser.firstLastName || fullUser.firstLastName;
+
+      payload.secondLastName =
+        item.payloadUser.secondLastName || fullUser.secondLastName;
+
+      payload.full_name = item.payloadUser.full_name || fullUser.full_name;
+
+      // =====================================================
+      // 🔥 EMAIL
+      // SOLO SI VACÍO
+      // =====================================================
+
+      if (!fullUser.email && item.payloadUser.email) {
+        payload.email = item.payloadUser.email;
+      }
+
+      // =====================================================
+      // 🔥 USERNAME
+      // SOLO SI VACÍO
+      // =====================================================
+
+      if (!fullUser.username && item.username) {
+        payload.username = item.username;
+      }
+
+      // =====================================================
+      // 🔥 PASSWORD
+      // FORZAR CAMBIO
+      // =====================================================
+
+      //payload.password = item.payloadUser.password;
+      payload.password = '123456';
+
+      // =====================================================
+
+      if (!fullUser.birth_date && item.payloadUser.birth_date) {
+        payload.birth_date = item.payloadUser.birth_date;
+      }
+
+      if (!fullUser.contract_date && item.payloadUser.contract_date) {
+        payload.contract_date = item.payloadUser.contract_date;
+      }
+
+      if (!fullUser.contract_type) {
+        payload.contract_type = item.payloadUser.contract_type;
+      }
+
+      // =====================================================
+      // 🔥 LIMPIAR CAMPOS
+      // =====================================================
+
+      delete payload.createdAt;
+      delete payload.updatedAt;
+      delete payload.deletedAt;
+
+      // =====================================================
+      // 🔥 UPDATE USER
+      // =====================================================
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      console.log('🔄 UPDATING USER');
+
+      console.log(payload);
+
+      await firstValueFrom(
+        this.usersService.updateUser(existingUser.id, payload),
+      );
+
+      console.log('✅ USER UPDATED');
+
+      // =====================================================
+      // 🔥 SYNC ROLE
+      // =====================================================
+
+      await this.assignRoleIfNeeded(existingUser.id, item.roleId);
+    } catch (error) {
+      console.error('❌ ERROR UPDATE USER:', error);
+    }
+  }
+
+  generateUniqueUsername(base: string): string {
+    let username = base;
+
+    let counter = 1;
+
+    while (
+      this.allUsers.some(
+        (u: any) => u.username?.toLowerCase() === username.toLowerCase(),
+      )
+    ) {
+      username = `${base}${counter}`;
+
+      counter++;
+    }
+
+    return username;
   }
 }

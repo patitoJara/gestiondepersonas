@@ -12,7 +12,9 @@
       <span class="icon">🔍</span>
       <input type="text" [(ngModel)]="q" (input)="onSearchChange(q)" />
 
-      <button *ngIf="q" (click)="clearSearch()">✕</button>
+      <button *ngIf="q" class="clear-btn" type="button" (click)="clearSearch()">
+        ✕
+      </button>
     </div>
   </div>
 
@@ -78,7 +80,9 @@
           <span
             class="badge"
             [ngClass]="'badge-' + r.toLowerCase()"
-            *ngFor="let r of (row.roles && row.roles.length ? row.roles : ['Sin rol'])"
+            *ngFor="
+              let r of row.roles && row.roles.length ? row.roles : ['Sin rol']
+            "
           >
             {{ r }}
           </span>

@@ -29,7 +29,6 @@ import { Role } from '../../../../../../core/auth/models/role.model';
 import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { RolesService } from '../../../services/admin/roles.service';
 import { generarPassword } from '@app/shared/utils/password.util';
-import { formatearNombre } from '@app/shared/utils/name.util';
 
 import { rutValidator } from '@app/shared/utils/rut.validator';
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
@@ -273,7 +272,7 @@ export class UsuariosDialogComponent implements OnInit {
     const valor = control.value;
     if (!valor) return;
 
-    const formateado = formatearNombre(valor);
+    const formateado = String(valor).trim().toUpperCase();
 
     control.setValue(formateado, { emitEvent: false });
 

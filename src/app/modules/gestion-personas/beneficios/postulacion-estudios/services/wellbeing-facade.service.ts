@@ -2,32 +2,25 @@ import { Injectable, inject } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
 
-import { WellbeingPostulationService }
-from './wellbeing-postulation.service';
+import { WellbeingPostulationService } from './wellbeing-postulation.service';
 
-import { WellbeingMapperService }
-from './wellbeing-mapper.service';
+import { WellbeingMapperService } from './wellbeing-mapper.service';
 
-import { WellbeingStorageService }
-from './wellbeing-storage.service';
+import { WellbeingStorageService } from './wellbeing-storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WellbeingFacadeService {
-
   // =========================================
   // 🔥 INJECTS
   // =========================================
 
-  private postulationService =
-    inject(WellbeingPostulationService);
+  private postulationService = inject(WellbeingPostulationService);
 
-  private mapperService =
-    inject(WellbeingMapperService);
+  private mapperService = inject(WellbeingMapperService);
 
-  private storageService =
-    inject(WellbeingStorageService);
+  private storageService = inject(WellbeingStorageService);
 
   constructor() {}
 
@@ -35,17 +28,16 @@ export class WellbeingFacadeService {
   // 🔥 CREATE POSTULATION
   // =========================================
 
-  async createPostulation():
-    Promise<number> {
+  async createPostulation(): Promise<number> {
+    const response: any = await firstValueFrom(
+      this.postulationService.start({
+        processYear: 2026,
 
-    const response =
-      await firstValueFrom(
-        this.postulationService
-          .createPostulation(),
-      );
+        benefitType: 'APOYO_ESTUDIOS_SUPERIORES',
+      }),
+    );
 
-    this.storageService
-      .savePostulationId(response.id);
+    this.storageService.savePostulationId(response.id);
 
     return response.id;
   }
@@ -54,33 +46,19 @@ export class WellbeingFacadeService {
   // 🔥 SAVE STEP 1
   // =========================================
 
-  async saveAffiliate(
-    form: any,
-  ): Promise<void> {
-
-    const postulationId =
-      this.storageService
-        .getPostulationId();
+  async saveAffiliate(form: any): Promise<void> {
+    const postulationId = this.storageService.getPostulationId();
 
     if (!postulationId) {
-      throw new Error(
-        'No existe postulación activa',
-      );
+      throw new Error('No existe postulación activa');
     }
 
-    const payload =
-      this.mapperService
-        .mapAffiliate(form);
+    const payload = this.mapperService.mapAffiliate(form);
 
     await firstValueFrom(
-      this.postulationService
-        .saveAffiliate(
-          postulationId,
-          payload,
-        ),
+      this.postulationService.saveAffiliate(postulationId, payload),
     );
 
-    this.storageService
-      .saveCurrentStep(2);
+    this.storageService.saveCurrentStep(2);
   }
 }

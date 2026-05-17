@@ -162,7 +162,7 @@ export class UsuariosComponent implements AfterViewInit {
               return {
                 ...user,
                 roles,
-                fullName: (user as any).full_name || this.buildFullName(user),
+                fullName: this.buildFullName(user),
               };
             }),
           );
@@ -200,7 +200,7 @@ export class UsuariosComponent implements AfterViewInit {
         .filter((w) => w.trim().length > 0);
 
       data = data.filter((u: any) => {
-        const full = (u.fullName || this.buildFullName(u)).toLowerCase();
+        const full = this.buildFullName(u).toLowerCase();
 
         // 🔥 TODAS las palabras deben estar
         return words.every((w) => full.includes(w));
@@ -327,14 +327,9 @@ export class UsuariosComponent implements AfterViewInit {
 */
 
   buildFullName(u: any): string {
-    // 🔹 usar fullName si viene bien formado
-    if (typeof u.fullName === 'string' && u.fullName.trim().length > 0) {
-      return u.fullName.trim();
-    }
-
-    // 🔹 construir desde campos
     const name = [u.firstName, u.secondName, u.firstLastName, u.secondLastName]
       .filter(Boolean)
+      .map((v) => String(v).trim().toUpperCase())
       .join(' ')
       .replace(/\s+/g, ' ')
       .trim();
@@ -358,14 +353,7 @@ export class UsuariosComponent implements AfterViewInit {
 
       // 🔥 nombre completo
       case 'fullName':
-        return [
-          row.firstName,
-          row.secondName,
-          row.firstLastName,
-          row.secondLastName,
-        ]
-          .filter(Boolean)
-          .join(' ');
+        return this.buildFullName(row);
 
       // 🔥 roles
       case 'roles':
@@ -389,6 +377,7 @@ export class UsuariosComponent implements AfterViewInit {
       row.secondLastName,
     ]
       .filter(Boolean)
+      .map((v) => String(v).trim().toUpperCase())
       .join(' ');
   }
 
@@ -516,4 +505,6 @@ export class UsuariosComponent implements AfterViewInit {
       }
     });
   }
+
+
 }

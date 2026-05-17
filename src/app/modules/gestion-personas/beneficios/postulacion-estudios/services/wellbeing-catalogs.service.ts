@@ -85,37 +85,37 @@ export class WellbeingCatalogsService {
 
   getParentTypes(): Observable<ParentType[]> {
     return this.http.get<ParentType[]>(
-      `${this.apiUrl}/parent-types/all`,
+      `${this.apiUrl}/parents_types/all`,
     );
   }
 
   // =========================================
-  // 🔥 CONTRACT TYPES
+  // 🔥 CONTRACT TYPES  /api/v1/contracts_types
   // =========================================
 
   getContractTypes(): Observable<ContractType[]> {
     return this.http.get<ContractType[]>(
-      `${this.apiUrl}/contract-types/all`,
+      `${this.apiUrl}/contracts_types/all`,
     );
   }
 
   // =========================================
-  // 🔥 CIVIL STATES
+  // 🔥 CIVIL STATES /api/v1/civil_states
   // =========================================
 
   getCivilStates(): Observable<CivilState[]> {
     return this.http.get<CivilState[]>(
-      `${this.apiUrl}/civil-states/all`,
+      `${this.apiUrl}/civil_states/all`,
     );
   }
 
   // =========================================
-  // 🔥 BILL TYPES
+  // 🔥 BILL TYPES   /api/v1/bills_types
   // =========================================
 
   getBillTypes(): Observable<BillType[]> {
     return this.http.get<BillType[]>(
-      `${this.apiUrl}/bill-types/all`,
+      `${this.apiUrl}/bills_types/all`,
     );
   }
 
@@ -130,12 +130,12 @@ export class WellbeingCatalogsService {
   }
 
   // =========================================
-  // 🔥 WORK PLACES
+  // 🔥 WORK PLACES /api/v1/works_places/{id}/restore
   // =========================================
 
   getWorkPlaces(): Observable<WorkPlace[]> {
     return this.http.get<WorkPlace[]>(
-      `${this.apiUrl}/work-places/all`,
+      `${this.apiUrl}/works_places/all`,
     );
   }
 
@@ -150,22 +150,22 @@ export class WellbeingCatalogsService {
   }
 
   // =========================================
-  // 🔥 TYPE PROPERTY
+  // 🔥 TYPE PROPERTY  /api/v1/types_properties
   // =========================================
 
   getTypeProperties(): Observable<TypeProperty[]> {
     return this.http.get<TypeProperty[]>(
-      `${this.apiUrl}/type-properties/all`,
+      `${this.apiUrl}/types_properties/all`,
     );
   }
 
   // =========================================
-  // 🔥 TYPE HOUSING
+  // 🔥 TYPE HOUSING /api/v1/types_housings
   // =========================================
 
   getTypeHousings(): Observable<TypeHousing[]> {
     return this.http.get<TypeHousing[]>(
-      `${this.apiUrl}/type-housings/all`,
+      `${this.apiUrl}/types_housings/all`,
     );
   }
 }

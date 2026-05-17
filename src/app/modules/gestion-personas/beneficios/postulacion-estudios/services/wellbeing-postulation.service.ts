@@ -28,6 +28,8 @@ import { HousingRequest } from '../models/housing-request.model';
 
 import { SummaryResponse } from '../models/summary-response.model';
 
+import { PostulationSummaryResponse } from '../models/postulation-summary-response.model';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -42,25 +44,9 @@ export class WellbeingPostulationService {
   // 🔥 BASE URL
   // =========================================
 
-  private apiUrl =
-    `${environment.apiUrl}/wellbeing/postulations`;
+  private apiUrl = `${environment.apiUrl}/wellbeing/postulations`;
 
   constructor() {}
-
-  // =========================================
-  // 🔥 CREATE POSTULATION
-  // =========================================
-
-  createPostulation(): Observable<PostulationResponse> {
-    return this.http.post<PostulationResponse>(
-      this.apiUrl,
-      {
-        processYear: 2026,
-
-        benefitType: 'APOYO_ESTUDIOS_SUPERIORES',
-      },
-    );
-  }
 
   // =========================================
   // 🔥 STEP 1 — AFFILIATE
@@ -70,7 +56,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: AffiliateRequest,
   ): Observable<PostulationResponse> {
-
     return this.http.put<PostulationResponse>(
       `${this.apiUrl}/${postulationId}/affiliate`,
       payload,
@@ -85,7 +70,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: FamilyMemberRequest[],
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/family-members`,
       payload,
@@ -100,7 +84,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: BeneficiaryRequest,
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/beneficiary`,
       payload,
@@ -115,7 +98,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: AcademicBackgroundRequest,
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/academic-background`,
       payload,
@@ -130,7 +112,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: AcademicVerificationRequest,
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/academic-verification`,
       payload,
@@ -145,7 +126,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: IncomeRequest[],
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/family-incomes`,
       payload,
@@ -160,7 +140,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: ExpenseRequest,
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/family-expenses`,
       payload,
@@ -175,7 +154,6 @@ export class WellbeingPostulationService {
     postulationId: number,
     payload: HealthRecordRequest[],
   ): Observable<any> {
-
     return this.http.put(
       `${this.apiUrl}/${postulationId}/health-records`,
       payload,
@@ -186,15 +164,8 @@ export class WellbeingPostulationService {
   // 🔥 STEP 8 — HOUSING
   // =========================================
 
-  saveHousing(
-    postulationId: number,
-    payload: HousingRequest,
-  ): Observable<any> {
-
-    return this.http.put(
-      `${this.apiUrl}/${postulationId}/housing`,
-      payload,
-    );
+  saveHousing(postulationId: number, payload: HousingRequest): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${postulationId}/housing`, payload);
   }
 
   // =========================================
@@ -206,18 +177,11 @@ export class WellbeingPostulationService {
     documentTypeId: number,
     file: File,
   ): Observable<any> {
-
     const formData = new FormData();
 
-    formData.append(
-      'documentTypeId',
-      documentTypeId.toString(),
-    );
+    formData.append('documentTypeId', documentTypeId.toString());
 
-    formData.append(
-      'file',
-      file,
-    );
+    formData.append('file', file);
 
     return this.http.post(
       `${this.apiUrl}/${postulationId}/documents`,
@@ -229,12 +193,96 @@ export class WellbeingPostulationService {
   // 🔥 STEP 10 — SUMMARY
   // =========================================
 
-  getSummary(
-    postulationId: number,
-  ): Observable<SummaryResponse> {
-
+  getSummary(postulationId: number): Observable<SummaryResponse> {
     return this.http.get<SummaryResponse>(
       `${this.apiUrl}/${postulationId}/summary`,
+    );
+  }
+
+  // =========================================
+  // 🔥 START DRAFT
+  // =========================================
+
+  start(payload: any): Observable<PostulationResponse> {
+    return this.http.post<PostulationResponse>(`${this.apiUrl}/start`, payload);
+  }
+
+  // =========================================
+  // 🔥 MY DRAFTS
+  // =========================================
+
+  getMyDrafts(): Observable<PostulationSummaryResponse[]> {
+    return this.http.get<PostulationSummaryResponse[]>(
+      `${this.apiUrl}/my-drafts`,
+    );
+  }
+
+  // =========================================
+  // 🔥 MY ACTIVE
+  // =========================================
+
+  getMyActive(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/my-active`);
+  }
+
+  // =========================================
+  // 🔥 MY POSTULATION
+  // =========================================
+
+  getMyPostulation(postulationId: number): Observable<PostulationResponse> {
+    return this.http.get<PostulationResponse>(
+      `${this.apiUrl}/my/${postulationId}`,
+    );
+  }
+
+  // =========================================
+  // 🔥 MY SUMMARY
+  // =========================================
+
+  getMySummary(postulationId: number): Observable<SummaryResponse> {
+    return this.http.get<SummaryResponse>(
+      `${this.apiUrl}/my/${postulationId}/summary`,
+    );
+  }
+
+  // =========================================
+  // 🔥 DELETE MY POSTULATION
+  // =========================================
+
+  deleteMyPostulation(postulationId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/my/${postulationId}`);
+  }
+
+  // =========================================
+  // 🔥 UPDATE CURRENT STEP
+  // =========================================
+
+  updateCurrentStep(
+    postulationId: number,
+    currentStep: number,
+  ): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/my/${postulationId}/step`, {
+      currentStep,
+    });
+  }
+
+  // =========================================
+  // 🔥 SEARCH POSTULATIONS
+  // =========================================
+
+  search(params: any): Observable<any> {
+    return this.http.get(this.apiUrl, {
+      params,
+    });
+  }
+
+  // =========================================
+  // 🔥 GET BY ID
+  // =========================================
+
+  getById(postulationId: number): Observable<PostulationResponse> {
+    return this.http.get<PostulationResponse>(
+      `${this.apiUrl}/${postulationId}`,
     );
   }
 }

@@ -113,6 +113,10 @@ export class UsersService {
     return this.http.get<boolean>(`${this.api}/exists-rut/${rut}`);
   }
 
+  findByRut(rut: string) {
+    return this.http.get<any>(`${this.api}/rut/${encodeURIComponent(rut)}`);
+  }
+
   // =========================================
   // 🔍 PREVIEW (TEMPORAL)
   // =========================================

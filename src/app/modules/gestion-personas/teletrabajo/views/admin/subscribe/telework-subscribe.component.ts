@@ -418,8 +418,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
         for (const u of actions.update) {
           console.log('🛠️ PUT UPDATE:', u);
 
-          debugger;
-
           const response = await firstValueFrom(
             this.subscribeService.update(u.id, u),
           );
@@ -435,8 +433,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       if (actions.delete?.length) {
         for (const d of actions.delete) {
           console.log('🗑️ DELETE:', d);
-
-          debugger;
 
           const response = await firstValueFrom(
             this.subscribeService.delete(d.id),
@@ -475,14 +471,37 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       // 🔥 RECARGAR
       // =====================================================
 
-      debugger;
-
       await this.loadSubscriptions(userId);
 
+      console.log('📧 DESPUÉS LOAD:', this.notificationEmails);
       // =====================================================
       // 🔥 EMAIL
       // =====================================================
+      /*
+console.log('📧 ENVIANDO EMAIL...');
 
+this.emailService.sendEmail({
+  to: 'patricio.jara@redsalud.gob.cl',
+
+  subject: 'Prueba Telework-SM',
+
+  message: 'Correo de prueba sistema teletrabajo.',
+}).subscribe({
+  next: (response) => {
+    console.log(
+      '✅ Correo enviado correctamente',
+      response,
+    );
+  },
+
+  error: (error) => {
+    console.error(
+      '❌ Error al enviar correo',
+      error,
+    );
+  },
+});
+     
       try {
         const response = await firstValueFrom(
           this.emailService.sendEmail({
@@ -498,19 +517,36 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       } catch (e) {
         console.error('💥 ERROR EMAIL:', e);
       }
-      /*      
+        */
+
       try {
         console.log('📧 PREPARANDO ENVÍO EMAIL...');
 
         const email = this.buildSubscriptionEmail(actions.create);
 
-        console.log('📧 DESTINATARIOS:', this.notificationEmails);
+        // =====================================================
+        // 🔥 DESTINATARIOS
+        // =====================================================
+
+        const recipients = [
+          this.selectedUser?.email,
+
+          ...this.notificationEmails,
+        ]
+          .filter(Boolean)
+          .join(',');
+
+        console.log('📧 DESTINATARIOS:', recipients);
 
         console.log('📧 EMAIL:', email);
 
+        // =====================================================
+        // 🔥 SEND
+        // =====================================================
+
         const response = await firstValueFrom(
           this.emailService.sendEmail({
-            to: this.notificationEmails.join(','),
+            to: recipients,
 
             subject: email.subject,
 
@@ -522,7 +558,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       } catch (e) {
         console.error('💥 ERROR EMAIL:', e);
       }
-*/
+
       this.steps.forEach((s) => (s.completed = true));
 
       this.currentStep = 5;
@@ -532,8 +568,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
       this.neutralDates = [];
     } catch (error) {
       console.error('💥 ERROR GENERAL:', error);
-
-      debugger;
 
       this.showWarning('Error al guardar cambios');
     } finally {

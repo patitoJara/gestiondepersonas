@@ -19,9 +19,10 @@ const PUBLIC_URLS = [
   '/auth/login',
   '/auth/refresh',
   '/auth/register',
-  '/users/recover-password',
-  '/notifications/send-email',
+  '/users/recover-password',  
 ];
+// '/notifications/send-email',
+
 
 // 🔁 Control refresh concurrente
 let isRefreshing = false;
@@ -151,7 +152,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // tokenService.clear();
   // authService.logout?.();
 
-  debugger;
 
   return throwError(() => refreshError);
   
