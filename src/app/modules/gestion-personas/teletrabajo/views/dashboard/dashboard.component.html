@@ -1,0 +1,195 @@
+<div class="dashboard-container">
+  <!-- 🔥 CORTINA -->
+  <div class="overlay" *ngIf="!canMarkToday">
+    <div class="overlay-content">
+      <mat-icon>block</mat-icon>
+
+      <h3>Acceso restringido</h3>
+
+      <p>No posee una suscripción activa para el día de hoy.</p>
+    </div>
+  </div>
+
+  <div class="home-wrapper">
+    <!-- 🟦 TITULO -->
+    <div class="title">
+      <mat-icon>schedule</mat-icon>
+      <div>
+        <div class="title-main">Servicio de Salud Magallanes</div>
+        <div class="title-sub">Sistema Registro Teletrabajo</div>
+      </div>
+    </div>
+
+    <!-- 🔲 GRID -->
+    <div class="layout-4">
+      <!-- 🟢 MARCACIÓN -->
+      <div class="col">
+        <div class="card-header green">
+          <mat-icon>access_time</mat-icon>
+          Jornada
+        </div>
+
+        <div class="bloque-reloj">
+          <div class="fecha">
+            {{ serverNow | date: "fullDate" | uppercase }}
+          </div>
+
+          <div class="hora">
+            {{ serverNow | date: "HH:mm:ss" }}
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button
+            class="btn btn-big btn-green"
+            (click)="mark('ING')"
+            [disabled]="!canMarkToday || hasIngreso"
+          >
+            <mat-icon>login</mat-icon>
+            Ingreso
+          </button>
+
+          <button
+            class="btn btn-big btn-orange"
+            (click)="mark('SAL')"
+            [disabled]="!canMarkToday || hasSalida"
+          >
+            <mat-icon>logout</mat-icon>
+            Salida
+          </button>
+        </div>
+
+        <div class="user-name">
+          {{ userName }}
+        </div>
+      </div>
+
+      <!-- 🔵 EVENTOS DEL DÍA -->
+      <div class="col">
+        <div class="card-header blue">
+          <mat-icon>history</mat-icon>
+          Marcaciones de Hoy
+        </div>
+
+        <div *ngFor="let e of todayEvents" class="item">
+          <div class="user-left">
+            <mat-icon [ngClass]="e.type === 'ING' ? 'green' : 'orange'">
+              {{ e.type === "ING" ? "login" : "logout" }}
+            </mat-icon>
+
+            <span>
+              {{ e.type === "ING" ? "Ingreso" : "Salida" }}
+            </span>
+          </div>
+
+          <div>
+            {{ e.datetime | date: "HH:mm:ss" }}
+          </div>
+        </div>
+
+        <div *ngIf="!todayEvents.length" class="empty">
+          <mat-icon>event_busy</mat-icon>
+          <p>Sin marcaciones hoy</p>
+        </div>
+      </div>
+
+      <!-- 🟣 ACTIVIDADES (NUEVO 🔥) -->
+      <div class="col">
+        <div class="card-header purple">
+          <mat-icon>task</mat-icon>
+          Actividades del día
+        </div>
+
+        <div class="toolbar">
+          <button class="btn btn-md btn-purple" (click)="crearWork()">
+            <mat-icon>add</mat-icon>
+            Nueva
+          </button>
+        </div>
+
+        <div *ngFor="let w of works" class="item work-item">
+          <div class="work-text">
+            <div class="desc">
+              {{ w.description }}
+            </div>
+            <div class="meta">
+              <!-- 🕒 CREACIÓN -->
+              <span class="created">
+                <mat-icon>schedule</mat-icon>
+                {{ w.createdAt | date: "HH:mm" }}
+              </span>
+
+              <!-- ✏️ EDICIÓN -->
+              <span
+                *ngIf="w.updatedAt && w.updatedAt !== w.createdAt"
+                class="edited"
+                [matTooltip]="'Editado a las ' + (w.updatedAt | date: 'HH:mm')"
+              >
+                <mat-icon>edit</mat-icon>
+                {{ w.updatedAt | date: "HH:mm" }}
+              </span>
+            </div>
+          </div>
+
+          <!-- 🔥 ACCIONES POR FILA -->
+          <div class="work-actions">
+            <!-- ✏️ EDITAR -->
+            <button mat-icon-button matTooltip="Editar" (click)="editarWork(w)">
+              <mat-icon class="edit">edit</mat-icon>
+            </button>
+
+            <!-- 🗑️ ELIMINAR -->
+            <button
+              mat-icon-button
+              matTooltip="Eliminar"
+              (click)="eliminarWork(w)"
+            >
+              <mat-icon class="delete">delete</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="!works.length" class="empty">
+          <mat-icon>inbox</mat-icon>
+          <p>Sin actividades</p>
+        </div>
+      </div>
+
+      <!-- 🟠 SUSCRIPCIONES -->
+      <div class="col">
+        <div class="card-header orange">
+          <mat-icon>event</mat-icon>
+          Suscripciones
+        </div>
+
+        <div *ngIf="subscriptions.length" class="subs-list">
+          <div *ngFor="let s of subscriptions" class="item subs-item">
+            <div class="subs-left">
+              <mat-icon>event</mat-icon>
+
+              <div class="subs-text">
+                <div class="range">
+                  {{ s.begin | date: "dd MMM yyyy" }} →
+                  {{ s.end | date: "dd MMM yyyy" }}
+                </div>
+
+                <div class="status" [ngClass]="getSubStatus(s)">
+                  {{ getSubStatusText(s) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!subscriptions.length" class="empty">
+          <mat-icon>event_busy</mat-icon>
+          <p>Sin suscripciones</p>
+        </div>
+
+        <div *ngIf="!subscriptions.length" class="empty">
+          No posee suscripciones
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

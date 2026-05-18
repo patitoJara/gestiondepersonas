@@ -1,0 +1,587 @@
+<!-- 🟦 HEADER -->
+<div class="title">
+  <mat-icon>fact_check</mat-icon>
+
+  <div>
+    <div class="title-main">Supervisión Operacional Teletrabajo</div>
+
+    <div class="title-sub">
+      Revisión, validación y regularización de registros de jornada
+    </div>
+  </div>
+</div>
+
+<!-- 👤 JEFATURA -->
+<div class="hint">
+  <mat-icon>person</mat-icon>
+
+  <span class="nombre">
+    {{ jefe?.fullName || "Sin jefatura asignada" }}
+  </span>
+</div>
+
+<!-- =========================================================
+🟦 OPERATIONAL FILTERS
+========================================================= -->
+<div class="filters">
+  <!-- IZQUIERDA -->
+  <div class="filters-left">
+    <!-- MES -->
+    <select class="input" [(ngModel)]="month" (change)="onMonthYearChange()">
+      <option *ngFor="let m of months" [value]="m.value">
+        {{ m.name }}
+      </option>
+    </select>
+
+    <!-- AÑO -->
+    <select class="input" [(ngModel)]="year" (change)="onMonthYearChange()">
+      <option *ngFor="let y of years" [value]="y">
+        {{ y }}
+      </option>
+    </select>
+
+    <!-- FECHAS -->
+    <div class="date-range">
+      <mat-form-field appearance="outline" class="f-date">
+        <input
+          matInput
+          [matDatepicker]="pickerFrom"
+          [(ngModel)]="dateFrom"
+          placeholder="Desde"
+          (dateChange)="onDateChange('from')"
+        />
+
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="pickerFrom"
+        ></mat-datepicker-toggle>
+
+        <mat-datepicker #pickerFrom></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="f-date">
+        <input
+          matInput
+          [matDatepicker]="pickerTo"
+          [(ngModel)]="dateTo"
+          placeholder="Hasta"
+          (dateChange)="onDateChange('to')"
+        />
+
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="pickerTo"
+        ></mat-datepicker-toggle>
+
+        <mat-datepicker #pickerTo></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- DERECHA -->
+  <div class="filters-actions">
+    <button class="btn btn-sm btn-blue" (click)="search()">
+      <mat-icon>search</mat-icon>
+      Buscar
+    </button>
+
+    <button class="btn btn-sm btn-gray" (click)="clearFilters()">
+      <mat-icon>refresh</mat-icon>
+      Limpiar
+    </button>
+  </div>
+</div>
+
+<!-- =========================================================
+🟦 JEFATURA OPERATIONAL CENTER
+========================================================= -->
+
+<div class="jefatura-layout" *ngIf="hasSearched">
+  <!-- =====================================================
+  👤 SIDEBAR
+  ====================================================== -->
+
+  <aside class="sidebar">
+    <!-- 🔹 FUNCIONARIO -->
+    <section class="panel-card users-panel">
+      <div class="section-header user-header">
+        <div>
+          <span class="section-tag"> Funcionario </span>
+
+          <h4>
+            {{ selectedUser?.fullName || "Sin selección" }}
+          </h4>
+
+          <p>
+            {{ selectedUser?.rut || "--" }}
+          </p>
+        </div>
+
+        <div class="user-status">
+          <mat-icon> verified_user </mat-icon>
+        </div>
+      </div>
+      <!--
+      <br>
+      <div class="section-header user-header">
+        <div class="meta-item">
+          <span class="meta-label"> Jornada </span>
+
+          <strong> 44 horas </strong>
+        </div>
+      </div>
+      -->
+      <div class="users-list">
+        <div
+          class="user-item"
+          *ngFor="let u of users"
+          (click)="selectUser(u)"
+          [class.active]="selectedUser?.id === u.id"
+        >
+          <div class="user-avatar-sm">
+            <mat-icon> person </mat-icon>
+          </div>
+
+          <div class="user-info">
+            <strong>
+              {{ u.fullName }}
+            </strong>
+
+            <span>
+              {{ u.rut }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 🔹 KPIS -->
+    <section class="panel-card kpi-panel">
+      <!-- OK -->
+      <div class="kpi-row ok">
+        <div class="kpi-left">
+          <mat-icon>check_circle</mat-icon>
+
+          <span>Correctos</span>
+        </div>
+        <strong>
+          {{ totalOk }}
+        </strong>
+      </div>
+
+      <!-- REVIEW -->
+      <div class="kpi-row review">
+        <div class="kpi-left">
+          <mat-icon>error_outline</mat-icon>
+
+          <span>Revisar</span>
+        </div>
+
+        <strong>
+          {{ totalReview }}
+        </strong>
+      </div>
+
+      <!-- OBSERVED -->
+      <div class="kpi-row observed">
+        <div class="kpi-left">
+          <mat-icon>schedule</mat-icon>
+
+          <span>Observados</span>
+        </div>
+
+        <strong>
+          {{ totalObserved }}
+        </strong>
+      </div>
+
+      <!-- CRITICAL -->
+      <div class="kpi-row critical">
+        <div class="kpi-left">
+          <mat-icon>warning</mat-icon>
+
+          <span>Críticos</span>
+        </div>
+
+        <strong>
+          {{ totalCritical }}
+        </strong>
+      </div>
+
+      <!-- HOURS -->
+      <div class="kpi-row hours">
+        <div class="kpi-left">
+          <mat-icon>timer</mat-icon>
+
+          <span>Total horas</span>
+        </div>
+
+        <strong>
+          {{ totalWorkedHours | number: "1.1-1" }}
+        </strong>
+      </div>
+    </section>
+
+    <!-- 🔹 ACCIONES OFICIALES -->
+    <section class="panel-card official-actions-panel" *ngIf="selectedUser">
+      <div class="section-header">
+        <div>
+          <span class="section-tag"> Exportación </span>
+
+          <h4>Acciones oficiales</h4>
+
+          <p>Información validada para envío a sueldos</p>
+        </div>
+
+        <mat-icon> description </mat-icon>
+      </div>
+
+      <div class="official-actions">
+        <!-- PDF -->
+        <button class="btn btn-blue btn-full" (click)="printUser(selectedUser)">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Imprimir reporte
+        </button>
+
+        <!-- EXCEL -->
+        <button
+          class="btn btn-green btn-full"
+          (click)="exportUser(selectedUser)"
+        >
+          <mat-icon>table_view</mat-icon>
+          Exportar Excel
+        </button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- =====================================================
+  🟩 MAIN
+  ====================================================== -->
+
+  <main class="main-content">
+    <!-- 🔹 DETALLE -->
+    <section class="panel-card">
+      <div class="section-header">
+        <div>
+          <h3>Detalle operacional</h3>
+
+          <span> Supervisión diaria de registros </span>
+        </div>
+
+        <div class="section-counter">
+          {{ dailyRows.length }}
+        </div>
+      </div>
+      <div class="empty-state" *ngIf="!hasDailyRows">
+        <mat-icon> fact_check </mat-icon>
+
+        <div class="user-empty" *ngIf="!selectedUser">
+          <mat-icon> groups </mat-icon>
+
+          <span> Selecciona un funcionario </span>
+        </div>
+
+        <p>
+          Visualiza el detalle operacional y validación diaria de registros.
+        </p>
+      </div>
+      <!-- GRID -->
+      <div class="operational-grid" *ngIf="hasDailyRows">
+        <!-- =====================================================
+          HEADER
+          ====================================================== -->
+
+        <div class="grid-header">
+          <!-- STATUS -->
+          <div class="status-header"></div>
+
+          <div>Fecha</div>
+
+          <div>Entrada</div>
+
+          <div>Salida</div>
+
+          <div>Horas</div>
+
+          <div>Act.</div>
+
+          <div>Acciones</div>
+        </div>
+
+        <!-- =====================================================
+  ROWS
+  ====================================================== -->
+
+        <div
+          class="grid-row"
+          *ngFor="let row of dailyRows"
+          (click)="selectDay(row.date)"
+          [class.row-critical]="row.status === 'CRITICAL'"
+          [class.row-review]="row.status === 'REVIEW'"
+          [class.row-observed]="row.status === 'OBSERVED'"
+          [class.row-ok]="row.status === 'OK'"
+        >
+          <!-- ===================================================
+    STATUS
+    ==================================================== -->
+
+          <!-- STATUS -->
+          <div class="cell status-cell">
+            <div
+              class="status-indicator"
+              [ngClass]="{
+                critical: row.status === 'CRITICAL',
+                review: row.status === 'REVIEW',
+                observed: row.status === 'OBSERVED',
+                ok: row.status === 'OK',
+              }"
+            >
+              <mat-icon>
+                {{
+                  row.status === "CRITICAL"
+                    ? "warning"
+                    : row.status === "REVIEW"
+                      ? "error_outline"
+                      : row.status === "OBSERVED"
+                        ? "schedule"
+                        : "check_circle"
+                }}
+              </mat-icon>
+            </div>
+
+            <div class="status-info">
+              <!-- 🔥 STATUS -->
+              <span class="status-title">
+                {{
+                  row.status === "CRITICAL"
+                    ? "Crítico"
+                    : row.status === "REVIEW"
+                      ? "Revisar"
+                      : row.status === "OBSERVED"
+                        ? "Observado"
+                        : "Correcto"
+                }}
+              </span>
+
+              <!-- 🔥 COMENTARIO -->
+              <span class="status-comment" *ngIf="row.comment">
+                {{ row.comment }}
+              </span>
+
+              <!-- 🔥 REVIEW META -->
+              <div class="review-meta" *ngIf="row.review">
+                <small>
+                  {{ row.review?.administrator?.full_name }}
+                </small>
+
+                <small>
+                  {{ row.review?.updatedAt | date: "dd/MM HH:mm" }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <!-- ===================================================
+    FECHA
+    ==================================================== -->
+
+          <div class="cell date-cell">
+            <span class="mark-chip">
+              {{ formatDateShortCL(row.date) }}
+            </span>
+          </div>
+
+          <!-- ===================================================
+    ENTRADA
+    ==================================================== -->
+
+          <div class="cell">
+            <span class="mark-chip" [class.virtual]="row.isVirtualEntry">
+              {{ row.entryTime || "Sin marca" }}
+            </span>
+          </div>
+
+          <!-- ===================================================
+    SALIDA
+    ==================================================== -->
+
+          <div class="cell">
+            <span class="mark-chip" [class.virtual]="row.isVirtualExit">
+              {{ row.exitTime || "Sin marca" }}
+            </span>
+          </div>
+
+          <!-- ===================================================
+    HORAS
+    ==================================================== -->
+
+          <div class="cell">
+            <span
+              class="hours-badge"
+              [class.low]="row.workedHours < 8"
+              [class.ok]="row.workedHours >= 8"
+            >
+              <mat-icon> schedule </mat-icon>
+              {{
+                row.workedHours !== null && row.workedHours !== undefined
+                  ? (row.workedHours | number: "1.1-1") + " h"
+                  : "--"
+              }}
+            </span>
+          </div>
+
+          <!-- ===================================================
+            ACTIVIDADES
+            ==================================================== -->
+
+          <div class="cell">
+            <span class="activities-badge" [class.empty]="!row.hasActivities">
+              {{ row.worksCount }}
+            </span>
+          </div>
+
+          <!-- ===================================================
+          ACTIONS
+          ==================================================== -->
+
+          <div class="cell">
+            <div class="row-actions" (click)="$event.stopPropagation()">
+              <!-- ===================================== -->
+              <!-- APROBAR -->
+              <!-- ===================================== -->
+
+              <button
+                class="action-btn approve"
+                matTooltip="{{
+                  row.isReviewed ? 'Jornada ya revisada' : 'Aprobar jornada'
+                }}"
+                [disabled]="row.isReviewed"
+                (click)="confirmQuickApprove(row)"
+              >
+                <mat-icon>
+                  {{ row.isReviewed ? "lock" : "check_circle" }}
+                </mat-icon>
+              </button>
+
+              <!-- ===================================== -->
+              <!-- REVISIÓN -->
+              <!-- ===================================== -->
+
+              <button
+                class="action-btn edit"
+                matTooltip="{{
+                  row.isReviewed
+                    ? 'Jornada ya revisada'
+                    : 'Revisión operacional'
+                }}"
+                [disabled]="row.isReviewed"
+                (click)="openReview(row)"
+              >
+                <mat-icon>
+                  {{ row.isReviewed ? "lock" : "edit" }}
+                </mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =====================================================
+🟪 CONTEXT PANEL
+===================================================== -->
+
+  <aside class="context-panel">
+    <!-- ===================================================
+  📝 ACTIVIDADES
+  ==================================================== -->
+
+    <section class="panel-card">
+      <div class="section-header">
+        <div>
+          <h3>Actividades</h3>
+
+          <span> Registro diario operativo </span>
+        </div>
+
+        <div class="section-counter">
+          {{ works.length || 0 }}
+        </div>
+      </div>
+
+      <!-- EMPTY -->
+      <div class="empty-mini" *ngIf="!works.length">
+        <mat-icon> assignment </mat-icon>
+
+        <span> Sin actividades </span>
+      </div>
+
+      <!-- LIST -->
+      <div class="works-list" *ngIf="works.length">
+        <div class="work-item" *ngFor="let w of works">
+          <div class="work-hour">
+            {{ formatTimeCL(w.createdAt || w.created_at) }}
+          </div>
+
+          <div class="work-desc">
+            {{ w.description || w.activity || w.detail }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+  📅 SUSCRIPCIONES
+  ==================================================== -->
+
+    <section class="panel-card">
+      <div class="section-header">
+        <div>
+          <h3>Suscripciones</h3>
+
+          <span> Rangos de teletrabajo </span>
+        </div>
+
+        <div class="section-counter">
+          {{ subscriptions.length || 0 }}
+        </div>
+      </div>
+
+      <!-- EMPTY -->
+      <div class="empty-mini" *ngIf="!subscriptions.length">
+        <mat-icon> event_busy </mat-icon>
+
+        <span> Sin suscripciones </span>
+      </div>
+
+      <!-- LIST -->
+      <div class="subs-list" *ngIf="subscriptions.length">
+        <div class="sub-item" *ngFor="let s of subscriptions">
+          <div class="sub-dates">
+            <strong>
+              {{ formatDateShortCL(s.begin || s.start) }}
+            </strong>
+
+            <span> → </span>
+
+            <strong>
+              {{ formatDateShortCL(s.end || s.finish) }}
+            </strong>
+          </div>
+
+          <div
+            class="sub-status"
+            [ngClass]="{
+              active: s.state === 'ACTIVE',
+              pending: s.state === 'PENDING',
+              expired: s.state === 'EXPIRED',
+            }"
+          >
+            {{ s.state || "ACTIVA" }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div>

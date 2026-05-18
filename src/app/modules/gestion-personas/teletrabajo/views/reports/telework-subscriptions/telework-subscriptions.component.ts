@@ -1,0 +1,1041 @@
+//C:\Users\pjara\Documents\DESARROLLO\ANGULAR\gestion-personas\src\app\modules\gestion-personas\teletrabajo\views\reports\telework-subscriptions\telework-subscriptions.component.ts
+
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { MatTableModule } from '@angular/material/table';
+import { MatInputModule } from '@angular/material/input';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
+import { TeleworkReportService } from '@app/modules/gestion-personas/teletrabajo/services/telework-report.service';
+
+import { firstValueFrom } from 'rxjs';
+import { MatIconModule } from '@angular/material/icon';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { TeleworkReportPrintSubscriptionService } from '@app/modules/gestion-personas/teletrabajo/services/reports/telework-report-subscription.service';
+
+import { LoaderService } from '@app/core/services/loader.service';
+import { TokenService } from '@app/core/services/token.service';
+
+@Component({
+  selector: 'app-telework-user-subscriptions',
+  standalone: true,
+  templateUrl: './telework-subscriptions.component.html',
+  styleUrls: ['./telework-subscriptions.component.scss'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTableModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatIconModule,
+  ],
+})
+export class TeleworkUserSubscriptionsComponent {
+  private dialog = inject(MatDialog);
+  private reportService = inject(TeleworkReportService);
+  private teleworkReport = inject(TeleworkReportPrintSubscriptionService);
+  private loader = inject(LoaderService);
+  private tokenService = inject(TokenService);
+
+  // ===============================
+  // FILTROS
+  // ===============================
+
+  userId: number = 0;
+  userName: string = '';
+  rut: string = '';
+
+  private systemUserIds: number[] = [1, 2, 3, 4];
+
+  rutInvalido = false;
+  loading = false;
+
+  month: number | null = null;
+  year: number | null = null;
+
+  selectedDates: Date[] = [];
+  ranges: { from: Date; to: Date }[] = [];
+
+  months = [
+    { value: 1, name: 'Enero' },
+    { value: 2, name: 'Febrero' },
+    { value: 3, name: 'Marzo' },
+    { value: 4, name: 'Abril' },
+    { value: 5, name: 'Mayo' },
+    { value: 6, name: 'Junio' },
+    { value: 7, name: 'Julio' },
+    { value: 8, name: 'Agosto' },
+    { value: 9, name: 'Septiembre' },
+    { value: 10, name: 'Octubre' },
+    { value: 11, name: 'Noviembre' },
+    { value: 12, name: 'Diciembre' },
+  ];
+
+  dateFrom: Date | null = null;
+  dateTo: Date | null = null;
+
+  // ===============================
+  // RESULTADOS
+  // ===============================
+
+  users: any[] = [];
+  selectedUser: any = null;
+
+  registers: any[] = [];
+  allRegisters: any[] = [];
+
+  subscriptions: any[] = [];
+  allSubscriptions: any[] = [];
+
+  usersWithoutMarks: any[] = [];
+  years: number[] = [];
+
+  // ===============================
+  // COLUMNAS TABLAS
+  // ===============================
+
+  displayedUsersColumns: string[] = ['fullName', 'rut', 'marks', 'actions'];
+  displayedWarningColumns: string[] = ['fullName', 'rut', 'marks'];
+
+  displayedRegistersColumns = [
+    'date',
+    'day',
+    'hour',
+    'type', // 👈 nueva
+  ];
+
+  displayedSubscriptionsColumns = ['start', 'end', 'duration', 'state'];
+
+  ngOnInit() {
+    this.userId = this.tokenService.getUserId()!;
+    this.userName = this.tokenService.getUserFullName() || 'Usuario';
+
+    this.loadUserData();
+
+    const today = new Date();
+
+    // 🔥 CLAVE
+    this.month = today.getMonth() + 1;
+    this.year = today.getFullYear();
+
+    const currentYear = today.getFullYear();
+
+    for (let i = currentYear; i <= currentYear + 10; i++) {
+      this.years.push(i);
+    }
+
+    // 🔥 NO cargar datos automáticamente
+    this.clearResults();
+  }
+
+  async loadUserData() {
+    try {
+      const user: any = await firstValueFrom(
+        this.reportService.getUserById(this.userId),
+      );
+
+      this.rut = user.rut || '';
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // ===============================
+  // BUSCAR
+  // ===============================
+
+  async search() {
+    if (!this.userId) {
+      this.showWarning('Usuario no válido');
+      return;
+    }
+
+    if (this.dateFrom && this.dateTo) {
+      const from = new Date(this.dateFrom);
+      const to = new Date(this.dateTo);
+
+      if (to < from) {
+        this.showWarning(
+          'La fecha "Hasta" no puede ser menor que la fecha "Desde"',
+        );
+        return;
+      }
+    }
+
+    try {
+      this.loading = true;
+
+      // =========================================
+      // 🔥 1. TRAER DATOS CRUDOS
+      // =========================================
+
+      const [registersRaw, subscribesRaw] = await Promise.all([
+        firstValueFrom(this.reportService.getRegisters()),
+        firstValueFrom(this.reportService.getSubscribes()),
+      ]);
+
+      // =========================================
+      // 🔥 2. FILTRAR BORRADOS (CLAVE)
+      // =========================================
+
+      const registers = registersRaw.filter(
+        (r: any) =>
+          !r.deletedAt &&
+          !r.user?.deletedAt &&
+          !this.systemUserIds.includes(r.user?.id),
+      );
+
+      const subscribes = subscribesRaw.filter(
+        (s: any) =>
+          !s.deletedAt &&
+          !s.user?.deletedAt &&
+          !this.systemUserIds.includes(s.user?.id),
+      );
+
+      // 🔥 guardar limpio (IMPORTANTE para selectUser)
+      this.allRegisters = registers;
+      this.allSubscriptions = subscribes;
+
+      // =========================================
+      // 🔥 REGISTROS DEL USUARIO
+      // =========================================
+
+      let filteredRegisters = registers
+        .filter(
+          (r: any) => r.user?.id === this.userId || r.userId === this.userId,
+        )
+        .map((r: any) => ({
+          ...r,
+          type: r.state,
+        }));
+
+      // =========================================
+      // 🔥 PRIORIDAD: FECHA > MES/AÑO
+      // =========================================
+
+      if (this.dateFrom && this.dateTo) {
+        const from = new Date(this.dateFrom);
+        from.setHours(0, 0, 0, 0);
+
+        const to = new Date(this.dateTo);
+        to.setHours(23, 59, 59, 999);
+
+        filteredRegisters = filteredRegisters.filter((r: any) => {
+          const d = new Date(r.register_datetime);
+          return d >= from && d <= to;
+        });
+      } else if (this.month !== null && this.year !== null) {
+        filteredRegisters = filteredRegisters.filter((r: any) => {
+          const d = new Date(r.register_datetime);
+          return (
+            d.getMonth() + 1 === this.month && d.getFullYear() === this.year
+          );
+        });
+      }
+
+      // =========================================
+      // 🔥 SUSCRIPCIONES
+      // =========================================
+
+      const mySubscriptions = subscribes.filter(
+        (s: any) => s.user?.id === this.userId || s.userId === this.userId,
+      );
+
+      if (this.dateFrom && this.dateTo) {
+        const from = this.parseLocalDate(this.dateFrom);
+        from.setHours(0, 0, 0, 0);
+
+        const to = this.parseLocalDate(this.dateTo);
+        to.setHours(23, 59, 59, 999);
+
+        this.subscriptions = mySubscriptions
+          .filter((s: any) => {
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+            return start <= to && end >= from;
+          })
+          .map((s: any) => {
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+
+            return {
+              ...s,
+              begin: start < from ? from : start,
+              end: end > to ? to : end,
+            };
+          });
+      } else if (this.month !== null && this.year !== null) {
+        const from = new Date(this.year, this.month - 1, 1, 0, 0, 0, 0);
+        const to = new Date(this.year, this.month, 0, 23, 59, 59, 999);
+
+        this.subscriptions = mySubscriptions
+          .filter((s: any) => {
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+            return start <= to && end >= from;
+          })
+          .map((s: any) => {
+            const start = this.parseLocalDate(s.begin);
+            const end = this.parseLocalDate(s.end);
+
+            return {
+              ...s,
+              begin: start < from ? from : start,
+              end: end > to ? to : end,
+            };
+          });
+      } else {
+        this.subscriptions = mySubscriptions.map((s: any) => ({
+          ...s,
+          begin: this.parseLocalDate(s.begin),
+          end: this.parseLocalDate(s.end),
+        }));
+      }
+
+      // 🔥 ORDEN FINAL (UNA SOLA VEZ)
+      this.subscriptions = this.subscriptions.sort((a: any, b: any) => {
+        const d1 = this.parseLocalDate(a.begin).getTime();
+        const d2 = this.parseLocalDate(b.begin).getTime();
+        return d1 - d2; // ASC
+      });
+      // =========================================
+      // 🔥 REGISTROS FINALES
+      // =========================================
+
+      if (!this.dateFrom && !this.dateTo) {
+        this.registers = this.generateFullRegisters(
+          this.subscriptions,
+          filteredRegisters,
+        );
+      } else {
+        this.registers = filteredRegisters;
+      }
+
+      // =========================================
+      // 🔥 MENSAJE SIN RESULTADOS
+      // =========================================
+
+      if (!this.registers.length && !this.subscriptions.length) {
+        this.showMessage(
+          'Sin resultados',
+          'No se encontró información para el rango seleccionado',
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      this.showWarning('Error consultando información');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  setCurrentMonthYear() {
+    const today = new Date();
+    this.month = today.getMonth() + 1;
+    this.year = today.getFullYear();
+  }
+
+  // ===============================
+  // DÍA DE LA SEMANA
+  // ===============================
+
+  getDayOfWeek(date: any): string {
+    const days = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
+
+    const d = this.toLocalDate(date);
+
+    return days[d.getDay()];
+  }
+
+  selectUser(user: any): void {
+    this.selectedUser = user;
+    this.registers = [];
+    this.subscriptions = [];
+
+    // 🔹 obtener registros reales
+    let userRegisters = this.allRegisters
+      .filter((r: any) => r.user?.id === user.id || r.userId === user.id)
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.register_datetime).getTime() -
+          new Date(b.register_datetime).getTime(),
+      );
+
+    // 🔥 si NO viene tipo desde backend → lo generamos
+    userRegisters = userRegisters.map((r: any, index: number) => ({
+      ...r,
+      type: r.type || (index % 2 === 0 ? 'ING' : 'SAL'),
+      isVirtual: false,
+    }));
+
+    // 🔹 suscripciones
+    this.subscriptions = this.allSubscriptions.filter(
+      (s: any) => s.user?.id === user.id || s.userId === user.id,
+    );
+
+    // 💥 AQUÍ LA MAGIA
+    this.registers = this.generateFullRegisters(
+      this.subscriptions,
+      userRegisters,
+    );
+  }
+
+  validarRut() {
+    if (!this.rut) {
+      this.rutInvalido = false;
+      return;
+    }
+
+    // limpiar formato
+    const rutLimpio = this.rut
+      .replace(/\./g, '')
+      .replace('-', '')
+      .toUpperCase();
+
+    if (rutLimpio.length < 2) {
+      this.rutInvalido = true;
+      return;
+    }
+
+    const cuerpo = rutLimpio.slice(0, -1);
+    const dv = rutLimpio.slice(-1);
+
+    if (!/^\d+$/.test(cuerpo)) {
+      this.rutInvalido = true;
+      return;
+    }
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += multiplo * parseInt(cuerpo.charAt(i), 10);
+      multiplo = multiplo === 7 ? 2 : multiplo + 1;
+    }
+
+    const resto = suma % 11;
+    const dvEsperado = 11 - resto;
+
+    let dvCalculado = '';
+
+    if (dvEsperado === 11) {
+      dvCalculado = '0';
+    } else if (dvEsperado === 10) {
+      dvCalculado = 'K';
+    } else {
+      dvCalculado = dvEsperado.toString();
+    }
+
+    this.rutInvalido = dvCalculado !== dv;
+  }
+
+  formatRut(event: any) {
+    let value = event.target.value.replace(/[^0-9kK]/g, '');
+
+    if (value.length < 2) {
+      this.rut = value;
+      this.validarRut(); // 👈 agregar
+      return;
+    }
+
+    let cuerpo = value.slice(0, -1);
+    let dv = value.slice(-1);
+
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    this.rut = cuerpo + '-' + dv.toUpperCase();
+
+    this.validarRut(); // 👈 agregar
+  }
+
+  normalizeDate(date: any): Date {
+    return this.parseDateCL(date);
+  }
+
+  formatDateCL(date: any): string {
+    const d = this.toLocalDate(date);
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  }
+
+  parseDateCL(date: any): Date {
+    if (!date) return new Date();
+
+    // 🔥 ISO del backend → cortar directo
+    if (typeof date === 'string' && date.includes('T')) {
+      const [y, m, d] = date.split('T')[0].split('-');
+      return new Date(+y, +m - 1, +d);
+    }
+
+    // dd/mm/yyyy
+    if (typeof date === 'string' && date.includes('/')) {
+      const parts = date.split('/');
+      return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+    }
+
+    // datepicker
+    if (date instanceof Date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    return new Date(date);
+  }
+
+  showMessage(title: string, message: string) {
+    this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      disableClose: true,
+      data: {
+        title: title,
+        message: message,
+        confirmText: 'Aceptar',
+        cancelText: '',
+        icon: 'info',
+        color: 'primary',
+      },
+    });
+  }
+
+  showWarning(message: string) {
+    this.dialog.open(ConfirmDialogComponent, {
+      width: '420px',
+      disableClose: true,
+      data: {
+        title: 'Atención',
+        message: message,
+        confirmText: 'Aceptar',
+        cancelText: '',
+        icon: 'warning',
+        color: 'warn',
+      },
+    });
+  }
+
+  checkSubscriptionsWithoutMarks(): any[] {
+    const alerts: any[] = [];
+
+    this.allSubscriptions.forEach((s: any) => {
+      if (!s.active) return;
+
+      const hasRegisters = this.allRegisters.some(
+        (r: any) => r.user?.id === s.user?.id || r.userId === s.userId,
+      );
+
+      if (!hasRegisters) {
+        alerts.push(s);
+      }
+    });
+
+    return alerts;
+  }
+
+  clearResults(): void {
+    this.registers = [];
+    this.subscriptions = [];
+  }
+
+  clearFilters(): void {
+    this.rut = '';
+    this.setCurrentMonthYear();
+    this.onMonthYearChange();
+
+    this.selectedUser = null;
+
+    this.registers = [];
+    this.subscriptions = [];
+  }
+
+  getDurationDays(s: any): number {
+    const start = new Date(s.begin);
+    const end = new Date(s.end);
+
+    const diff = end.getTime() - start.getTime();
+
+    return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  isCurrentlyActive(s: any): boolean {
+    const today = this.parseDateCL(this.getToday());
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(s.begin);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(s.end);
+    end.setHours(0, 0, 0, 0);
+
+    return today >= start && today <= end;
+  }
+
+  getEstado(s: any): 'pendiente' | 'vigente' | 'vencido' {
+    const today = this.parseDateCL(this.getToday());
+    today.setHours(0, 0, 0, 0);
+
+    const start = new Date(s.begin);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(s.end);
+    end.setHours(0, 0, 0, 0);
+
+    if (today < start) return 'pendiente';
+    if (today > end) return 'vencido';
+    return 'vigente';
+  }
+
+  getToday(): Date {
+    return new Date();
+  }
+
+  generateFullRegisters(subscriptions: any[], registers: any[]) {
+    const result = [...registers];
+
+    const today = this.parseLocalDate(this.getToday());
+
+    subscriptions.forEach((sub) => {
+      let start = this.parseLocalDate(sub.begin);
+      let end = this.parseLocalDate(sub.end);
+
+      // 🔥 AJUSTE POR FILTRO
+      if (this.dateFrom && this.dateTo) {
+        const from = this.parseLocalDate(this.dateFrom);
+        const to = this.parseLocalDate(this.dateTo);
+
+        if (start < from) start = from;
+        if (end > to) end = to;
+      } else {
+        if (this.isCurrentlyActive(sub)) {
+          end = today;
+        }
+      }
+
+      if (start > end) return;
+
+      // 🔁 GENERAR DÍAS
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const current = this.parseLocalDate(d);
+
+        if (current > today) continue;
+
+        const ingreso = result.find(
+          (r) => this.isSameDaySafe(r.register_datetime, d) && r.type === 'ING',
+        );
+
+        const salida = result.find(
+          (r) => this.isSameDaySafe(r.register_datetime, d) && r.type === 'SAL',
+        );
+
+        if (!ingreso) {
+          const dIng = new Date(d);
+          dIng.setHours(0, 0, 0);
+
+          result.push({
+            register_datetime: dIng,
+            type: 'ING',
+            isVirtual: true,
+          });
+        }
+
+        if (!salida) {
+          const dSal = new Date(d);
+          dSal.setHours(0, 0, 0);
+
+          result.push({
+            register_datetime: dSal,
+            type: 'SAL',
+            isVirtual: true,
+          });
+        }
+      }
+    });
+
+    return result.sort(
+      (a, b) =>
+        this.parseLocalDate(a.register_datetime).getTime() -
+        this.parseLocalDate(b.register_datetime).getTime(),
+    );
+  }
+
+  formatTimeCL(date: any, isVirtual?: boolean): string {
+    if (isVirtual) return '00:00';
+
+    const d = new Date(date); // aquí sí, porque hora real
+
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+
+    return `${h}:${m}`;
+  }
+
+  formatDateTimeCL(date: any) {
+    const d = new Date(date);
+
+    return {
+      fecha: d.toLocaleDateString('es-CL'),
+      hora: d.toLocaleTimeString('es-CL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
+    };
+  }
+
+  toLocalDate(date: any): Date {
+    if (!date) return new Date();
+
+    // 🔥 si viene ISO (backend)
+    if (typeof date === 'string' && date.includes('T')) {
+      const [y, m, d] = date.split('T')[0].split('-');
+      return new Date(+y, +m - 1, +d);
+    }
+
+    return new Date(date);
+  }
+
+  trackByFn(index: number, item: any) {
+    return item.register_datetime + '_' + item.type;
+  }
+
+  onMonthFocus(): void {
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  onDateChange(): void {
+    // 🔥 si hay al menos una fecha, trabaja
+    if (this.dateFrom) {
+      const from = new Date(this.dateFrom);
+
+      this.month = from.getMonth() + 1;
+      this.year = from.getFullYear();
+
+      from.setHours(0, 0, 0, 0);
+      this.dateFrom = from;
+    }
+
+    if (this.dateTo) {
+      const to = new Date(this.dateTo);
+      to.setHours(23, 59, 59, 999);
+      this.dateTo = to;
+
+      // 🔥 SI SOLO CAMBIA HASTA → también sincroniza mes/año
+      if (!this.dateFrom) {
+        this.month = to.getMonth() + 1;
+        this.year = to.getFullYear();
+      }
+    }
+
+    this.clearResults();
+  }
+
+  onMonthYearChange(): void {
+    if (!this.month || !this.year) {
+      return; // 👈 dejamos pasar, pero no rompemos estado
+    }
+
+    setTimeout(() => {
+      const from = new Date(this.year!, this.month! - 1, 1);
+      from.setHours(0, 0, 0, 0);
+
+      const to = new Date(this.year!, this.month!, 0);
+      to.setHours(23, 59, 59, 999);
+
+      this.dateFrom = from;
+      this.dateTo = to;
+    });
+  }
+
+  printUser(user: any) {
+    try {
+      this.loader.show();
+
+      this.selectUser(user);
+
+      const data = this.registers.map((r: any) => ({
+        fecha: this.formatDateCL(r.register_datetime),
+        dia: this.getDayOfWeek(r.register_datetime),
+        hora: this.formatTimeCL(r.register_datetime, r.isVirtual),
+        tipo: r.type === 'ING' ? 'Ingreso' : 'Salida',
+      }));
+
+      const html = this.teleworkReport.generateReportSubscriptions({
+        userName: this.userName,
+        rut: this.rut,
+        subscriptions: data,
+      });
+
+      this.teleworkReport.printPdf(html);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+  generateReport() {
+    try {
+      this.loader.show();
+
+      if (!this.subscriptions.length) {
+        this.showWarning('No hay suscripciones para imprimir');
+        return;
+      }
+
+      const data = this.subscriptions.map((s: any) => ({
+        inicio: this.formatDateCL(s.begin),
+        fin: this.formatDateCL(s.end),
+        dias: this.getDurationDays(s),
+        estado: this.getEstado(s),
+      }));
+
+      const html = this.teleworkReport.generateReportSubscriptions({
+        userName: this.userName,
+        rut: this.rut,
+        subscriptions: data,
+      });
+
+      this.teleworkReport.printPdf(html);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error generando reporte');
+    } finally {
+      this.loader.hide();
+    }
+  }
+
+  exportUser() {
+    try {
+      this.loader.show();
+
+      if (!this.subscriptions.length) {
+        this.showWarning('No hay suscripciones para exportar');
+        return;
+      }
+
+      const data = this.subscriptions.map((s: any) => ({
+        Inicio: this.formatDateCL(s.begin),
+        Fin: this.formatDateCL(s.end),
+        Días: this.getDurationDays(s),
+        Estado: this.getEstado(s),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Suscripciones');
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: 'application/octet-stream',
+      });
+
+      saveAs(blob, `suscripciones_${this.userName}.xlsx`);
+    } catch (error) {
+      console.error(error);
+      this.showWarning('Error exportando Excel');
+    } finally {
+      this.loader.hide();
+    }
+  }
+
+  formatDateSafe(value: string | Date): string {
+    if (!value) return '';
+
+    // 🔥 si ya es Date
+    if (value instanceof Date) {
+      const d = value.getDate().toString().padStart(2, '0');
+      const m = (value.getMonth() + 1).toString().padStart(2, '0');
+      const y = value.getFullYear();
+
+      return `${d}/${m}/${y}`;
+    }
+
+    // 🔥 si es string ISO
+    const [datePart] = value.split('T');
+    const [y, m, d] = datePart.split('-');
+
+    return `${d}/${m}/${y}`;
+  }
+
+  parseLocalDate(
+    value?: string | Date | number,
+    month?: number,
+    day?: number,
+    hour: number = 0,
+    minute: number = 0,
+    second: number = 0,
+    ms: number = 0,
+  ): Date {
+    // 🔥 sin argumentos → hoy
+    if (value === undefined) {
+      return new Date();
+    }
+
+    // 🔥 overload tipo new Date(y,m,d)
+    if (typeof value === 'number') {
+      return new Date(value, month || 0, day || 1, hour, minute, second, ms);
+    }
+
+    // 🔥 Date
+    if (value instanceof Date) {
+      return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours(),
+        value.getMinutes(),
+        value.getSeconds(),
+        value.getMilliseconds(),
+      );
+    }
+
+    // 🔥 ISO/string
+    const [datePart, timePart] = value.split('T');
+
+    const [y, m, d] = datePart.split('-').map(Number);
+
+    if (!timePart) {
+      return new Date(y, m - 1, d);
+    }
+
+    const [h, min, s] = timePart.split(':').map(Number);
+
+    return new Date(y, m - 1, d, h || 0, min || 0, s || 0);
+  }
+
+  formatToLocalISOString(date: Date): string {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+
+    const h = date.getHours().toString().padStart(2, '0');
+    const min = date.getMinutes().toString().padStart(2, '0');
+    const s = date.getSeconds().toString().padStart(2, '0');
+
+    return `${y}-${m}-${d}T${h}:${min}:${s}`;
+  }
+
+  onFilterFocus(): void {
+    // 🔥 limpiar fechas si usas mes/año
+    this.dateFrom = null;
+    this.dateTo = null;
+  }
+
+  onDateFocus(): void {
+    this.month = null;
+    this.year = null;
+
+    this.clearResults(); // 🔥 limpieza completa
+  }
+
+  isSameDaySafe(value: string | Date, compare: Date): boolean {
+    const d = this.parseLocalDate(value);
+
+    return (
+      d.getFullYear() === compare.getFullYear() &&
+      d.getMonth() === compare.getMonth() &&
+      d.getDate() === compare.getDate()
+    );
+  }
+
+  toggleDate(date: Date) {
+    const exists = this.selectedDates.some((d) => this.isSameDay(d, date));
+
+    if (exists) {
+      this.selectedDates = this.selectedDates.filter(
+        (d) => !this.isSameDay(d, date),
+      );
+    } else {
+      this.selectedDates.push(date);
+    }
+
+    this.generateRanges(); // 🔥 automático
+  }
+
+  isSameDay(a: Date, b: Date) {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  }
+
+  getWeekKey(d: Date) {
+    const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    const day = date.getDay() || 7; // domingo = 7
+    date.setDate(date.getDate() + 4 - day);
+
+    const yearStart = new Date(date.getFullYear(), 0, 1);
+
+    const week = Math.ceil(
+      ((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+    );
+
+    return `${date.getFullYear()}-W${week}`;
+  }
+
+  generateRanges() {
+    if (!this.selectedDates.length) {
+      this.ranges = [];
+      return;
+    }
+
+    const sorted = [...this.selectedDates].sort(
+      (a, b) => a.getTime() - b.getTime(),
+    );
+
+    const result: { from: Date; to: Date }[] = [];
+
+    let start = sorted[0];
+    let prev = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const current = sorted[i];
+
+      const isNextDay = current.getTime() === prev.getTime() + 86400000;
+
+      const sameWeek = this.getWeekKey(current) === this.getWeekKey(prev);
+
+      if (isNextDay && sameWeek) {
+        prev = current;
+      } else {
+        result.push({ from: start, to: prev });
+        start = current;
+        prev = current;
+      }
+    }
+
+    result.push({ from: start, to: prev });
+
+    this.ranges = result;
+  }
+}

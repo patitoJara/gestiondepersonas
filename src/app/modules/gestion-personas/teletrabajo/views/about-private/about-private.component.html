@@ -1,0 +1,46 @@
+<!-- 🔒 Vista interna (logueado, dentro del menú) -->
+<div *ngIf="isLoggedIn" class="page-container">
+  <mat-card class="section-card">
+    <h2>Acerca del Sistema</h2>
+
+    <p>
+      El
+      <strong
+        >Sistema Institucional de Registro de Jornada (Telework-SM)</strong
+      >
+      permite el control y registro formal de la jornada laboral en modalidad de
+      teletrabajo para funcionarios autorizados del Servicio de Salud
+      Magallanes.
+    </p>
+
+    <p>
+      Esta plataforma asegura trazabilidad, control administrativo y respaldo
+      institucional de los eventos de inicio y término de jornada en modalidad
+      remota.
+    </p>
+
+    <hr />
+
+    <div class="info-block">
+      <div class="info-row">
+        <span class="label">Versión</span>
+        <span class="value">{{ appVersion }}</span>
+      </div>
+
+      <div class="info-row">
+        <span class="label">Ambiente</span>
+        <span class="value">{{ appEnv }}</span>
+      </div>
+
+      <div class="info-row">
+        <span class="label">Desarrollado por</span>
+        <span class="value">Equipo TIC – SSM</span>
+      </div>
+
+      <div class="info-row">
+        <span class="label">Contacto</span>
+        <span class="value">tic.ssmagallanes&#64;redsalud.gob.cl</span>        
+      </div>
+    </div>
+  </mat-card>
+</div>
