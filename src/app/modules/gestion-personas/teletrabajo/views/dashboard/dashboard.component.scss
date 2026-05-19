@@ -1,0 +1,517 @@
+/* =========================================================
+   🟦 DASHBOARD TELETRABAJO — SIRUS UI PRO
+========================================================= */
+
+/* =========================================================
+   🟣 HOST
+========================================================= */
+
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background-color: #f7f9fc;
+}
+
+.home-wrapper {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.dashboard-container {
+  position: relative;
+}
+
+/* =========================================================
+   🔒 OVERLAY / CORTINA
+========================================================= */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 10;
+}
+
+.overlay-content {
+  text-align: center;
+  padding: 20px;
+
+  border-radius: 12px;
+  background: white;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.overlay-content mat-icon {
+  font-size: 40px;
+  color: #c62828;
+}
+
+.overlay-content h3 {
+  margin: 10px 0 6px;
+  color: #c62828;
+}
+
+.overlay-content p {
+  font-size: 13px;
+  color: #607d8b;
+}
+
+/* =========================================================
+   🟦 TITLE
+========================================================= */
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 20px;
+  padding: 12px 16px;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+  border: 1px solid #e3e8f0;
+
+  border-left: 4px solid #1565c0;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.title-main {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.title-sub {
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.title mat-icon {
+  font-size: 20px;
+  color: #1565c0;
+}
+
+/* =========================================================
+   🕒 RELOJ
+========================================================= */
+
+.bloque-reloj {
+  text-align: center;
+  margin: 10px 0 16px;
+}
+
+.fecha {
+  font-size: 12px;
+  font-weight: 500;
+  color: #818a07;
+
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+
+  text-transform: uppercase;
+}
+
+.fecha::after {
+  content: "";
+
+  display: block;
+
+  width: 40px;
+  height: 2px;
+
+  margin: 6px auto 0;
+
+  border-radius: 2px;
+
+  background: #e3e8f0;
+}
+
+.hora {
+  font-size: 42px;
+  font-weight: 700;
+  color: #07119b;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+/* =========================================================
+   🟦 GRID
+========================================================= */
+
+.layout-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* =========================================================
+   🟦 CARDS
+========================================================= */
+
+.col {
+  min-height: 320px;
+
+  padding: 16px;
+
+  background: #fff;
+
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.col:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   🟦 NOMBRE USUARIO
+========================================================= */
+
+.user-name {
+  margin-top: 18px;
+
+  text-align: center;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  color: #8e44ad;
+}
+
+/* =========================================================
+   🟦 CARD HEADER
+========================================================= */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 10px;
+  margin-bottom: 12px;
+
+  border-radius: 8px;
+
+  font-weight: 600;
+}
+
+/* =========================================================
+   🎨 COLORS
+========================================================= */
+
+.blue {
+  background: rgba(21, 101, 192, 0.1);
+  color: #1565c0;
+}
+
+.green {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+}
+
+.orange {
+  background: rgba(245, 124, 0, 0.1);
+  color: #f57c00;
+}
+
+.purple {
+  background: rgba(123, 31, 162, 0.1);
+  color: #7b1fa2;
+}
+
+/* =========================================================
+   📦 ITEMS
+========================================================= */
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 6px 10px;
+
+  border-radius: 8px;
+
+  transition: 0.2s;
+}
+
+.item:hover {
+  background: rgba(21, 101, 192, 0.08);
+}
+
+/* =========================================================
+   🔘 TOOLBAR
+========================================================= */
+
+.toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+
+  margin-top: 20px;
+}
+
+/* =========================================================
+   📭 EMPTY
+========================================================= */
+
+.empty {
+  text-align: center;
+  margin-top: 20px;
+
+  opacity: 0.9;
+
+  color: #7b1fa2;
+}
+
+/* =========================================================
+   🟣 WORKS
+========================================================= */
+
+.work-item {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  min-height: 42px;
+
+  padding: 12px 10px;
+
+  margin-bottom: 12px;
+
+  border-radius: 12px;
+
+  border: 1px solid #edf2f7;
+
+  background: #ffffff;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.work-item:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(126, 87, 194, 0.25);
+
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.work-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.work-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.work-text .desc {
+  white-space: pre-line;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.work-text .meta {
+  font-size: 11px;
+  color: #90a4ae;
+}
+
+.created,
+.edited {
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  font-size: 11px;
+
+  color: #78909c;
+
+  opacity: 0.85;
+}
+
+.work-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  opacity: 0;
+
+  transform: translateX(6px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.work-item:hover .work-actions {
+  opacity: 1;
+
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+/* =========================================================
+   🔘 ACTION BUTTONS
+========================================================= */
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px 8px;
+
+  border: none;
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  white-space: nowrap;
+
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.action-btn.edit {
+  color: #1565c0;
+}
+
+.action-btn.delete {
+  background: rgba(198, 40, 40, 0.1);
+  color: #c62828;
+}
+
+/* =========================================================
+   📅 SUSCRIPCIONES
+========================================================= */
+
+.subs-item {
+  display: flex;
+  align-items: center;
+
+  padding: 10px;
+
+  border-radius: 8px;
+
+  transition: 0.2s;
+}
+
+.subs-item:hover {
+  background: rgba(21, 101, 192, 0.08);
+}
+
+.subs-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subs-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.range {
+  font-size: 13px;
+  font-weight: 500;
+  color: #263238;
+}
+
+.status {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status.vigente {
+  color: #2e7d32;
+}
+
+.status.pendiente {
+  color: #f57c00;
+}
+
+.status.vencido {
+  color: #c62828;
+}
+
+/* =========================================================
+   📱 RESPONSIVE
+========================================================= */
+
+@media (max-width: 1024px) {
+  .layout-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .layout-4 {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .layout-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .work-actions {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .action-btn {
+    padding: 8px 10px;
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .overlay {
+    align-items: flex-start;
+    padding-top: 80px;
+  }
+}

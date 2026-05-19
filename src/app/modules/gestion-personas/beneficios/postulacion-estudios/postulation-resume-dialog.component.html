@@ -1,0 +1,46 @@
+<div class="resume-card" *ngFor="let item of data">
+  <!-- ===================================== -->
+  <!-- 🔥 LINE 1 -->
+  <!-- ===================================== -->
+
+  <div class="resume-line resume-top">
+    <div class="benefit">Apoyo Estudios Superiores</div>
+
+    <div class="status">
+      {{ translateStatus(item.status) }}
+    </div>
+  </div>
+
+  <!-- ===================================== -->
+  <!-- 🔥 LINE 2 -->
+  <!-- ===================================== -->
+
+  <div class="resume-line resume-bottom">
+    <div>
+      {{ formatDate(item.updatedAt || item.createdAt) }}
+    </div>
+
+    <div class="code">
+      ID:
+      {{ item.code.slice(-5) }}
+    </div>
+  </div>
+
+  <!-- ===================================== -->
+  <!-- 🔥 ACTIONS -->
+  <!-- ===================================== -->
+
+  <div class="actions-inline">
+    <button class="btn btn-primary" (click)="continue(item)">
+      {{ getActionLabel(item.status) }}
+    </button>
+
+    <button
+      *ngIf="item.status === 'DRAFT'"
+      class="btn btn-danger"
+      (click)="deleteDraft(item)"
+    >
+      Eliminar
+    </button>
+  </div>
+</div>

@@ -1,0 +1,220 @@
+<!-- =======================================================
+     🧭 LAYOUT GESTIÓN DE PERSONAS — FINAL PRO
+     ======================================================= -->
+
+<!-- 🔹 Pantalla selección rol -->
+<ng-container *ngIf="!menuVisible && userRoles.length > 1; else mainLayout">
+  <div class="role-wrapper">
+    <mat-card class="role-card" appearance="outlined">
+      <div class="role-header">
+        <img src="assets/logoSSM.png" alt="Logo SSM" width="120" />
+        <h2>Bienvenido, {{ userFullName }}</h2>
+        <p>Selecciona el rol con el cual desea ingresar.</p>
+      </div>
+
+      <mat-form-field appearance="fill" class="role-full">
+        <mat-label>Rol</mat-label>
+        <mat-select [(ngModel)]="activeRole">
+          <mat-option *ngFor="let r of userRoles" [value]="r">
+            {{ r }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="role-actions">
+        <button mat-stroked-button color="accent" routerLink="/auth/login">
+          <mat-icon>arrow_back</mat-icon>
+          Volver
+        </button>
+
+        <button mat-flat-button color="primary" (click)="onContinue()">
+          <mat-icon>arrow_forward</mat-icon>
+          Ingresar
+        </button>
+      </div>
+    </mat-card>
+  </div>
+</ng-container>
+
+<!-- =======================================================
+     🧱 LAYOUT PRINCIPAL
+     ======================================================= -->
+<ng-template #mainLayout>
+  <mat-sidenav-container class="sidenav-container">
+    <!-- SIDENAV -->
+    <mat-sidenav
+      #drawer
+      [fixedInViewport]="(isHandset$ | async) === true"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false"
+    >
+      <!-- <img src="assets/logo100ssm.png" class="logo-ssm" /> -->
+      <div class="sidenav-header">
+        <img src="assets/logoSSM.png" alt="SSM" />
+      </div>
+
+      <!-- GESTIÓN -->
+      <div class="menu-section">
+        <mat-icon>business</mat-icon>
+        Gestión de Personas
+      </div>
+
+      <!-- TELETRABAJO -->
+      <div class="submenu-title" (click)="teletrabajoOpen = !teletrabajoOpen">
+        <mat-icon>laptop</mat-icon>
+        Teletrabajo
+      </div>
+
+      <div *ngIf="teletrabajoOpen" class="submenu">
+        <div *ngFor="let group of menuItems.teletrabajo">
+          <!-- 👇 SOLO mostrar carpeta si NO es Operación -->
+          <ng-container *ngIf="group.label !== 'Operación'; else flatGroup">
+            <div class="submenu-title" (click)="toggleGroup(group)">
+              {{ group.label }}
+            </div>
+
+            <div *ngIf="group.open">
+              <div
+                *ngFor="let item of group.children"
+                class="submenu-item"
+                [routerLink]="item.route"
+                [class.active]="isActive(item.route)"
+                (click)="isMobile() && drawer?.close()"
+              >
+                <mat-icon [style.color]="item.iconColor">{{
+                  group.open ? "folder_open" : "folder"
+                }}</mat-icon>
+                <mat-icon>{{ item.icon }}</mat-icon>
+                <span>{{ item.title }}</span>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- 👇 ESTE ES EL TRUCO -->
+          <ng-template #flatGroup>
+            <div
+              *ngFor="let item of group.children"
+              class="submenu-item"
+              [routerLink]="item.route"
+              [class.active]="isActive(item.route)"
+              (click)="isMobile() && drawer?.close()"
+            >
+              <mat-icon [style.color]="item.iconColor">{{
+                item.icon
+              }}</mat-icon>
+              <span>{{ item.title }}</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <!-- BENEFICIOS -->
+      <div class="submenu-title" (click)="beneficiosOpen = !beneficiosOpen">
+        <mat-icon>{{ beneficiosOpen ? "folder_open" : "folder" }}</mat-icon>
+        Beneficios
+      </div>
+
+      <div *ngIf="beneficiosOpen" class="submenu">
+        <div *ngFor="let group of menuItems.beneficios">
+          <div class="submenu-title" (click)="toggleGroup(group)">
+            <mat-icon>{{ group.open ? "folder_open" : "folder" }}</mat-icon>
+            {{ group.label }}
+          </div>
+
+          <div *ngIf="group.open">
+            <div
+              *ngFor="let item of group.children"
+              class="submenu-item"
+              [routerLink]="item.route"
+              [class.active]="isActive(item.route)"
+              (click)="isMobile() && drawer?.close()"
+            >
+              <mat-icon [style.color]="item.iconColor">
+                {{ item.icon }}
+              </mat-icon>
+              <span>{{ item.title }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-sidenav>
+
+    <!-- CONTENIDO -->
+    <mat-sidenav-content>
+      <div class="main-content">
+        <!-- TOPBAR -->
+        <mat-toolbar class="topbar">
+          <!-- IZQUIERDA -->
+          <div class="topbar-left">
+            <button mat-icon-button (click)="toggleDrawer()">
+              <mat-icon>menu</mat-icon>
+            </button>
+
+            <span class="title">Gestión de Personas</span>
+          </div>
+
+          <!-- ESPACIADOR -->
+          <span class="spacer"></span>
+
+          <!-- DERECHA -->
+          <div class="topbar-right">
+            <div class="user-main">
+              <mat-icon>account_circle</mat-icon>
+              <div class="user-text">
+                <div class="name">{{ userFullName }}</div>
+                <div class="meta">{{ userUsername }} · {{ activeRole }}</div>
+              </div>
+            </div>
+
+            <div class="session-box">
+              <span
+                class="session-timer"
+                [class.warning]="remainingMinutes <= 5"
+              >
+                <mat-icon>timer</mat-icon>
+
+                <!-- 🟢 TIEMPO NORMAL -->
+                <ng-container *ngIf="remainingMinutes > 0; else expiring">
+                  {{ remainingMinutes }} min
+                </ng-container>
+
+                <!-- 🔴 EXPIRANDO -->
+                <ng-template #expiring> expirando... </ng-template>
+              </span>
+
+              <!-- 🔘 EXTENDER -->
+              <button
+                *ngIf="showExtendButton"
+                mat-stroked-button
+                color="primary"
+                class="extend-btn"
+                (click)="extendSession()"
+              >
+                <mat-icon>autorenew</mat-icon>
+                Extender
+              </button>
+
+              <!-- 🔒 PERFIL -->
+              <button mat-icon-button (click)="goToProfile()">
+                <mat-icon>lock</mat-icon>
+              </button>
+            </div>
+
+            <button mat-stroked-button class="logout-btn" (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              Salir
+            </button>
+          </div>
+        </mat-toolbar>
+
+        <!-- CONTENIDO (SCROLL) -->
+        <div class="content">
+          <router-outlet></router-outlet>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">Servicio de Salud Magallanes — Área TIC</footer>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</ng-template>

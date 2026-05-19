@@ -1,0 +1,104 @@
+// src\app\modules\gestion-personas\beneficios\postulacion-estudios\_postulacion-docs.scss
+
+/* 🔹 GRID */
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .docs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🔹 ITEM */
+.doc-item {
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  transition: 0.15s;
+  border-left: 2px solid transparent;
+  padding: 6px;
+}
+
+.doc-item:hover {
+  background: rgba(21, 101, 192, 0.06);
+}
+
+.doc-item.completed {
+  border-left: 3px solid #2e7d32;
+  background: rgba(46, 125, 50, 0.05);
+}
+
+/* 🔹 TITULO */
+.doc-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.doc-title:hover {
+  color: #1565c0;
+}
+
+/* 🔹 UPLOAD */
+.file-upload {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px dashed #b0bec5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.file-upload:hover {
+  background: #f1f8ff;
+  border-color: #1565c0;
+}
+
+/* 🔹 TEXTO */
+.file-title {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hint {
+  font-size: 11px;
+  color: #78909c;
+}
+
+/* 🔹 LISTA ARCHIVOS */
+.file-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  background: #e3f2fd;
+  border-left: 3px solid #1565c0;
+
+  font-size: 12px;
+}
+
+.file-list > div:hover {
+  background: #e1f5fe;
+}

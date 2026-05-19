@@ -1,0 +1,53 @@
+<mat-dialog-content class="dialog-content">
+
+  <div class="dialog-header">
+    <mat-icon>edit</mat-icon>
+
+    <div class="header-text">
+      <h2>{{ data?.title || 'Nueva actividad' }}</h2>
+
+      <span>
+        Registro de actividad operacional
+      </span>
+    </div>
+  </div>
+
+  <div class="dialog-body">
+
+    <div class="ssm-field">
+
+      <label>Actividad</label>
+
+      <textarea
+        #txtArea
+        class="textarea-pro"
+        [(ngModel)]="description"
+        rows="2"
+        cdkTextareaAutosize
+      ></textarea>
+
+    </div>
+
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+
+  <button
+    class="btn btn-sm btn-gray"
+    (click)="cancelar()"
+  >
+    <mat-icon>close</mat-icon>
+    Cancelar
+  </button>
+
+  <button
+    class="btn btn-sm btn-blue"
+    (click)="guardar()"
+  >
+    <mat-icon>save</mat-icon>
+    Guardar
+  </button>
+
+</mat-dialog-actions>

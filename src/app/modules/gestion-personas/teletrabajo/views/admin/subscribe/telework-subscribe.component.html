@@ -1,0 +1,552 @@
+<form [formGroup]="form">
+  <div class="transfer-container">
+    <!-- HEADER -->
+    <div class="transfer-header">
+      <mat-icon>event</mat-icon>
+      <span>Suscripción Teletrabajo</span>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="stepper" [style.--progress]="progress / 100">
+      <div
+        *ngFor="let step of steps"
+        class="step"
+        [class.active]="step.id === currentStep"
+        [class.completed]="step.completed"
+      >
+        <!-- CÍRCULO -->
+        <div class="circle">
+          <span *ngIf="!step.completed">
+            {{ step.id }}
+          </span>
+
+          <mat-icon *ngIf="step.completed"> check </mat-icon>
+        </div>
+
+        <!-- TÍTULO -->
+        <div class="label">
+          {{ step.title }}
+        </div>
+
+        <!-- VALORES -->
+        <div class="value" *ngIf="step.completed">
+          <!-- STEP 1 -->
+          <span *ngIf="step.id === 1">
+            {{ getUserName() }}
+          </span>
+
+          <!-- STEP 2 🔥 NUEVO -->
+          <span *ngIf="step.id === 2">
+            {{ ranges.length }} rangos / {{ getTotalDays() }} días
+          </span>
+
+          <!-- STEP 3 -->
+          <span *ngIf="step.id === 3">
+            <span *ngIf="fileName; else noDoc">
+              Documento: {{ fileName }}
+            </span>
+            <ng-template #noDoc>Sin documento</ng-template>
+          </span>
+
+          <!-- STEP 4 -->
+          <span *ngIf="step.id === 4">
+            {{ ranges.length }} rangos / {{ getTotalDays() }} días
+          </span>
+
+          <!-- STEP 5 -->
+          <span *ngIf="step.id === 5 && currentStep === 5">
+            Suscripción registrada
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 1 FUNCIONARIO -->
+
+    <div *ngIf="currentStep === 1" class="step-content" @stepAnimation>
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>person</mat-icon>
+          Seleccionar Funcionario
+        </div>
+
+        <!-- BUSCADOR -->
+
+        <div class="sirus-field full-width">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Buscar funcionario</mat-label>
+
+            <input
+              matInput
+              type="text"
+              placeholder="Nombre o RUT"
+              [formControl]="userSearch"
+              [matAutocomplete]="auto"
+              autocomplete="off"
+            />
+
+            <!-- 🔍 ICONO BUSCAR -->
+            <mat-icon matPrefix>search</mat-icon>
+
+            <!-- ❌ LIMPIAR -->
+            <button
+              mat-icon-button
+              matSuffix
+              *ngIf="userSearch.value"
+              (click)="limpiarBusqueda()"
+              matTooltip="Limpiar búsqueda"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+        </div>
+
+        <!-- AUTOCOMPLETE -->
+        <mat-autocomplete
+          #auto="matAutocomplete"
+          [displayWith]="displayUser"
+          (optionSelected)="selectUserFromSearch($event.option.value)"
+          autoActiveFirstOption
+        >
+          <mat-option *ngFor="let u of filteredUsers" [value]="u">
+            <div class="option-user">
+              <div class="name">{{ u.fullName }}</div>
+              <div class="rut">{{ u.rut }}</div>
+            </div>
+          </mat-option>
+        </mat-autocomplete>
+
+        <!-- ACCIONES -->
+
+        <div class="card-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            class="continuar-btn"
+            (click)="handleNext()"
+            [disabled]="!canGoNext()"
+          >
+            Continuar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 2  FECHA INICIO -->
+    <div *ngIf="currentStep === 2" class="step-content" @stepAnimation>
+      <mat-card class="card-elegante card-form">
+        <!-- HEADER -->
+        <div class="card-header blue">
+          <mat-icon>calendar_today</mat-icon>
+          <div>
+            <div class="title">Selección de fechas</div>
+            <div class="subtitle">Seleccione los días</div>
+          </div>
+        </div>
+
+        <!-- INFO -->
+        <div class="top-info">
+          <div *ngIf="!canContinue()" class="hint error">
+            Seleccione al menos un rango para continuar
+          </div>
+
+          <div class="rules-box">
+            Seleccione los días que desea asignar. El sistema agrupará
+            automáticamente los rangos respetando las semanas. No se permiten
+            cruces de semana ni rangos superpuestos.
+          </div>
+        </div>
+
+        <!-- BODY -->
+        <div class="card-body">
+          <div class="layout">
+            <!-- 🗓️ CALENDARIO -->
+            <div class="calendar-container">
+              <div *ngFor="let m of groupedMonths" class="month-block">
+                <div class="month-title">{{ m.label }}</div>
+
+                <div class="week-header">
+                  <span>L</span><span>M</span><span>M</span> <span>J</span
+                  ><span>V</span><span>S</span><span>D</span>
+                </div>
+
+                <div class="days-grid">
+                  <ng-container *ngFor="let d of getMonthDaysWithOffset(m)">
+                    <div
+                      *ngIf="d; else empty"
+                      class="day"
+                      [class.today]="isToday(d)"
+                      [class.start]="
+                        isStart(d) ||
+                        (!isNeutralDay(d) && !isSelectedDay(d) && isSubStart(d))
+                      "
+                      [class.end]="
+                        isEnd(d) ||
+                        (!isNeutralDay(d) && !isSelectedDay(d) && isSubEnd(d))
+                      "
+                      [class.middle]="
+                        isMiddle(d) ||
+                        (!isNeutralDay(d) &&
+                          !isSelectedDay(d) &&
+                          isSubMiddle(d))
+                      "
+                      [class.single]="
+                        isSingle(d) ||
+                        (!isNeutralDay(d) &&
+                          !isSelectedDay(d) &&
+                          isSubSingle(d))
+                      "
+                      [class.sub]="
+                        !isNeutralDay(d) &&
+                        !isSelectedDay(d) &&
+                        (isSubStart(d) ||
+                          isSubMiddle(d) ||
+                          isSubEnd(d) ||
+                          isSubSingle(d))
+                      "
+                      [class.neutral]="isNeutralDay(d)"
+                      [class.replaced-in-range]="
+                        isBlockedDay(d) && isSelectedDay(d)
+                      "
+                      (click)="onDayClick(d)"
+                    >
+                      {{ d.getDate() }}
+                    </div>
+
+                    <ng-template #empty>
+                      <div class="empty-day"></div>
+                    </ng-template>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+
+            <!-- 👉 PANEL DERECHO PRO -->
+            <div class="right-panel">
+              <!-- 🔹 RANGOS -->
+              <div class="ranges-panel">
+                <div class="ranges-title">Rangos seleccionados</div>
+
+                <div *ngIf="ranges.length === 0" class="empty-state">
+                  No hay rangos seleccionados
+                </div>
+
+                <div *ngFor="let r of ranges" class="range-item">
+                  {{ formatDateCL(r.from) }} - {{ formatDateCL(r.to) }}
+                  <span>({{ getDays(r) }} días)</span>
+                </div>
+
+                <div class="total" [class.active]="getTotalDays() > 0">
+                  Total: {{ getTotalDays() }} días
+                </div>
+
+                <div class="panel-actions">
+                  <button mat-stroked-button (click)="previousStep()">
+                    <mat-icon>arrow_back</mat-icon>
+                    Volver
+                  </button>
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="handleNext()"
+                    [disabled]="!canContinue()"
+                  >
+                    Continuar
+                  </button>
+                </div>
+              </div>
+
+              <!-- 🔹 CONTEXTO (REEMPLAZA HISTORIAL) -->
+              <div class="context-box">
+                <div class="context-title">Estado del funcionario</div>
+
+                <!-- 🟢 ACTIVA -->
+                <div *ngIf="activeSubs.length" class="context-item active">
+                  <div class="label">Suscripción activa</div>
+                  <div class="value">
+                    {{ formatDateCL(activeSubs[0].begin) }} →
+                    {{ formatDateCL(activeSubs[0].end) }}
+                  </div>
+                </div>
+
+                <!-- 🔵 FUTURA -->
+                <div *ngIf="futureSubs.length" class="context-item future">
+                  <div class="label">Próxima suscripción</div>
+                  <div class="value">
+                    {{ formatDateCL(futureSubs[0].begin) }} →
+                    {{ formatDateCL(futureSubs[0].end) }}
+                  </div>
+                </div>
+
+                <!-- ⚠️ MENSAJE -->
+                <div class="context-warning">
+                  Los días con suscripciones existentes no pueden ser
+                  modificados.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 3  FECHA HASTA -->
+
+    <div *ngIf="currentStep === 3" class="step-content" @stepAnimation>
+      <mat-card class="card-elegante">
+        <div class="card-title">
+          <mat-icon>upload_file</mat-icon>
+          Documento de Autorización
+        </div>
+
+        <p style="font-size: 13px; color: #616161">
+          Adjunte el documento de autorización de teletrabajo. (Opcional por
+          ahora)
+        </p>
+
+        <!-- INPUT FILE -->
+
+        <input
+          #fileInput
+          type="file"
+          accept="application/pdf"
+          (change)="onFileSelected($event)"
+        />
+
+        <!-- ARCHIVO SELECCIONADO -->
+
+        <div *ngIf="fileName" class="file-preview">
+          <mat-icon color="primary">description</mat-icon>
+
+          <span class="file-name">
+            {{ fileName }}
+          </span>
+
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="removeFile(fileInput)"
+            matTooltip="Eliminar documento"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+
+        <!-- BOTONES -->
+        <div class="card-actions">
+          <button
+            mat-stroked-button
+            class="volver-btn"
+            (click)="previousStep()"
+          >
+            <mat-icon>arrow_back</mat-icon>
+            Volver
+          </button>
+
+          <button
+            mat-raised-button
+            color="primary"
+            class="continuar-btn"
+            (click)="handleNext()"
+            [disabled]="!canGoNext()"
+          >
+            Continuar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 4 CONFIRMACION -->
+
+    <div
+      *ngIf="currentStep === 4"
+      class="step-content centered-step"
+      @stepAnimation
+    >
+      <mat-card class="card-elegante card-form">
+        <div class="card-header blue">
+          <mat-icon>fact_check</mat-icon>
+          <div>
+            <div class="title">Confirmación</div>
+            <div class="subtitle">Revise la información antes de registrar</div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Usuario -->
+          <div class="confirm-item">
+            <span class="label">Funcionario</span>
+            <span class="value">{{ getUserName() }}</span>
+          </div>
+
+          <!-- Rangos -->
+          <div class="confirm-item">
+            <span class="label">Rangos seleccionados</span>
+
+            <div class="ranges-list" *ngIf="ranges.length > 0; else noRanges">
+              <div *ngFor="let r of ranges; let i = index" class="range-row">
+                <span class="range-index">#{{ i + 1 }}</span>
+
+                <span class="range-dates">
+                  {{ formatDateCL(r.from) }} → {{ formatDateCL(r.to) }}
+                </span>
+
+                <span class="range-days"> ({{ getDays(r) }} días) </span>
+              </div>
+            </div>
+
+            <ng-template #noRanges>
+              <span class="empty-state">No hay rangos seleccionados</span>
+            </ng-template>
+          </div>
+
+          <!-- Total -->
+          <div class="confirm-item total">
+            <span class="label">Total días</span>
+            <span class="value">{{ getTotalDays() }}</span>
+          </div>
+
+          <!-- Documento -->
+          <div class="confirm-item">
+            <span class="label">Documento</span>
+            <span class="value">
+              <span *ngIf="fileName; else noDoc">{{ fileName }}</span>
+              <ng-template #noDoc>No adjunto</ng-template>
+            </span>
+          </div>
+        </div>
+
+        <!-- 🔥 NOTIFICACIONES -->
+        <div class="confirm-item">
+          <span class="label">Notificaciones</span>
+
+          <div class="notification-section">
+            <!-- 👤 DESTINATARIO PRINCIPAL -->
+            <div class="main-recipient">
+              <div class="recipient-title">Destinatario principal</div>
+
+              <div class="notification-chip principal">
+                <mat-icon>person</mat-icon>
+
+                <span>{{ selectedUser?.email }}</span>
+                
+              </div>
+            </div>
+
+            <!-- 📧 ADICIONALES -->
+            <div class="recipient-title secondary">
+              Notificaciones adicionales
+            </div>
+
+            <!-- LISTA -->
+            <div class="notification-list">
+              <div
+                *ngFor="let email of notificationEmails"
+                class="notification-chip"
+              >
+                <mat-icon>mail</mat-icon>
+
+                <span>{{ email }}</span>
+
+                <button
+                  type="button"
+                  class="remove-chip"
+                  (click)="removeNotificationEmail(email)"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- INPUT -->
+            <div class="notification-add">
+              <input
+                type="email"
+                [(ngModel)]="newEmail"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Agregar correo adicional"
+                (keyup.enter)="addNotificationEmail()"
+              />
+
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                (click)="addNotificationEmail()"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions confirm-actions">
+          <button mat-stroked-button (click)="previousStep()">
+            <mat-icon>arrow_back</mat-icon>
+            Volver
+          </button>
+
+          <button mat-raised-button color="primary" (click)="handleNext()">
+            Confirmar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- PASO 5 REGISTRO -->
+
+    <div *ngIf="currentStep === 5" class="step-content" @stepAnimation>
+      <div class="confirm-box success">
+        <mat-icon class="success-icon"> check_circle </mat-icon>
+
+        <h2 class="success-title">Suscripción registrada</h2>
+
+        <p class="success-text">
+          El registro fue guardado correctamente en el sistema
+        </p>
+
+        <button mat-raised-button color="primary" (click)="reset()">
+          Nueva Suscripción
+        </button>
+      </div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div
+      *ngIf="subscriptions.length > 0 && currentStep === 1"
+      class="history-wrapper"
+    >
+      <div class="history-box">
+        <!-- 🟢 ACTIVAS -->
+        <div *ngIf="hasActiveSubs">
+          <div class="group-title active">Activas</div>
+
+          <div *ngFor="let s of activeSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge active">ACTIVA</span>
+          </div>
+        </div>
+
+        <!-- 🔵 FUTURAS -->
+        <div *ngIf="hasFutureSubs">
+          <div class="group-title future">Próximas</div>
+
+          <div *ngFor="let s of futureSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge future">PENDIENTE</span>
+          </div>
+        </div>
+
+        <!-- 🔴 PASADAS -->
+        <div *ngIf="hasPastSubs">
+          <div class="group-title past">Históricas</div>
+
+          <div *ngFor="let s of pastSubs" class="history-item">
+            {{ formatDateCL(s.begin) }} → {{ formatDateCL(s.end) }}
+            <span class="badge past">VENCIDA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

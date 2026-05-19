@@ -1,0 +1,266 @@
+// src/styles.scss
+
+@use "@angular/material" as mat;
+@use './styles/components/buttons';
+
+/* ============================================================
+🎨 VARIABLES SSM
+============================================================ */
+:root {
+--ssm-primary: #1565c0;
+--ssm-primary-dark: #0d47a1;
+--ssm-primary-light: #e3f2fd;
+
+--ssm-accent: #00838f;
+
+--ssm-warn: #ff9800;
+--ssm-error: #d32f2f;
+--ssm-success: #2e7d32;
+
+--ssm-surface: #ffffff;
+
+--ssm-radius: 12px;
+--ssm-radius-lg: 18px;
+
+--ssm-font: "Roboto", "Helvetica Neue", sans-serif;
+}
+
+/* ============================================================
+🎯 THEME ANGULAR MATERIAL (BASE DEL SISTEMA)
+============================================================ */
+@include mat.core();
+
+$theme: mat.define-theme((
+color: (
+theme-type: light,
+primary: mat.$azure-palette,
+tertiary: mat.$blue-palette,
+),
+typography: (
+brand-family: var(--ssm-font),
+bold-weight: 600,
+),
+density: (
+scale: 0,
+),
+));
+
+:root {
+@include mat.all-component-themes($theme);
+}
+
+/* ============================================================
+🌐 BASE GLOBAL
+============================================================ */
+html,
+body {
+height: 100%;
+margin: 0;
+background: var(--ssm-surface);
+font-family: var(--ssm-font);
+color: #212121;
+overflow-x: hidden;
+}
+
+/* ============================================================
+✏️ FORMULARIOS COMPACTOS
+============================================================ */
+.mat-mdc-form-field {
+min-width: 0 !important;
+}
+
+form:not(.no-compact) mat-form-field {
+width: 100%;
+margin-bottom: 0;
+}
+
+.mat-mdc-form-field-label {
+font-size: 13px !important;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+color: var(--ssm-primary) !important;
+}
+
+.mat-mdc-form-field-focus-overlay {
+background: rgba(21, 101, 192, 0.1) !important;
+}
+
+/* ============================================================
+🧱 GRID UNIVERSAL
+============================================================ */
+@for $i from 1 through 10 {
+.block#{$i}-row {
+display: grid;
+grid-template-columns: repeat(#{$i}, 1fr);
+gap: 1rem;
+}
+}
+
+@media (max-width: 1024px) {
+[class*="block"] {
+grid-template-columns: repeat(2, 1fr) !important;
+}
+}
+
+@media (max-width: 600px) {
+[class*="block"] {
+grid-template-columns: 1fr !important;
+}
+}
+
+/* ============================================================
+📋 TABLAS
+============================================================ */
+.tabla-wrapper {
+width: 100%;
+overflow-x: auto;
+}
+
+.mat-mdc-header-row {
+background: var(--ssm-primary-light) !important;
+color: var(--ssm-primary-dark) !important;
+font-weight: 600;
+}
+
+.mat-mdc-row:hover {
+background: #f1f5ff !important;
+}
+
+/* ============================================================
+🪟 TOOLBAR
+============================================================ */
+.topbar {
+background: var(--ssm-primary) !important;
+color: white !important;
+height: 56px;
+display: flex;
+align-items: center;
+padding: 0 12px;
+}
+
+/* ============================================================
+🧱 SIDENAV
+============================================================ */
+.sidenav {
+width: 260px;
+background: #fff;
+border-right: 1px solid #e0e0e0;
+}
+
+.sidenav a.active {
+background: #bbdefb !important;
+}
+
+/* ============================================================
+🎨 OVERLAY COMPONENTS (DATEPICKER PRO)
+🔥 SOLO AQUÍ SE ESTILIZA MATERIAL OVERLAY
+============================================================ */
+
+/* CONTENEDOR */
+.cdk-overlay-pane .mat-calendar {
+border-radius: 16px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+overflow: hidden;
+font-size: 13px;
+}
+
+/* HEADER */
+.cdk-overlay-pane .mat-calendar-header {
+background: #f5f7fa;
+border-bottom: 1px solid #e0e0e0;
+}
+
+/* MES / AÑO */
+.cdk-overlay-pane .mat-calendar-period-button {
+color: var(--ssm-primary) !important;
+font-weight: 600;
+font-size: 13px;
+}
+
+/* FLECHAS */
+.cdk-overlay-pane .mat-calendar-header button {
+color: var(--ssm-primary) !important;
+}
+
+/* DÍAS DE LA SEMANA */
+.cdk-overlay-pane .mat-calendar-table-header th {
+color: var(--ssm-success) !important;
+opacity: 0.75;
+font-weight: 500;
+font-size: 12px;
+}
+
+/* DÍAS */
+.cdk-overlay-pane .mat-calendar-body-cell-content {
+border-radius: 8px;
+transition: all 0.15s ease;
+}
+
+/* HOVER */
+.cdk-overlay-pane .mat-calendar-body-cell:hover .mat-calendar-body-cell-content {
+background: rgba(21, 101, 192, 0.12);
+transform: scale(1.08);
+}
+
+/* SELECCIONADO */
+.cdk-overlay-pane .mat-calendar-body-selected {
+background: var(--ssm-primary) !important;
+color: #fff !important;
+}
+
+/* HOY */
+.cdk-overlay-pane .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+border: 1.5px solid var(--ssm-primary);
+}
+
+/* DESHABILITADOS */
+.cdk-overlay-pane .mat-calendar-body-disabled {
+opacity: 0.3;
+}
+
+/* FIX LABEL MES */
+.cdk-overlay-pane .mat-calendar-body-label {
+display: none !important;
+}
+
+/* ============================================================
+🍫 SNACKBAR
+============================================================ */
+.mat-mdc-snack-bar-container {
+border-radius: var(--ssm-radius);
+color: #fff;
+}
+
+/* ============================================================
+🎬 ANIMACIONES
+============================================================ */
+@keyframes fadeIn {
+from {
+opacity: 0;
+transform: translateY(10px);
+}
+to {
+opacity: 1;
+transform: translateY(0);
+}
+}
+
+app-login {
+animation: fadeIn 0.4s ease;
+}
+
+/* ============================================================
+🔥 DIALOG SYSTEM
+============================================================ */
+.sirus-dialog .mdc-dialog__surface {
+border-radius: 18px !important;
+}
+
+/* ============================================================
+🔥 OVERLAY FIX (Z-INDEX)
+============================================================ */
+.cdk-overlay-container,
+.cdk-overlay-pane {
+z-index: 9999 !important;
+}

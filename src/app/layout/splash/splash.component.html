@@ -1,0 +1,27 @@
+<div class="splash-wrapper">
+  <!-- Fondo SVG con partículas -->
+  <svg class="background-svg" preserveAspectRatio="xMidYMid slice" viewBox="0 0 100 100">
+    <circle cx="10" cy="20" r="1.2" class="bubble"></circle>
+    <circle cx="30" cy="80" r="0.8" class="bubble"></circle>
+    <circle cx="70" cy="50" r="1.5" class="bubble"></circle>
+    <circle cx="90" cy="30" r="1" class="bubble"></circle>
+    <circle cx="50" cy="70" r="0.6" class="bubble"></circle>
+  </svg>
+
+  <!-- Contenido principal -->
+  <div class="splash-content">
+    <img
+      src="assets/logoSSM.png"
+      alt="Logo Servicio de Salud Magallanes"
+      class="splash-logo"
+      [class.visible]="logoVisible"
+    />
+
+    <h2 class="splash-title" [class.visible]="textVisible">
+      Sistema RDA – Salud Mental
+    </h2>
+    <p class="splash-subtitle" [class.visible]="textVisible">
+      Servicio de Salud Magallanes
+    </p>
+  </div>
+</div>

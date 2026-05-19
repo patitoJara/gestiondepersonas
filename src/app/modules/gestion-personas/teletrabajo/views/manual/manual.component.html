@@ -1,0 +1,45 @@
+<div class="manual-container" #manualScroll (scroll)="onScroll()">
+  <!-- 🔝 BOTÓN VOLVER AL ÍNDICE -->
+  <button *ngIf="showIndexBtn" class="btn-indice" (click)="scrollToIndex()">
+    <mat-icon>arrow_upward</mat-icon>
+    <span>Índice</span>
+  </button>
+
+  <!-- 🟦 CABECERA -->
+  <mat-card class="manual-header" id="manual-top">
+    <div class="header-row">
+      <mat-icon class="header-icon">menu_book</mat-icon>
+      <div>
+        <h1>Manual del Sistema</h1>
+        <p>Sistema de Registro de Eventos – Teletrabajo</p>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- 📑 ÍNDICE DINÁMICO -->
+  <mat-card class="manual-section manual-index" id="indice">
+    <h3>Índice</h3>
+
+    <ul class="manual-list">
+      <li *ngFor="let section of sections">
+        <a (click)="scrollTo(section.id)">
+          {{ section.label }}
+        </a>
+      </li>
+    </ul>
+  </mat-card>
+
+  <!-- 🧩 SECCIONES -->
+  <section id="objetivo"><app-objetivo></app-objetivo></section>
+  <section id="principios"><app-principios></app-principios></section>
+  <section id="rolesusuarios"><app-rolesusuarios></app-rolesusuarios></section>
+  <section id="vista-funcionario"><app-vista-funcionario></app-vista-funcionario></section>
+  <section id="vista-admin"><app-vista-admin></app-vista-admin></section>
+  <section id="usuarios"><app-usuarios></app-usuarios></section>
+  <section id="suscripciones"><app-suscripciones></app-suscripciones></section>
+  <section id="reportes"><app-reportes></app-reportes></section>
+  <section id="validaciones"><app-validaciones></app-validaciones></section>
+  <section id="modelo"><app-modelo></app-modelo></section>
+  <section id="vpn"><app-manuales></app-manuales></section>
+  <section id="gusuario"><app-gestionusuario></app-gestionusuario></section>
+</div>
