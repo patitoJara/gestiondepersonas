@@ -1193,7 +1193,7 @@ export class PostulationFormComponent {
       // 🔥 PERSONALES
       // =====================================
 
-      fechaNacimiento: affiliate.birthDate || '',
+      fechaNacimiento: this.parseDateOnlyLocal(affiliate.birthDate),
 
       sexo: affiliate.sex || '',
 
@@ -1201,10 +1201,7 @@ export class PostulationFormComponent {
       // 🔥 AFILIACIÓN
       // =====================================
 
-      tipoAfiliado: affiliate.affiliateType || '',
-
-      fechaAfiliacion: affiliate.affiliateDate || '',
-
+      fechaAfiliacion: this.parseDateOnlyLocal(affiliate.affiliateDate),
       // =====================================
       // 🔥 POSTULATION
       // =====================================
@@ -1313,9 +1310,17 @@ export class PostulationFormComponent {
 
       email: keepOrSet('email', user.email, ''),
 
-      fechaNacimiento: keepOrSet('fechaNacimiento', user.birth_date, null),
+      fechaNacimiento: keepOrSet(
+        'fechaNacimiento',
+        this.parseDateOnlyLocal(user.birth_date),
+        null,
+      ),
 
-      fechaAfiliacion: keepOrSet('fechaAfiliacion', user.contract_date, null),
+      fechaAfiliacion: keepOrSet(
+        'fechaAfiliacion',
+        this.parseDateOnlyLocal(user.contract_date),
+        null,
+      ),
 
       calidadContractual: keepOrSet(
         'calidadContractual',
@@ -1332,8 +1337,16 @@ export class PostulationFormComponent {
       nombre: this.form.value.nombre,
       apellido: this.form.value.apellido,
       email: this.form.value.email,
-      fechaNacimiento: this.form.value.fechaNacimiento,
-      fechaAfiliacion: this.form.value.fechaAfiliacion,
+      fechaNacimiento: keepOrSet(
+        'fechaNacimiento',
+        this.parseDateOnlyLocal(user.birth_date),
+        null,
+      ),
+      fechaAfiliacion: keepOrSet(
+        'fechaAfiliacion',
+        this.parseDateOnlyLocal(user.contract_date),
+        null,
+      ),
       calidadContractual: this.form.value.calidadContractual,
       tipoAfiliado: this.form.value.tipoAfiliado,
     });
@@ -1377,14 +1390,16 @@ export class PostulationFormComponent {
 
           sex: this.form.value.sexo || fullUser.sex,
 
-          birth_date: this.form.value.fechaNacimiento || fullUser.birth_date,
+          birth_date:
+            this.formatDateOnlyForBackend(this.form.value.fechaNacimiento) ||
+            fullUser.birth_date,
 
           // =====================================
           // 🔥 AFILIACIÓN
           // =====================================
-
           contract_date:
-            this.form.value.fechaAfiliacion || fullUser.contract_date,
+            this.formatDateOnlyForBackend(this.form.value.fechaAfiliacion) ||
+            fullUser.contract_date,
 
           contract_type: this.form.value.calidadContractual
             ? String(this.form.value.calidadContractual).toUpperCase()
@@ -5125,7 +5140,7 @@ export class PostulationFormComponent {
 
         estudiaRegion: '',
 
-        open: false,
+        open: true,
 
         titular: true,
 
@@ -5169,13 +5184,10 @@ export class PostulationFormComponent {
     // =====================================
 
     if (familiar.titular) {
-      familiar.birthDate = (
-        formValue.fechaNacimiento ||
+      familiar.birthDate =
+        this.formatDateOnlyForBackend(formValue.fechaNacimiento) ||
         familiar.birthDate ||
-        ''
-      )
-        .toString()
-        .substring(0, 10);
+        null;
 
       familiar.previtionId = familiar.previtionId || formValue.previtionId;
 
@@ -6171,6 +6183,29 @@ export class PostulationFormComponent {
     console.log('🩺 HEALTH RESTORED DEDUP:', this.salud);
   }
 
+  formatFechaVisual(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    if (value instanceof Date) {
+      const day = String(value.getDate()).padStart(2, '0');
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const year = value.getFullYear();
+
+      return `${day}-${month}-${year}`;
+    }
+
+    const text = String(value).substring(0, 10);
+    const [year, month, day] = text.split('-');
+
+    if (!year || !month || !day) {
+      return text;
+    }
+
+    return `${day}-${month}-${year}`;
+  }
+
   /*
   private restoreHealthFromSummary(summary: any): void {
     const records = Array.isArray(summary?.healthRecords)
@@ -6237,7 +6272,7 @@ export class PostulationFormComponent {
       studyPlace: m.studyPlace || '',
       birthDate: m.birthDate || null,
       estudiaRegion: '',
-      open: false,
+      open: true,
       titular: index === 0,
       existsInUsers: index === 0,
       mustCreatePassive: false,
@@ -6424,5 +6459,43 @@ export class PostulationFormComponent {
     color: #1e3a8a;
     font-size: 10px;
   `;
+  }
+
+  private parseDateOnlyLocal(value: any): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    const text = String(value).substring(0, 10);
+
+    const [year, month, day] = text.split('-').map(Number);
+
+    if (!year || !month || !day) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day);
+  }
+
+  private formatDateOnlyForBackend(value: any): string | null {
+    if (!value) {
+      return null;
+    }
+
+    if (typeof value === 'string') {
+      return value.substring(0, 10);
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 }

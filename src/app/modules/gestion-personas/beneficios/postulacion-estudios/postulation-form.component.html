@@ -166,7 +166,7 @@
                     matInput
                     [matDatepicker]="birthPicker"
                     formControlName="fechaNacimiento"
-                    placeholder="Seleccione fecha"
+                    readonly
                   />
 
                   <mat-datepicker-toggle matIconSuffix [for]="birthPicker">
@@ -246,17 +246,12 @@
             <div class="ssm-grid-2">
               <div class="ssm-field">
                 <label>Fecha afiliación</label>
-                <mat-form-field class="birth-field">
-                  <input
-                    matInput
-                    [matDatepicker]="affiliatePicker"
-                    formControlName="fechaAfiliacion"
-                    placeholder="Seleccione fecha"
-                  />
-                  <mat-datepicker-toggle matIconSuffix [for]="affiliatePicker">
-                  </mat-datepicker-toggle>
-                  <mat-datepicker #affiliatePicker></mat-datepicker>
-                </mat-form-field>
+
+                <input
+                  class="input ssm-readonly"
+                  [value]="formatFechaVisual(form.value.fechaAfiliacion)"
+                  readonly
+                />
               </div>
             </div>
           </div>
@@ -299,8 +294,9 @@
             Agregar integrante
           </button>
         </div>
+
         <!-- 🔥 HOGAR MONOPARENTAL -->
-        <div class="ssm-field-inline">
+        <div class="ssm-field-inline" *ngIf="false">
           <label>
             <mat-icon>family_restroom</mat-icon>
             Hogar monoparental
@@ -350,7 +346,7 @@
               <div class="title">
                 <mat-icon>person</mat-icon>
                 <div *ngIf="i === 0" class="pasivo-badge">
-                  <span>Usuario Logeado </span>
+                  <span>Afiliado Identificado</span>
                 </div>
                 <div *ngIf="i > 0" class="pasivo-badge">
                   <span>Familiar {{ i }}</span>
@@ -512,7 +508,7 @@
                 </div>
 
                 <div class="ssm-field">
-                  <label>Actividad / Estudios</label>
+                  <label>Actividad</label>
                   <select
                     class="input"
                     [(ngModel)]="f.activityId"
@@ -525,7 +521,7 @@
                 </div>
 
                 <div class="ssm-field">
-                  <label>Lugar de Trabajo</label>
+                  <label>Profesión u oficio</label>
                   <select
                     class="input"
                     [(ngModel)]="f.workPlaceId"
@@ -878,7 +874,7 @@
               </div>
 
               <div class="ssm-field">
-                <label>% aprobación</label>
+                <label>% de asignatura aprobadas</label>
                 <input
                   class="input no-spinner"
                   type="number"
