@@ -66,11 +66,10 @@
           <label>Postulación cargada</label>
           <select
             class="input"
-            [ngModel]="selectedPostulationViewId"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="openPostulationFromSelector($event)"
+            [value]="selectedPostulationViewId"
+            (change)="openPostulationFromSelector($any($event.target).value)"
           >
-            <option *ngFor="let p of availablePostulations" [ngValue]="p.id">
+            <option *ngFor="let p of availablePostulations" [value]="p.id">
               {{ getPostulationOptionLabel(p) }}
             </option>
           </select>
@@ -795,32 +794,16 @@
           <!-- 🔹 INFORMACIÓN ADICIONAL -->
           <div class="ssm-section">
             <div class="ssm-title">Información adicional</div>
-
             <div class="ssm-field">
               <label
                 >¿El beneficiario ha recibido este beneficio
                 anteriormente?</label
               >
 
-              <div class="ssm-radio-group">
-                <label class="ssm-radio">
-                  <input
-                    type="radio"
-                    formControlName="beneficiado"
-                    [value]="true"
-                  />
-                  <span>Sí</span>
-                </label>
-
-                <label class="ssm-radio">
-                  <input
-                    type="radio"
-                    formControlName="beneficiado"
-                    [value]="false"
-                  />
-                  <span>No</span>
-                </label>
-              </div>
+              <select class="input" formControlName="beneficiado">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
             </div>
           </div>
           <!-- 🔹 ACTIONS -->
@@ -882,7 +865,7 @@
                   [(ngModel)]="verificacion.promedio"
                   [ngModelOptions]="{ standalone: true }"
                   (focusout)="validarPromedioVerificacion()"
-                  (change)="validarPromedioVerificacion()"                  
+                  (change)="validarPromedioVerificacion()"
                 />
               </div>
 
@@ -892,11 +875,11 @@
                   class="input no-spinner"
                   type="number"
                   min="1"
-                  max="100"                  
+                  max="100"
                   [(ngModel)]="verificacion.aprobacion"
                   [ngModelOptions]="{ standalone: true }"
                   (focusout)="validarAprobacionVerificacion()"
-                  (change)="validarAprobacionVerificacion()"                  
+                  (change)="validarAprobacionVerificacion()"
                 />
               </div>
             </div>
@@ -1004,11 +987,13 @@
 
                   <div class="ssm-field">
                     <label>Monto</label>
+
                     <div class="ssm-money-input">
                       <input
                         class="input"
-                        [(ngModel)]="i.monto"
-                        [ngModelOptions]="{ standalone: true }"
+                        type="text"
+                        inputmode="numeric"
+                        [value]="i.monto ? i.monto.toLocaleString('es-CL') : ''"
                         (input)="formatearMontoIngreso($event, idx)"
                       />
                     </div>
@@ -1160,6 +1145,25 @@
                   </button>
                 </div>
 
+                <!-- 🔹 RESUMEN VISUAL CUANDO ESTÁ CERRADO -->
+                <div class="mini-summary" *ngIf="!g.open">
+                  <div class="mini-summary-content">
+                    <div class="mini-avatar">
+                      <mat-icon>receipt_long</mat-icon>
+                    </div>
+
+                    <div class="mini-info">
+                      <div class="mini-name">
+                        {{ g.glosa || "Sin glosa" }}
+                      </div>
+
+                      <div class="mini-detail">
+                        $ {{ g.monto || 0 | number: "1.0-0" }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- 🔹 BODY -->
                 <div class="card-body" *ngIf="g.open">
                   <div class="ssm-field">
@@ -1179,8 +1183,9 @@
                     <div class="ssm-money-input">
                       <input
                         class="input"
-                        [(ngModel)]="g.monto"
-                        [ngModelOptions]="{ standalone: true }"
+                        type="text"
+                        inputmode="numeric"
+                        [value]="g.monto ? g.monto.toLocaleString('es-CL') : ''"
                         (input)="formatearMontoOtro($event, g)"
                       />
                     </div>
@@ -1372,8 +1377,9 @@
 
                       <input
                         class="input"
-                        [(ngModel)]="s.gasto"
-                        [ngModelOptions]="{ standalone: true }"
+                        type="text"
+                        inputmode="numeric"
+                        [value]="s.gasto ? s.gasto.toLocaleString('es-CL') : ''"
                         (input)="formatearMontoSalud($event, s)"
                       />
                     </div>
@@ -1595,7 +1601,8 @@
           <div class="section-title">Documentos adicionales</div>
 
           <div class="section-sub">
-            Adjuntar informacion complementaria necesaria Debajo de Documentos adicionales
+            Adjuntar informacion complementaria necesaria Debajo de Documentos
+            adicionales
           </div>
 
           <div class="docs-grid">
@@ -2064,7 +2071,7 @@
               <mat-icon>mail</mat-icon>
               Enviar comprobante por correo
             </button>   
-         -->       
+         -->
         </div>
       </div>
 

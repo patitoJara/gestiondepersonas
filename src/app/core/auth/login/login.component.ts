@@ -26,6 +26,7 @@ import { TokenService } from '@app/core/services/token.service';
 import { SessionService } from '@app/core/services/session.service';
 // Dialog
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
+import { finalize } from 'rxjs';
 
 @Component({
   standalone: true,
@@ -94,87 +95,136 @@ export class LoginComponent implements AfterViewInit {
 
     this.loading = true;
 
-    this.auth.login(email, password).subscribe({
-      next: (res) => {
-        console.log('[login] respuesta backend:', res);
-
-        if (!res || !res.token) {
+    this.auth
+      .login(email, password)
+      .pipe(
+        finalize(() => {
           this.loading = false;
-          this.mostrarErrorLogin('El correo o la contraseña son incorrectos.');
-          return;
-        }
+        }),
+      )
+      .subscribe({
+        next: (res: any) => {
+          console.log('[login.component] respuesta backend:', res);
 
-        // =========================
-        // 🔐 TOKENS (CORRECTO)
-        // =========================
-        this.tokenService.setTokens(res.token, res.refreshToken);
+          // =====================================
+          // 🔥 VALIDACIÓN FLEXIBLE DEL TOKEN
+          // =====================================
 
-        // =========================
-        // 👤 PERFIL (CORRECTO)
-        // =========================
-        if (res.profile) {
-          this.tokenService.setUserProfile(res.profile);
-        }
+          const token =
+            res?.token ||
+            res?.accessToken ||
+            res?.access_token ||
+            this.tokenService.getAccessToken?.();
 
-        // =========================
-        // 🎭 ROLES (CORRECTO)
-        // =========================
-        if (res.roles) {
-          this.tokenService.setUserRoles(res.roles);
-        }
+          if (!token) {
+            console.warn(
+              '[login.component] ⚠️ Login correcto, pero sin token visible',
+            );
+            this.mostrarErrorLogin(
+              'El correo o la contraseña son incorrectos.',
+            );
+            return;
+          }
 
-        console.log('[login] ✅ Token, perfil y roles guardados correctamente');
+          // =====================================
+          // 🔐 TOKENS
+          // Solo guardar si vienen en la respuesta.
+          // Si AuthLoginService ya los guardó, no molestamos.
+          // =====================================
 
-        // =========================
-        // 💾 RECORDAR EMAIL
-        // =========================
-        if (remember) {
-          localStorage.setItem('last_email', email);
-        } else {
-          localStorage.removeItem('last_email');
-        }
+          if (res?.token || res?.accessToken || res?.access_token) {
+            this.tokenService.setTokens(
+              res.token || res.accessToken || res.access_token,
+              res.refreshToken || res.refresh_token,
+            );
+          }
 
-        const returnUrl =
-          this.route.snapshot.queryParamMap.get('returnUrl') ||
-          '/gestion-personas/inicio';
+          // =====================================
+          // 👤 PERFIL
+          // =====================================
 
-        console.log('[login] ⏳ Navegando y reiniciando sesión...');
+          if (res?.profile) {
+            this.tokenService.setUserProfile(res.profile);
+          }
 
-        // =========================
-        // 🚀 NAVEGACIÓN + SESIÓN
-        // =========================
-        this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
-          this.sessionService.startSession('login');
-          this.loading = false;
-        });
-      },
+          // =====================================
+          // 🎭 ROLES
+          // =====================================
 
-      error: (err) => {
-        console.error('[login] ❌ Error de autenticación:', err);
-        this.loading = false;
+          if (res?.roles) {
+            this.tokenService.setUserRoles(res.roles);
+          }
 
-        if (err.status === 401) {
-          this.mostrarErrorLogin('Usuario o contraseña incorrectos.');
-        } else if (err.status === 403) {
-          this.mostrarErrorLogin(
-            'Tu usuario no tiene permisos para acceder al sistema.',
-          );
-        } else {
+          console.log('[login.component] ✅ Login validado, navegando...');
+
+          // =====================================
+          // 💾 RECORDAR EMAIL
+          // =====================================
+
+          if (remember) {
+            localStorage.setItem('last_email', email);
+          } else {
+            localStorage.removeItem('last_email');
+          }
+
+          const returnUrl =
+            this.route.snapshot.queryParamMap.get('returnUrl') ||
+            '/gestion-personas/inicio';
+
+          // =====================================
+          // 🚀 NAVEGACIÓN + SESIÓN
+          // =====================================
+
+          this.router
+            .navigateByUrl(returnUrl, { replaceUrl: true })
+            .then((ok) => {
+              console.log('[login.component] navegación resultado:', ok);
+
+              if (ok) {
+                this.sessionService.startSession('login');
+              } else {
+                console.warn('[login.component] ⚠️ Router no navegó');
+              }
+            });
+        },
+
+        error: (err) => {
+          if (err.status === 401) {
+            this.mostrarErrorLogin('Usuario o contraseña incorrectos.');
+            return;
+          }
+
+          if (err.status === 403) {
+            this.mostrarErrorLogin(
+              'Tu usuario no tiene permisos para acceder al sistema.',
+            );
+            return;
+          }
+
           this.mostrarErrorLogin(
             'No fue posible iniciar sesión. Intenta nuevamente.',
           );
-        }
-      },
-    });
+        },
+      });
   }
 
   ngAfterViewInit(): void {
-    if (this.form.value.email) {
-      const pwd = document.querySelector(
-        'input[formControlName="password"]',
-      ) as HTMLInputElement;
-      pwd?.focus();
+    setTimeout(() => this.focusLoginButton(), 300);
+    setTimeout(() => this.focusLoginButton(), 600);
+    setTimeout(() => this.focusLoginButton(), 900);
+  }
+
+  private focusLoginButton(): void {
+    const button = this.loginButton?.nativeElement;
+
+    if (!button) {
+      console.warn('[login] ⚠️ Botón INGRESAR no encontrado');
+      return;
     }
+
+    button.focus();
+
+    console.log('[login] 🎯 Foco actual:', document.activeElement);
   }
 
   goToRecover(): void {
@@ -189,17 +239,22 @@ export class LoginComponent implements AfterViewInit {
   @ViewChild('loginButton') loginButton!: ElementRef<HTMLButtonElement>;
 
   private mostrarErrorLogin(mensaje: string): void {
-    this.dialog.open(ErrorConfirmDialogComponent, {
-      width: '420px',
-      disableClose: true,
-      data: {
-        title: 'Error de inicio de sesión',
-        message: mensaje,
-        confirmText: 'Aceptar',
-        color: 'warn',
-        icon: 'error',
-        dense: true,
-      },
-    });
+    this.dialog
+      .open(ErrorConfirmDialogComponent, {
+        width: '420px',
+        disableClose: true,
+        data: {
+          title: 'Error de inicio de sesión',
+          message: mensaje,
+          confirmText: 'Aceptar',
+          color: 'warn',
+          icon: 'error',
+          dense: true,
+        },
+      })
+      .afterClosed()
+      .subscribe(() => {
+        this.focusLoginButton();
+      });
   }
 }

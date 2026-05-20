@@ -1,6 +1,8 @@
 import {
   Component,
   OnInit,
+  AfterViewInit,
+  ElementRef,
   ViewChild,
   inject,
   ChangeDetectorRef,
@@ -31,6 +33,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
+import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 import { OnDestroy } from '@angular/core';
 
 import { TokenService } from '@app/core/services/token.service';
@@ -38,6 +41,7 @@ import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { SessionService } from '@app/core/services/session.service';
 import { TimeService } from '@app/core/services/time.service';
 import { routes } from '../../app.routes';
+
 import { AppRouteData } from '@app/core/models/route-data.model';
 
 @Component({
@@ -76,6 +80,39 @@ export class TemplateComponent implements OnInit, OnDestroy {
   private timeService = inject(TimeService);
 
   private warned = false;
+
+  private roleContinueButtonRef?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('roleContinueButton')
+  set roleContinueButton(ref: ElementRef<HTMLButtonElement> | undefined) {
+    this.roleContinueButtonRef = ref;
+
+    if (ref) {
+      this.scheduleRoleButtonFocus();
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.scheduleRoleButtonFocus();
+  }
+
+  private scheduleRoleButtonFocus(delay = 300): void {
+    setTimeout(() => {
+      this.focusRoleContinueButton();
+    }, delay);
+  }
+
+  private focusRoleContinueButton(): void {
+    const button = this.roleContinueButtonRef?.nativeElement;
+
+    if (!button || this.menuVisible || this.userRoles.length <= 1) {
+      return;
+    }
+
+    button.focus();
+
+    console.log('[roles] 🎯 Foco puesto en botón INGRESAR');
+  }
 
   remainingMinutes = 60;
   showExtendButton = false;
@@ -212,7 +249,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
     }
 
     if (!this.activeRole) {
-      alert('Debe seleccionar rol.');
+      this.showRoleRequiredModal();
       return;
     }
 
@@ -223,6 +260,25 @@ export class TemplateComponent implements OnInit, OnDestroy {
     this.menuVisible = true;
   }
 
+  private showRoleRequiredModal(): void {
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        width: '420px',
+        disableClose: true,
+        data: {
+          title: 'Rol requerido',
+          message: 'Debe seleccionar un rol para continuar.',
+          confirmText: 'Aceptar',
+          cancelText: '',
+          icon: 'warning',
+          color: 'warn',
+        },
+      })
+      .afterClosed()
+      .subscribe(() => {
+        this.scheduleRoleButtonFocus();
+      });
+  }
   toggleDrawer(): void {
     this.drawer.toggle();
   }
@@ -365,22 +421,22 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
   showSessionExpiredModal(): void {
     this.dialog
-      .open(ConfirmDialogComponent, {
+      .open(ErrorConfirmDialogComponent, {
         width: '420px',
         disableClose: true,
         data: {
           title: 'Sesión expirada',
           message:
             'Tu sesión ha expirado por seguridad. Debes volver a iniciar sesión.',
-          confirmText: 'Ir a login',
-          cancelText: '',
-          icon: 'warning',
+          confirmText: 'Volver al login',
           color: 'warn',
+          icon: 'warning',
+          dense: true,
         },
       })
       .afterClosed()
       .subscribe(() => {
-        this.forceLogout(); // 🔥 AQUÍ recién
+        this.forceLogout();
       });
   }
 

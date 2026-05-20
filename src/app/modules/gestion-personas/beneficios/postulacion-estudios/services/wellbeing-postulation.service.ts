@@ -82,10 +82,7 @@ export class WellbeingPostulationService {
       currentStep: Number(currentStep),
     };
 
-    return this.http.patch(
-      `${this.apiUrl}/my/${postulationId}/step`,
-      payload,
-    );
+    return this.http.patch(`${this.apiUrl}/my/${postulationId}/step`, payload);
   }
 
   // =========================================
@@ -251,9 +248,7 @@ export class WellbeingPostulationService {
     payload: HealthRecordRequest[],
   ): Observable<any> {
     return forkJoin(
-      payload.map((record) =>
-        this.createHealthRecord(postulationId, record),
-      ),
+      payload.map((record) => this.createHealthRecord(postulationId, record)),
     );
   }
 
@@ -261,14 +256,8 @@ export class WellbeingPostulationService {
   // 🔥 STEP 8 — HOUSING
   // =========================================
 
-  saveHousing(
-    postulationId: number,
-    payload: HousingRequest,
-  ): Observable<any> {
-    return this.http.put(
-      `${this.apiUrl}/my/${postulationId}/housing`,
-      payload,
-    );
+  saveHousing(postulationId: number, payload: HousingRequest): Observable<any> {
+    return this.http.put(`${this.apiUrl}/my/${postulationId}/housing`, payload);
   }
 
   // =========================================
@@ -292,22 +281,15 @@ export class WellbeingPostulationService {
     );
   }
 
-  createDocument(
-    postulationId: number,
-    payload: any,
-  ): Observable<any> {
+  createDocument(postulationId: number, payload: any): Observable<any> {
     return this.http.post(
       `${this.apiUrl}/my/${postulationId}/documents`,
       payload,
     );
   }
 
-  deleteDocument(
-    documentId: number,
-  ): Observable<any> {
-    return this.http.delete(
-      `${this.apiUrl}/my/documents/${documentId}`,
-    );
+  deleteDocument(documentId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/my/documents/${documentId}`);
   }
 
   // =========================================
@@ -382,5 +364,29 @@ export class WellbeingPostulationService {
     return this.http.get<PostulationResponse>(
       `${this.apiUrl}/${postulationId}`,
     );
+  }
+
+  // =========================================
+  // 🔥 STEP 6 — DELETE INCOME
+  // =========================================
+
+  deleteIncome(incomeId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/my/incomes/${incomeId}`);
+  }
+
+  // =========================================
+  // 🔥 STEP 7 — DELETE EXPENSE
+  // =========================================
+
+  deleteExpense(expenseId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/my/expenses/${expenseId}`);
+  }
+
+  // =========================================
+  // 🔥 STEP 8 — DELETE HEALTH RECORD
+  // =========================================
+
+  deleteHealthRecord(recordId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/my/health-records/${recordId}`);
   }
 }

@@ -9,13 +9,19 @@
   <div class="login-card animate-entry" appearance="outlined">
     <!-- 🏛️ Logo institucional -->
     <div class="logo-header">
-      <img src="assets/logoSSM.png" alt="Logo Servicio de Salud Magallanes" />
+      <img
+        src="assets/logoSSM.png"
+        alt="Logo Servicio de Salud Magallanes"
+        tabindex="-1"
+        draggable="false"
+      />
       <h2>Servicio de Salud Magallanes</h2>
       <p>Departamento de Tecnologías de la Información</p>
     </div>
 
     <!-- 📘 Título -->
     <h3 class="form-title">Acceso Gestión de Personas</h3>
+
     <p class="subtitle">
       Sistema institucional del Servicio de Salud Magallanes para la gestión de
       personas
@@ -24,27 +30,31 @@
     <!-- 🧾 Formulario -->
     <form [formGroup]="form" (ngSubmit)="login()" class="login-form" novalidate>
       <!-- 📧 Correo -->
-      <mat-form-field appearance="fill" class="full">
+      <mat-form-field appearance="fill" class="full login-field">
         <mat-label>Correo electrónico</mat-label>
+
         <input
           matInput
           type="email"
           formControlName="email"
           placeholder="usuario@dominio.com"
+          autocomplete="email"
           required
         />
-        <!--           autocomplete="email" -->
+
         <mat-error *ngIf="f.email.touched && f.email.hasError('required')">
           El correo es obligatorio.
         </mat-error>
+
         <mat-error *ngIf="f.email.touched && f.email.hasError('email')">
           Ingresa un correo válido.
         </mat-error>
       </mat-form-field>
 
       <!-- 🔑 Contraseña -->
-      <mat-form-field appearance="fill" class="full">
+      <mat-form-field appearance="fill" class="full login-field">
         <mat-label>Contraseña</mat-label>
+
         <input
           matInput
           [type]="hidePwd ? 'password' : 'text'"
@@ -53,6 +63,7 @@
           autocomplete="current-password"
           required
         />
+
         <button
           mat-icon-button
           matSuffix
@@ -64,6 +75,7 @@
         >
           <mat-icon>{{ hidePwd ? "visibility" : "visibility_off" }}</mat-icon>
         </button>
+
         <mat-error
           *ngIf="f.password.touched && f.password.hasError('required')"
         >
@@ -73,12 +85,13 @@
 
       <!-- 🔘 Botón principal -->
       <button
+        #loginButton
         mat-flat-button
         color="primary"
         class="login-btn"
         type="submit"
-        [disabled]="loading || form.invalid"
-        (mousedown)="$event.preventDefault()"
+        tabindex="0"
+        autofocus
       >
         <ng-container *ngIf="!loading; else loadingTpl">
           INGRESAR
@@ -86,15 +99,16 @@
       </button>
 
       <!-- 🔗 Enlaces secundarios -->
-
       <div class="links-row">
         <div class="access-links">
-          <a (click)="goToRecover()">¿Olvidaste tu contraseña?</a>
+          <a type="button" (click)="goToRecover()">¿Olvidaste tu contraseña?</a>
           <span class="divider">|</span>
           <!-- <a routerLink="/auth/change-password">Cambiar contraseña</a> -->
         </div>
 
-        <a routerLink="/about-public" class="system-link">Acerca del sistema</a>
+        <a routerLink="/about-public" class="system-link">
+          Acerca del sistema
+        </a>
       </div>
     </form>
   </div>
@@ -108,5 +122,6 @@
 
 <!-- 🌀 Template único para loading -->
 <ng-template #loadingTpl>
-  <mat-spinner diameter="18"></mat-spinner>&nbsp; Ingresando...
+  <mat-spinner diameter="18"></mat-spinner>
+  &nbsp; Ingresando...
 </ng-template>

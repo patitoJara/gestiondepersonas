@@ -190,6 +190,7 @@ export class PostulationFormComponent {
   private emailService = inject(EmailService);
 
   comprobantePdfFile: File | null = null;
+  private openingPostulation = false;
 
   form: FormGroup;
   studies: Study[] = [];
@@ -849,8 +850,22 @@ export class PostulationFormComponent {
     const id = Number(postulationId);
     if (!id) return;
 
+    if (this.openingPostulation) {
+      console.warn('⛔ OPEN POSTULATION BLOQUEADO: ya se está cargando una');
+      return;
+    }
+
+    if (Number(this.postulationId) === id && this.summary) {
+      console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
+      return;
+    }
+
     try {
+      // 🔥 ESTA LÍNEA FALTABA
+      this.openingPostulation = true;
+
       this.isLoading = true;
+
       console.log('📂 OPEN POSTULATION:', id);
 
       const summary: any = await firstValueFrom(
@@ -858,21 +873,39 @@ export class PostulationFormComponent {
       );
 
       const postulation = summary?.postulation || summary;
+
       if (!postulation?.id) {
         throw new Error('La respuesta summary no contiene postulación válida');
       }
 
+      const status = String(postulation.status || '').toUpperCase();
+
       this.postulationId = Number(postulation.id);
       this.selectedPostulationViewId = this.postulationId;
       this.codigoPostulacion = postulation.code || '';
-      this.isSubmitted = ['SUBMITTED', 'UNDER_REVIEW'].includes(
-        String(postulation.status || '').toUpperCase(),
-      );
+
+      this.isSubmitted = ['SUBMITTED', 'UNDER_REVIEW'].includes(status);
+
       this.summary = summary;
+
+      // =====================================
+      // 🔥 RESTAURAR DESDE SUMMARY / DASH
+      // =====================================
 
       this.restoreFullStateFromSummary(summary);
 
-      const status = String(postulation.status || '').toUpperCase();
+      if (!this.isSubmitted) {
+        await this.loadLoggedAffiliate({ onlyEmpty: true });
+
+        if (this.grupoFamiliar.length === 0) {
+          this.syncAffiliateToFamily();
+        }
+      }
+
+      // =====================================
+      // 🔥 STEP
+      // =====================================
+
       if (status === 'SUBMITTED' || status === 'UNDER_REVIEW') {
         this.currentStep = Number(postulation.currentStep || 11);
       } else {
@@ -881,14 +914,24 @@ export class PostulationFormComponent {
 
       this.wellbeingStorageService.savePostulationId(this.postulationId);
       this.wellbeingStorageService.saveCurrentStep(this.currentStep);
+
       this.saveWorkflow();
+
+      console.log('✅ POSTULATION OPENED:', {
+        id: this.postulationId,
+        status,
+        currentStep: this.currentStep,
+        isSubmitted: this.isSubmitted,
+      });
 
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
     } catch (e) {
       console.error('❌ ERROR OPEN POSTULATION:', e);
+
       this.showError('No fue posible cargar la postulación seleccionada');
     } finally {
       this.isLoading = false;
+      this.openingPostulation = false;
     }
   }
 
@@ -1114,7 +1157,7 @@ export class PostulationFormComponent {
     this.syncAffiliateToFamily();
   }
 
-  async loadLoggedAffiliate() {
+  async loadLoggedAffiliate(options: { onlyEmpty?: boolean } = {}) {
     try {
       const user: any = await firstValueFrom(
         this.usersService.getById(this.loggedUser.id),
@@ -1127,57 +1170,104 @@ export class PostulationFormComponent {
       }
 
       this.afiliado = user;
-
       this.afiliadoValido = true;
 
-      this.patchAffiliate(user);
+      this.patchAffiliateFromUsers(user, {
+        onlyEmpty: options.onlyEmpty ?? false,
+      });
 
-      console.log('✅ AFILIADO CARGADO');
+      console.log('✅ AFILIADO CARGADO DESDE USERS');
     } catch (e) {
       console.error('❌ ERROR LOAD AFFILIATE:', e);
     }
   }
 
-  private patchAffiliate(user: any) {
+  private patchAffiliateFromUsers(
+    user: any,
+    options: { onlyEmpty?: boolean } = {},
+  ): void {
+    const onlyEmpty = options.onlyEmpty === true;
+    const current = this.form.getRawValue();
+
+    const isEmpty = (value: any): boolean => {
+      return (
+        value === null || value === undefined || String(value).trim() === ''
+      );
+    };
+
+    const keepOrSet = (field: string, value: any, fallback: any = null) => {
+      if (onlyEmpty && !isEmpty(current[field])) {
+        return current[field];
+      }
+
+      if (!isEmpty(value)) {
+        return value;
+      }
+
+      return fallback;
+    };
+
+    // =====================================
+    // 🔥 NOMBRE Y APELLIDO DESDE USERS
+    // users.firstName + users.secondName => nombre
+    // users.firstLastName + users.secondLastName => apellido
+    // =====================================
+
+    const nombre = `${user.firstName || ''} ${user.secondName || ''}`
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+
+    const apellido = `${user.firstLastName || ''} ${user.secondLastName || ''}`
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+
+    const calidadContractual = user.contract_type
+      ? String(user.contract_type).trim().toUpperCase()
+      : 'CONTRATA';
+
     this.form.patchValue({
       // =====================================
-      // 🔥 IDENTIFICACIÓN
+      // 🔥 SOLO DATOS BASE DESDE USERS
       // =====================================
 
-      rut: user.rut || '',
+      rut: keepOrSet('rut', user.rut, ''),
 
-      // =====================================
-      // 🔥 NOMBRES
-      // =====================================
+      nombre: keepOrSet('nombre', nombre, ''),
 
-      nombre: `${user.firstName || ''} ${user.secondName || ''}`
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toUpperCase(),
+      apellido: keepOrSet('apellido', apellido, ''),
 
-      apellido: `${user.firstLastName || ''} ${user.secondLastName || ''}`
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toUpperCase(),
+      email: keepOrSet('email', user.email, ''),
 
-      // =====================================
-      // 🔥 CONTACTO
-      // =====================================
+      fechaNacimiento: keepOrSet('fechaNacimiento', user.birth_date, null),
 
-      email: user.email || '',
+      fechaAfiliacion: keepOrSet('fechaAfiliacion', user.contract_date, null),
 
-      // =====================================
-      // 🔥 DATOS FUNCIONARIO
-      // =====================================
+      calidadContractual: keepOrSet(
+        'calidadContractual',
+        calidadContractual,
+        'CONTRATA',
+      ),
 
-      fechaNacimiento: user.birth_date || null,
-
-      fechaAfiliacion: user.contract_date || null,
-
-      calidadContractual: user.contract_type
-        ? String(user.contract_type).trim().toUpperCase()
-        : 'CONTRATA',
+      tipoAfiliado: keepOrSet('tipoAfiliado', 'ACTIVO', 'ACTIVO'),
     });
+
+    console.log('🧩 PATCH USERS STEP 1:', {
+      onlyEmpty,
+      rut: this.form.value.rut,
+      nombre: this.form.value.nombre,
+      apellido: this.form.value.apellido,
+      email: this.form.value.email,
+      fechaNacimiento: this.form.value.fechaNacimiento,
+      fechaAfiliacion: this.form.value.fechaAfiliacion,
+      calidadContractual: this.form.value.calidadContractual,
+      tipoAfiliado: this.form.value.tipoAfiliado,
+    });
+  }
+
+  private patchAffiliate(user: any): void {
+    this.patchAffiliateFromUsers(user, { onlyEmpty: false });
   }
 
   async saveStep1Affiliate() {
@@ -1747,7 +1837,233 @@ export class PostulationFormComponent {
   // =========================================================
   // 🔥 SAVE STEP 6
   // =========================================================
+  async saveStep6FamilyIncomes() {
+    try {
+      const activePostulationId = await this.ensureActiveDraft();
 
+      this.isSaving = true;
+
+      // =====================================
+      // 🔥 1) LOAD SUMMARY ACTUAL
+      // =====================================
+
+      await this.loadSummary();
+
+      const currentIncomes = Array.isArray(this.summary?.incomes)
+        ? this.summary.incomes
+        : [];
+
+      console.log('🧹 INCOMES EXISTENTES A BORRAR:', currentIncomes);
+
+      // =====================================
+      // 🔥 2) DELETE INCOMES EXISTENTES
+      // =====================================
+
+      for (const income of currentIncomes) {
+        const incomeId = Number(income.id || 0);
+
+        if (!incomeId) {
+          continue;
+        }
+
+        console.log('🗑️ DELETE INCOME:', incomeId);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.deleteIncome(incomeId),
+        );
+      }
+
+      // =====================================
+      // 🔥 3) CREATE INCOMES ACTUALES
+      // =====================================
+
+      for (const ingreso of this.ingresosFamiliares) {
+        if (!ingreso.familiarId) {
+          continue;
+        }
+
+        const familiar = this.grupoFamiliar.find(
+          (f) => Number(f.id) === Number(ingreso.familiarId),
+        );
+
+        if (!familiar?.backendId) {
+          console.warn('⚠️ Familiar sin backendId, no se guarda ingreso:', {
+            ingreso,
+            familiar,
+          });
+
+          continue;
+        }
+
+        const amount = Number(ingreso.monto || 0);
+
+        if (amount <= 0) {
+          continue;
+        }
+
+        const payload = {
+          familyMemberId: Number(familiar.backendId),
+
+          // Según documentación anterior puede ser contractTypeId.
+          // Dejamos incomeTypeId porque así veníamos trabajando.
+          incomeTypeId: 1,
+
+          amount,
+        };
+
+        console.log('💰 CREATE INCOME:', payload);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.createIncome(
+            activePostulationId,
+            payload,
+          ),
+        );
+      }
+
+      // =====================================
+      // 🔥 4) RELOAD SUMMARY
+      // =====================================
+
+      await this.loadSummary();
+
+      this.restoreIncomesFromSummary(this.summary);
+
+      await this.moveToStep(7);
+
+      //this.showSuccess('Ingresos familiares guardados');
+    } catch (e) {
+      console.error('❌ ERROR SAVE INCOMES:', e);
+
+      this.showError('Error guardando ingresos');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  /*
+  async saveStep6FamilyIncomes() {
+    try {
+      const activePostulationId = await this.ensureActiveDraft();
+
+      this.isSaving = true;
+
+      // =====================================
+      // 🔥 CARGAR SUMMARY ACTUAL
+      // Para saber qué ingresos ya existen en BD
+      // =====================================
+
+      await this.loadSummary();
+
+      const existingIncomes = Array.isArray(this.summary?.incomes)
+        ? this.summary.incomes
+        : [];
+
+      const existingKeys = new Set<string>();
+
+      for (const income of existingIncomes) {
+        const familyMemberId = Number(income.familyMemberId || 0);
+        const incomeTypeId = Number(income.incomeTypeId || 1);
+
+        if (familyMemberId) {
+          existingKeys.add(`${familyMemberId}|${incomeTypeId}`);
+        }
+      }
+
+      // =====================================
+      // 🔥 COMPACTAR INGRESOS DEL FRONT
+      // 1 ingreso por familiar
+      // =====================================
+
+      const ingresosUnicos = new Map<number, IngresoFamiliar>();
+
+      for (const ingreso of this.ingresosFamiliares) {
+        if (!ingreso.familiarId) {
+          continue;
+        }
+
+        ingresosUnicos.set(Number(ingreso.familiarId), ingreso);
+      }
+
+      let createdCount = 0;
+      let skippedCount = 0;
+
+      // =====================================
+      // 🔥 GUARDAR SOLO LOS QUE NO EXISTEN
+      // =====================================
+
+      for (const ingreso of Array.from(ingresosUnicos.values())) {
+        const familiar = this.grupoFamiliar.find(
+          (f) => Number(f.id) === Number(ingreso.familiarId),
+        );
+
+        if (!familiar?.backendId) {
+          console.warn('⚠️ Familiar sin backendId, no se guarda ingreso:', {
+            ingreso,
+            familiar,
+          });
+
+          continue;
+        }
+
+        const familyMemberId = Number(familiar.backendId);
+        const incomeTypeId = 1;
+        const key = `${familyMemberId}|${incomeTypeId}`;
+
+        if (existingKeys.has(key)) {
+          console.log('⏭️ INCOME YA EXISTE, SE OMITE:', {
+            familyMemberId,
+            incomeTypeId,
+            amount: ingreso.monto,
+          });
+
+          skippedCount++;
+          continue;
+        }
+
+        const payload = {
+          familyMemberId,
+          incomeTypeId,
+          amount: Number(ingreso.monto || 0),
+        };
+
+        console.log('💰 INCOME CREATE:', payload);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.createIncome(
+            activePostulationId,
+            payload,
+          ),
+        );
+
+        existingKeys.add(key);
+        createdCount++;
+      }
+
+      // =====================================
+      // 🔥 RECARGAR SUMMARY Y RESTAURAR LIMPIO
+      // =====================================
+
+      await this.loadSummary();
+      this.restoreIncomesFromSummary(this.summary);
+
+      await this.moveToStep(7);
+
+      if (createdCount > 0) {
+        this.showSuccess('Ingresos familiares guardados');
+      } else if (skippedCount > 0) {
+        this.showSuccess('Ingresos familiares ya estaban registrados');
+      }
+    } catch (e) {
+      console.error(e);
+
+      this.showError('Error guardando ingresos');
+    } finally {
+      this.isSaving = false;
+    }
+  }*/
+
+  /*
   async saveStep6FamilyIncomes() {
     try {
       const activePostulationId = await this.ensureActiveDraft();
@@ -1778,7 +2094,7 @@ export class PostulationFormComponent {
 
       await this.moveToStep(7);
 
-      this.showSuccess('Ingresos familiares guardados');
+      //this.showSuccess('Ingresos familiares guardados');
     } catch (e) {
       console.error(e);
 
@@ -1787,11 +2103,151 @@ export class PostulationFormComponent {
       this.isSaving = false;
     }
   }
+  */
 
   // =========================================================
   // 🔥 SAVE STEP 7
   // =========================================================
+  async saveStep7FamilyExpenses() {
+    try {
+      const activePostulationId = await this.ensureActiveDraft();
 
+      this.isSaving = true;
+
+      // =====================================
+      // 🔥 1) LOAD SUMMARY ACTUAL
+      // =====================================
+
+      await this.loadSummary();
+
+      const currentExpenses = Array.isArray(this.summary?.expenses)
+        ? this.summary.expenses
+        : [];
+
+      // =====================================
+      // 🔥 2) SAVE FIXED EXPENSES
+      // Estos son PUT, no duplican.
+      // =====================================
+
+      const fixedPayload = {
+        rentOrDividend: Number(this.form.value.arriendo || 0),
+
+        electricity: Number(this.form.value.luz || 0),
+
+        water: Number(this.form.value.agua || 0),
+
+        gas: Number(this.form.value.gas || 0),
+
+        phone: Number(this.form.value.telefonoGasto || 0),
+
+        credits: Number(this.form.value.creditos || 0),
+
+        tuition: Number(this.form.value.matricula || 0),
+
+        monthlyFee: Number(this.form.value.mensualidad || 0),
+
+        lodging: Number(this.form.value.alojamiento || 0),
+      };
+
+      console.log('💸 FIXED EXPENSES:', fixedPayload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveFixedExpenses(
+          activePostulationId,
+          fixedPayload,
+        ),
+      );
+
+      // =====================================
+      // 🔥 3) DELETE OTHER EXPENSES EXISTENTES
+      // Solo otros gastos dinámicos.
+      // =====================================
+
+      const otherExpensesToDelete = currentExpenses.filter((expense: any) => {
+        const category = String(expense.category || '').toUpperCase();
+        const code = String(expense.code || '').toUpperCase();
+
+        return category === 'OTHER' || code === 'OTRO';
+      });
+
+      console.log(
+        '🧹 OTHER EXPENSES EXISTENTES A BORRAR:',
+        otherExpensesToDelete,
+      );
+
+      for (const expense of otherExpensesToDelete) {
+        const expenseId = Number(expense.id || 0);
+
+        if (!expenseId) {
+          continue;
+        }
+
+        console.log('🗑️ DELETE OTHER EXPENSE:', expenseId);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.deleteExpense(expenseId),
+        );
+      }
+
+      // =====================================
+      // 🔥 4) CREATE OTHER EXPENSES ACTUALES
+      // =====================================
+
+      for (const g of this.otrosGastos) {
+        const amount = Number(g.monto || 0);
+        const glosa = String(g.glosa || '').trim();
+
+        if (amount <= 0 && !glosa) {
+          continue;
+        }
+
+        if (amount <= 0) {
+          continue;
+        }
+
+        const payload = {
+          code: 'OTRO',
+
+          name: glosa || 'Otro gasto',
+
+          description: glosa || 'Otro gasto',
+
+          amount,
+        };
+
+        console.log('🧾 CREATE OTHER EXPENSE:', payload);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.createOtherExpense(
+            activePostulationId,
+            payload,
+          ),
+        );
+      }
+
+      // =====================================
+      // 🔥 5) RELOAD SUMMARY
+      // =====================================
+
+      await this.loadSummary();
+
+      this.restoreExpensesFromSummary(this.summary);
+
+      await this.moveToStep(8);
+
+      //this.showSuccess('Gastos familiares guardados');
+    } catch (e) {
+      console.error('❌ ERROR SAVE EXPENSES:', e);
+
+      this.showError(
+        'Error guardando gastos. Verifique que el borrador esté activo y que la sesión sea válida.',
+      );
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  /*
   async saveStep7FamilyExpenses() {
     try {
       const activePostulationId = await this.ensureActiveDraft();
@@ -1871,7 +2327,7 @@ export class PostulationFormComponent {
 
       await this.moveToStep(8);
 
-      this.showSuccess('Gastos familiares guardados');
+      //this.showSuccess('Gastos familiares guardados');
     } catch (e) {
       console.error(e);
 
@@ -1882,11 +2338,142 @@ export class PostulationFormComponent {
       this.isSaving = false;
     }
   }
+    */
 
   // =========================================================
   // 🔥 SAVE STEP 8
   // =========================================================
 
+  async saveStep8HealthAndHousing() {
+    if (!this.postulationId) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      const activePostulationId = Number(this.postulationId);
+
+      // =====================================
+      // 🔥 1) LOAD SUMMARY ACTUAL
+      // =====================================
+
+      await this.loadSummary();
+
+      const currentHealthRecords = Array.isArray(this.summary?.healthRecords)
+        ? this.summary.healthRecords
+        : [];
+
+      console.log(
+        '🧹 HEALTH RECORDS EXISTENTES A BORRAR:',
+        currentHealthRecords,
+      );
+
+      // =====================================
+      // 🔥 2) DELETE HEALTH RECORDS EXISTENTES
+      // =====================================
+
+      for (const record of currentHealthRecords) {
+        const recordId = Number(record.id || 0);
+
+        if (!recordId) {
+          continue;
+        }
+
+        console.log('🗑️ DELETE HEALTH RECORD:', recordId);
+
+        await firstValueFrom(
+          this.wellbeingPostulationService.deleteHealthRecord(recordId),
+        );
+      }
+
+      // =====================================
+      // 🔥 3) CREATE HEALTH RECORDS ACTUALES
+      // =====================================
+
+      const healthPayload = this.salud
+        .filter(
+          (s: any) =>
+            s.nombre?.trim() &&
+            s.familiarId &&
+            s.patologia?.trim() &&
+            Number(s.gasto || 0) > 0,
+        )
+        .map((s: any) => {
+          const familiar = this.grupoFamiliar.find(
+            (f: any) => Number(f.id) === Number(s.familiarId),
+          );
+
+          return {
+            familyMemberId: Number(familiar?.backendId || 0),
+
+            personName: String(s.nombre || '').trim(),
+
+            pathology: String(s.patologia || '').trim(),
+
+            monthlyExpense: Number(s.gasto || 0),
+          };
+        })
+        .filter((record: any) => record.familyMemberId > 0);
+
+      console.log('🩺 HEALTH CREATE PAYLOAD:', healthPayload);
+
+      if (healthPayload.length > 0) {
+        await firstValueFrom(
+          this.wellbeingPostulationService.saveHealthRecords(
+            activePostulationId,
+            healthPayload,
+          ),
+        );
+      }
+
+      // =====================================
+      // 🔥 4) SAVE HOUSING
+      // Esto es PUT, no duplica.
+      // =====================================
+
+      const housingPayload = {
+        typeHousingId: Number(this.form.value.tipoVivienda || 0),
+
+        typePropertyId: Number(this.form.value.tipoPropiedad || 0),
+
+        housingBackground: this.form.value.infoVivienda || '',
+
+        otherBackground: this.form.value.otrosAntecedentes || '',
+      };
+
+      console.log('🏠 HOUSING:', housingPayload);
+
+      await firstValueFrom(
+        this.wellbeingPostulationService.saveHousing(
+          activePostulationId,
+          housingPayload,
+        ),
+      );
+
+      // =====================================
+      // 🔥 5) RELOAD SUMMARY
+      // =====================================
+
+      await this.loadSummary();
+
+      this.restoreHealthFromSummary(this.summary);
+
+      this.restoreHousingFromSummary(this.summary);
+
+      await this.moveToStep(9);
+
+      //this.showSuccess('Salud y vivienda guardados');
+    } catch (e) {
+      console.error('❌ ERROR SAVE HEALTH/HOUSING:', e);
+
+      this.showError('Error guardando salud/vivienda');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  /*
   async saveStep8HealthAndHousing() {
     if (!this.postulationId) {
       return;
@@ -1968,7 +2555,7 @@ export class PostulationFormComponent {
 
       await this.moveToStep(9);
 
-      this.showSuccess('Salud y vivienda guardados');
+      //this.showSuccess('Salud y vivienda guardados');
     } catch (e) {
       console.error(e);
 
@@ -1976,7 +2563,7 @@ export class PostulationFormComponent {
     } finally {
       this.isSaving = false;
     }
-  }
+  }*/
 
   // =========================================================
   // 🔥 SAVE STEP 9 DOCUMENTS
@@ -3220,23 +3807,14 @@ export class PostulationFormComponent {
           .replace(/\s+/g, ' ')
           .trim()
           .toUpperCase();
-
         f.birthDate = user.birth_date || null;
-
         f.previtionId = user.previtionId || null;
-
         f.existsInUsers = true;
-
         f.mustCreatePassive = false;
-
         f.notFound = false;
-
         f.source = 'USERS';
-
         console.log('✅ USER ENCONTRADO:', user);
-
-        this.showSuccess('Integrante encontrado en sistema');
-
+        //this.showSuccess('Integrante encontrado en sistema');
         return;
       }
 
@@ -4657,13 +5235,9 @@ export class PostulationFormComponent {
   }
 
   agregarGasto() {
-    this.otrosGastos.forEach((g) => (g.open = false));
-
     this.otrosGastos.push({
       glosa: '',
-
       monto: 0,
-
       open: true,
     });
   }
@@ -4862,8 +5436,55 @@ export class PostulationFormComponent {
     return true;
   }
   private validateStep4(): boolean {
+    const errores = this.getStep4Errors();
+
+    if (errores.length > 0) {
+      this.showWarning(
+        `Antecedentes académicos incompletos:\n\n• ${errores.join('\n• ')}`,
+      );
+
+      return false;
+    }
+
     return true;
   }
+
+  private getStep4Errors(): string[] {
+    const errores: string[] = [];
+
+    if (!this.academico.institucion?.trim()) {
+      errores.push('Debe ingresar institución');
+    }
+
+    if (!this.academico.carrera?.trim()) {
+      errores.push('Debe ingresar carrera');
+    }
+
+    if (!this.academico.studyId) {
+      errores.push('Debe seleccionar tipo de estudio');
+    }
+
+    if (!this.academico.semestre) {
+      errores.push('Debe ingresar semestre actual');
+    }
+
+    if (!this.academico.duracion) {
+      errores.push('Debe ingresar duración de la carrera');
+    }
+
+    if (!this.academico.region) {
+      errores.push('Debe indicar si estudia en la región');
+    }
+
+    if (!['si', 'no'].includes(String(this.form.value.beneficiado))) {
+      errores.push(
+        'Debe indicar si el beneficiario ha recibido este beneficio anteriormente',
+      );
+    }
+
+    return errores;
+  }
+
   private validateStep5(): boolean {
     return true;
   }
@@ -4940,23 +5561,50 @@ export class PostulationFormComponent {
 
     if (!this.grupoFamiliar.length) {
       this.showWarning('Debe ingresar integrantes familiares');
-
       return false;
     }
+
+    // =====================================
+    // 🔥 HELPERS
+    // =====================================
+
+    const getNombreIntegrante = (f: Familiar, index: number): string => {
+      const nombre = `${f.nombre || ''} ${f.apellido || ''}`
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (nombre) {
+        return nombre;
+      }
+
+      if (f.titular) {
+        return 'el titular';
+      }
+
+      return `el integrante familiar ${index + 1}`;
+    };
+
+    const warning = (f: Familiar, index: number, campo: string): boolean => {
+      const nombre = getNombreIntegrante(f, index);
+
+      this.showWarning(`Falta ${campo} para ${nombre}`);
+
+      return false;
+    };
 
     // =====================================
     // 🔥 VALIDAR TODOS
     // =====================================
 
-    for (const f of this.grupoFamiliar) {
+    for (let i = 0; i < this.grupoFamiliar.length; i++) {
+      const f = this.grupoFamiliar[i];
+
       // =====================================
       // 🔥 RUT
       // =====================================
 
       if (!f.rut) {
-        this.showWarning('Todos los integrantes deben tener RUT');
-
-        return false;
+        return warning(f, i, 'RUT');
       }
 
       // =====================================
@@ -4964,9 +5612,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.nombre?.trim()) {
-        this.showWarning('Todos los integrantes deben tener nombres');
-
-        return false;
+        return warning(f, i, 'nombre');
       }
 
       // =====================================
@@ -4974,9 +5620,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.apellido?.trim()) {
-        this.showWarning('Todos los integrantes deben tener apellidos');
-
-        return false;
+        return warning(f, i, 'apellido');
       }
 
       // =====================================
@@ -4984,18 +5628,15 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.birthDate) {
-        this.showWarning('Debe ingresar fecha de nacimiento');
-
-        return false;
+        return warning(f, i, 'fecha de nacimiento');
       }
+
       // =====================================
       // 🔥 PREVISIÓN
       // =====================================
 
       if (!f.previtionId) {
-        this.showWarning('Debe seleccionar previsión');
-
-        return false;
+        return warning(f, i, 'previsión');
       }
 
       // =====================================
@@ -5003,9 +5644,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.parentTypeId) {
-        this.showWarning('Debe seleccionar parentesco');
-
-        return false;
+        return warning(f, i, 'parentesco');
       }
 
       // =====================================
@@ -5013,9 +5652,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.civilStateId) {
-        this.showWarning('Debe seleccionar estado civil');
-
-        return false;
+        return warning(f, i, 'estado civil');
       }
 
       // =====================================
@@ -5023,9 +5660,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.activityId) {
-        this.showWarning('Debe seleccionar actividad');
-
-        return false;
+        return warning(f, i, 'actividad');
       }
 
       // =====================================
@@ -5033,9 +5668,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.workPlaceId) {
-        this.showWarning('Debe seleccionar lugar de trabajo');
-
-        return false;
+        return warning(f, i, 'lugar de trabajo');
       }
 
       // =====================================
@@ -5043,9 +5676,7 @@ export class PostulationFormComponent {
       // =====================================
 
       if (!f.studyId) {
-        this.showWarning('Debe seleccionar nivel de estudios');
-
-        return false;
+        return warning(f, i, 'nivel de estudios');
       }
 
       // =====================================
@@ -5059,8 +5690,10 @@ export class PostulationFormComponent {
           !f.birthDate ||
           !f.previtionId
         ) {
+          const nombre = getNombreIntegrante(f, i);
+
           this.showWarning(
-            'Complete todos los antecedentes del integrante manual',
+            `Complete todos los antecedentes obligatorios para ${nombre}`,
           );
 
           return false;
@@ -5186,6 +5819,101 @@ export class PostulationFormComponent {
 
   private restoreIncomesFromSummary(summary: any): void {
     const incomes = Array.isArray(summary?.incomes) ? summary.incomes : [];
+
+    if (!incomes.length) {
+      return;
+    }
+
+    const map = new Map<string, any>();
+
+    for (const income of incomes) {
+      const familyMemberId = Number(income.familyMemberId || 0);
+      const incomeTypeId = Number(income.incomeTypeId || 1);
+
+      if (!familyMemberId) {
+        continue;
+      }
+
+      const key = `${familyMemberId}|${incomeTypeId}`;
+
+      map.set(key, income);
+    }
+
+    const incomesUnicos = Array.from(map.values());
+
+    this.ingresosFamiliares = incomesUnicos.map(
+      (income: any, index: number) => {
+        const backendFamilyMemberId = Number(income.familyMemberId || 0);
+
+        const familiar = this.grupoFamiliar.find(
+          (f: any) => Number(f.backendId) === backendFamilyMemberId,
+        );
+
+        return {
+          familiarId: familiar?.id || null,
+          monto: Number(income.amount || 0),
+          open: index === 0,
+        };
+      },
+    );
+
+    console.log('💰 INCOMES RESTORED DEDUP:', this.ingresosFamiliares);
+  }
+
+  /*
+  private restoreIncomesFromSummary(summary: any): void {
+    const incomes = Array.isArray(summary?.incomes) ? summary.incomes : [];
+
+    if (!incomes.length) {
+      return;
+    }
+
+    // =====================================
+    // 🔥 DEDUP VISUAL
+    // 1 ingreso por familyMemberId + incomeTypeId
+    // Si vienen duplicados desde BD, se queda con el último
+    // =====================================
+
+    const map = new Map<string, any>();
+
+    for (const income of incomes) {
+      const familyMemberId = Number(income.familyMemberId || 0);
+      const incomeTypeId = Number(income.incomeTypeId || 1);
+
+      if (!familyMemberId) {
+        continue;
+      }
+
+      const key = `${familyMemberId}|${incomeTypeId}`;
+
+      map.set(key, income);
+    }
+
+    const incomesUnicos = Array.from(map.values());
+
+    this.ingresosFamiliares = incomesUnicos.map(
+      (income: any, index: number) => {
+        const backendFamilyMemberId = Number(income.familyMemberId || 0);
+
+        const familiar = this.grupoFamiliar.find(
+          (f: any) => Number(f.backendId) === backendFamilyMemberId,
+        );
+
+        return {
+          familiarId: familiar?.id || null,
+          monto: Number(income.amount || 0),
+          open: index === 0,
+        };
+      },
+    );
+
+    console.log('💰 INCOMES RESTORED DEDUP:', this.ingresosFamiliares);
+  }
+  */
+
+  /*
+  private restoreIncomesFromSummary(summary: any): void {
+    const incomes = Array.isArray(summary?.incomes) ? summary.incomes : [];
     if (!incomes.length) return;
 
     this.ingresosFamiliares = incomes.map((income: any, index: number) => {
@@ -5201,7 +5929,75 @@ export class PostulationFormComponent {
       };
     });
   }
+    */
 
+  private restoreExpensesFromSummary(summary: any): void {
+    const expenses = Array.isArray(summary?.expenses) ? summary.expenses : [];
+
+    if (!expenses.length) {
+      return;
+    }
+
+    const patch: any = {};
+
+    const fixedMap: Record<string, string> = {
+      RENT_OR_DIVIDEND: 'arriendo',
+      ELECTRICITY: 'luz',
+      WATER: 'agua',
+      GAS: 'gas',
+      PHONE: 'telefonoGasto',
+      CREDITS: 'creditos',
+      TUITION: 'matricula',
+      MONTHLY_FEE: 'mensualidad',
+      LODGING: 'alojamiento',
+    };
+
+    const otherMap = new Map<string, OtroGasto>();
+
+    for (const expense of expenses) {
+      const category = String(expense.category || '').toUpperCase();
+      const code = String(expense.code || '').toUpperCase();
+      const amount = Number(expense.amount || 0);
+
+      if (category === 'OTHER') {
+        const glosa = String(
+          expense.name || expense.description || 'Otro gasto',
+        ).trim();
+
+        const key = `${glosa.toUpperCase()}|${amount}`;
+
+        otherMap.set(key, {
+          glosa,
+          monto: amount,
+          open: false,
+        });
+
+        continue;
+      }
+
+      const formKey = fixedMap[code];
+
+      if (formKey) {
+        patch[formKey] = amount;
+      }
+    }
+
+    this.form.patchValue(patch);
+
+    const otherExpenses = Array.from(otherMap.values());
+
+    if (otherExpenses.length) {
+      otherExpenses[0].open = true;
+      this.otrosGastos = otherExpenses;
+    }
+
+    console.log('💸 EXPENSES RESTORED DEDUP:', {
+      patch,
+      otrosGastos: this.otrosGastos,
+    });
+  }
+
+  /*
   private restoreExpensesFromSummary(summary: any): void {
     const expenses = Array.isArray(summary?.expenses) ? summary.expenses : [];
     if (!expenses.length) return;
@@ -5248,7 +6044,61 @@ export class PostulationFormComponent {
       this.otrosGastos = otherExpenses;
     }
   }
+  */
 
+  private restoreHealthFromSummary(summary: any): void {
+    const records = Array.isArray(summary?.healthRecords)
+      ? summary.healthRecords
+      : [];
+
+    if (!records.length) {
+      return;
+    }
+
+    const map = new Map<string, any>();
+
+    for (const record of records) {
+      const familyMemberId = Number(record.familyMemberId || 0);
+      const personName = String(record.personName || '')
+        .trim()
+        .toUpperCase();
+      const pathology = String(record.pathology || '')
+        .trim()
+        .toUpperCase();
+      const monthlyExpense = Number(record.monthlyExpense || 0);
+
+      if (!familyMemberId || !personName || !pathology) {
+        continue;
+      }
+
+      const key = `${familyMemberId}|${personName}|${pathology}|${monthlyExpense}`;
+
+      map.set(key, record);
+    }
+
+    const recordsUnicos = Array.from(map.values());
+
+    this.salud = recordsUnicos.map((record: any, index: number) => {
+      const backendFamilyMemberId = Number(record.familyMemberId || 0);
+
+      const familiar = this.grupoFamiliar.find(
+        (f: any) => Number(f.backendId) === backendFamilyMemberId,
+      );
+
+      return {
+        id: record.id || Date.now() + index,
+        nombre: record.personName || '',
+        familiarId: familiar?.id || null,
+        patologia: record.pathology || '',
+        gasto: Number(record.monthlyExpense || 0),
+        open: index === 0,
+      };
+    });
+
+    console.log('🩺 HEALTH RESTORED DEDUP:', this.salud);
+  }
+
+  /*
   private restoreHealthFromSummary(summary: any): void {
     const records = Array.isArray(summary?.healthRecords)
       ? summary.healthRecords
@@ -5271,6 +6121,7 @@ export class PostulationFormComponent {
       };
     });
   }
+  */
 
   private restoreHousingFromSummary(summary: any): void {
     const housing = summary?.housing;

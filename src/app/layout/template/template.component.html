@@ -7,13 +7,20 @@
   <div class="role-wrapper">
     <mat-card class="role-card" appearance="outlined">
       <div class="role-header">
-        <img src="assets/logoSSM.png" alt="Logo SSM" width="120" />
+        <img
+          src="assets/logoSSM.png"
+          alt="Logo SSM"
+          width="120"
+          tabindex="-1"
+          draggable="false"
+        />
         <h2>Bienvenido, {{ userFullName }}</h2>
         <p>Selecciona el rol con el cual desea ingresar.</p>
       </div>
 
-      <mat-form-field appearance="fill" class="role-full">
+      <mat-form-field appearance="fill" class="role-full role-field">
         <mat-label>Rol</mat-label>
+
         <mat-select [(ngModel)]="activeRole">
           <mat-option *ngFor="let r of userRoles" [value]="r">
             {{ r }}
@@ -27,7 +34,14 @@
           Volver
         </button>
 
-        <button mat-flat-button color="primary" (click)="onContinue()">
+        <button
+          #roleContinueButton
+          mat-flat-button
+          color="primary"
+          type="button"
+          tabindex="0"
+          (click)="onContinue()"
+        >
           <mat-icon>arrow_forward</mat-icon>
           Ingresar
         </button>

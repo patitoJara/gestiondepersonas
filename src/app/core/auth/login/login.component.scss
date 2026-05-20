@@ -4,10 +4,11 @@
    ======================================================= */
 
 /* 🌐 RESET GENERAL */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 🚫 sin scroll */
+  overflow: hidden;
   height: 100%;
   width: 100%;
 }
@@ -48,6 +49,7 @@ html, body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -58,24 +60,33 @@ html, body {
 .logo-header {
   text-align: center;
   margin-bottom: 12px;
-}
 
-.logo-header img {
-  width: 110px;
-  margin-bottom: 8px;
-}
+  img {
+    width: 110px;
+    margin-bottom: 8px;
+    outline: none !important;
+    user-select: none;
+    pointer-events: none;
+  }
 
-.logo-header h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a237e;
-  margin: 0;
-}
+  img:focus,
+  img:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 
-.logo-header p {
-  margin: 2px 0 0;
-  color: #555;
-  font-size: 0.9rem;
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a237e;
+    margin: 0;
+  }
+
+  p {
+    margin: 2px 0 0;
+    color: #555;
+    font-size: 0.9rem;
+  }
 }
 
 /* 📋 Título */
@@ -103,18 +114,98 @@ mat-form-field.full {
   margin-bottom: 1.2rem;
 }
 
-/* 🔘 Botón principal */
+/* =====================================================
+   🧾 CAMPOS MATERIAL LOGIN
+===================================================== */
+
+:host ::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+:host ::ng-deep .login-field .mat-mdc-text-field-wrapper,
+:host ::ng-deep .login-wrapper .mat-mdc-text-field-wrapper,
+:host ::ng-deep .login-field .mat-mdc-form-field-flex,
+:host ::ng-deep .login-field .mdc-text-field,
+:host ::ng-deep .login-field .mdc-text-field--filled,
+:host
+  ::ng-deep
+  .login-field
+  .mdc-text-field--filled:not(.mdc-text-field--disabled),
+:host ::ng-deep .login-field input,
+:host ::ng-deep .mat-mdc-input-element {
+  background-color: #ffffff !important;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-text-field-wrapper {
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-text-field-wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.2);
+}
+
+:host
+  ::ng-deep
+  .login-wrapper
+  .mat-mdc-form-field.mat-focused
+  .mat-mdc-text-field-wrapper {
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.25);
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-input-element {
+  caret-color: #1565c0;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-icon-suffix mat-icon {
+  color: #607d8b;
+  transition: 0.2s;
+}
+
+:host ::ng-deep .login-wrapper .mat-mdc-form-field-icon-suffix button:hover mat-icon {
+  color: #1565c0;
+}
+
+/* 🔥 Autofill Chrome */
+:host ::ng-deep input:-webkit-autofill,
+:host ::ng-deep input:-webkit-autofill:hover,
+:host ::ng-deep input:-webkit-autofill:focus,
+:host ::ng-deep input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/* =====================================================
+   🔘 BOTÓN PRINCIPAL
+===================================================== */
+
+.login-btn {
+  min-width: 160px;
+  height: 44px;
+  border-radius: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
 
 .login-btn:hover {
   background-color: #0d47a1 !important;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(13, 71, 161, 0.25);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
 }
 
-/* 🔗 Enlaces secundarios */
-/* ================================
+.login-btn:focus,
+.login-btn:focus-visible {
+  outline: 3px solid rgba(0, 86, 179, 0.45) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px rgba(0, 86, 179, 0.15) !important;
+}
+
+/* =====================================================
    🔗 ENLACES INFERIORES LOGIN
-   ================================ */
+===================================================== */
+
 .links-row {
   display: flex;
   flex-direction: column;
@@ -124,6 +215,7 @@ mat-form-field.full {
   font-size: 0.9rem;
 
   a {
+    cursor: pointer;
     color: #1565c0;
     text-decoration: none;
     font-weight: 500;
@@ -135,7 +227,6 @@ mat-form-field.full {
     }
   }
 
-  /* Agrupa "¿Olvidaste?" y "Cambiar contraseña" en una misma línea */
   .access-links {
     display: flex;
     justify-content: center;
@@ -153,7 +244,6 @@ mat-form-field.full {
     }
   }
 
-  /* "Acerca del sistema" separado, más discreto */
   .system-link {
     font-size: 0.85rem;
     color: #666;
@@ -198,17 +288,17 @@ mat-form-field.full {
   color: #555;
   font-size: 0.85rem;
   z-index: 20;
-}
 
-.footer-seal img {
-  height: 26px;
-  width: auto;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
-}
+  img {
+    height: 26px;
+    width: auto;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
 
-.footer-seal img:hover {
-  opacity: 1;
+    &:hover {
+      opacity: 1;
+    }
+  }
 }
 
 /* 📱 Responsive */
@@ -229,77 +319,4 @@ mat-form-field.full {
   .form-title {
     font-size: 1.2rem;
   }
-}
-
-
-
-/* ============================
-   🔗 Enlaces clickeables
-   ============================ */
-.links-row a {
-  cursor: pointer; /* 🖱️ Muestra la manito al pasar el mouse */
-  color: #1565c0;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.25s ease;
-
-  &:hover {
-    color: #0d47a1;
-    text-decoration: underline;
-  }
-}
-
-.login-button {
-  background-color: #0066cc;
-}
-
-/* =====================================================
-   🔥 SIRUS LOGIN ENHANCEMENT (NO ROMPE NADA)
-===================================================== */
-
-/* INPUTS MÁS PRO */
-.login-wrapper .mat-mdc-text-field-wrapper {
-  background: #ffffff !important;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-/* HOVER */
-.login-wrapper .mat-mdc-text-field-wrapper:hover {
-  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.2);
-}
-
-/* FOCUS */
-.login-wrapper .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
-  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.25);
-}
-
-/* TEXTO */
-.login-wrapper .mat-mdc-input-element {
-  caret-color: #1565c0;
-}
-
-/* ICONO PASSWORD */
-.login-wrapper .mat-mdc-form-field-icon-suffix mat-icon {
-  color: #607d8b;
-  transition: 0.2s;
-}
-
-.login-wrapper .mat-mdc-form-field-icon-suffix button:hover mat-icon {
-  color: #1565c0;
-}
-
-/* BOTÓN PRO */
-.login-btn {
-  min-width: 160px;
-  height: 44px;
-  border-radius: 24px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.2s ease;
-}
-
-.login-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
 }

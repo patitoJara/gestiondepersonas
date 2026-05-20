@@ -1,7 +1,8 @@
 /* ============================================
    🌐 BASE GLOBAL (OBLIGATORIO)
 ============================================ */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
@@ -50,7 +51,7 @@ app-root {
 ============================================ */
 mat-sidenav {
   width: 250px;
-  background: #f8fafc; 
+  background: #f8fafc;
   border-right: 1px solid #e0e0e0;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 
@@ -147,7 +148,7 @@ mat-sidenav-content {
   padding: 24px 32px;
   min-height: 0;
 
-  display: flex;          // 🔥 ahora sí sirve
+  display: flex; // 🔥 ahora sí sirve
   flex-direction: column;
 }
 
@@ -219,9 +220,15 @@ mat-sidenav-content {
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* ============================================
@@ -279,8 +286,8 @@ mat-sidenav-content {
 
 /* 🔥 ICONO */
 .submenu-item mat-icon {
-  font-size: 22px;      /* 🔥 más grande */
-  width: 26px;          /* 🔥 espacio real */
+  font-size: 22px; /* 🔥 más grande */
+  width: 26px; /* 🔥 espacio real */
   min-width: 26px;
 
   display: flex;
@@ -322,7 +329,6 @@ mat-sidenav-content {
   }
 }
 
-
 /* ============================================
    🔹 ROLE VIEW (AISLADO DEL LOGIN)
 ============================================ */
@@ -358,21 +364,73 @@ mat-sidenav-content {
 .role-header {
   margin-bottom: 16px;
 
+  img {
+    width: 120px;
+    margin-bottom: 8px;
+
+    outline: none !important;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  img:focus,
+  img:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   h2 {
     margin: 8px 0 4px;
     color: #0d47a1;
+    font-size: 1.3rem;
+    font-weight: 600;
   }
 
   p {
     color: #666;
     font-size: 0.95rem;
+    margin: 0;
   }
 }
 
-/* INPUT */
+/* SELECT ROL */
 .role-full {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 18px;
+}
+
+/* MISMO ESTILO MATERIAL QUE LOGIN */
+:host ::ng-deep .role-field .mat-mdc-text-field-wrapper {
+  background-color: #ffffff !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .role-field .mat-mdc-text-field-wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.2);
+}
+
+:host ::ng-deep .role-field.mat-focused .mat-mdc-text-field-wrapper {
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.25);
+}
+
+:host ::ng-deep .role-field .mat-mdc-form-field-flex,
+:host ::ng-deep .role-field .mdc-text-field,
+:host ::ng-deep .role-field .mdc-text-field--filled,
+:host
+  ::ng-deep
+  .role-field
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: #ffffff !important;
+}
+
+:host ::ng-deep .role-field .mat-mdc-select-value {
+  color: #111827;
+  font-weight: 500;
+}
+
+:host ::ng-deep .role-field .mat-mdc-select-arrow {
+  color: #1565c0;
 }
 
 /* BOTONES */
@@ -387,10 +445,16 @@ mat-sidenav-content {
     border-radius: 24px;
     font-weight: 600;
   }
+
+  button:focus,
+  button:focus-visible {
+    outline: 3px solid rgba(0, 86, 179, 0.45) !important;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 4px rgba(0, 86, 179, 0.15) !important;
+  }
 }
 
 @media (max-width: 768px) {
-
   .topbar {
     flex-direction: column;
     align-items: stretch;
@@ -452,7 +516,6 @@ mat-sidenav-content {
 }
 
 @media (max-width: 768px) {
-
   .topbar {
     padding: 6px 10px;
     gap: 4px;
@@ -468,7 +531,6 @@ mat-sidenav-content {
 }
 
 @media (max-width: 768px) {
-
   .user-main {
     gap: 4px;
   }
@@ -483,7 +545,6 @@ mat-sidenav-content {
 }
 
 @media (max-width: 768px) {
-
   .session-timer {
     padding: 2px 8px;
     font-size: 11px;
@@ -495,7 +556,6 @@ mat-sidenav-content {
 }
 
 @media (max-width: 768px) {
-
   .logout-btn {
     height: 34px;
     font-size: 12px;
@@ -504,14 +564,12 @@ mat-sidenav-content {
 }
 
 @media (max-width: 768px) {
-
   .content {
     padding: 12px 10px; // 🔥 antes 24px 32px
   }
 }
 
 @media (max-width: 768px) {
-
   .card {
     padding: 12px;
   }
@@ -521,13 +579,11 @@ mat-sidenav-content {
   }
 }
 
-
 /* =====================================================
    📱 SIRUS MOBILE PATCH (NO ROMPE LO EXISTENTE)
 ===================================================== */
 
 @media (max-width: 768px) {
-
   /* 🔥 TABLAS: permitir scroll horizontal */
   .table-scroll {
     overflow-x: auto !important;
@@ -568,11 +624,9 @@ mat-sidenav-content {
     flex-direction: column;
     width: 100%;
   }
-
 }
 
 @media (max-width: 768px) {
-
   /* 🔥 ordenar bloque derecho */
   .topbar-right {
     display: flex;
@@ -602,11 +656,9 @@ mat-sidenav-content {
     width: 100%;
     justify-content: center;
   }
-
 }
 
 @media (max-width: 768px) {
-
   /* 🔥 título principal */
   .title {
     font-size: 14px !important;
@@ -634,18 +686,16 @@ mat-sidenav-content {
   }
 
   /* 🔥 contenido general */
-  td, th {
+  td,
+  th {
     font-size: 12px !important;
   }
-
 }
 
 @media (max-width: 768px) {
-
   button {
     min-height: 36px; // mejor para dedo
   }
-
 }
 
 .extend-btn {
