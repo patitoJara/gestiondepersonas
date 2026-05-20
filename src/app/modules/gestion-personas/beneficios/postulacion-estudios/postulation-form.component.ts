@@ -28,7 +28,7 @@ import { Activity } from '@app/core/models/activity.model';
 import { WorkPlace } from '@app/core/models/work-place.model';
 import { Grade } from '@app/core/models/grade.model';
 import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { TokenService } from '@app/core/services/token.service';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -190,7 +190,8 @@ export class PostulationFormComponent {
   private emailService = inject(EmailService);
 
   comprobantePdfFile: File | null = null;
-  private openingPostulation = false;
+  openingPostulation = false;
+  private pendingPostulationToOpen: number | null = null;
 
   form: FormGroup;
   studies: Study[] = [];
@@ -391,23 +392,31 @@ export class PostulationFormComponent {
   establecimientos: any[] = [
     {
       id: 1,
-      name: 'Hospital Clínico Magallanes',
+      name: 'DSSM',
     },
     {
       id: 2,
-      name: 'Hospital Puerto Natales',
+      name: 'Hospital Clínico Magallanes',
     },
     {
       id: 3,
-      name: 'Hospital Porvenir',
+      name: 'Hospital Dr. Augusto Essmann Burgos',
     },
     {
       id: 4,
-      name: 'Hospital Puerto Williams',
+      name: 'Hospital Comunitario Cristina Calderon',
     },
     {
       id: 5,
-      name: 'DSSM',
+      name: 'Hospital Dr. Marco Chamorro',
+    },
+    {
+      id: 6,
+      name: 'Otro',
+    },
+    {
+      id: 7,
+      name: 'No Aplica',
     },
   ];
 
@@ -468,6 +477,14 @@ export class PostulationFormComponent {
     {
       id: 3,
       name: 'HONORARIOS',
+    },
+    {
+      id: 4,
+      name: 'SUPLENTE',
+    },
+    {
+      id: 5,
+      name: 'NO APLICA',
     },
   ];
 
@@ -850,10 +867,22 @@ export class PostulationFormComponent {
     const id = Number(postulationId);
     if (!id) return;
 
+    // =====================================
+    // 🔥 SI YA ESTÁ CARGANDO UNA,
+    // GUARDAR LA ÚLTIMA SELECCIÓN
+    // =====================================
+
     if (this.openingPostulation) {
-      console.warn('⛔ OPEN POSTULATION BLOQUEADO: ya se está cargando una');
+      console.warn('⏳ OPEN POSTULATION EN PROCESO, SE DEJA PENDIENTE:', id);
+
+      this.pendingPostulationToOpen = id;
+
       return;
     }
+
+    // =====================================
+    // 🔥 SI YA ESTÁ CARGADA, NO REPETIR
+    // =====================================
 
     if (Number(this.postulationId) === id && this.summary) {
       console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
@@ -861,9 +890,7 @@ export class PostulationFormComponent {
     }
 
     try {
-      // 🔥 ESTA LÍNEA FALTABA
       this.openingPostulation = true;
-
       this.isLoading = true;
 
       console.log('📂 OPEN POSTULATION:', id);
@@ -892,14 +919,36 @@ export class PostulationFormComponent {
       // 🔥 RESTAURAR DESDE SUMMARY / DASH
       // =====================================
 
+      console.log('♻️ RESTORE FULL STATE START:', {
+        id: this.postulationId,
+        status,
+      });
+
       this.restoreFullStateFromSummary(summary);
 
-      if (!this.isSubmitted) {
-        await this.loadLoggedAffiliate({ onlyEmpty: true });
+      console.log('♻️ RESTORE FULL STATE OK');
 
-        if (this.grupoFamiliar.length === 0) {
-          this.syncAffiliateToFamily();
-        }
+      // =====================================
+      // 🔥 RESPALDO USERS SOLO PARA BORRADOR
+      // =====================================
+
+      if (!this.isSubmitted) {
+        console.log('👤 LOAD LOGGED AFFILIATE BACKUP START');
+
+        this.loadLoggedAffiliate({ onlyEmpty: true })
+          .then(() => {
+            console.log('👤 LOAD LOGGED AFFILIATE BACKUP OK');
+
+            if (this.grupoFamiliar.length === 0) {
+              this.syncAffiliateToFamily();
+            }
+          })
+          .catch((e) => {
+            console.warn(
+              '⚠️ No fue posible cargar users como respaldo. Se mantiene summary.',
+              e,
+            );
+          });
       }
 
       // =====================================
@@ -924,7 +973,9 @@ export class PostulationFormComponent {
         isSubmitted: this.isSubmitted,
       });
 
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 0);
     } catch (e) {
       console.error('❌ ERROR OPEN POSTULATION:', e);
 
@@ -932,6 +983,23 @@ export class PostulationFormComponent {
     } finally {
       this.isLoading = false;
       this.openingPostulation = false;
+
+      // =====================================
+      // 🔥 SI EL USUARIO CAMBIÓ OTRA VEZ
+      // MIENTRAS CARGABA, ABRIR LA ÚLTIMA
+      // =====================================
+
+      const pendingId = this.pendingPostulationToOpen;
+
+      this.pendingPostulationToOpen = null;
+
+      if (pendingId && pendingId !== Number(this.postulationId)) {
+        console.log('🔁 ABRIENDO POSTULACIÓN PENDIENTE:', pendingId);
+
+        setTimeout(() => {
+          this.openPostulationFromSelector(pendingId);
+        }, 0);
+      }
     }
   }
 
@@ -1159,8 +1227,13 @@ export class PostulationFormComponent {
 
   async loadLoggedAffiliate(options: { onlyEmpty?: boolean } = {}) {
     try {
+      if (!this.loggedUser?.id) {
+        console.warn('⚠️ No existe loggedUser.id para cargar afiliado');
+        return;
+      }
+
       const user: any = await firstValueFrom(
-        this.usersService.getById(this.loggedUser.id),
+        this.usersService.getById(this.loggedUser.id).pipe(timeout(5000)),
       );
 
       console.log('👤 USER FOUND:', user);
@@ -1178,7 +1251,7 @@ export class PostulationFormComponent {
 
       console.log('✅ AFILIADO CARGADO DESDE USERS');
     } catch (e) {
-      console.error('❌ ERROR LOAD AFFILIATE:', e);
+      console.warn('⚠️ ERROR/TIMEOUT LOAD AFFILIATE:', e);
     }
   }
 
@@ -3830,7 +3903,7 @@ export class PostulationFormComponent {
       f.mustCreatePassive = true;
       f.notFound = true;
       f.source = 'MANUAL';
-      this.showWarning('🔥 VALIDAR RUT GENERAL - Usuario no encontrado');
+      //this.showWarning('🔥 VALIDAR RUT GENERAL - Usuario no encontrado');
     } catch (e) {
       console.error(e);
       f.existsInUsers = false;

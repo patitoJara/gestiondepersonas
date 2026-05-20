@@ -67,6 +67,7 @@
           <select
             class="input"
             [value]="selectedPostulationViewId"
+            [disabled]="isLoading || openingPostulation"
             (change)="openPostulationFromSelector($any($event.target).value)"
           >
             <option *ngFor="let p of availablePostulations" [value]="p.id">
@@ -844,14 +845,21 @@
 
             <div class="ssm-grid-3">
               <div class="ssm-field">
-                <label>Situación académica</label>
+                <label>Situación Acedémica</label>
                 <select
                   class="input"
                   [(ngModel)]="verificacion.tipo"
                   [ngModelOptions]="{ standalone: true }"
                 >
                   <option value="primer">Primer año</option>
-                  <option value="continuidad">Curso superior</option>
+                  <option value="continuidad">Segundo año</option>
+                  <option value="continuidad">Tercer año</option>
+                  <option value="continuidad">Cuarto año</option>
+                  <option value="continuidad">Quinto año</option>
+                  <option value="continuidad">Sexto año</option>
+                  <option value="continuidad">Septimo año</option>
+                  <option value="continuidad">Octavo año</option>
+                  <option value="continuidad">Curso Superior</option>
                 </select>
               </div>
 
