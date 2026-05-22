@@ -7605,19 +7605,6 @@ export class PostulationFormComponent {
     return date;
   }
 
-  onFamilyBirthDateInputChange(familiar: Familiar, value: string): void {
-    if (familiar.notFound !== true || familiar.titular === true) {
-      return;
-    }
-
-    familiar.birthDate = value || null;
-
-    console.log(
-      '📅 Fecha nacimiento familiar actualizada:',
-      familiar.birthDate,
-    );
-  }
-
   onFamilyBirthDateChange(familiar: any, value: Date | null): void {
     if (!value) {
       familiar.birthDate = null;
@@ -7635,4 +7622,199 @@ export class PostulationFormComponent {
       familiar.birthDate,
     );
   }
+
+  hasValidFamilyBirthDate(value: any): boolean {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    const text = String(value).trim();
+
+    if (
+      text === '' ||
+      text.toLowerCase() === 'null' ||
+      text.toLowerCase() === 'undefined' ||
+      text.toLowerCase() === 'invalid date'
+    ) {
+      return false;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return true;
+    }
+
+    if (text.includes('T')) {
+      const datePart = text.split('T')[0];
+
+      return /^\d{4}-\d{2}-\d{2}$/.test(datePart);
+    }
+
+    return false;
+  }
+
+  canEditFamilyBirthDate(familiar: Familiar): boolean {
+    // 🔒 El titular nunca se edita desde Step 2
+    if (familiar.titular === true) {
+      return false;
+    }
+
+    // 🔥 Usuario no encontrado: completar manualmente
+    if (familiar.notFound === true) {
+      return true;
+    }
+
+    // 🔥 Usuario existe, pero viene sin fecha válida: permitir completar
+    if (
+      familiar.existsInUsers === true &&
+      !this.hasValidFamilyBirthDate(familiar.birthDate)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  formatFamilyBirthDateMMDDYYYY(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const text = String(value).trim();
+
+    // yyyy-MM-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [year, month, day] = text.split('-');
+      return `${month}-${day}-${year}`;
+    }
+
+    // yyyy-MM-ddTHH:mm:ss
+    if (text.includes('T')) {
+      const datePart = text.split('T')[0];
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [year, month, day] = datePart.split('-');
+        return `${month}-${day}-${year}`;
+      }
+    }
+
+    // MM-DD-YYYY
+    if (/^\d{2}-\d{2}-\d{4}$/.test(text)) {
+      return text;
+    }
+
+    return '';
+  }
+
+  onFamilyBirthDateMMDDYYYYChange(familiar: Familiar, value: string): void {
+    // =====================================
+    // 🔒 ÚNICA CONDICIÓN
+    // =====================================
+
+    if (familiar.titular === true) {
+      return;
+    }
+
+    // =====================================
+    // 🔥 FORMATEAR MM-DD-YYYY
+    // =====================================
+
+    const clean = String(value || '')
+      .replace(/[^\d]/g, '')
+      .slice(0, 8);
+
+    let formatted = clean;
+
+    if (clean.length >= 5) {
+      formatted = `${clean.slice(0, 2)}-${clean.slice(2, 4)}-${clean.slice(4)}`;
+    } else if (clean.length >= 3) {
+      formatted = `${clean.slice(0, 2)}-${clean.slice(2)}`;
+    }
+
+    // Mientras escribe, se mantiene visual MM-DD-YYYY
+    familiar.birthDate = formatted;
+
+    // =====================================
+    // 🔥 SI ESTÁ COMPLETA, GUARDAR BACKEND yyyy-MM-dd
+    // =====================================
+
+    if (/^\d{2}-\d{2}-\d{4}$/.test(formatted)) {
+      const [month, day, year] = formatted.split('-');
+
+      familiar.birthDate = `${year}-${month}-${day}`;
+
+      console.log('📅 Fecha nacimiento familiar actualizada:', {
+        visual: formatted,
+        backend: familiar.birthDate,
+      });
+    }
+  }
+
+  openNativeDatePicker(input: HTMLInputElement): void {
+    if (!input || input.disabled) {
+      return;
+    }
+
+    input.focus();
+
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    }
+  }
+
+
+
+hasFamilyBirthDate(value: any): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  const text = String(value).trim();
+
+  if (
+    text === '' ||
+    text.toLowerCase() === 'null' ||
+    text.toLowerCase() === 'undefined' ||
+    text.toLowerCase() === 'invalid date'
+  ) {
+    return false;
+  }
+
+  // yyyy-MM-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return true;
+  }
+
+  // yyyy-MM-ddTHH:mm:ss
+  if (text.includes('T')) {
+    const datePart = text.split('T')[0];
+    return /^\d{4}-\d{2}-\d{2}$/.test(datePart);
+  }
+
+  return false;
+}
+
+normalizeDateInput(value: any): string | null {
+  if (!this.hasFamilyBirthDate(value)) {
+    return null;
+  }
+
+  const text = String(value).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text;
+  }
+
+  if (text.includes('T')) {
+    return text.split('T')[0];
+  }
+
+  return null;
+}
+
+onFamilyBirthDateNativeChange(familiar: Familiar, value: string): void {
+  familiar.birthDate = value || null;
+
+  console.log('📅 Fecha nacimiento familiar actualizada:', familiar.birthDate);
+}
+
 }

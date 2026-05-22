@@ -492,23 +492,37 @@
                         [class.readonly-field]="f.titular === true"
                       />
                     </div>
+
                     <div class="ssm-field">
                       <label>Fecha nacimiento</label>
 
-                      <input
-                        class="input"
-                        type="date"
-                        [ngModel]="f.birthDate"
-                        [ngModelOptions]="{ standalone: true }"
-                        (ngModelChange)="
-                          onFamilyBirthDateInputChange(f, $event)
-                        "
-                        [readonly]="f.notFound !== true || f.titular === true"
-                        [class.readonly-field]="
-                          f.notFound !== true || f.titular === true
-                        "
-                      />
+                      <div class="native-date-wrapper">
+                        <input
+                          #familyBirthInput
+                          class="input native-date-input"
+                          type="date"
+                          [ngModel]="normalizeDateInput(f.birthDate)"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="
+                            onFamilyBirthDateNativeChange(f, $event)
+                          "
+                          [disabled]="hasFamilyBirthDate(f.birthDate)"
+                          [class.readonly-field]="
+                            hasFamilyBirthDate(f.birthDate)
+                          "
+                        />
+
+                        <button
+                          type="button"
+                          class="native-date-button"
+                          *ngIf="!hasFamilyBirthDate(f.birthDate)"
+                          (click)="openNativeDatePicker(familyBirthInput)"
+                        >
+                          <mat-icon>calendar_month</mat-icon>
+                        </button>
+                      </div>
                     </div>
+
                     <!-- PREVISIÓN -->
                     <div class="ssm-field">
                       <label>Previsión</label>
@@ -2026,7 +2040,6 @@
                 </strong>
                 -
                 {{ getParentTypeName(f.parentTypeId) }}
-
               </div>
             </div>
 
