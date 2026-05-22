@@ -5266,6 +5266,7 @@ export class PostulationFormComponent {
     // =====================================
 
     this.wellbeingStorageService.clearAll();
+    localStorage.removeItem('wellbeing_workflow');
 
     // =====================================
     // 🔥 CLEAR CURRENT POSTULATION
@@ -5274,18 +5275,162 @@ export class PostulationFormComponent {
     this.postulationId = null;
     this.summary = null;
     this.selectedPostulationViewId = null;
+    this.codigoPostulacion = '';
 
     // =====================================
-    // 🔥 CLEAR SUBMITTED MODE
+    // 🔥 CLEAR SUBMITTED / LOADING MODES
     // =====================================
 
     this.isSubmitted = false;
+    this.isSaving = false;
+    this.isFinalizing = false;
+    this.isLoading = false;
+    this.openingPostulation = false;
+    this.pendingPostulationToOpen = null;
 
     // =====================================
     // 🔥 RESET STEP
     // =====================================
 
     this.currentStep = 1;
+
+    // =====================================
+    // 🔥 RESET STEP 2 - GRUPO FAMILIAR
+    // =====================================
+
+    this.grupoFamiliar = [];
+    this.postulanteSeleccionado = null;
+    this.tipoPostulante = 'afiliado';
+
+    // =====================================
+    // 🔥 RESET STEP 4 - ACADÉMICOS
+    // =====================================
+
+    this.academico = {
+      institucion: '',
+      carrera: '',
+      studyId: null,
+      semestre: null,
+      duracion: null,
+      region: '',
+    };
+
+    // =====================================
+    // 🔥 RESET STEP 5 - VERIFICACIÓN
+    // =====================================
+
+    this.verificacion = {
+      tipo: '',
+      promedio: null,
+      aprobacion: null,
+    };
+
+    // =====================================
+    // 🔥 RESET STEP 6 - INGRESOS
+    // =====================================
+
+    this.ingresosFamiliares = [
+      {
+        familiarId: null,
+        monto: 0,
+        open: true,
+      },
+    ];
+
+    // =====================================
+    // 🔥 RESET STEP 7 - GASTOS
+    // =====================================
+
+    this.otrosGastos = [
+      {
+        glosa: '',
+        monto: 0,
+        open: true,
+      },
+    ];
+
+    this.form.patchValue({
+      ingresoJefe: null,
+      ingresoOtros: 0,
+      otrosIngresos: 0,
+
+      arriendo: 0,
+      luz: 0,
+      agua: 0,
+      gas: 0,
+      telefonoGasto: 0,
+      creditos: 0,
+      matricula: 0,
+      mensualidad: 0,
+      alojamiento: 0,
+    });
+
+    // =====================================
+    // 🔥 RESET STEP 8 - SALUD / VIVIENDA
+    // =====================================
+
+    this.salud = [];
+
+    this.form.patchValue({
+      tipoVivienda: null,
+      tipoPropiedad: null,
+      infoVivienda: '',
+      otrosAntecedentes: '',
+      typePropertyId: null,
+      typeHousingId: null,
+    });
+
+    // =====================================
+    // 🔥 RESET STEP 9 - DOCUMENTOS
+    // =====================================
+
+    this.filesObligatorios = {};
+    this.filesOpcionales = {};
+    this.uploadedDocumentsByKey = {};
+
+    this.documentosObligatorios = this.documentosObligatorios.map((doc) => ({
+      ...doc,
+      open: false,
+    }));
+
+    this.documentosOpcionales = this.documentosOpcionales.map((doc) => ({
+      ...doc,
+      open: doc.key === 'liquidaciones',
+    }));
+
+    // =====================================
+    // 🔥 RESET FORM STEP 1 PARCIAL
+    // OJO: NO LIMPIAMOS CATÁLOGOS
+    // =====================================
+
+    this.form.patchValue({
+      nombre: '',
+      apellido: '',
+      rut: '',
+      telefono: '',
+      email: '',
+      direccion: '',
+      planta: '',
+      grado: null,
+      fechaNacimiento: null,
+      establecimiento: '',
+      sexo: '',
+      previtionId: null,
+
+      tipoAfiliado: null,
+      calidadContractual: null,
+
+      fechaAfiliacion: null,
+      esPostulante: 'si',
+      beneficiado: 'no',
+      hogarMonoparental: false,
+
+      tipoBeneficiario: '',
+      familiarId: null,
+    });
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
 
     // =====================================
     // 🔥 RETURN TO SELECTOR
@@ -5302,155 +5447,16 @@ export class PostulationFormComponent {
       behavior: 'smooth',
     });
 
-    console.log('🆕 VOLVIENDO A SELECTOR DE POSTULACIONES');
-  }
-
-  /*
-  async nuevaPostulacion() {
-    // =====================================
-    // 🔥 BACKUP STEP 1
-    // =====================================
-
-    const affiliateBackup = {
-      rut: this.form.value.rut,
-      nombre: this.form.value.nombre,
-      apellido: this.form.value.apellido,
-      telefono: this.form.value.telefono,
-      email: this.form.value.email,
-      direccion: this.form.value.direccion,
-      sexo: this.form.value.sexo,
-      previtionId: this.form.value.previtionId,
-      fechaNacimiento: this.form.value.fechaNacimiento,
-      fechaAfiliacion: this.form.value.fechaAfiliacion,
-      tipoAfiliado: this.form.value.tipoAfiliado,
-      calidadContractual: this.form.value.calidadContractual,
-      hogarMonoparental: this.form.value.hogarMonoparental,
-      establecimiento: this.form.value.establecimiento,
-    };
-
-    // =====================================
-    // 🔥 BACKUP FAMILY
-    // =====================================
-
-    const familyBackup = [...this.grupoFamiliar];
-
-    // =====================================
-    // 🔥 RESET FORM
-    // =====================================
-
-    this.form.reset();
-
-    // =====================================
-    // 🔥 RESTORE STEP 1
-    // =====================================
-
-    this.form.patchValue({
-      ...affiliateBackup,
-
-      esPostulante: 'si',
-
-      beneficiado: 'no',
-
-      ingresoOtros: 0,
-
-      otrosIngresos: 0,
-
-      arriendo: 0,
-
-      luz: 0,
-
-      agua: 0,
-
-      gas: 0,
-
-      telefonoGasto: 0,
-
-      creditos: 0,
-
-      matricula: 0,
-
-      mensualidad: 0,
-
-      alojamiento: 0,
+    console.log('🆕 VOLVIENDO A SELECTOR DE POSTULACIONES - FORM LIMPIO', {
+      postulationId: this.postulationId,
+      currentStep: this.currentStep,
+      grupoFamiliar: this.grupoFamiliar.length,
+      ingresosFamiliares: this.ingresosFamiliares.length,
+      otrosGastos: this.otrosGastos.length,
+      salud: this.salud.length,
+      showPostulationForm: this.showPostulationForm,
     });
-
-    // =====================================
-    // 🔥 RESTORE FAMILY
-    // =====================================
-
-    this.grupoFamiliar = familyBackup;
-
-    this.syncAffiliateToFamily();
-
-    // =====================================
-    // 🔥 RESET HEALTH
-    // =====================================
-
-    this.salud = [];
-
-    // =====================================
-    // 🔥 RESET INCOMES
-    // =====================================
-
-    this.ingresosFamiliares = [
-      {
-        familiarId: null,
-        monto: 0,
-        open: true,
-      },
-    ];
-
-    // =====================================
-    // 🔥 RESET OTHER EXPENSES
-    // =====================================
-
-    this.otrosGastos = [
-      {
-        glosa: '',
-        monto: 0,
-        open: true,
-      },
-    ];
-
-    // =====================================
-    // 🔥 HEALTH DEFAULT
-    // =====================================
-
-    this.agregarSalud();
-
-    // =====================================
-    // 🔥 CLEAR FILES
-    // =====================================
-
-    this.filesObligatorios = {};
-
-    this.filesOpcionales = {};
-
-    // =====================================
-    // 🔥 CLEAR WORKFLOW
-    // =====================================
-
-    this.wellbeingStorageService.clearAll();
-
-    this.postulationId = null;
-
-    this.summary = null;
-
-    // =====================================
-    // 🔥 CREATE NEW DRAFT
-    // =====================================
-
-    await this.createPostulation(false);
-
-    // =====================================
-    // 🔥 STEP 1
-    // =====================================
-
-    await this.moveToStep(1);
-
-    console.log('🆕 NUEVA POSTULACIÓN');
   }
-  */
 
   volverAlSelector(): void {
     // =====================================

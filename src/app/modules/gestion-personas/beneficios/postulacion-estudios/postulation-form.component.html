@@ -314,26 +314,6 @@
            🟣 PASO 2 
       ============================ -->
           <div *ngIf="currentStep === 2" class="step2-container">
-            <!-- 🔥 DEBUG TEMPORAL -->
-            <div
-              style="
-                background: #fff3cd;
-                color: #000;
-                padding: 16px;
-                margin: 16px 0;
-                border: 3px solid #ff9800;
-                font-weight: bold;
-                font-size: 18px;
-                z-index: 9999;
-                position: relative;
-              "
-            >
-              ✅ ESTOY EN STEP 2<br />
-              currentStep: {{ currentStep }}<br />
-              showPostulationForm: {{ showPostulationForm }}<br />
-              familiares: {{ grupoFamiliar.length }}
-            </div>
-
             <div class="step-header-actions">
               <div>
                 <div class="section-title">
@@ -2044,14 +2024,9 @@
                 <strong>
                   {{ f.nombre }}
                 </strong>
-
                 -
-
                 {{ getParentTypeName(f.parentTypeId) }}
 
-                -
-
-                {{ i === 0 ? form.value.calidadContractual : "PASIVO" }}
               </div>
             </div>
 
