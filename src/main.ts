@@ -16,10 +16,10 @@ moment.locale('es');
 bootstrapApplication(AppComponent, appConfig)
   .then(() => {
     const splash = document.querySelector('app-splash');
+
     if (splash) {
       setTimeout(() => splash.classList.add('hide'), 1800);
       setTimeout(() => splash.remove(), 2500);
     }
   })
-  .catch(err => console.error(err));
-
+  .catch((err) => console.error(err));

@@ -1,4 +1,4 @@
-import { ApplicationConfig, LOCALE_ID } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, ErrorHandler } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -8,10 +8,12 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loaderInterceptor } from './core/interceptors/loader.interceptor';
 
+import { GlobalErrorHandler } from './core/handlers/global-error.handler';
+
 import {
   MAT_DATE_FORMATS,
   MAT_DATE_LOCALE,
-  provideNativeDateAdapter
+  provideNativeDateAdapter,
 } from '@angular/material/core';
 
 export const MY_FORMATS = {
@@ -26,7 +28,24 @@ export const MY_FORMATS = {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // =====================================
+    // 🔥 ERROR HANDLER GLOBAL
+    // =====================================
+
+    {
+      provide: ErrorHandler,
+      useClass: GlobalErrorHandler,
+    },
+
+    // =====================================
+    // 🔥 LOCALE
+    // =====================================
+
     { provide: LOCALE_ID, useValue: 'es-CL' },
+
+    // =====================================
+    // 🔥 ROUTER
+    // =====================================
 
     provideRouter(
       routes,
@@ -36,7 +55,15 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
 
+    // =====================================
+    // 🔥 ANIMATIONS
+    // =====================================
+
     provideAnimations(),
+
+    // =====================================
+    // 🔥 HTTP + INTERCEPTORS
+    // =====================================
 
     provideHttpClient(
       withInterceptors([
@@ -45,11 +72,18 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
 
-    // 🔥 SIN MOMENT → SOLO DATE NATIVO
+    // =====================================
+    // 🔥 DATEPICKER NATIVO
+    // =====================================
+
     provideNativeDateAdapter(),
 
     { provide: MAT_DATE_LOCALE, useValue: 'es-CL' },
     { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS },
+
+    // =====================================
+    // 🔥 CHARTS
+    // =====================================
 
     provideCharts(withDefaultRegisterables()),
   ],
