@@ -443,42 +443,41 @@
           <!-- ===================================================
           ACTIONS
           ==================================================== -->
-
           <div class="cell">
             <div class="row-actions" (click)="$event.stopPropagation()">
               <!-- ===================================== -->
-              <!-- APROBAR -->
+              <!-- APROBAR / ACTUALIZAR -->
               <!-- ===================================== -->
 
               <button
                 class="action-btn approve"
                 matTooltip="{{
-                  row.isReviewed ? 'Jornada ya revisada' : 'Aprobar jornada'
+                  row.isReviewed ? 'Actualizar validación' : 'Aprobar jornada'
                 }}"
-                [disabled]="row.isReviewed"
                 (click)="confirmQuickApprove(row)"
               >
                 <mat-icon>
-                  {{ row.isReviewed ? "lock" : "check_circle" }}
+                  {{
+                    row.isReviewed ? "published_with_changes" : "check_circle"
+                  }}
                 </mat-icon>
               </button>
 
               <!-- ===================================== -->
-              <!-- REVISIÓN -->
+              <!-- REVISIÓN / MODIFICAR -->
               <!-- ===================================== -->
 
               <button
                 class="action-btn edit"
                 matTooltip="{{
                   row.isReviewed
-                    ? 'Jornada ya revisada'
+                    ? 'Modificar revisión operacional'
                     : 'Revisión operacional'
                 }}"
-                [disabled]="row.isReviewed"
                 (click)="openReview(row)"
               >
                 <mat-icon>
-                  {{ row.isReviewed ? "lock" : "edit" }}
+                  {{ row.isReviewed ? "edit_note" : "edit" }}
                 </mat-icon>
               </button>
             </div>

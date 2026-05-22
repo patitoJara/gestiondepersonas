@@ -65,6 +65,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   serverNow: Date = new Date();
 
   serverOffset = 0;
+  loadingRegisters = true;
+  isMarking = false;
 
   constructor(
     private subscribesService: SubscribesService,
@@ -105,38 +107,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const userId = this.tokenService.getUserId();
     const fullName = this.tokenService.getUserFullName();
 
-    if (!userId) return;
+    if (!userId) {
+      this.loadingRegisters = false;
+      return;
+    }
 
     if (fullName) {
       this.userName = fullName;
     }
 
+    this.loadingRegisters = true;
+
     forkJoin({
       subs: this.subscribesService.getByUser(userId),
       regs: this.registersService.getAll(),
-    }).subscribe(({ subs, regs }) => {
-      // 🔥 SUSCRIPCIONES
-      this.subscriptions = subs || [];
-      this.validateToday();
+    }).subscribe({
+      next: ({ subs, regs }) => {
+        // 🔥 SUSCRIPCIONES
+        this.subscriptions = subs || [];
+        this.validateToday();
 
-      // 🔥 REGISTROS
-      const userRegisters = (regs || []).filter(
-        (r) => r.user?.id === userId && !r.deletedAt,
-      );
+        // 🔥 REGISTROS
+        const userRegisters = (regs || []).filter(
+          (r: any) =>
+            r.user?.id === userId && !r.deletedAt && r.register_datetime,
+        );
 
-      this.events = userRegisters
-        .filter((r) => r.register_datetime)
-        .map((r) => ({
-          id: r.id,
+        this.events = userRegisters
+          .map(
+            (r: any): TeleworkEvent => ({
+              id: r.id,
+              type: r.state === 'ING' ? 'ING' : 'SAL',
+              origin: 'USER',
+              datetime: r.register_datetime,
+            }),
+          )
+          .sort((a, b) => a.datetime.localeCompare(b.datetime));
 
-          type: r.state,
+        this.updateTodayEvents();
 
-          origin: 'USER',
-          datetime: r.register_datetime,
-        }));
-      // 🔥 TODO JUNTO
-      this.updateTodayEvents();
-      this.cdr.detectChanges();
+        this.loadingRegisters = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+        console.error('Error cargando dashboard', err);
+
+        this.loadingRegisters = false;
+        this.showWarning('No fue posible cargar las marcaciones del día.');
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -181,7 +201,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.registersService.getAll().subscribe({
       next: (data: any[]) => {
         const userRegisters = (data || []).filter((r: any) => {
-          return r.user?.id === userId  && !r.deletedAt;
+          return r.user?.id === userId && !r.deletedAt;
         });
 
         this.events = userRegisters
@@ -198,12 +218,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         // 🔥 DIRECTO, SIN PROMESAS RARAS
         this.updateTodayEvents();
 
-    console.log('EVENTS:', this.events);
-    console.log('TODAY:', this.todayEvents);
-    console.log('HAS ING:', this.hasIngreso);
-    console.log('HAS SAL:', this.hasSalida);
-    
-    
+        console.log('EVENTS:', this.events);
+        console.log('TODAY:', this.todayEvents);
+        console.log('HAS ING:', this.hasIngreso);
+        console.log('HAS SAL:', this.hasSalida);
+
         this.cdr.detectChanges();
       },
 
@@ -217,42 +236,91 @@ export class DashboardComponent implements OnInit, OnDestroy {
     clearInterval(this.timer);
   }
 
-  mark(type: 'ING' | 'SAL') {
-    if (!this.canMarkToday) return;
-
-    // 🔥 VALIDACIONES
-    if (type === 'ING' && this.hasIngreso) {
-      this.showWarning('Ya registraste tu ingreso hoy.');
+  async mark(type: 'ING' | 'SAL'): Promise<void> {
+    if (!this.canMarkToday) {
       return;
     }
 
-    if (type === 'SAL' && this.hasSalida) {
-      this.showWarning('Ya registraste tu salida hoy.');
+    // 🔥 Evita marcar mientras carga o mientras ya está guardando
+    if (this.loadingRegisters || this.isMarking) {
       return;
     }
 
-    const userId = this.tokenService.getUserId();
+    this.isMarking = true;
 
-    if (!userId) return;
+    try {
+      const userId = this.tokenService.getUserId();
 
-    const payload = {
-      user: { id: userId },
-      state: type,
-    };
+      if (!userId) {
+        return;
+      }
 
-    this.registersService.create(payload).subscribe({
-      next: () => {
-        // 🔥 RECARGAR DESDE BACKEND
-        this.loadRegisters(userId);
-      },
+      // =====================================================
+      // 🔥 RECARGA PREVIA DESDE BACKEND
+      // Evita que el PC no vea una marca hecha desde celular.
+      // =====================================================
 
-      
-      error: (err) => {
-        console.error('Error guardando registro', err);
+      await this.reloadRegistersAfterMark(userId);
 
-        this.showWarning('No fue posible registrar el marcaje.');
-      },
+      // =====================================================
+      // 🔥 VALIDACIONES CON DATA FRESCA
+      // =====================================================
+
+      if (type === 'ING' && this.hasIngreso) {
+        this.showWarning('Ya registraste tu ingreso hoy.');
+        return;
+      }
+
+      if (type === 'SAL' && this.hasSalida) {
+        this.showWarning('Ya registraste tu salida hoy.');
+        return;
+      }
+
+      // =====================================================
+      // 🔥 GUARDAR MARCA REAL
+      // =====================================================
+
+      const payload = {
+        user: { id: userId },
+        state: type,
+      };
+
+      await firstValueFrom(this.registersService.create(payload));
+
+      // =====================================================
+      // 🔥 RECARGA FINAL
+      // =====================================================
+
+      await this.reloadRegistersAfterMark(userId);
+    } catch (err) {
+      console.error('Error guardando registro', err);
+
+      this.showWarning('No fue posible registrar el marcaje.');
+    } finally {
+      this.isMarking = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private async reloadRegistersAfterMark(userId: number): Promise<void> {
+    const data: any[] = await firstValueFrom(this.registersService.getAll());
+
+    const userRegisters = (data || []).filter((r: any) => {
+      return r.user?.id === userId && !r.deletedAt && r.register_datetime;
     });
+
+    this.events = userRegisters
+      .map(
+        (r: any): TeleworkEvent => ({
+          id: r.id,
+          type: r.state === 'ING' ? 'ING' : 'SAL',
+          origin: 'USER',
+          datetime: r.register_datetime,
+        }),
+      )
+      .sort((a, b) => a.datetime.localeCompare(b.datetime));
+
+    this.updateTodayEvents();
   }
 
   // cargar suscripciones

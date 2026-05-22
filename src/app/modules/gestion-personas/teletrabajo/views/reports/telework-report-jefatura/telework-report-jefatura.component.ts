@@ -260,7 +260,7 @@ export class TeleworkReportJefaturaComponent {
     try {
       this.hasSearched = true;
 
-      const [users, registers, subscribes, relaciones, works, reviews] =
+      const [users, registers, subscribes, relaciones, works] =
         (await Promise.all([
           firstValueFrom(this.reportService.getUsers()),
 
@@ -271,8 +271,6 @@ export class TeleworkReportJefaturaComponent {
           firstValueFrom(this.usersGroupService.getAll()),
 
           firstValueFrom(this.workService.getAll()),
-
-          firstValueFrom(this.registerReviewService.getAll()),
         ])) as any;
 
       console.log('🔥 REGISTERS RAW:', registers);
@@ -427,7 +425,7 @@ export class TeleworkReportJefaturaComponent {
         return true;
       });
 
-      this.allReviews = (reviews || []).filter((r: any) => !r.deletedAt);
+      this.allReviews = [];
 
       // ===============================
       // 🔍 VALIDAR SI HAY DATOS
@@ -455,24 +453,21 @@ export class TeleworkReportJefaturaComponent {
   async selectUser(user: any): Promise<void> {
     this.selectedUser = user;
 
-    // 🔹 REGISTROS
+    // 🔹 REGISTROS REALES
     let userRegisters = this.allRegisters
       .filter((r: any) => r.user?.id === user.id)
-
-      // 🔥 ORDEN REAL
       .sort(
         (a: any, b: any) =>
           (this.parseDateTimeLocal(a.register_datetime)?.getTime() || 0) -
           (this.parseDateTimeLocal(b.register_datetime)?.getTime() || 0),
       )
-
-      .map((r: any, index: number) => ({
+      .map((r: any) => ({
         ...r,
         type: r.type || r.state || '',
         isVirtual: r.isVirtual ?? false,
       }));
 
-    // 🔥 FILTRO POR RANGO
+    // 🔥 FILTRO REGISTROS POR RANGO
     if (this.dateFrom && this.dateTo) {
       const from = this.toLocalDate(this.dateFrom);
       const to = this.toLocalDate(this.dateTo);
@@ -487,12 +482,12 @@ export class TeleworkReportJefaturaComponent {
       });
     }
 
-    // 🔹 SUSCRIPCIONES
+    // 🔹 SUSCRIPCIONES DEL USUARIO
     let userSubscriptions = this.allSubscriptions.filter(
       (s: any) => s.user?.id === user.id,
     );
 
-    // 🔥 FILTRO POR RANGO
+    // 🔥 FILTRO SUSCRIPCIONES POR RANGO
     if (this.dateFrom && this.dateTo) {
       const from = this.toLocalDate(this.dateFrom);
       const to = this.toLocalDate(this.dateTo);
@@ -504,6 +499,7 @@ export class TeleworkReportJefaturaComponent {
         .filter((s: any) => {
           const start = this.toLocalDate(s.begin);
           const end = this.toLocalDate(s.end);
+
           return start <= to && end >= from;
         })
         .map((s: any) => {
@@ -523,35 +519,62 @@ export class TeleworkReportJefaturaComponent {
       const d1 = this.toLocalDate(a.begin).getTime();
       const d2 = this.toLocalDate(b.begin).getTime();
 
-      return d2 - d1; // 🔥 DESC → más reciente primero
+      return d2 - d1; // DESC → más reciente primero
     });
 
-    this.works = this.allWorks.filter((w: any) => w.user?.id === user.id);
+    // 🔹 ACTIVIDADES DEL USUARIO
+    this.works = this.allWorks.filter((w: any) => {
+      return w.user?.id === user.id || w.userId === user.id;
+    });
 
-    // 🔥 GENERACIÓN COMPLETA (CLAVE)
+    // =====================================
+    // 🔥 GENERACIÓN COMPLETA
+    // registros reales + fantasmas visuales
+    // =====================================
+
     this.registers = this.generateFullRegisters(
       this.subscriptions,
       userRegisters,
     );
 
-    // 🔹 AGRUPACIÓN
+    // 🔹 AGRUPACIÓN ORIGINAL
     this.days = this.groupByDay(this.registers, this.works);
 
-    // 🔥 FIX FINAL (EL QUE TE FALTABA)
+    // 🔥 VALIDACIÓN DE EXISTENCIA
     const hasRealRegisters = this.registers.some((r) => !r.isVirtual);
     const hasSubscriptions = this.subscriptions.length > 0;
 
+    // =====================================
+    // 🔥 CONSTRUIR FILAS OPERACIONALES
+    // =====================================
+
     this.buildDailyRows(this.registers);
+
+    // =====================================
+    // 🔥 NUEVO:
+    // CARGAR REGISTERS_MODIFIEDS POR JORNADA
+    // administratorId + userId + fecha
+    // =====================================
+
+    await this.loadModifiedRegistersForDailyRows();
+
+    // =====================================
+    // 🔥 MOSTRAR / OCULTAR DETALLE
+    // =====================================
 
     if (!hasRealRegisters && !hasSubscriptions) {
       this.showDetail = false;
-
-      //this.showWarning(
-      //  'El usuario no posee información en el período seleccionado.',
-      //);
     } else {
       this.showDetail = true;
     }
+
+    console.log('✅ USER SELECTED OPERATIONAL:', {
+      userId: user.id,
+      registers: this.registers.length,
+      dailyRows: this.dailyRows.length,
+      subscriptions: this.subscriptions.length,
+      modifieds: this.allReviews.length,
+    });
   }
 
   selectRegisterDay(register: any) {
@@ -689,16 +712,27 @@ export class TeleworkReportJefaturaComponent {
     }
 
     // 🔥 DEFINIR HOY UNA SOLA VEZ
+    // IMPORTANTE:
+    // toLocalDate deja la fecha como día local operacional.
+    // No usar toISOString para evitar desfase UTC.
     const today = this.toLocalDate(this.timeService.getServerTime());
+    today.setHours(0, 0, 0, 0);
 
     subs.forEach((s) => {
       let start = this.toLocalDate(s.begin);
       let end = this.toLocalDate(s.end);
 
-      if (!start || !end) return;
+      if (!start || !end) {
+        return;
+      }
 
-      if (from && start < from) start = new Date(from);
-      if (to && end > to) end = new Date(to);
+      if (from && start < from) {
+        start = new Date(from);
+      }
+
+      if (to && end > to) {
+        end = new Date(to);
+      }
 
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
@@ -713,6 +747,8 @@ export class TeleworkReportJefaturaComponent {
         d.setDate(d.getDate() + 1)
       ) {
         const currentDay = new Date(d);
+        currentDay.setHours(0, 0, 0, 0);
+
         if (from && currentDay < from) {
           continue;
         }
@@ -720,6 +756,8 @@ export class TeleworkReportJefaturaComponent {
         if (to && currentDay > to) {
           continue;
         }
+
+        const dayKey = this.getKeyFromDate(currentDay);
 
         const ingreso = result.find((r) => {
           const rd = this.toLocalDate(r.register_datetime);
@@ -737,14 +775,16 @@ export class TeleworkReportJefaturaComponent {
 
         // 🔥 SOLO DÍAS PASADOS
         if (isPastDay) {
-          const baseDate = new Date(currentDay);
-          baseDate.setHours(12, 0, 0, 0); // 🔥 hora neutra
+          // 🔥 Fantasma operacional sin hora real.
+          // Se usa 00:00 porque registers_modifieds trabaja por jornada.
+          // NO usar toISOString.
+          const virtualDateTime = `${dayKey}T00:00:00`;
 
           if (!ingreso) {
             result.push({
               user: this.selectedUser,
 
-              register_datetime: `${this.getKeyFromDate(baseDate)}T12:00:00`,
+              register_datetime: virtualDateTime,
 
               type: 'ING',
 
@@ -756,7 +796,7 @@ export class TeleworkReportJefaturaComponent {
             result.push({
               user: this.selectedUser,
 
-              register_datetime: `${this.getKeyFromDate(baseDate)}T12:00:00`,
+              register_datetime: virtualDateTime,
 
               type: 'SAL',
 
@@ -773,17 +813,24 @@ export class TeleworkReportJefaturaComponent {
       const d2 = this.parseDateTimeLocal(b.register_datetime)?.getTime() || 0;
 
       // 🔥 ORDEN POR FECHA (MENOR → MAYOR)
-      if (d1 !== d2) return d1 - d2;
+      if (d1 !== d2) {
+        return d1 - d2;
+      }
 
-      // 🔥 MISMO DÍA → ORDEN POR HORA REAL
-      if (!a.isVirtual && !b.isVirtual) return d1 - d2;
+      // 🔥 MISMO DÍA → REALES ARRIBA, VIRTUALES ABAJO
+      if (a.isVirtual && !b.isVirtual) {
+        return 1;
+      }
 
-      // 🔥 REALES ARRIBA, VIRTUALES ABAJO
-      if (a.isVirtual && !b.isVirtual) return 1;
-      if (!a.isVirtual && b.isVirtual) return -1;
+      if (!a.isVirtual && b.isVirtual) {
+        return -1;
+      }
 
       // 🔥 VIRTUALES → ING ANTES QUE SAL
-      if (a.type === b.type) return 0;
+      if (a.type === b.type) {
+        return 0;
+      }
+
       return a.type === 'ING' ? -1 : 1;
     });
   }
@@ -920,11 +967,15 @@ export class TeleworkReportJefaturaComponent {
   formatTimeCL(value: any): string {
     // 🔥 REGISTROS
     if (value && typeof value === 'object' && 'isVirtual' in value) {
-      if (value.isVirtual) return '08:00';
+      if (value.isVirtual) {
+        return '00:00';
+      }
 
       const d = this.parseDateTimeLocal(value.register_datetime);
 
-      if (!d) return '00:00'; // 🔥 fallback seguro
+      if (!d) {
+        return '00:00';
+      }
 
       return d.toLocaleTimeString('es-CL', {
         hour: '2-digit',
@@ -936,7 +987,9 @@ export class TeleworkReportJefaturaComponent {
     // 🔥 FECHA DIRECTA
     const d = this.parseDateTimeLocal(value);
 
-    if (!d) return '00:00'; // 🔥 fallback
+    if (!d) {
+      return '00:00';
+    }
 
     return d.toLocaleTimeString('es-CL', {
       hour: '2-digit',
@@ -1650,10 +1703,26 @@ export class TeleworkReportJefaturaComponent {
 
       // =====================================
       // 🔥 INGRESO
+      // Toma la primera ING real del día.
+      // Si solo hay fantasma, deja el fantasma.
       // =====================================
 
       if (r.type === 'ING') {
-        if (!row.entry || (row.entry.isVirtual && !r.isVirtual)) {
+        const currentEntryDate = this.parseDateTimeLocal(
+          row.entry?.register_datetime,
+        );
+        const newEntryDate = this.parseDateTimeLocal(r.register_datetime);
+
+        const shouldReplaceEntry =
+          !row.entry ||
+          (row.entry.isVirtual && !r.isVirtual) ||
+          (!row.entry.isVirtual &&
+            !r.isVirtual &&
+            currentEntryDate &&
+            newEntryDate &&
+            newEntryDate.getTime() < currentEntryDate.getTime());
+
+        if (shouldReplaceEntry) {
           row.entry = r;
 
           row.entryTime = this.formatTimeCL(r);
@@ -1664,10 +1733,26 @@ export class TeleworkReportJefaturaComponent {
 
       // =====================================
       // 🔥 SALIDA
+      // Toma la última SAL real del día.
+      // Si solo hay fantasma, deja el fantasma.
       // =====================================
 
       if (r.type === 'SAL') {
-        if (!row.exit || (row.exit.isVirtual && !r.isVirtual)) {
+        const currentExitDate = this.parseDateTimeLocal(
+          row.exit?.register_datetime,
+        );
+        const newExitDate = this.parseDateTimeLocal(r.register_datetime);
+
+        const shouldReplaceExit =
+          !row.exit ||
+          (row.exit.isVirtual && !r.isVirtual) ||
+          (!row.exit.isVirtual &&
+            !r.isVirtual &&
+            currentExitDate &&
+            newExitDate &&
+            newExitDate.getTime() > currentExitDate.getTime());
+
+        if (shouldReplaceExit) {
           row.exit = r;
 
           row.exitTime = this.formatTimeCL(r);
@@ -1737,6 +1822,7 @@ export class TeleworkReportJefaturaComponent {
       // =====================================
 
       row.isReviewed = reviews.length > 0;
+      row.canEditReview = true;
 
       // =====================================
       // 🔥 REVIEW STATES
@@ -1941,127 +2027,142 @@ export class TeleworkReportJefaturaComponent {
   ) {
     try {
       // =====================================
-      // 🔥 REGISTROS OPERACIONALES
+      // 🔥 VALIDACIÓN BASE
       // =====================================
 
-      const registers = [row.entry, row.exit].filter((r: any) => !!r);
-
-      // =====================================
-      // 🔥 RECORRER ING / SAL
-      // =====================================
-
-      for (const register of registers) {
-        let finalRegister = register;
-
-        // =====================================
-        // 🔥 RESOLVER REAL
-        // =====================================
-
-        finalRegister = await this.resolveOperationalRegister(row, register);
-
-        // =====================================
-        // 🔥 REFRESH ROW REFERENCES
-        // =====================================
-
-        if (finalRegister.type === 'ING') {
-          row.entry = finalRegister;
-
-          row.isVirtualEntry = false;
-        }
-
-        if (finalRegister.type === 'SAL') {
-          row.exit = finalRegister;
-
-          row.isVirtualExit = false;
-        }
-
-        // =====================================
-        // 🔥 REVIEW EXISTENTE
-        // =====================================
-
-        const existingReview = this.allReviews.find((r: any) => {
-          return (
-            r.user?.id === row.user?.id &&
-            this.getDateOnly(r.register_datetime) === row.date &&
-            r.register?.id === finalRegister.id &&
-            !r.deletedAt
-          );
+      if (!row?.date || !row?.user?.id || !this.loggedUser?.id) {
+        console.warn('⚠️ No hay datos suficientes para guardar revisión', {
+          row,
+          loggedUser: this.loggedUser,
         });
 
-        // =====================================
-        // 🔥 PAYLOAD REVIEW
-        // =====================================
+        return false;
+      }
 
-        const payload = {
-          register: {
-            id: finalRegister.id,
-          },
+      // =====================================
+      // 🔥 IDS OPERACIONALES
+      // =====================================
 
-          administrator: {
-            id: this.loggedUser?.id,
-          },
+      const administratorId = Number(this.loggedUser.id);
+      const userId = Number(row.user.id);
 
-          user: {
-            id: row.user?.id,
-          },
+      // =====================================
+      // 🔥 BUSCAR REGISTERS_MODIFIEDS EXISTENTES
+      // administratorId + userId + fecha
+      //
+      // IMPORTANTE:
+      // Si el search falla con 401 por datos inexistentes/borrados,
+      // searchModifiedReviewsSafe() devuelve [] y permite crear.
+      // =====================================
 
+      const existingReviews = await this.searchModifiedReviewsSafe({
+        administratorId,
+        userId,
+        registerDatetime: row.date,
+      });
+
+      console.log('🔎 EXISTING REGISTERS_MODIFIEDS:', {
+        userId,
+        administratorId,
+        date: row.date,
+        total: existingReviews.length,
+        existingReviews,
+      });
+
+      // =====================================
+      // 🔥 BUSCAR ING / SAL EXISTENTES
+      // =====================================
+
+      const existingEntryReview = existingReviews.find(
+        (r: any) => this.getReviewRegisterType(r) === 'ING',
+      );
+
+      const existingExitReview = existingReviews.find(
+        (r: any) => this.getReviewRegisterType(r) === 'SAL',
+      );
+
+      // =====================================
+      // 🔥 NORMA DEL SISTEMA:
+      // SIEMPRE ING + SAL POR DÍA
+      // =====================================
+
+      const targets: Array<{
+        type: 'ING' | 'SAL';
+        existingReview: any;
+      }> = [
+        {
+          type: 'ING',
+          existingReview: existingEntryReview,
+        },
+        {
+          type: 'SAL',
+          existingReview: existingExitReview,
+        },
+      ];
+
+      // =====================================
+      // 🔥 CREATE / UPDATE SOLO EN registers_modifieds
+      // =====================================
+
+      for (const target of targets) {
+        const finalObservation = this.resolveObservationForUpdate(
           observations,
+          target.existingReview,
+          row,
+        );
 
-          // 🔥 CLAVE OPERACIONAL
-          register_datetime: `${row.date}T00:00:00`,
-
+        const payload = this.buildModifiedReviewPayload(
+          row,
+          target.type,
           state,
-        };
+          finalObservation,
+          target.existingReview,
+        );
 
-        console.log('🚀 SAVING REVIEW:', payload);
+        console.log('🚀 SAVING REGISTERS_MODIFIEDS:', {
+          type: target.type,
+          existingId: target.existingReview?.id || null,
+          payload,
+        });
 
         let response: any;
 
         // =====================================
-        // 🔥 UPDATE
+        // 🔥 UPDATE SI EXISTE
         // =====================================
 
-        if (existingReview?.id) {
+        if (target.existingReview?.id) {
           response = await firstValueFrom(
-            this.registerReviewService.update(existingReview.id, payload),
+            this.registerReviewService.update(
+              target.existingReview.id,
+              payload,
+            ),
           );
 
-          console.log('✏️ REVIEW UPDATED:', response);
+          console.log('✏️ REGISTERS_MODIFIEDS UPDATED:', response);
         }
 
         // =====================================
-        // 🔥 CREATE
+        // 🔥 CREATE SI NO EXISTE
         // =====================================
         else {
           response = await firstValueFrom(
             this.registerReviewService.create(payload),
           );
 
-          console.log('✅ REVIEW CREATED:', response);
+          console.log('✅ REGISTERS_MODIFIEDS CREATED:', response);
         }
 
         // =====================================
         // 🔥 REFRESH MEMORIA
         // =====================================
 
-        if (response) {
-          const index = this.allReviews.findIndex(
-            (r: any) => r.id === response.id,
-          );
-
-          if (index >= 0) {
-            this.allReviews[index] = response;
-          } else {
-            this.allReviews.push(response);
-          }
-        }
+        this.mergeReviewInMemory(response);
       }
 
       // =====================================
       // 🔥 REFRESH VISUAL
       // =====================================
-      //this.buildDailyRows(this.registers);
-      //this.dailyRows = [...this.dailyRows];
 
       await this.selectUser(this.selectedUser);
 
@@ -2080,28 +2181,31 @@ export class TeleworkReportJefaturaComponent {
   async quickApprove(row: any): Promise<void> {
     try {
       // =====================================
-      // 🔥 VALIDAR
+      // 🔥 CONSERVAR OBSERVACIÓN EXISTENTE
       // =====================================
 
-      const ok = await this.saveOperationalReview(
-        row,
+      const previousObservation =
+        row.entryReview?.observations ||
+        row.exitReview?.observations ||
+        row.review?.observations ||
+        row.reviewObservation ||
+        row.comment ||
+        '';
 
-        'OK',
-
-        'Jornada validada por jefatura',
-      );
+      const observationToSave =
+        previousObservation && previousObservation.trim() !== ''
+          ? previousObservation
+          : 'Jornada validada por jefatura';
 
       // =====================================
-      // 🔥 ERROR
+      // 🔥 VALIDAR / ACTUALIZAR
       // =====================================
+
+      const ok = await this.saveOperationalReview(row, 'OK', observationToSave);
 
       if (!ok) {
         throw new Error('No fue posible validar');
       }
-
-      // =====================================
-      // 🔥 MENSAJE
-      // =====================================
 
       this.dialog.open(ConfirmDialogComponent, {
         width: '420px',
@@ -2109,7 +2213,9 @@ export class TeleworkReportJefaturaComponent {
         data: {
           title: 'Jornada validada',
 
-          message: 'La jornada fue validada correctamente.',
+          message: row.isReviewed
+            ? 'La validación fue actualizada correctamente.'
+            : 'La jornada fue validada correctamente.',
         },
       });
     } catch (e) {
@@ -2181,7 +2287,22 @@ export class TeleworkReportJefaturaComponent {
     const registerType = register.type || register.state;
 
     // =====================================
-    // 🔥 BUSCAR REAL EXISTENTE
+    // 🔥 SI YA ES REAL, SE USA TAL CUAL
+    // =====================================
+
+    if (!register?.isVirtual && register?.id) {
+      console.log('♻️ USING CURRENT REAL REGISTER:', register);
+
+      return {
+        ...register,
+        type: registerType,
+        isVirtual: false,
+      };
+    }
+
+    // =====================================
+    // 🔥 BUSCAR REAL EXISTENTE EN MEMORIA
+    // OJO: SOLO LECTURA, NO CREA NADA
     // =====================================
 
     const existingReal = this.allRegisters.find((r: any) => {
@@ -2193,154 +2314,38 @@ export class TeleworkReportJefaturaComponent {
         !r.deletedAt
       );
     });
+
     if (existingReal?.id) {
       console.log('♻️ USING EXISTING REAL REGISTER:', existingReal);
 
       return {
         ...existingReal,
-
         type: registerType,
-
         isVirtual: false,
       };
     }
+
     // =====================================
-    // 🔥 BUSCAR REVIEW EXISTENTE
+    // 🔥 SI ES FANTASMA, SE DEVUELVE COMO FANTASMA
+    // NO SE CREA REGISTER REAL
     // =====================================
 
-    console.log('🔥 ALL REVIEWS:', this.allReviews);
-
-    console.log('🔥 SEARCHING REVIEW:', {
+    console.warn('👻 REGISTER VIRTUAL - NO SE CREA EN registers:', {
       rowDate: row.date,
-
-      registerType,
-
       userId: row.user?.id,
+      registerType,
+      register,
     });
 
-    const existingReview = this.allReviews.find((rev: any) => {
-      const reviewDate = rev.register_datetime?.substring(0, 10);
-
-      const reviewType = rev.register?.state || rev.register?.type;
-
-      console.log('🧠 REVIEW CHECK', {
-        reviewId: rev.id,
-
-        reviewUser: rev.user?.id,
-
-        rowUser: row.user?.id,
-
-        reviewType,
-
-        registerType,
-
-        reviewDate,
-
-        rowDate: row.date,
-      });
-
-      return (
-        rev.user?.id === row.user?.id &&
-        reviewDate === row.date &&
-        reviewType === registerType &&
-        !rev.deletedAt
-      );
-    });
-
-    // =====================================
-    // 🔥 YA EXISTE REGISTER REAL
-    // =====================================
-
-    if (existingReview?.register?.id) {
-      console.log('♻️ USING REGISTER FROM REVIEW:', existingReview.register);
-
-      return {
-        ...existingReview.register,
-
-        type: registerType,
-
-        isVirtual: false,
-      };
-    }
-
-    // =====================================
-    // 🔥 YA ES REAL SIN REVIEW
-    // =====================================
-
-    if (!register?.isVirtual && register?.id) {
-      console.log('♻️ USING CURRENT REAL REGISTER:', register);
-
-      return {
-        ...register,
-
-        type: registerType,
-
-        isVirtual: false,
-      };
-    }
-
-    // =====================================
-    // 🔥 CREAR REAL
-    // =====================================
-
-    const payload = {
-      user: {
-        id: row.user?.id,
-      },
-
+    return {
+      ...register,
+      id: null,
+      type: registerType,
       state: registerType,
-
-      register_datetime: `${row.date}T12:00:00`,
+      register_datetime: `${row.date}T00:00:00`,
+      isVirtual: true,
+      user: row.user,
     };
-
-    console.log('🚀 CREATING REAL REGISTER:', payload);
-
-    const created = await firstValueFrom(
-      this.reportService.createRegister(payload),
-    );
-
-    created.isVirtual = false;
-
-    // 🔥 FIX OPERACIONAL
-    created.register_datetime = `${row.date}T12:00:00`;
-
-    // =====================================
-    // 🔥 NORMALIZAR
-    // =====================================
-
-    created.type = registerType;
-
-    created.isVirtual = false;
-
-    // =====================================
-    // 🔥 MEMORIA GLOBAL
-    // =====================================
-
-    this.allRegisters.push(created);
-
-    // =====================================
-    // 🔥 LIMPIAR VIRTUAL
-    // =====================================
-
-    this.registers = this.registers.filter(
-      (r: any) =>
-        !(
-          r.isVirtual &&
-          (r.type || r.state) === registerType &&
-          r.user?.id === row.user?.id &&
-          this.getDateOnly(r.register_datetime) === row.date
-        ),
-    );
-
-    // =====================================
-    // 🔥 INSERTAR REAL
-    // =====================================
-
-    this.registers.push(created);
-
-    console.log('✅ REAL REGISTER CREATED:', created);
-
-    return created;
   }
 
   buildOperationalRegisters() {
@@ -2397,5 +2402,253 @@ export class TeleworkReportJefaturaComponent {
     }
 
     this.operationalRegisters = result;
+  }
+
+  private extractReviewsFromSearchResponse(response: any): any[] {
+    if (Array.isArray(response?.content)) {
+      return response.content;
+    }
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    if (response?.id) {
+      return [response];
+    }
+
+    return [];
+  }
+
+  private getReviewRegisterType(review: any): string {
+    return String(
+      review?.register?.state ||
+        review?.register?.type ||
+        review?.registerState ||
+        review?.register_state ||
+        '',
+    ).toUpperCase();
+  }
+
+  private mergeReviewInMemory(review: any): void {
+    if (!review?.id) {
+      return;
+    }
+
+    const index = this.allReviews.findIndex(
+      (r: any) => Number(r.id) === Number(review.id),
+    );
+
+    if (index >= 0) {
+      this.allReviews[index] = review;
+    } else {
+      this.allReviews.push(review);
+    }
+  }
+
+  private resolveObservationForUpdate(
+    incomingObservation: string,
+    existingReview: any,
+    row: any,
+  ): string {
+    const generic = 'Jornada validada por jefatura';
+
+    const incoming = String(incomingObservation || '').trim();
+
+    const current =
+      existingReview?.observations ||
+      row.entryReview?.observations ||
+      row.exitReview?.observations ||
+      row.review?.observations ||
+      row.reviewObservation ||
+      '';
+
+    // 🔥 Si aprueba rápido y ya había comentario del modal,
+    // no pisamos el comentario anterior.
+    if (incoming === generic && current && current !== generic) {
+      return current;
+    }
+
+    return incoming || current || generic;
+  }
+
+  private buildModifiedReviewPayload(
+    row: any,
+    registerType: 'ING' | 'SAL',
+    state: string,
+    observations: string,
+    existingReview?: any,
+  ): any {
+    const sourceRegister = registerType === 'ING' ? row.entry : row.exit;
+
+    const payload: any = {
+      administrator: {
+        id: this.loggedUser?.id,
+      },
+
+      user: {
+        id: row.user?.id,
+      },
+
+      observations,
+
+      // 🔥 Jornada operacional
+      register_datetime: `${row.date}T00:00:00`,
+
+      state,
+
+      // 🔥 Ayuda para backend si acepta tipo operacional
+      registerState: registerType,
+      register_state: registerType,
+    };
+
+    // 🔥 Si hay register real, lo asociamos.
+    // Si es fantasma, NO creamos register.
+    if (sourceRegister?.id && sourceRegister?.isVirtual !== true) {
+      payload.register = {
+        id: sourceRegister.id,
+      };
+    }
+
+    // 🔥 Si ya existía registers_modifieds con register asociado,
+    // conservamos esa asociación. No crea nada nuevo en registers.
+    else if (existingReview?.register?.id) {
+      payload.register = {
+        id: existingReview.register.id,
+      };
+    }
+
+    return payload;
+  }
+
+  private getMostRelevantReviewState(reviews: any[]): string | null {
+    const states = reviews
+      .map((r: any) => String(r?.state || '').toUpperCase())
+      .filter(Boolean);
+
+    if (states.includes('CRITICAL')) {
+      return 'CRITICAL';
+    }
+
+    if (states.includes('REVIEW')) {
+      return 'REVIEW';
+    }
+
+    if (states.includes('OBSERVED')) {
+      return 'OBSERVED';
+    }
+
+    if (states.includes('OK')) {
+      return 'OK';
+    }
+
+    return null;
+  }
+
+  private applyReviewStateToRow(row: any, reviews: any[]): void {
+    row.review = reviews[0] || null;
+
+    row.entryReview =
+      reviews.find((r: any) => this.getReviewRegisterType(r) === 'ING') || null;
+
+    row.exitReview =
+      reviews.find((r: any) => this.getReviewRegisterType(r) === 'SAL') || null;
+
+    row.isReviewed = reviews.length > 0;
+
+    row.reviewObservation =
+      row.entryReview?.observations ||
+      row.exitReview?.observations ||
+      row.review?.observations ||
+      '';
+
+    const state = this.getMostRelevantReviewState(reviews);
+
+    if (!state) {
+      return;
+    }
+
+    row.status = state;
+
+    if (row.status === 'OK') {
+      row.comment = row.reviewObservation || 'Jornada validada por jefatura';
+    } else if (row.status === 'CRITICAL') {
+      row.comment = row.reviewObservation || 'Inconsistencia crítica';
+    } else if (row.status === 'OBSERVED') {
+      row.comment = row.reviewObservation || 'Jornada observada';
+    } else {
+      row.comment = row.reviewObservation || 'Requiere validación operacional';
+    }
+  }
+
+  private async loadModifiedRegistersForDailyRows(): Promise<void> {
+    if (!this.selectedUser?.id || !this.loggedUser?.id) {
+      return;
+    }
+
+    const administratorId = Number(this.loggedUser.id);
+    const userId = Number(this.selectedUser.id);
+
+    for (const row of this.dailyRows) {
+      try {
+        const reviews = await this.searchModifiedReviewsSafe({
+          administratorId,
+          userId,
+          registerDatetime: row.date,
+        });
+
+        console.log('🔎 REGISTERS_MODIFIEDS SEARCH ROW:', {
+          userId,
+          administratorId,
+          date: row.date,
+          total: reviews.length,
+          reviews,
+        });
+
+        this.applyReviewStateToRow(row, reviews);
+
+        for (const review of reviews) {
+          this.mergeReviewInMemory(review);
+        }
+      } catch (error) {
+        console.warn('⚠️ No se pudo cargar registers_modifieds para jornada:', {
+          date: row.date,
+          userId,
+          administratorId,
+          error,
+        });
+      }
+    }
+
+    this.dailyRows = [...this.dailyRows];
+  }
+
+  private async searchModifiedReviewsSafe(params: {
+    administratorId: number;
+    userId: number;
+    registerDatetime: string;
+  }): Promise<any[]> {
+    try {
+      const response: any = await firstValueFrom(
+        this.registerReviewService.search({
+          administratorId: params.administratorId,
+          userId: params.userId,
+          registerDatetime: params.registerDatetime,
+        }),
+      );
+
+      return this.extractReviewsFromSearchResponse(response).filter(
+        (r: any) => !r.deletedAt,
+      );
+    } catch (error: any) {
+      console.warn('⚠️ SEARCH registers_modifieds falló, se asumirá vacío:', {
+        params,
+        status: error?.status,
+        url: error?.url,
+        error,
+      });
+
+      return [];
+    }
   }
 }

@@ -43,7 +43,7 @@
           <button
             class="btn btn-big btn-green"
             (click)="mark('ING')"
-            [disabled]="!canMarkToday || hasIngreso"
+            [disabled]="!canMarkToday || hasIngreso || loadingRegisters || isMarking"
           >
             <mat-icon>login</mat-icon>
             Ingreso
@@ -52,7 +52,7 @@
           <button
             class="btn btn-big btn-orange"
             (click)="mark('SAL')"
-            [disabled]="!canMarkToday || hasSalida"
+            [disabled]="!canMarkToday || hasSalida || loadingRegisters || isMarking"
           >
             <mat-icon>logout</mat-icon>
             Salida
