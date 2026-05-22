@@ -1,3 +1,4 @@
+<!-- 🔥 SPINNER DESHABILITADO TEMPORALMENTE PARA PRUEBA -->
 <ng-container *ngIf="loader.loading$ | async as loading">
   <div *ngIf="loading" class="loader-overlay">
     <div class="loader-box">
@@ -24,447 +25,492 @@
         <div class="title-sub">Bienestar SSM 2026</div>
       </div>
 
-      <!-- 🚀 STEPPER PRO -->
-      <div class="sirus-stepper">
-        <div class="progress-bar">
-          <div class="progress-fill" [style.width.%]="progress"></div>
-        </div>
-
-        <div class="steps">
-          <div
-            *ngFor="let step of steps"
-            class="step wizard-step"
-            [class.active]="step.id === currentStep"
-            [class.completed]="step.id < currentStep && isStepValid(step.id)"
-            [class.error]="step.id < currentStep && !isStepValid(step.id)"
-            [class.disabled]="step.id > currentStep + 1"
-            (click)="goToStep(step.id)"
-          >
-            <div class="dot">
-              <mat-icon *ngIf="step.id < currentStep && isStepValid(step.id)">
-                check
-              </mat-icon>
-
-              <span *ngIf="!(step.id < currentStep && isStepValid(step.id))">
-                {{ step.id }}
-              </span>
-            </div>
-
-            <div class="label">
-              {{ step.title }}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Selector de postulación: permite alternar entre borrador activo y postulaciones enviadas -->
-      <div
-        *ngIf="availablePostulations.length > 0"
-        class="postulation-switcher"
-      >
-        <div class="switcher-main">
-          <label>Postulación cargada</label>
-          <select
-            class="input"
-            [value]="selectedPostulationViewId"
-            [disabled]="isLoading || openingPostulation"
-            (change)="openPostulationFromSelector($any($event.target).value)"
-          >
-            <option *ngFor="let p of availablePostulations" [value]="p.id">
-              {{ getPostulationOptionLabel(p) }}
-            </option>
-          </select>
-          <div
-            class="switcher-badge"
-            *ngIf="getSelectedPostulationStatus() === 'SUBMITTED'"
-          >
-            Postulación enviada · vista solo lectura
-          </div>
+      <div *ngIf="!showPostulationForm" class="postulation-start-panel">
+        <div class="section-title">
+          <mat-icon>folder_open</mat-icon>
+          Mis postulaciones
+        </div>
 
-          <div
-            class="switcher-badge draft"
-            *ngIf="getSelectedPostulationStatus() === 'DRAFT'"
-          >
-            Borrador editable
+        <div class="section-sub">
+          Seleccione una postulación existente o inicie una nueva solicitud.
+        </div>
+
+        <div
+          *ngIf="availablePostulations.length > 0"
+          class="postulation-switcher"
+        >
+          <div class="switcher-main">
+            <label>Mis postulaciones</label>
+
+            <select
+              class="input"
+              [(ngModel)]="selectedPostulationViewId"
+              [ngModelOptions]="{ standalone: true }"
+            >
+              <option *ngFor="let p of availablePostulations" [ngValue]="p.id">
+                {{ getPostulationOptionLabel(p) }}
+              </option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <!-- ============================
-     🔵 PASO 1: DATOS PERSONALES
-      ============================ -->
-      <div *ngIf="currentStep === 1" class="step1-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>person</mat-icon>
-            Datos del Afiliado/a
-          </div>
-
-          <div class="section-sub">
-            Debe tener afiliación mínima de 6 meses y obligaciones al día
-          </div>
-
-          <!-- 🔹 IDENTIFICACIÓN -->
-          <div class="ssm-section">
-            <div class="ssm-title">Identificación</div>
-
-            <div class="ssm-grid-afiliado">
-              <div class="ssm-field">
-                <label>RUT</label>
-
-                <input
-                  class="input ssm-readonly"
-                  formControlName="rut"
-                  maxlength="12"
-                  readonly
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>Nombres</label>
-                <input
-                  class="input ssm-readonly"
-                  formControlName="nombre"
-                  readonly
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>Apellidos</label>
-                <input
-                  class="input ssm-readonly"
-                  formControlName="apellido"
-                  readonly
-                />
-              </div>
-              <div class="ssm-field">
-                <label>Teléfono</label>
-                <input class="input" formControlName="telefono" />
-              </div>
-
-              <div class="ssm-field">
-                <label>Correo institucional</label>
-                <input
-                  class="input ssm-readonly"
-                  type="email"
-                  formControlName="email"
-                  readonly
-                />
-              </div>
-            </div>
-            <div class="ssm-grid-3">
-              <!-- ===================================== -->
-              <!-- 🔥 FECHA NACIMIENTO -->
-              <!-- ===================================== -->
-
-              <div class="ssm-field">
-                <label>Fecha nacimiento</label>
-
-                <mat-form-field class="ssm-datepicker">
-                  <input
-                    matInput
-                    [matDatepicker]="birthPicker"
-                    formControlName="fechaNacimiento"
-                    readonly
-                  />
-
-                  <mat-datepicker-toggle matIconSuffix [for]="birthPicker">
-                  </mat-datepicker-toggle>
-
-                  <mat-datepicker #birthPicker></mat-datepicker>
-                </mat-form-field>
-              </div>
-
-              <!-- ===================================== -->
-              <!-- 🔥 SEXO -->
-              <!-- ===================================== -->
-
-              <div class="ssm-field">
-                <label>Sexo</label>
-
-                <select class="input" formControlName="sexo">
-                  <option *ngFor="let s of sexos" [value]="s.id">
-                    {{ s.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- ===================================== -->
-              <!-- 🔥 DIRECCIÓN -->
-              <!-- ===================================== -->
-
-              <div class="ssm-field">
-                <label>Dirección</label>
-                <input class="input" formControlName="direccion" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 DATOS INSTITUCIONALES -->
-          <div class="ssm-section">
-            <div class="ssm-title">Datos institucionales</div>
-
-            <div class="ssm-grid-4">
-              <!-- 🔥 TIPO AFILIADO -->
-              <div class="ssm-field">
-                <label>Tipo afiliado</label>
-
-                <select class="input" formControlName="tipoAfiliado">
-                  <option *ngFor="let t of tiposAfiliado" [ngValue]="t.name">
-                    {{ t.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- 🔥 CALIDAD CONTRACTUAL -->
-              <div class="ssm-field">
-                <label>Calidad contractual</label>
-
-                <select class="input" formControlName="calidadContractual">
-                  <option
-                    *ngFor="let c of calidadesContractuales"
-                    [value]="c.name"
-                  >
-                    {{ c.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- 🔥 ESTABLECIMIENTO -->
-              <div class="ssm-field">
-                <label>Establecimiento</label>
-                <select class="input" formControlName="establecimiento">
-                  <option *ngFor="let e of establecimientos" [ngValue]="e.id">
-                    {{ e.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 🔥 SEGUNDA FILA -->
-            <div class="ssm-grid-2">
-              <div class="ssm-field">
-                <label>Fecha afiliación</label>
-
-                <input
-                  class="input ssm-readonly"
-                  [value]="formatFechaVisual(form.value.fechaAfiliacion)"
-                  readonly
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 BOTÓN (AHORA CORRECTO) -->
+        <div class="actions">
           <button
             type="button"
             mat-raised-button
             class="btn-primary"
-            (click)="nextStep()"
+            [disabled]="!selectedPostulationViewId"
+            (click)="openSelectedPostulationByUserAction()"
           >
-            Continuar
+            Abrir postulación
+          </button>
+
+          <button
+            type="button"
+            mat-stroked-button
+            class="btn-secondary"
+            (click)="startNewPostulationFromSelector()"
+          >
+            Nueva postulación
           </button>
         </div>
       </div>
 
-      <!-- ============================
+      <!-- 🔥 FORMULARIO COMPLETO: STEPPER + STEPS -->
+      <div *ngIf="showPostulationForm">
+        <div *ngIf="showPostulationForm">
+          <div class="postulation-top-bar">
+            <button
+              type="button"
+              class="btn-back-selector"
+              (click)="volverAlSelector()"
+            >
+              <mat-icon>arrow_back</mat-icon>
+              <span>Volver a mis postulaciones</span>
+            </button>
+          </div>
+
+          <!-- STEPPER -->
+          <!-- STEPS -->
+        </div>
+        <!-- 🚀 STEPPER PRO -->
+        <div class="sirus-stepper">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="progress"></div>
+          </div>
+
+          <div class="steps">
+            <div
+              *ngFor="let step of steps"
+              class="step wizard-step"
+              [class.active]="step.id === currentStep"
+              [class.completed]="step.id < currentStep && isStepValid(step.id)"
+              [class.error]="step.id < currentStep && !isStepValid(step.id)"
+              [class.disabled]="step.id > currentStep || step.id === 11"
+              (click)="
+                step.id <= currentStep && step.id !== 11 && goToStep(step.id)
+              "
+            >
+              <div class="dot">
+                <mat-icon *ngIf="step.id < currentStep && isStepValid(step.id)">
+                  check
+                </mat-icon>
+
+                <span *ngIf="!(step.id < currentStep && isStepValid(step.id))">
+                  {{ step.id }}
+                </span>
+              </div>
+
+              <div class="label">
+                {{ step.title }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="showPostulationForm">
+          <!-- ============================
+        🔵 PASO 1: DATOS PERSONALES
+          ============================ -->
+          <div *ngIf="currentStep === 1" class="step1-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>person</mat-icon>
+                Datos del Afiliado/a
+              </div>
+
+              <div class="section-sub">
+                Debe tener afiliación mínima de 6 meses y obligaciones al día
+              </div>
+
+              <!-- 🔹 IDENTIFICACIÓN -->
+              <div class="ssm-section">
+                <div class="ssm-title">Identificación</div>
+
+                <div class="ssm-grid-afiliado">
+                  <div class="ssm-field">
+                    <label>RUT</label>
+
+                    <input
+                      class="input ssm-readonly"
+                      formControlName="rut"
+                      maxlength="12"
+                      readonly
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Nombres</label>
+                    <input
+                      class="input ssm-readonly"
+                      formControlName="nombre"
+                      readonly
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Apellidos</label>
+                    <input
+                      class="input ssm-readonly"
+                      formControlName="apellido"
+                      readonly
+                    />
+                  </div>
+                  <div class="ssm-field">
+                    <label>Teléfono</label>
+                    <input class="input" formControlName="telefono" />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Correo institucional</label>
+                    <input
+                      class="input ssm-readonly"
+                      type="email"
+                      formControlName="email"
+                      readonly
+                    />
+                  </div>
+                </div>
+                <div class="ssm-grid-3">
+                  <!-- ===================================== -->
+                  <!-- 🔥 FECHA NACIMIENTO -->
+                  <!-- ===================================== -->
+
+                  <div class="ssm-field">
+                    <label>Fecha nacimiento</label>
+
+                    <mat-form-field class="ssm-datepicker">
+                      <input
+                        matInput
+                        [matDatepicker]="birthPicker"
+                        formControlName="fechaNacimiento"
+                        readonly
+                      />
+
+                      <mat-datepicker-toggle matIconSuffix [for]="birthPicker">
+                      </mat-datepicker-toggle>
+
+                      <mat-datepicker #birthPicker></mat-datepicker>
+                    </mat-form-field>
+                  </div>
+
+                  <!-- ===================================== -->
+                  <!-- 🔥 SEXO -->
+                  <!-- ===================================== -->
+
+                  <div class="ssm-field">
+                    <label>Sexo</label>
+
+                    <select class="input" formControlName="sexo">
+                      <option *ngFor="let s of sexos" [value]="s.id">
+                        {{ s.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- ===================================== -->
+                  <!-- 🔥 DIRECCIÓN -->
+                  <!-- ===================================== -->
+
+                  <div class="ssm-field">
+                    <label>Dirección</label>
+                    <input class="input" formControlName="direccion" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 DATOS INSTITUCIONALES -->
+              <div class="ssm-section">
+                <div class="ssm-title">Datos institucionales</div>
+
+                <div class="ssm-grid-4">
+                  <!-- 🔥 TIPO AFILIADO -->
+                  <div class="ssm-field">
+                    <label>Tipo afiliado</label>
+
+                    <select class="input" formControlName="tipoAfiliado">
+                      <option
+                        *ngFor="let t of tiposAfiliado"
+                        [ngValue]="t.name"
+                      >
+                        {{ t.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- 🔥 CALIDAD CONTRACTUAL -->
+                  <div class="ssm-field">
+                    <label>Calidad contractual</label>
+
+                    <select class="input" formControlName="calidadContractual">
+                      <option
+                        *ngFor="let c of calidadesContractuales"
+                        [value]="c.name"
+                      >
+                        {{ c.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- 🔥 ESTABLECIMIENTO -->
+                  <div class="ssm-field">
+                    <label>Establecimiento</label>
+                    <select class="input" formControlName="establecimiento">
+                      <option
+                        *ngFor="let e of establecimientos"
+                        [ngValue]="e.id"
+                      >
+                        {{ e.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 🔥 SEGUNDA FILA -->
+                <div class="ssm-grid-2">
+                  <div class="ssm-field">
+                    <label>Fecha afiliación</label>
+
+                    <input
+                      class="input ssm-readonly"
+                      [value]="formatFechaVisual(form.value.fechaAfiliacion)"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 BOTÓN (AHORA CORRECTO) -->
+              <button
+                type="button"
+                mat-raised-button
+                class="btn-primary"
+                (click)="nextStep()"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+
+          <!-- ============================
            🟣 PASO 2 
       ============================ -->
-      <div *ngIf="currentStep === 2" class="step2-container">
-        <div class="step-header-actions">
-          <div>
-            <div class="section-title">
-              <mat-icon>groups</mat-icon>
-              Grupo Familiar
-            </div>
-
-            <div class="section-sub">
-              Ingrese los integrantes del grupo familiar
-            </div>
-          </div>
-
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="agregarFamiliar()"
-          >
-            <mat-icon>add</mat-icon>
-            Agregar integrante
-          </button>
-        </div>
-
-        <!-- 🔥 HOGAR MONOPARENTAL -->
-        <div class="ssm-field-inline" *ngIf="false">
-          <label>
-            <mat-icon>family_restroom</mat-icon>
-            Hogar monoparental
-          </label>
-
-          <div class="ssm-inline-options">
-            <label
-              class="ssm-inline-radio"
-              [class.active]="form.value.hogarMonoparental === true"
-            >
-              <input
-                type="radio"
-                formControlName="hogarMonoparental"
-                [value]="true"
-              />
-              <span>Sí</span>
-            </label>
-
-            <label
-              class="ssm-inline-radio"
-              [class.active]="form.value.hogarMonoparental === false"
-            >
-              <input
-                type="radio"
-                formControlName="hogarMonoparental"
-                [value]="false"
-              />
-
-              <span>No</span>
-            </label>
-          </div>
-        </div>
-        <!-- 🔥 COMPOSICIÓN FAMILIAR -->
-
-        <!-- 🔹 LISTA DINÁMICA -->
-        <div class="family-list">
-          <div
-            class="family-card"
-            *ngFor="let f of grupoFamiliar; let i = index"
-          >
-            <!-- HEADER -->
-            <div
-              class="card-header"
-              [class.active]="f.open"
-              (click)="toggleFamiliar(i)"
-            >
-              <div class="title">
-                <mat-icon>person</mat-icon>
-                <div *ngIf="i === 0" class="pasivo-badge">
-                  <span>Afiliado Identificado</span>
+          <div *ngIf="currentStep === 2" class="step2-container">
+            <div class="step-header-actions">
+              <div>
+                <div class="section-title">
+                  <mat-icon>groups</mat-icon>
+                  Grupo Familiar
                 </div>
-                <div *ngIf="i > 0" class="pasivo-badge">
-                  <span>Familiar {{ i }}</span>
+
+                <div class="section-sub">
+                  Ingrese los integrantes del grupo familiar
                 </div>
               </div>
 
               <button
-                *ngIf="!f.titular"
-                mat-icon-button
-                color="warn"
-                (click)="eliminarFamiliar(i); $event.stopPropagation()"
                 type="button"
+                mat-raised-button
+                class="btn-primary"
+                (click)="agregarFamiliar()"
               >
-                <mat-icon>delete</mat-icon>
+                <mat-icon>add</mat-icon>
+                Agregar integrante
               </button>
             </div>
 
-            <!-- RESUMEN -->
-            <div *ngIf="!f.open" class="mini-summary">
-              <div class="mini-summary-content">
-                <div class="mini-avatar">
-                  <mat-icon>family_restroom</mat-icon>
-                </div>
-                <div class="mini-info">
-                  <div class="mini-name">
-                    {{ f.nombre || "Sin nombre" }}
-                  </div>
+            <!-- 🔥 HOGAR MONOPARENTAL -->
+            <div class="ssm-field-inline" *ngIf="false">
+              <label>
+                <mat-icon>family_restroom</mat-icon>
+                Hogar monoparental
+              </label>
 
-                  <div class="mini-detail" *ngIf="f.parentTypeId">
-                    {{ getParentTypeName(f.parentTypeId) }}
-                  </div>
-                </div>
+              <div class="ssm-inline-options">
+                <label
+                  class="ssm-inline-radio"
+                  [class.active]="form.value.hogarMonoparental === true"
+                >
+                  <input
+                    type="radio"
+                    formControlName="hogarMonoparental"
+                    [value]="true"
+                  />
+                  <span>Sí</span>
+                </label>
+
+                <label
+                  class="ssm-inline-radio"
+                  [class.active]="form.value.hogarMonoparental === false"
+                >
+                  <input
+                    type="radio"
+                    formControlName="hogarMonoparental"
+                    [value]="false"
+                  />
+
+                  <span>No</span>
+                </label>
               </div>
-
-              <div class="mini-status" *ngIf="f.titular">Titular</div>
             </div>
+            <!-- 🔥 COMPOSICIÓN FAMILIAR -->
 
-            <!-- FORM -->
-            <div *ngIf="f.open" class="card-body">
-              <!-- 🔹 DATOS -->
-              <div class="ssm-title">Datos básicos / Ingresos</div>
-              <div class="ssm-grid-6">
-                <div class="ssm-field">
-                  <label>RUT</label>
-
-                  <input
-                    class="input rut"
-                    [(ngModel)]="f.rut"
-                    [ngModelOptions]="{ standalone: true }"
-                    [readonly]="f.titular"
-                    [class.readonly-field]="f.titular"
-                    (keydown.enter)="
-                      $event.preventDefault();
-                      !f.titular && validarRutGeneral(f)
-                    "
-                    (input)="!f.titular && procesarRut($event, f)"
-                    (blur)="!f.titular && validarRutGeneral(f)"
-                  />
-
-                  <!-- 🔥 ENCONTRADO -->
-                  <div *ngIf="f.existsInUsers" class="rut-found">
-                    <mat-icon>check_circle</mat-icon>
-                    Datos encontrados en sistema
+            <!-- 🔹 LISTA DINÁMICA -->
+            <div class="family-list">
+              <div
+                class="family-card"
+                *ngFor="let f of grupoFamiliar; let i = index"
+              >
+                <!-- HEADER -->
+                <div
+                  class="card-header"
+                  [class.active]="f.open"
+                  (click)="toggleFamiliar(i)"
+                >
+                  <div class="title">
+                    <mat-icon>person</mat-icon>
+                    <div *ngIf="i === 0" class="pasivo-badge">
+                      <span>Afiliado Identificado</span>
+                    </div>
+                    <div *ngIf="i > 0" class="pasivo-badge">
+                      <span>Familiar {{ i }}</span>
+                    </div>
                   </div>
 
-                  <!-- 🔥 NO ENCONTRADO -->
-                  <div *ngIf="f.notFound" class="rut-not-found">
-                    <mat-icon>warning</mat-icon>
-                    Usuario no encontrado. Complete antecedentes manualmente.
-                  </div>
-                </div>
-                <div class="ssm-field">
-                  <label>Nombres</label>
-
-                  <input
-                    class="input"
-                    [(ngModel)]="f.nombre"
-                    [ngModelOptions]="{ standalone: true }"
-                    [readonly]="f.titular"
-                    [class.readonly-field]="f.titular"
-                  />
-                </div>
-                <div class="ssm-field">
-                  <label>Apellidos</label>
-
-                  <input
-                    class="input"
-                    [(ngModel)]="f.apellido"
-                    [ngModelOptions]="{ standalone: true }"
-                    [readonly]="f.titular"
-                    [class.readonly-field]="f.titular"
-                  />
-                </div>
-                <div class="ssm-field">
-                  <label>Fecha nacimiento</label>
-
-                  <input
-                    class="input"
-                    type="date"
-                    [(ngModel)]="f.birthDate"
-                    [ngModelOptions]="{ standalone: true }"
-                  />
-                </div>
-                <div class="ssm-field">
-                  <label>Previsión</label>
-
-                  <select
-                    class="input"
-                    [(ngModel)]="f.previtionId"
-                    [ngModelOptions]="{ standalone: true }"
+                  <button
+                    *ngIf="!f.titular"
+                    mat-icon-button
+                    color="warn"
+                    (click)="eliminarFamiliar(i); $event.stopPropagation()"
+                    type="button"
                   >
-                    <option *ngFor="let p of previtions" [ngValue]="p.id">
-                      {{ p.name }}
-                    </option>
-                  </select>
+                    <mat-icon>delete</mat-icon>
+                  </button>
                 </div>
 
-                <!-- 
+                <!-- RESUMEN -->
+                <div *ngIf="!f.open" class="mini-summary">
+                  <div class="mini-summary-content">
+                    <div class="mini-avatar">
+                      <mat-icon>family_restroom</mat-icon>
+                    </div>
+                    <div class="mini-info">
+                      <div class="mini-name">
+                        {{ f.nombre || "Sin nombre" }}
+                      </div>
+
+                      <div class="mini-detail" *ngIf="f.parentTypeId">
+                        {{ getParentTypeName(f.parentTypeId) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mini-status" *ngIf="f.titular">Titular</div>
+                </div>
+
+                <!-- FORM -->
+                <div *ngIf="f.open" class="card-body">
+                  <!-- 🔹 DATOS -->
+                  <div class="ssm-title">Datos básicos / Ingresos</div>
+                  <div class="ssm-grid-6">
+                    <div class="ssm-field">
+                      <label>RUT</label>
+
+                      <input
+                        class="input rut"
+                        [(ngModel)]="f.rut"
+                        [ngModelOptions]="{ standalone: true }"
+                        [readonly]="f.titular"
+                        [class.readonly-field]="f.titular"
+                        (keydown.enter)="
+                          $event.preventDefault();
+                          !f.titular && validarRutGeneral(f)
+                        "
+                        (input)="!f.titular && procesarRut($event, f)"
+                        (blur)="!f.titular && validarRutGeneral(f)"
+                      />
+
+                      <!-- 🔥 ENCONTRADO -->
+                      <div *ngIf="f.existsInUsers" class="rut-found">
+                        <mat-icon>check_circle</mat-icon>
+                        Datos encontrados en sistema
+                      </div>
+
+                      <!-- 🔥 NO ENCONTRADO -->
+                      <div *ngIf="f.notFound" class="rut-not-found">
+                        <mat-icon>warning</mat-icon>
+                        Usuario no encontrado. Complete antecedentes
+                        manualmente.
+                      </div>
+                    </div>
+                    <div class="ssm-field">
+                      <label>Nombres</label>
+
+                      <input
+                        class="input"
+                        [(ngModel)]="f.nombre"
+                        [ngModelOptions]="{ standalone: true }"
+                        [readonly]="f.titular"
+                        [class.readonly-field]="f.titular"
+                      />
+                    </div>
+                    <div class="ssm-field">
+                      <label>Apellidos</label>
+
+                      <input
+                        class="input"
+                        [(ngModel)]="f.apellido"
+                        [ngModelOptions]="{ standalone: true }"
+                        [readonly]="f.titular"
+                        [class.readonly-field]="f.titular"
+                      />
+                    </div>
+                    <div class="ssm-field">
+                      <label>Fecha nacimiento</label>
+
+                      <input
+                        class="input"
+                        [value]="formatFechaVisual(f.birthDate)"
+                        readonly
+                      />
+                    </div>
+                    <div class="ssm-field">
+                      <label>Previsión</label>
+
+                      <select
+                        class="input"
+                        [(ngModel)]="f.previtionId"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option *ngFor="let p of previtions" [ngValue]="p.id">
+                          {{ p.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- 
                 <div class="ssm-field">
                   <label>Condición integrante</label>
 
@@ -475,1596 +521,1706 @@
                   />
                 </div>
                 -->
+                  </div>
+
+                  <!-- 🔹 PERSONAL -->
+                  <div class="ssm-title">Información personal</div>
+                  <div class="ssm-grid-6">
+                    <div class="ssm-field">
+                      <label>Tipo de Parentesco</label>
+                      <select
+                        class="input"
+                        [(ngModel)]="f.parentTypeId"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="refreshFamilySummary()"
+                      >
+                        <option *ngFor="let p of parentTypes" [ngValue]="p.id">
+                          {{ p.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="ssm-field">
+                      <label>Estado Civil</label>
+                      <select
+                        class="input"
+                        [(ngModel)]="f.civilStateId"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option *ngFor="let c of civilStates" [value]="c.id">
+                          {{ c.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="ssm-field">
+                      <label>Actividad</label>
+
+                      <select
+                        class="input"
+                        [(ngModel)]="f.activityId"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onFamilyActivityChange(f)"
+                      >
+                        <option *ngFor="let a of activities" [ngValue]="a.id">
+                          {{ a.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="ssm-field" *ngIf="isOtherActivitySelected(f)">
+                      <label>Indique actividad</label>
+
+                      <input
+                        class="input"
+                        type="text"
+                        [(ngModel)]="f.othersActivities"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Ingrese actividad"
+                      />
+                    </div>
+
+                    <div class="ssm-field">
+                      <label>Profesión u oficio</label>
+
+                      <select
+                        class="input"
+                        [(ngModel)]="f.workPlaceId"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onFamilyWorkPlaceChange(f)"
+                      >
+                        <option *ngFor="let w of workPlaces" [ngValue]="w.id">
+                          {{ w.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="ssm-field" *ngIf="isOtherWorkPlaceSelected(f)">
+                      <label>Indique profesión u oficio</label>
+
+                      <input
+                        class="input"
+                        type="text"
+                        [(ngModel)]="f.othersWorkplaces"
+                        [ngModelOptions]="{ standalone: true }"
+                        placeholder="Ingrese profesión u oficio"
+                      />
+                    </div>
+
+                    <div class="ssm-field">
+                      <label>Nivel de Estudios</label>
+                      <select
+                        class="input"
+                        [(ngModel)]="f.studyId"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option *ngFor="let e of studies" [ngValue]="e.id">
+                          {{ e.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
 
-              <!-- 🔹 PERSONAL -->
-              <div class="ssm-title">Información personal</div>
-              <div class="ssm-grid-6">
-                <div class="ssm-field">
-                  <label>Tipo de Parentesco</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.parentTypeId"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="refreshFamilySummary()"
-                  >
-                    <option *ngFor="let p of parentTypes" [ngValue]="p.id">
-                      {{ p.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ssm-field">
-                  <label>Estado Civil</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.civilStateId"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option *ngFor="let c of civilStates" [value]="c.id">
-                      {{ c.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ssm-field">
-                  <label>Actividad</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.activityId"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option *ngFor="let a of activities" [ngValue]="a.id">
-                      {{ a.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ssm-field">
-                  <label>Profesión u oficio</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.workPlaceId"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option *ngFor="let w of workPlaces" [ngValue]="w.id">
-                      {{ w.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ssm-field">
-                  <label>Nivel de Estudios</label>
-                  <select
-                    class="input"
-                    [(ngModel)]="f.studyId"
-                    [ngModelOptions]="{ standalone: true }"
-                  >
-                    <option *ngFor="let e of studies" [ngValue]="e.id">
-                      {{ e.name }}
-                    </option>
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
               </div>
             </div>
           </div>
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
 
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- =========================
+          <!-- =========================
         🟣 PASO 3: POSTULANTE
       ========================= -->
-      <div *ngIf="currentStep === 3" class="step3-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>how_to_reg</mat-icon>
-            Seleccione beneficiario
-          </div>
+          <div *ngIf="currentStep === 3" class="step3-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>how_to_reg</mat-icon>
+                Seleccione beneficiario
+              </div>
 
-          <div class="section-sub">Indique quién recibirá el beneficio</div>
+              <div class="section-sub">Indique quién recibirá el beneficio</div>
 
-          <!-- 🔹 OPCIONES -->
-          <div class="ssm-section">
-            <div class="ssm-title">Tipo de beneficiario</div>
+              <!-- 🔹 OPCIONES -->
+              <div class="ssm-section">
+                <div class="ssm-title">Tipo de beneficiario</div>
 
-            <div class="postulante-options">
-              <!-- 🔥 AFILIADO -->
-              <label
-                class="postulante-card"
-                [class.active]="tipoPostulante === 'afiliado'"
-              >
-                <input
-                  type="radio"
-                  name="tipoPostulante"
-                  [(ngModel)]="tipoPostulante"
-                  value="afiliado"
-                  [ngModelOptions]="{ standalone: true }"
-                />
+                <div class="postulante-options">
+                  <!-- 🔥 AFILIADO -->
+                  <label
+                    class="postulante-card"
+                    [class.active]="tipoPostulante === 'afiliado'"
+                  >
+                    <input
+                      type="radio"
+                      name="tipoPostulante"
+                      [(ngModel)]="tipoPostulante"
+                      value="afiliado"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
 
-                <div class="postulante-icon">
-                  <mat-icon>person</mat-icon>
+                    <div class="postulante-icon">
+                      <mat-icon>person</mat-icon>
+                    </div>
+
+                    <div>
+                      <strong>Yo, afiliado/a</strong>
+
+                      <span> Se utilizarán sus datos personales </span>
+                    </div>
+                  </label>
+
+                  <!-- 🔥 FAMILIAR -->
+                  <label
+                    *ngIf="familiaresAdicionales.length > 0"
+                    class="postulante-card"
+                    [class.active]="tipoPostulante === 'familiar'"
+                  >
+                    <input
+                      type="radio"
+                      name="tipoPostulante"
+                      [(ngModel)]="tipoPostulante"
+                      value="familiar"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+
+                    <div class="postulante-icon">
+                      <mat-icon>groups</mat-icon>
+                    </div>
+
+                    <div>
+                      <strong> Integrante del grupo familiar </strong>
+
+                      <span> Seleccione el integrante </span>
+                    </div>
+                  </label>
                 </div>
+              </div>
 
-                <div>
-                  <strong>Yo, afiliado/a</strong>
+              <!-- 🔹 SELECCIÓN FAMILIAR -->
+              <div *ngIf="tipoPostulante === 'familiar'" class="ssm-section">
+                <div class="ssm-title">Beneficiario seleccionado</div>
 
-                  <span> Se utilizarán sus datos personales </span>
+                <div class="ssm-grid-1">
+                  <div class="ssm-field">
+                    <select
+                      class="input"
+                      [(ngModel)]="postulanteSeleccionado"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      <option
+                        *ngFor="let f of familiaresAdicionales"
+                        [ngValue]="f"
+                      >
+                        {{ f.nombre }}
+                        ({{ getParentTypeName(f.parentTypeId) }})
+                      </option>
+                    </select>
+                  </div>
                 </div>
-              </label>
+              </div>
 
-              <!-- 🔥 FAMILIAR -->
-              <label
-                *ngIf="familiaresAdicionales.length > 0"
-                class="postulante-card"
-                [class.active]="tipoPostulante === 'familiar'"
-              >
-                <input
-                  type="radio"
-                  name="tipoPostulante"
-                  [(ngModel)]="tipoPostulante"
-                  value="familiar"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-
-                <div class="postulante-icon">
-                  <mat-icon>groups</mat-icon>
-                </div>
-
-                <div>
-                  <strong> Integrante del grupo familiar </strong>
-
-                  <span> Seleccione el integrante </span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- 🔹 SELECCIÓN FAMILIAR -->
-          <div *ngIf="tipoPostulante === 'familiar'" class="ssm-section">
-            <div class="ssm-title">Beneficiario seleccionado</div>
-
-            <div class="ssm-grid-1">
-              <div class="ssm-field">
-                <select
-                  class="input"
-                  [(ngModel)]="postulanteSeleccionado"
-                  [ngModelOptions]="{ standalone: true }"
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
                 >
-                  <option *ngFor="let f of familiaresAdicionales" [ngValue]="f">
-                    {{ f.nombre }}
-                    ({{ getParentTypeName(f.parentTypeId) }})
-                  </option>
-                </select>
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                  [disabled]="
+                    tipoPostulante === 'familiar' && !postulanteSeleccionado
+                  "
+                >
+                  Continuar
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-              [disabled]="
-                tipoPostulante === 'familiar' && !postulanteSeleccionado
-              "
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- =========================
+          <!-- =========================
         🟣 PASO 4: ANTECEDENTES aCEDEMICOS
       ========================= -->
-      <div *ngIf="currentStep === 4" class="step4-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>school</mat-icon>
-            Antecedentes académicos
+          <div *ngIf="currentStep === 4" class="step4-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>school</mat-icon>
+                Antecedentes académicos
+              </div>
+
+              <div class="section-sub">
+                Complete la información académica del beneficiario
+              </div>
+
+              <!-- 🔹 Beneficiario -->
+              <div class="ssm-section">
+                <div class="ssm-title">Beneficiario</div>
+
+                <div class="resume-box">
+                  <mat-icon>person</mat-icon>
+                  <span>
+                    Beneficiario:
+                    <strong>
+                      {{
+                        tipoPostulante === "afiliado"
+                          ? form.value.nombre + " " + form.value.apellido
+                          : postulanteSeleccionado?.nombre
+                      }}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <!-- 🔹 DATOS ACADÉMICOS -->
+              <div class="ssm-section">
+                <div class="ssm-title">Información académica</div>
+
+                <div class="ssm-grid-2">
+                  <div class="ssm-field">
+                    <label>Institución</label>
+                    <input
+                      class="input"
+                      [(ngModel)]="academico.institucion"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Carrera</label>
+                    <input
+                      class="input"
+                      [(ngModel)]="academico.carrera"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Tipo de estudio</label>
+
+                    <select
+                      class="input"
+                      [(ngModel)]="academico.studyId"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      <option *ngFor="let t of tiposEstudio" [value]="t.id">
+                        {{ t.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Semestre actual</label>
+                    <input
+                      class="input no-spinner"
+                      type="number"
+                      min="1"
+                      max="15"
+                      [(ngModel)]="academico.semestre"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focusout)="validarSemestreAcademico()"
+                      (change)="validarSemestreAcademico()"
+                    />
+                  </div>
+                  <div class="ssm-field">
+                    <label>Duración carrera (semestres)</label>
+                    <input
+                      class="input no-spinner"
+                      type="number"
+                      min="1"
+                      max="15"
+                      [(ngModel)]="academico.duracion"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focusout)="validarDuracionAcademico()"
+                      (change)="validarSemestreAcademico()"
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Estudia en la región</label>
+                    <select
+                      class="input"
+                      [(ngModel)]="academico.region"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      <option value="si">Sí</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 INFORMACIÓN ADICIONAL -->
+              <div class="ssm-section">
+                <div class="ssm-title">Información adicional</div>
+                <div class="ssm-field">
+                  <label
+                    >¿El beneficiario ha recibido este beneficio
+                    anteriormente?</label
+                  >
+
+                  <select class="input" formControlName="beneficiado">
+                    <option value="no">No</option>
+                    <option value="si">Sí</option>
+                  </select>
+                </div>
+              </div>
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- =========================
+        🟣 PASO 5: VERIFICACION
+      ========================= -->
+          <div *ngIf="currentStep === 5" class="step5-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>fact_check</mat-icon>
+                Antecedentes académicos complementarios
+              </div>
+
+              <div class="section-sub">
+                Estos antecedentes serán revisados durante el proceso de
+                evaluación
+              </div>
+
+              <!-- 🔹 FORMULARIO -->
+              <div class="ssm-section">
+                <div class="ssm-title">Información académica adicional</div>
+
+                <div class="ssm-grid-3">
+                  <div class="ssm-field">
+                    <label>Situación Acedémica</label>
+                    <select
+                      class="input"
+                      [(ngModel)]="verificacion.tipo"
+                      [ngModelOptions]="{ standalone: true }"
+                    >
+                      <option value="primer">Primer año</option>
+                      <option value="continuidad">Segundo año</option>
+                      <option value="continuidad">Tercer año</option>
+                      <option value="continuidad">Cuarto año</option>
+                      <option value="continuidad">Quinto año</option>
+                      <option value="continuidad">Sexto año</option>
+                      <option value="continuidad">Septimo año</option>
+                      <option value="continuidad">Octavo año</option>
+                      <option value="continuidad">Curso Superior</option>
+                    </select>
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Promedio de notas</label>
+                    <input
+                      class="input no-spinner"
+                      type="number"
+                      min="1"
+                      max="100"
+                      [(ngModel)]="verificacion.promedio"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focusout)="validarPromedioVerificacion()"
+                      (change)="validarPromedioVerificacion()"
+                    />
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>% de asignatura aprobadas</label>
+                    <input
+                      class="input no-spinner"
+                      type="number"
+                      min="1"
+                      max="100"
+                      [(ngModel)]="verificacion.aprobacion"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focusout)="validarAprobacionVerificacion()"
+                      (change)="validarAprobacionVerificacion()"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="section-sub">
-            Complete la información académica del beneficiario
+          <!-- =========================
+        🟣 PASO 6: INGRESOS GRUPO FAMILIAR
+      ========================= -->
+          <!-- 🔹 HEADER + ACCIÓN -->
+          <div *ngIf="currentStep === 6" class="step6-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER + ACCIÓN -->
+              <div class="step-header-actions">
+                <div>
+                  <div class="section-title">
+                    <mat-icon>payments</mat-icon>
+                    Ingresos Familiares
+                  </div>
+
+                  <div class="section-sub">
+                    Registre los ingresos mensuales del grupo familiar
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="agregarIngreso()"
+                >
+                  <mat-icon>add</mat-icon>
+                  Agregar ingreso familiar
+                </button>
+              </div>
+
+              <!-- 🔹 LISTA DINÁMICA -->
+              <div class="family-list">
+                <div
+                  class="family-card ingreso-card"
+                  *ngFor="let i of ingresosFamiliares; let idx = index"
+                >
+                  <div class="card-header">
+                    <div class="title">
+                      <mat-icon>payments</mat-icon>
+                      <span>Ingreso {{ idx + 1 }}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      mat-icon-button
+                      color="warn"
+                      (click)="eliminarIngreso(idx)"
+                      *ngIf="ingresosFamiliares.length > 1"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+
+                  <div class="card-body">
+                    <div class="step6-grid">
+                      <div class="ssm-field">
+                        <label>Integrante</label>
+
+                        <select
+                          class="input"
+                          [(ngModel)]="i.familiarId"
+                          [ngModelOptions]="{ standalone: true }"
+                        >
+                          <option
+                            *ngFor="let f of grupoFamiliar"
+                            [ngValue]="f.backendId || f.id"
+                            [disabled]="
+                              estaSeleccionado(f.backendId || f.id, idx)
+                            "
+                          >
+                            {{ f.nombre }} ({{
+                              getParentTypeName(f.parentTypeId)
+                            }})
+                          </option>
+                        </select>
+                      </div>
+
+                      <div class="ssm-field">
+                        <label>Parentesco</label>
+
+                        <input
+                          class="input ssm-readonly"
+                          [value]="getParentescoIngreso(i.familiarId)"
+                          readonly
+                        />
+                      </div>
+                      <div class="ssm-field">
+                        <label>Monto</label>
+
+                        <div class="ssm-money-input">
+                          <input
+                            class="input"
+                            type="text"
+                            inputmode="numeric"
+                            [value]="
+                              i.monto ? i.monto.toLocaleString('es-CL') : ''
+                            "
+                            (input)="formatearMontoIngreso($event, idx)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 TOTAL INGRESOS -->
+              <div class="ssm-section">
+                <div class="ssm-title">Resumen de ingresos</div>
+
+                <div class="total-ingresos-card">
+                  <mat-icon>account_balance_wallet</mat-icon>
+
+                  <div class="total-content">
+                    <span>Total ingresos familiares</span>
+
+                    <strong>
+                      $ {{ totalIngresosFamiliares | number: "1.0-0" }}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- 🔹 Beneficiario -->
-          <div class="ssm-section">
-            <div class="ssm-title">Beneficiario</div>
+          <!-- =========================
+      PASO 7: Gastos mensuales del grupo familiar
+      ========================= -->
+          <div *ngIf="currentStep === 7" class="step7-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>receipt_long</mat-icon>
+                Gastos Familiares
+              </div>
 
-            <div class="resume-box">
-              <mat-icon>person</mat-icon>
-              <span>
-                Beneficiario:
-                <strong>
+              <div class="section-sub">
+                Registre los gastos mensuales del grupo familiar
+              </div>
+
+              <!-- 🔹 BLOQUE DOBLE -->
+              <div class="step7-top-grid">
+                <!-- 🔹 GASTOS BÁSICOS -->
+                <div class="ssm-section">
+                  <div class="ssm-title">Gastos básicos</div>
+
+                  <div class="step7-basicos-grid">
+                    <div
+                      class="ssm-field"
+                      *ngFor="let campo of camposGastosBasicos"
+                    >
+                      <label>{{ campo.label }}</label>
+
+                      <div class="ssm-money-input">
+                        <input
+                          class="input"
+                          type="text"
+                          [formControlName]="campo.key"
+                          (input)="formatearMonto($event, campo.key)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 🔹 GASTOS EDUCACIÓN -->
+                <div class="ssm-section">
+                  <div class="ssm-title">Gastos educación</div>
+
+                  <div class="step7-educacion-grid">
+                    <div
+                      class="ssm-field"
+                      *ngFor="let campo of camposGastosEducacion"
+                    >
+                      <label>{{ campo.label }}</label>
+
+                      <div class="ssm-money-input">
+                        <input
+                          class="input"
+                          type="text"
+                          [formControlName]="campo.key"
+                          (input)="formatearMonto($event, campo.key)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 OTROS GASTOS -->
+              <div class="ssm-section">
+                <div class="step-header-actions">
+                  <div>
+                    <div class="ssm-title">Otros gastos</div>
+
+                    <div class="section-sub">
+                      Registre gastos extraordinarios
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    mat-raised-button
+                    class="btn-primary"
+                    (click)="agregarGasto()"
+                  >
+                    <mat-icon>add</mat-icon>
+                    Agregar gasto
+                  </button>
+                </div>
+
+                <div class="otros-gastos-grid">
+                  <div
+                    class="family-card gasto-card"
+                    *ngFor="let g of otrosGastos; let i = index"
+                  >
+                    <!-- 🔹 HEADER -->
+                    <div class="card-header active">
+                      <div class="title">
+                        <mat-icon>receipt</mat-icon>
+                        <span>Gasto {{ i + 1 }}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        mat-icon-button
+                        color="warn"
+                        *ngIf="otrosGastos.length > 1"
+                        (click)="eliminarGasto(i); $event.stopPropagation()"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- 🔹 BODY SIEMPRE ABIERTO -->
+                    <div class="card-body">
+                      <div class="ssm-field">
+                        <label>Glosa</label>
+
+                        <input
+                          class="input"
+                          [(ngModel)]="g.glosa"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="Ej: medicamentos"
+                        />
+                      </div>
+
+                      <div class="ssm-field">
+                        <label>Monto</label>
+
+                        <div class="ssm-money-input">
+                          <input
+                            class="input"
+                            type="text"
+                            inputmode="numeric"
+                            [value]="
+                              g.monto ? g.monto.toLocaleString('es-CL') : ''
+                            "
+                            (input)="formatearMontoOtro($event, g)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 RESUMEN DE GASTOS -->
+              <div class="ssm-section">
+                <div class="ssm-title">Resumen de gastos</div>
+
+                <div class="step7-resumen-grid">
+                  <!-- 🔹 TOTAL BÁSICOS -->
+                  <div class="total-basicos-card">
+                    <mat-icon>home</mat-icon>
+
+                    <div>
+                      <span>Total gastos básicos</span>
+
+                      <strong>
+                        $ {{ totalGastosBasicos | number: "1.0-0" }}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <!-- 🔹 TOTAL EDUCACIÓN -->
+                  <div class="total-educacion-card">
+                    <mat-icon>school</mat-icon>
+
+                    <div>
+                      <span>Total gastos educación</span>
+
+                      <strong>
+                        $ {{ totalGastosEducacion | number: "1.0-0" }}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <!-- 🔹 TOTAL OTROS -->
+                  <div class="total-secundario-card" *ngIf="otrosGastos.length">
+                    <mat-icon>add_card</mat-icon>
+
+                    <div>
+                      <span>Total otros gastos</span>
+
+                      <strong>
+                        $ {{ totalOtrosGastos | number: "1.0-0" }}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <!-- 🔹 TOTAL GENERAL -->
+                  <div class="total-gastos-card">
+                    <mat-icon>trending_down</mat-icon>
+
+                    <div>
+                      <span>Total gastos familiares</span>
+
+                      <strong> $ {{ totalGastos | number: "1.0-0" }} </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =========================
+        PASO 8: SALUD Y VIVIENDA
+      ========================= -->
+          <div *ngIf="currentStep === 8" class="step8-container">
+            <div class="ssm-section-main">
+              <!-- 🔹 HEADER -->
+              <div class="section-title">
+                <mat-icon>healing</mat-icon>
+                Salud y Vivienda
+              </div>
+
+              <div class="section-sub">
+                Registre antecedentes de salud y vivienda
+              </div>
+
+              <!-- 🔹 SALUD -->
+              <div class="ssm-section">
+                <div class="step-header-actions">
+                  <div>
+                    <div class="ssm-title">Antecedentes de salud</div>
+
+                    <div class="section-sub">
+                      Registre enfermedades o gastos médicos del grupo familiar
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    mat-raised-button
+                    class="btn-primary"
+                    (click)="agregarSalud()"
+                  >
+                    <mat-icon>add</mat-icon>
+                    {{
+                      salud.length
+                        ? "Agregar otro antecedente"
+                        : "Agregar antecedente de salud"
+                    }}
+                  </button>
+                </div>
+
+                <!-- 🔹 GRID TIPO OTROS GASTOS -->
+                <div class="salud-grid">
+                  <div
+                    class="family-card salud-card"
+                    *ngFor="let s of salud; let i = index"
+                  >
+                    <!-- 🔹 HEADER -->
+                    <div class="card-header active">
+                      <div class="title">
+                        <mat-icon>healing</mat-icon>
+                        <span>Registro {{ i + 1 }}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        mat-icon-button
+                        color="warn"
+                        *ngIf="salud.length > 1"
+                        (click)="eliminarSalud(i); $event.stopPropagation()"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- 🔹 BODY -->
+                    <div class="card-body">
+                      <div class="ssm-field">
+                        <label>Nombre</label>
+
+                        <input
+                          class="input"
+                          [(ngModel)]="s.nombre"
+                          [ngModelOptions]="{ standalone: true }"
+                        />
+                      </div>
+
+                      <div class="ssm-field">
+                        <label>Integrante familiar</label>
+
+                        <select
+                          class="input"
+                          [(ngModel)]="s.familiarId"
+                          [ngModelOptions]="{ standalone: true }"
+                        >
+                          <option
+                            *ngFor="let f of grupoFamiliar"
+                            [ngValue]="f.id"
+                          >
+                            {{ f.nombre }} ({{
+                              getParentTypeName(f.parentTypeId)
+                            }})
+                          </option>
+                        </select>
+                      </div>
+
+                      <div class="ssm-field">
+                        <label>Patología</label>
+
+                        <input
+                          class="input"
+                          [(ngModel)]="s.patologia"
+                          [ngModelOptions]="{ standalone: true }"
+                        />
+                      </div>
+
+                      <div class="ssm-field">
+                        <label>Gasto mensual</label>
+
+                        <div class="ssm-money-input">
+                          <span>$</span>
+
+                          <input
+                            class="input"
+                            type="text"
+                            inputmode="numeric"
+                            [value]="
+                              s.gasto ? s.gasto.toLocaleString('es-CL') : ''
+                            "
+                            (input)="formatearMontoSalud($event, s)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 🔹 TOTAL SALUD -->
+                <div class="total-salud-card" *ngIf="salud.length">
+                  <mat-icon>health_and_safety</mat-icon>
+
+                  <div>
+                    <span>Total gastos salud</span>
+
+                    <strong> $ {{ totalSalud | number: "1.0-0" }} </strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 VIVIENDA -->
+              <div class="ssm-section">
+                <div class="ssm-title">Vivienda</div>
+
+                <div class="step8-vivienda-grid">
+                  <!-- TIPO INMUEBLE -->
+                  <div class="ssm-field">
+                    <label>Tipo de inmueble</label>
+
+                    <select class="input" formControlName="tipoVivienda">
+                      <option *ngFor="let t of typesHousing" [ngValue]="t.id">
+                        {{ t.name }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- TIPO TENENCIA -->
+                  <div class="ssm-field">
+                    <label>Tipo tenencia inmueble</label>
+
+                    <select class="input" formControlName="tipoPropiedad">
+                      <option
+                        *ngFor="let t of typesProperties"
+                        [ngValue]="t.id"
+                      >
+                        {{ t.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 🔹 ANTECEDENTES -->
+                <div class="step8-vivienda-textos">
+                  <div class="ssm-field">
+                    <label>Antecedentes habitacionales</label>
+
+                    <textarea
+                      class="ssm-textarea"
+                      rows="3"
+                      formControlName="infoVivienda"
+                    ></textarea>
+                  </div>
+
+                  <div class="ssm-field">
+                    <label>Otros antecedentes</label>
+
+                    <textarea
+                      class="ssm-textarea"
+                      rows="3"
+                      formControlName="otrosAntecedentes"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 🔹 ACTIONS -->
+              <div class="actions">
+                <button
+                  mat-stroked-button
+                  (click)="previousStep()"
+                  type="button"
+                >
+                  Volver
+                </button>
+
+                <button
+                  type="button"
+                  mat-raised-button
+                  class="btn-primary"
+                  (click)="nextStep()"
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =========================
+        PASO 9: DOCUMENTOS
+      ========================= -->
+
+          <div *ngIf="currentStep === 9">
+            <!-- 🔹 OBLIGATORIOS -->
+            <div class="section">
+              <div class="section-title">Documentos requeridos</div>
+
+              <div class="section-sub">
+                <strong>{{ getTotalObligatoriosCargados() }}</strong> de
+                <strong>{{ documentosObligatorios.length }}</strong>
+                documentos cargados
+              </div>
+
+              <div class="docs-grid">
+                <div
+                  class="doc-item"
+                  *ngFor="let doc of documentosObligatorios"
+                  [class.completed]="tieneArchivoObligatorio(doc.key)"
+                >
+                  <!-- HEADER -->
+                  <div class="doc-title clickable" (click)="toggleDoc(doc)">
+                    <mat-icon
+                      [ngClass]="{
+                        'icon-ok': tieneArchivoObligatorio(doc.key),
+                        'icon-pendiente': !tieneArchivoObligatorio(doc.key),
+                      }"
+                    >
+                      {{
+                        tieneArchivoObligatorio(doc.key)
+                          ? "check_circle"
+                          : doc.open
+                            ? "expand_less"
+                            : "expand_more"
+                      }}
+                    </mat-icon>
+
+                    <span>{{ doc.label }}</span>
+
+                    <!-- 🔥 ICONO AYUDA -->
+                    <mat-icon
+                      *ngIf="doc.help"
+                      class="help-icon"
+                      [matTooltip]="doc.help"
+                      (click)="$event.stopPropagation()"
+                    >
+                      help_outline
+                    </mat-icon>
+                  </div>
+
+                  <!-- CONTENIDO -->
+                  <div class="doc-content" *ngIf="doc.open !== false">
+                    <!-- UPLOAD -->
+                    <div class="file-upload" (click)="triggerFile(doc.key)">
+                      <mat-icon class="doc-icon">upload_file</mat-icon>
+
+                      <div>
+                        <div class="file-title">Adjuntar archivos</div>
+                        <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
+                      </div>
+
+                      <input
+                        [id]="'file-' + doc.key"
+                        type="file"
+                        multiple
+                        hidden
+                        (change)="onFileSelected($event, doc.key)"
+                      />
+                    </div>
+
+                    <!-- SIN ARCHIVOS -->
+                    <div
+                      *ngIf="
+                        !filesObligatorios[doc.key]?.length &&
+                        !hasBackendDocumentsForKey(doc.key)
+                      "
+                      class="hint"
+                    >
+                      Sin archivos adjuntos
+                    </div>
+
+                    <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
+                    <div
+                      *ngIf="hasBackendDocumentsForKey(doc.key)"
+                      class="file-list uploaded-documents"
+                    >
+                      <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
+                        <div class="file-left">
+                          <mat-icon color="primary">cloud_done</mat-icon>
+                          <span>{{
+                            d.originalFilename || d.original_filename
+                          }}</span>
+                        </div>
+                        <span class="hint">Documento ya registrado</span>
+                      </div>
+                    </div>
+
+                    <!-- PREVIEW ARCHIVOS NUEVOS -->
+                    <div
+                      *ngIf="filesObligatorios[doc.key]?.length"
+                      class="file-list"
+                    >
+                      <div
+                        *ngFor="
+                          let f of filesObligatorios[doc.key];
+                          let i = index
+                        "
+                      >
+                        <div class="file-left">
+                          <mat-icon>description</mat-icon>
+                          <span>{{ f.name }}</span>
+                        </div>
+
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeFile(doc.key, i)"
+                          type="button"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 🔹 OPCIONALES -->
+            <div class="section">
+              <div class="section-title">Documentos adicionales</div>
+
+              <div class="section-sub">
+                Adjuntar informacion complementaria necesaria Debajo de
+                Documentos adicionales
+              </div>
+
+              <div class="docs-grid">
+                <div
+                  class="doc-item"
+                  *ngFor="let doc of documentosOpcionales"
+                  [class.completed]="tieneArchivoOpcional(doc.key)"
+                >
+                  <!-- HEADER -->
+                  <div class="doc-title clickable" (click)="toggleDoc(doc)">
+                    <mat-icon
+                      [ngClass]="{
+                        'icon-ok': tieneArchivoOpcional(doc.key),
+                        'icon-pendiente': !tieneArchivoOpcional(doc.key),
+                      }"
+                    >
+                      {{
+                        tieneArchivoOpcional(doc.key)
+                          ? "check_circle"
+                          : doc.open
+                            ? "expand_less"
+                            : "expand_more"
+                      }}
+                    </mat-icon>
+
+                    <span>{{ doc.label }}</span>
+
+                    <!-- 🔥 ICONO AYUDA -->
+                    <mat-icon
+                      *ngIf="doc.help"
+                      class="help-icon"
+                      [matTooltip]="doc.help"
+                      (click)="$event.stopPropagation()"
+                    >
+                      help_outline
+                    </mat-icon>
+                  </div>
+
+                  <!-- CONTENIDO -->
+                  <div *ngIf="doc.open !== false">
+                    <!-- UPLOAD -->
+                    <div
+                      class="file-upload"
+                      (click)="triggerFileOpcional(doc.key)"
+                    >
+                      <mat-icon class="doc-icon">upload_file</mat-icon>
+
+                      <div>
+                        <div class="file-title">Adjuntar archivos</div>
+                        <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
+                      </div>
+
+                      <input
+                        [id]="'file-opc-' + doc.key"
+                        type="file"
+                        multiple
+                        hidden
+                        (change)="onFileSelectedOpcional($event, doc.key)"
+                      />
+                    </div>
+
+                    <!-- SIN ARCHIVOS -->
+                    <div
+                      *ngIf="
+                        !filesOpcionales[doc.key]?.length &&
+                        !hasBackendDocumentsForKey(doc.key)
+                      "
+                      class="hint"
+                    >
+                      Sin archivos adjuntos
+                    </div>
+
+                    <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
+                    <div
+                      *ngIf="hasBackendDocumentsForKey(doc.key)"
+                      class="file-list uploaded-documents"
+                    >
+                      <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
+                        <div class="file-left">
+                          <mat-icon color="primary">cloud_done</mat-icon>
+                          <span>{{
+                            d.originalFilename || d.original_filename
+                          }}</span>
+                        </div>
+                        <span class="hint">Documento ya registrado</span>
+                      </div>
+                    </div>
+
+                    <!-- PREVIEW ARCHIVOS NUEVOS -->
+                    <div
+                      *ngIf="filesOpcionales[doc.key]?.length"
+                      class="file-list"
+                    >
+                      <div
+                        *ngFor="
+                          let f of filesOpcionales[doc.key];
+                          let i = index
+                        "
+                      >
+                        <div class="file-left">
+                          <mat-icon>description</mat-icon>
+                          <span>{{ f.name }}</span>
+                        </div>
+
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeFileOpcional(doc.key, i)"
+                          type="button"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="actions">
+              <button mat-stroked-button (click)="previousStep()" type="button">
+                Volver
+              </button>
+              <button
+                type="button"
+                mat-raised-button
+                class="btn-primary"
+                (click)="saveStep9Documents()"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+
+          <!-- =========================
+        PASO 10: RESUMEN FINAL
+      ========================= -->
+          <div
+            *ngIf="currentStep === 10"
+            id="resumenPDF"
+            class="section step-final-container"
+          >
+            <!-- 🔹 HEADER -->
+            <div class="section-title">
+              <mat-icon>fact_check</mat-icon>
+              Confirmación
+            </div>
+
+            <div class="section-sub">
+              Revise cuidadosamente antes de enviar su postulación
+            </div>
+
+            <!-- 🔹 DATOS AFILIADO -->
+            <div class="resume-card">
+              <div class="card-header blue">
+                <mat-icon>person</mat-icon>
+
+                <span>Datos del afiliado</span>
+
+                <button mat-icon-button (click)="goToStep(1)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div class="resume-grid">
+                <div>
+                  <strong>Nombre:</strong>
+                  {{ form.value.nombre }} {{ form.value.apellido }}
+                </div>
+
+                <div>
+                  <strong>RUT:</strong>
+                  {{ form.value.rut }}
+                </div>
+
+                <div>
+                  <strong>Teléfono:</strong>
+                  {{ form.value.telefono || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Email:</strong>
+                  {{ form.value.email || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Fecha nacimiento:</strong>
+                  {{
+                    formatFechaVisual(form.value.fechaNacimiento) ||
+                      "No informado"
+                  }}
+                </div>
+
+                <div>
+                  <strong>Sexo:</strong>
+                  {{ getSexoName(form.value.sexo) || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Dirección:</strong>
+                  {{ form.value.direccion || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Calidad contractual:</strong>
+                  {{ form.value.calidadContractual || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Tipo afiliado:</strong>
+                  {{ form.value.tipoAfiliado || "No informado" }}
+                </div>
+
+                <div>
+                  <strong>Establecimiento:</strong>
+                  {{
+                    getStablishmentName(form.value.establecimiento) ||
+                      "No informado"
+                  }}
+                </div>
+
+                <div>
+                  <strong>Fecha afiliación:</strong>
+                  {{
+                    formatFechaVisual(form.value.fechaAfiliacion) ||
+                      "No informado"
+                  }}
+                </div>
+
+                <div>
+                  <strong>Hogar monoparental:</strong>
+                  {{ form.value.hogarMonoparental ? "Sí" : "No" }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 🔹 BENEFICIARIO -->
+            <div class="resume-card">
+              <div class="card-header green">
+                <mat-icon>school</mat-icon>
+
+                <span>Beneficiario</span>
+
+                <button mat-icon-button (click)="goToStep(3)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div class="resume-grid">
+                <div>
+                  <strong>Beneficiario:</strong>
+
                   {{
                     tipoPostulante === "afiliado"
                       ? form.value.nombre + " " + form.value.apellido
                       : postulanteSeleccionado?.nombre
                   }}
-                </strong>
-              </span>
-            </div>
-          </div>
-
-          <!-- 🔹 DATOS ACADÉMICOS -->
-          <div class="ssm-section">
-            <div class="ssm-title">Información académica</div>
-
-            <div class="ssm-grid-2">
-              <div class="ssm-field">
-                <label>Institución</label>
-                <input
-                  class="input"
-                  [(ngModel)]="academico.institucion"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>Carrera</label>
-                <input
-                  class="input"
-                  [(ngModel)]="academico.carrera"
-                  [ngModelOptions]="{ standalone: true }"
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>Tipo de estudio</label>
-
-                <select
-                  class="input"
-                  [(ngModel)]="academico.studyId"
-                  [ngModelOptions]="{ standalone: true }"
-                >
-                  <option *ngFor="let t of tiposEstudio" [value]="t.id">
-                    {{ t.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="ssm-field">
-                <label>Semestre actual</label>
-                <input
-                  class="input no-spinner"
-                  type="number"
-                  min="1"
-                  max="15"
-                  [(ngModel)]="academico.semestre"
-                  [ngModelOptions]="{ standalone: true }"
-                  (focusout)="validarSemestreAcademico()"
-                  (change)="validarSemestreAcademico()"
-                />
-              </div>
-              <div class="ssm-field">
-                <label>Duración carrera (semestres)</label>
-                <input
-                  class="input no-spinner"
-                  type="number"
-                  min="1"
-                  max="15"
-                  [(ngModel)]="academico.duracion"
-                  [ngModelOptions]="{ standalone: true }"
-                  (focusout)="validarDuracionAcademico()"
-                  (change)="validarSemestreAcademico()"
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>Estudia en la región</label>
-                <select
-                  class="input"
-                  [(ngModel)]="academico.region"
-                  [ngModelOptions]="{ standalone: true }"
-                >
-                  <option value="si">Sí</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 INFORMACIÓN ADICIONAL -->
-          <div class="ssm-section">
-            <div class="ssm-title">Información adicional</div>
-            <div class="ssm-field">
-              <label
-                >¿El beneficiario ha recibido este beneficio
-                anteriormente?</label
-              >
-
-              <select class="input" formControlName="beneficiado">
-                <option value="no">No</option>
-                <option value="si">Sí</option>
-              </select>
-            </div>
-          </div>
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- =========================
-        🟣 PASO 5: VERIFICACION
-      ========================= -->
-      <div *ngIf="currentStep === 5" class="step5-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>fact_check</mat-icon>
-            Antecedentes académicos complementarios
-          </div>
-
-          <div class="section-sub">
-            Estos antecedentes serán revisados durante el proceso de evaluación
-          </div>
-
-          <!-- 🔹 FORMULARIO -->
-          <div class="ssm-section">
-            <div class="ssm-title">Información académica adicional</div>
-
-            <div class="ssm-grid-3">
-              <div class="ssm-field">
-                <label>Situación Acedémica</label>
-                <select
-                  class="input"
-                  [(ngModel)]="verificacion.tipo"
-                  [ngModelOptions]="{ standalone: true }"
-                >
-                  <option value="primer">Primer año</option>
-                  <option value="continuidad">Segundo año</option>
-                  <option value="continuidad">Tercer año</option>
-                  <option value="continuidad">Cuarto año</option>
-                  <option value="continuidad">Quinto año</option>
-                  <option value="continuidad">Sexto año</option>
-                  <option value="continuidad">Septimo año</option>
-                  <option value="continuidad">Octavo año</option>
-                  <option value="continuidad">Curso Superior</option>
-                </select>
-              </div>
-
-              <div class="ssm-field">
-                <label>Promedio de notas</label>
-                <input
-                  class="input no-spinner"
-                  type="number"
-                  min="1"
-                  max="100"
-                  [(ngModel)]="verificacion.promedio"
-                  [ngModelOptions]="{ standalone: true }"
-                  (focusout)="validarPromedioVerificacion()"
-                  (change)="validarPromedioVerificacion()"
-                />
-              </div>
-
-              <div class="ssm-field">
-                <label>% de asignatura aprobadas</label>
-                <input
-                  class="input no-spinner"
-                  type="number"
-                  min="1"
-                  max="100"
-                  [(ngModel)]="verificacion.aprobacion"
-                  [ngModelOptions]="{ standalone: true }"
-                  (focusout)="validarAprobacionVerificacion()"
-                  (change)="validarAprobacionVerificacion()"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- =========================
-        🟣 PASO 6: INGRESOS GRUPO FAMILIAR
-      ========================= -->
-      <!-- 🔹 HEADER + ACCIÓN -->
-      <div *ngIf="currentStep === 6" class="step6-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER + ACCIÓN -->
-          <div class="step-header-actions">
-            <div>
-              <div class="section-title">
-                <mat-icon>payments</mat-icon>
-                Ingresos Familiares
-              </div>
-
-              <div class="section-sub">
-                Registre los ingresos mensuales del grupo familiar
-              </div>
-            </div>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="agregarIngreso()"
-            >
-              <mat-icon>add</mat-icon>
-              Agregar ingreso familiar
-            </button>
-          </div>
-
-          <!-- 🔹 LISTA DINÁMICA -->
-          <div class="family-list">
-            <div
-              class="family-card ingreso-card"
-              *ngFor="let i of ingresosFamiliares; let idx = index"
-            >
-              <div class="card-header">
-                <div class="title">
-                  <mat-icon>payments</mat-icon>
-                  <span>Ingreso {{ idx + 1 }}</span>
                 </div>
 
-                <button
-                  type="button"
-                  mat-icon-button
-                  color="warn"
-                  (click)="eliminarIngreso(idx)"
-                  *ngIf="ingresosFamiliares.length > 1"
-                >
-                  <mat-icon>delete</mat-icon>
+                <div>
+                  <strong>Tipo:</strong>
+
+                  {{
+                    tipoPostulante === "afiliado"
+                      ? "Afiliado/a"
+                      : "Integrante grupo familiar"
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 🔹 GRUPO FAMILIAR -->
+            <div class="resume-card">
+              <div class="card-header purple">
+                <mat-icon>groups</mat-icon>
+
+                <span>Grupo familiar</span>
+
+                <button mat-icon-button (click)="goToStep(2)" type="button">
+                  <mat-icon>edit</mat-icon>
                 </button>
               </div>
 
-              <div class="card-body">
-                <div class="step6-grid">
-                  <div class="ssm-field">
-                    <label>Integrante</label>
-                    <select
-                      class="input"
-                      [(ngModel)]="i.familiarId"
-                      [ngModelOptions]="{ standalone: true }"
-                    >
-                      <option
-                        *ngFor="let f of grupoFamiliar"
-                        [ngValue]="f.id"
-                        [disabled]="estaSeleccionado(f.id, idx)"
-                      >
-                        {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }}
-                        )
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="ssm-field">
-                    <label>Parentesco</label>
-                    <input
-                      class="input ssm-readonly"
-                      [value]="getParentescoIngreso(i.familiarId)"
-                      readonly
-                    />
-                  </div>
-
-                  <div class="ssm-field">
-                    <label>Monto</label>
-
-                    <div class="ssm-money-input">
-                      <input
-                        class="input"
-                        type="text"
-                        inputmode="numeric"
-                        [value]="i.monto ? i.monto.toLocaleString('es-CL') : ''"
-                        (input)="formatearMontoIngreso($event, idx)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 TOTAL INGRESOS -->
-          <div class="ssm-section">
-            <div class="ssm-title">Resumen de ingresos</div>
-
-            <div class="total-ingresos-card">
-              <mat-icon>account_balance_wallet</mat-icon>
-
-              <div class="total-content">
-                <span>Total ingresos familiares</span>
-
-                <strong>
-                  $ {{ totalIngresosFamiliares | number: "1.0-0" }}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- =========================
-      PASO 7: Gastos mensuales del grupo familiar
-      ========================= -->
-      <div *ngIf="currentStep === 7" class="step7-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>receipt_long</mat-icon>
-            Gastos Familiares
-          </div>
-
-          <div class="section-sub">
-            Registre los gastos mensuales del grupo familiar
-          </div>
-
-          <!-- 🔹 BLOQUE DOBLE -->
-          <div class="step7-top-grid">
-            <!-- 🔹 GASTOS BÁSICOS -->
-            <div class="ssm-section">
-              <div class="ssm-title">Gastos básicos</div>
-
-              <div class="step7-basicos-grid">
-                <div
-                  class="ssm-field"
-                  *ngFor="let campo of camposGastosBasicos"
-                >
-                  <label>{{ campo.label }}</label>
-
-                  <div class="ssm-money-input">
-                    <input
-                      class="input"
-                      type="text"
-                      [formControlName]="campo.key"
-                      (input)="formatearMonto($event, campo.key)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 🔹 GASTOS EDUCACIÓN -->
-            <div class="ssm-section">
-              <div class="ssm-title">Gastos educación</div>
-
-              <div class="step7-educacion-grid">
-                <div
-                  class="ssm-field"
-                  *ngFor="let campo of camposGastosEducacion"
-                >
-                  <label>{{ campo.label }}</label>
-
-                  <div class="ssm-money-input">
-                    <input
-                      class="input"
-                      type="text"
-                      [formControlName]="campo.key"
-                      (input)="formatearMonto($event, campo.key)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 OTROS GASTOS -->
-          <div class="ssm-section">
-            <div class="step-header-actions">
-              <div>
-                <div class="ssm-title">Otros gastos</div>
-
-                <div class="section-sub">Registre gastos extraordinarios</div>
-              </div>
-
-              <button
-                type="button"
-                mat-raised-button
-                class="btn-primary"
-                (click)="agregarGasto()"
-              >
-                <mat-icon>add</mat-icon>
-                Agregar gasto
-              </button>
-            </div>
-
-            <div class="otros-gastos-grid">
               <div
-                class="family-card gasto-card"
-                *ngFor="let g of otrosGastos; let i = index"
+                *ngFor="let f of grupoFamiliar; let i = index"
+                class="resume-row"
               >
-                <!-- 🔹 HEADER -->
-                <div class="card-header" (click)="toggleGasto(i)">
-                  <div class="title">
-                    <mat-icon>receipt</mat-icon>
-                    <span>Gasto {{ i + 1 }}</span>
-                  </div>
+                <strong>
+                  {{ f.nombre }}
+                </strong>
 
-                  <button
-                    type="button"
-                    mat-icon-button
-                    color="warn"
-                    *ngIf="otrosGastos.length > 1"
-                    (click)="eliminarGasto(i); $event.stopPropagation()"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
+                -
+
+                {{ getParentTypeName(f.parentTypeId) }}
+
+                -
+
+                {{ i === 0 ? form.value.calidadContractual : "PASIVO" }}
+              </div>
+            </div>
+
+            <!-- 🔹 ANTECEDENTES ACADÉMICOS -->
+            <div class="resume-card">
+              <div class="card-header blue">
+                <mat-icon>menu_book</mat-icon>
+
+                <span>Antecedentes académicos</span>
+
+                <button mat-icon-button (click)="goToStep(4)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div class="resume-grid">
+                <div>
+                  <strong>Institución:</strong>
+                  {{ academico.institucion }}
                 </div>
 
-                <!-- 🔹 RESUMEN VISUAL CUANDO ESTÁ CERRADO -->
-                <div class="mini-summary" *ngIf="!g.open">
-                  <div class="mini-summary-content">
-                    <div class="mini-avatar">
-                      <mat-icon>receipt_long</mat-icon>
-                    </div>
-
-                    <div class="mini-info">
-                      <div class="mini-name">
-                        {{ g.glosa || "Sin glosa" }}
-                      </div>
-
-                      <div class="mini-detail">
-                        $ {{ g.monto || 0 | number: "1.0-0" }}
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <strong>Carrera:</strong>
+                  {{ academico.carrera }}
                 </div>
 
-                <!-- 🔹 BODY -->
-                <div class="card-body" *ngIf="g.open">
-                  <div class="ssm-field">
-                    <label>Glosa</label>
+                <div>
+                  <strong>Nivel:</strong>
+                  {{ getStudyName(academico.studyId) }}
+                </div>
 
-                    <input
-                      class="input"
-                      [(ngModel)]="g.glosa"
-                      [ngModelOptions]="{ standalone: true }"
-                      placeholder="Ej: medicamentos"
-                    />
-                  </div>
+                <div>
+                  <strong>Semestre actual:</strong>
+                  {{ academico.semestre }}
+                </div>
 
-                  <div class="ssm-field">
-                    <label>Monto</label>
+                <div>
+                  <strong>Duración:</strong>
+                  {{ academico.duracion }} semestres
+                </div>
 
-                    <div class="ssm-money-input">
-                      <input
-                        class="input"
-                        type="text"
-                        inputmode="numeric"
-                        [value]="g.monto ? g.monto.toLocaleString('es-CL') : ''"
-                        (input)="formatearMontoOtro($event, g)"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <strong>Estudia en la región:</strong>
+                  {{ academico.region === "si" ? "Sí" : "No" }}
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 🔹 RESUMEN DE GASTOS -->
-          <div class="ssm-section">
-            <div class="ssm-title">Resumen de gastos</div>
+            <!-- 🔹 INGRESOS -->
+            <div class="resume-card">
+              <div class="card-header green">
+                <mat-icon>payments</mat-icon>
 
-            <div class="step7-resumen-grid">
-              <!-- 🔹 TOTAL BÁSICOS -->
-              <div class="total-basicos-card">
+                <span>Ingresos familiares</span>
+
+                <button mat-icon-button (click)="goToStep(6)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div *ngFor="let i of ingresosFamiliares" class="resume-row">
+                {{ getNombreIngreso(i) }} - $ {{ i.monto | number }}
+              </div>
+
+              <div class="resume-total">
+                Total ingresos: $ {{ totalIngresosFamiliares | number }}
+              </div>
+            </div>
+
+            <!-- 🔹 GASTOS -->
+            <div class="resume-card">
+              <div class="card-header orange">
+                <mat-icon>receipt_long</mat-icon>
+
+                <span>Gastos familiares</span>
+
+                <button mat-icon-button (click)="goToStep(7)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div class="resume-grid">
+                <div>
+                  <strong>Gastos básicos:</strong>
+                  $ {{ totalGastosBasicos | number }}
+                </div>
+
+                <div>
+                  <strong>Educación:</strong>
+                  $ {{ totalGastosEducacion | number }}
+                </div>
+
+                <div>
+                  <strong>Otros gastos:</strong>
+                  $ {{ totalOtrosGastos | number }}
+                </div>
+              </div>
+
+              <div class="resume-total">
+                Total gastos: $ {{ totalGastos | number }}
+              </div>
+            </div>
+
+            <!-- 🔹 VIVIENDA -->
+            <div class="resume-card">
+              <div class="card-header blue">
                 <mat-icon>home</mat-icon>
 
-                <div>
-                  <span>Total gastos básicos</span>
+                <span>Vivienda</span>
 
-                  <strong>
-                    $ {{ totalGastosBasicos | number: "1.0-0" }}
-                  </strong>
-                </div>
+                <button mat-icon-button (click)="goToStep(8)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
               </div>
 
-              <!-- 🔹 TOTAL EDUCACIÓN -->
-              <div class="total-educacion-card">
-                <mat-icon>school</mat-icon>
-
+              <div class="resume-grid">
                 <div>
-                  <span>Total gastos educación</span>
+                  <strong>Tipo vivienda:</strong>
 
-                  <strong>
-                    $ {{ totalGastosEducacion | number: "1.0-0" }}
-                  </strong>
+                  {{
+                    getHousingName(form.value.tipoVivienda) || "No informado"
+                  }}
                 </div>
-              </div>
-
-              <!-- 🔹 TOTAL OTROS -->
-              <div class="total-secundario-card" *ngIf="otrosGastos.length">
-                <mat-icon>add_card</mat-icon>
 
                 <div>
-                  <span>Total otros gastos</span>
+                  <strong>Propiedad:</strong>
 
-                  <strong> $ {{ totalOtrosGastos | number: "1.0-0" }} </strong>
-                </div>
-              </div>
-
-              <!-- 🔹 TOTAL GENERAL -->
-              <div class="total-gastos-card">
-                <mat-icon>trending_down</mat-icon>
-
-                <div>
-                  <span>Total gastos familiares</span>
-
-                  <strong> $ {{ totalGastos | number: "1.0-0" }} </strong>
+                  {{
+                    getPropertyName(form.value.tipoPropiedad) || "No informado"
+                  }}
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
+            <!-- 🔹 SALUD -->
+            <div class="resume-card">
+              <div class="card-header red">
+                <mat-icon>healing</mat-icon>
 
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
+                <span>Salud</span>
 
-      <!-- =========================
-        PASO 8: SALUD Y VIVIENDA
-      ========================= -->
-      <div *ngIf="currentStep === 8" class="step8-container">
-        <div class="ssm-section-main">
-          <!-- 🔹 HEADER -->
-          <div class="section-title">
-            <mat-icon>healing</mat-icon>
-            Salud y Vivienda
-          </div>
-
-          <div class="section-sub">
-            Registre antecedentes de salud y vivienda
-          </div>
-
-          <!-- 🔹 SALUD -->
-          <div class="ssm-section">
-            <div class="step-header-actions">
-              <div>
-                <div class="ssm-title">Antecedentes de salud</div>
-
-                <div class="section-sub">
-                  Registre enfermedades o gastos médicos del grupo familiar
-                </div>
+                <button mat-icon-button (click)="goToStep(8)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
               </div>
+
+              <div *ngFor="let s of salud" class="resume-row">
+                {{ getNombreFamiliar(s.familiarId) }} - {{ s.patologia }} - $
+                {{ s.gasto | number }}
+              </div>
+
+              <div class="resume-total">
+                Total salud: $ {{ totalSalud | number }}
+              </div>
+            </div>
+
+            <!-- 🔹 DOCUMENTOS -->
+            <div class="resume-card">
+              <div class="card-header purple">
+                <mat-icon>attach_file</mat-icon>
+
+                <span>Documentos adjuntos</span>
+
+                <button mat-icon-button (click)="goToStep(9)" type="button">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+
+              <div
+                *ngFor="let doc of documentosObligatorios"
+                class="resume-row"
+              >
+                ✔ {{ doc.label }}
+              </div>
+            </div>
+
+            <!-- 🔹 MENSAJE -->
+            <div class="resume-warning">
+              La postulación será revisada conforme a los antecedentes
+              presentados.
+            </div>
+
+            <!-- 🔹 ACTIONS -->
+            <div class="actions">
+              <button mat-stroked-button (click)="previousStep()" type="button">
+                Volver
+              </button>
 
               <button
-                type="button"
                 mat-raised-button
                 class="btn-primary"
-                (click)="agregarSalud()"
+                [disabled]="isSaving || isFinalizing"
+                (click)="guardarFinal($event)"
+                type="button"
               >
-                <mat-icon>add</mat-icon>
                 {{
-                  salud.length
-                    ? "Agregar otro antecedente"
-                    : "Agregar antecedente de salud"
+                  isSaving || isFinalizing
+                    ? "Enviando..."
+                    : "Enviar postulación"
                 }}
               </button>
-            </div>
 
-            <!-- 🔹 GRID TIPO OTROS GASTOS -->
-            <div class="salud-grid">
-              <div
-                class="family-card salud-card"
-                *ngFor="let s of salud; let i = index"
-              >
-                <!-- 🔹 HEADER -->
-                <div class="card-header" (click)="toggleSalud(i)">
-                  <div class="title">
-                    <mat-icon>healing</mat-icon>
-                    <span>Registro {{ i + 1 }}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    mat-icon-button
-                    color="warn"
-                    *ngIf="salud.length > 1"
-                    (click)="eliminarSalud(i); $event.stopPropagation()"
-                  >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-
-                <!-- 🔹 BODY -->
-                <div class="card-body" *ngIf="s.open">
-                  <div class="ssm-field">
-                    <label>Nombre</label>
-
-                    <input
-                      class="input"
-                      [(ngModel)]="s.nombre"
-                      [ngModelOptions]="{ standalone: true }"
-                    />
-                  </div>
-
-                  <div class="ssm-field">
-                    <label>Integrante familiar</label>
-
-                    <select
-                      class="input"
-                      [(ngModel)]="s.familiarId"
-                      [ngModelOptions]="{ standalone: true }"
-                    >
-                      <option *ngFor="let f of grupoFamiliar" [ngValue]="f.id">
-                        {{ f.nombre }} ({{ getParentTypeName(f.parentTypeId) }})
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="ssm-field">
-                    <label>Patología</label>
-
-                    <input
-                      class="input"
-                      [(ngModel)]="s.patologia"
-                      [ngModelOptions]="{ standalone: true }"
-                    />
-                  </div>
-
-                  <div class="ssm-field">
-                    <label>Gasto mensual</label>
-
-                    <div class="ssm-money-input">
-                      <span>$</span>
-
-                      <input
-                        class="input"
-                        type="text"
-                        inputmode="numeric"
-                        [value]="s.gasto ? s.gasto.toLocaleString('es-CL') : ''"
-                        (input)="formatearMontoSalud($event, s)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 🔹 TOTAL SALUD -->
-            <div class="total-salud-card" *ngIf="salud.length">
-              <mat-icon>health_and_safety</mat-icon>
-
-              <div>
-                <span>Total gastos salud</span>
-
-                <strong> $ {{ totalSalud | number: "1.0-0" }} </strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 VIVIENDA -->
-          <div class="ssm-section">
-            <div class="ssm-title">Vivienda</div>
-
-            <div class="step8-vivienda-grid">
-              <!-- TIPO INMUEBLE -->
-              <div class="ssm-field">
-                <label>Tipo de inmueble</label>
-
-                <select class="input" formControlName="tipoVivienda">
-                  <option *ngFor="let t of typesHousing" [ngValue]="t.id">
-                    {{ t.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- TIPO TENENCIA -->
-              <div class="ssm-field">
-                <label>Tipo tenencia inmueble</label>
-
-                <select class="input" formControlName="tipoPropiedad">
-                  <option *ngFor="let t of typesProperties" [ngValue]="t.id">
-                    {{ t.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 🔹 ANTECEDENTES -->
-            <div class="step8-vivienda-textos">
-              <div class="ssm-field">
-                <label>Antecedentes habitacionales</label>
-
-                <textarea
-                  class="ssm-textarea"
-                  rows="3"
-                  formControlName="infoVivienda"
-                ></textarea>
-              </div>
-
-              <div class="ssm-field">
-                <label>Otros antecedentes</label>
-
-                <textarea
-                  class="ssm-textarea"
-                  rows="3"
-                  formControlName="otrosAntecedentes"
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- 🔹 ACTIONS -->
-          <div class="actions">
-            <button mat-stroked-button (click)="previousStep()" type="button">
-              Volver
-            </button>
-
-            <button
-              type="button"
-              mat-raised-button
-              class="btn-primary"
-              (click)="nextStep()"
-            >
-              Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- =========================
-        PASO 9: DOCUMENTOS
-      ========================= -->
-
-      <div *ngIf="currentStep === 9">
-        <!-- 🔹 OBLIGATORIOS -->
-        <div class="section">
-          <div class="section-title">Documentos requeridos</div>
-
-          <div class="section-sub">
-            <strong>{{ getTotalObligatoriosCargados() }}</strong> de
-            <strong>{{ documentosObligatorios.length }}</strong>
-            documentos cargados
-          </div>
-
-          <div class="docs-grid">
-            <div
-              class="doc-item"
-              *ngFor="let doc of documentosObligatorios"
-              [class.completed]="tieneArchivoObligatorio(doc.key)"
-            >
-              <!-- HEADER -->
-              <div class="doc-title clickable" (click)="toggleDoc(doc)">
-                <mat-icon
-                  [ngClass]="{
-                    'icon-ok': tieneArchivoObligatorio(doc.key),
-                    'icon-pendiente': !tieneArchivoObligatorio(doc.key),
-                  }"
-                >
-                  {{
-                    tieneArchivoObligatorio(doc.key)
-                      ? "check_circle"
-                      : doc.open
-                        ? "expand_less"
-                        : "expand_more"
-                  }}
-                </mat-icon>
-
-                <span>{{ doc.label }}</span>
-
-                <!-- 🔥 ICONO AYUDA -->
-                <mat-icon
-                  *ngIf="doc.help"
-                  class="help-icon"
-                  [matTooltip]="doc.help"
-                  (click)="$event.stopPropagation()"
-                >
-                  help_outline
-                </mat-icon>
-              </div>
-
-              <!-- CONTENIDO -->
-              <div class="doc-content" *ngIf="doc.open !== false">
-                <!-- UPLOAD -->
-                <div class="file-upload" (click)="triggerFile(doc.key)">
-                  <mat-icon class="doc-icon">upload_file</mat-icon>
-
-                  <div>
-                    <div class="file-title">Adjuntar archivos</div>
-                    <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
-                  </div>
-
-                  <input
-                    [id]="'file-' + doc.key"
-                    type="file"
-                    multiple
-                    hidden
-                    (change)="onFileSelected($event, doc.key)"
-                  />
-                </div>
-
-                <!-- SIN ARCHIVOS -->
-                <div
-                  *ngIf="
-                    !filesObligatorios[doc.key]?.length &&
-                    !hasBackendDocumentsForKey(doc.key)
-                  "
-                  class="hint"
-                >
-                  Sin archivos adjuntos
-                </div>
-
-                <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
-                <div
-                  *ngIf="hasBackendDocumentsForKey(doc.key)"
-                  class="file-list uploaded-documents"
-                >
-                  <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
-                    <div class="file-left">
-                      <mat-icon color="primary">cloud_done</mat-icon>
-                      <span>{{
-                        d.originalFilename || d.original_filename
-                      }}</span>
-                    </div>
-                    <span class="hint">Documento ya registrado</span>
-                  </div>
-                </div>
-
-                <!-- PREVIEW ARCHIVOS NUEVOS -->
-                <div
-                  *ngIf="filesObligatorios[doc.key]?.length"
-                  class="file-list"
-                >
-                  <div
-                    *ngFor="let f of filesObligatorios[doc.key]; let i = index"
-                  >
-                    <div class="file-left">
-                      <mat-icon>description</mat-icon>
-                      <span>{{ f.name }}</span>
-                    </div>
-
-                    <button
-                      mat-icon-button
-                      color="warn"
-                      (click)="removeFile(doc.key, i)"
-                      type="button"
-                    >
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 🔹 OPCIONALES -->
-        <div class="section">
-          <div class="section-title">Documentos adicionales</div>
-
-          <div class="section-sub">
-            Adjuntar informacion complementaria necesaria Debajo de Documentos
-            adicionales
-          </div>
-
-          <div class="docs-grid">
-            <div
-              class="doc-item"
-              *ngFor="let doc of documentosOpcionales"
-              [class.completed]="tieneArchivoOpcional(doc.key)"
-            >
-              <!-- HEADER -->
-              <div class="doc-title clickable" (click)="toggleDoc(doc)">
-                <mat-icon
-                  [ngClass]="{
-                    'icon-ok': tieneArchivoOpcional(doc.key),
-                    'icon-pendiente': !tieneArchivoOpcional(doc.key),
-                  }"
-                >
-                  {{
-                    tieneArchivoOpcional(doc.key)
-                      ? "check_circle"
-                      : doc.open
-                        ? "expand_less"
-                        : "expand_more"
-                  }}
-                </mat-icon>
-
-                <span>{{ doc.label }}</span>
-
-                <!-- 🔥 ICONO AYUDA -->
-                <mat-icon
-                  *ngIf="doc.help"
-                  class="help-icon"
-                  [matTooltip]="doc.help"
-                  (click)="$event.stopPropagation()"
-                >
-                  help_outline
-                </mat-icon>
-              </div>
-
-              <!-- CONTENIDO -->
-              <div *ngIf="doc.open !== false">
-                <!-- UPLOAD -->
-                <div class="file-upload" (click)="triggerFileOpcional(doc.key)">
-                  <mat-icon class="doc-icon">upload_file</mat-icon>
-
-                  <div>
-                    <div class="file-title">Adjuntar archivos</div>
-                    <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
-                  </div>
-
-                  <input
-                    [id]="'file-opc-' + doc.key"
-                    type="file"
-                    multiple
-                    hidden
-                    (change)="onFileSelectedOpcional($event, doc.key)"
-                  />
-                </div>
-
-                <!-- SIN ARCHIVOS -->
-                <div
-                  *ngIf="
-                    !filesOpcionales[doc.key]?.length &&
-                    !hasBackendDocumentsForKey(doc.key)
-                  "
-                  class="hint"
-                >
-                  Sin archivos adjuntos
-                </div>
-
-                <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
-                <div
-                  *ngIf="hasBackendDocumentsForKey(doc.key)"
-                  class="file-list uploaded-documents"
-                >
-                  <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
-                    <div class="file-left">
-                      <mat-icon color="primary">cloud_done</mat-icon>
-                      <span>{{
-                        d.originalFilename || d.original_filename
-                      }}</span>
-                    </div>
-                    <span class="hint">Documento ya registrado</span>
-                  </div>
-                </div>
-
-                <!-- PREVIEW ARCHIVOS NUEVOS -->
-                <div *ngIf="filesOpcionales[doc.key]?.length" class="file-list">
-                  <div
-                    *ngFor="let f of filesOpcionales[doc.key]; let i = index"
-                  >
-                    <div class="file-left">
-                      <mat-icon>description</mat-icon>
-                      <span>{{ f.name }}</span>
-                    </div>
-
-                    <button
-                      mat-icon-button
-                      color="warn"
-                      (click)="removeFileOpcional(doc.key, i)"
-                      type="button"
-                    >
-                      <mat-icon>close</mat-icon>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- BOTONES -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()" type="button">
-            Volver
-          </button>
-          <button
-            type="button"
-            mat-raised-button
-            class="btn-primary"
-            (click)="nextStep()"
-          >
-            Continuar
-          </button>
-        </div>
-      </div>
-
-      <!-- =========================
-        PASO 10: RESUMEN FINAL
-      ========================= -->
-      <div
-        *ngIf="currentStep === 10"
-        id="resumenPDF"
-        class="section step-final-container"
-      >
-        <!-- 🔹 HEADER -->
-        <div class="section-title">
-          <mat-icon>fact_check</mat-icon>
-          Confirmación
-        </div>
-
-        <div class="section-sub">
-          Revise cuidadosamente antes de enviar su postulación
-        </div>
-
-        <!-- 🔹 DATOS AFILIADO -->
-        <div class="resume-card">
-          <div class="card-header blue">
-            <mat-icon>person</mat-icon>
-
-            <span>Datos del afiliado</span>
-
-            <button mat-icon-button (click)="goToStep(1)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div class="resume-grid">
-            <div>
-              <strong>Nombre:</strong>
-              {{ form.value.nombre }} {{ form.value.apellido }}
-            </div>
-
-            <div>
-              <strong>RUT:</strong>
-              {{ form.value.rut }}
-            </div>
-
-            <div>
-              <strong>Teléfono:</strong>
-              {{ form.value.telefono }}
-            </div>
-
-            <div>
-              <strong>Email:</strong>
-              {{ form.value.email }}
-            </div>
-
-            <div>
-              <strong>Planta:</strong>
-              {{ form.value.planta }}
-            </div>
-
-            <div>
-              <strong>Grado:</strong>
-              {{ form.value.grado }}
-            </div>
-
-            <div>
-              <strong>Calidad contractual:</strong>
-              {{ form.value.calidadContractual }}
-            </div>
-            <div>
-              <strong>Hogar monoparental:</strong>
-              {{ form.value.hogarMonoparental ? "Sí" : "No" }}
-            </div>
-
-            <div>
-              <strong>Tipo afiliado:</strong>
-              {{ form.value.tipoAfiliado }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 🔹 BENEFICIARIO -->
-        <div class="resume-card">
-          <div class="card-header green">
-            <mat-icon>school</mat-icon>
-
-            <span>Beneficiario</span>
-
-            <button mat-icon-button (click)="goToStep(3)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div class="resume-grid">
-            <div>
-              <strong>Beneficiario:</strong>
-
-              {{
-                tipoPostulante === "afiliado"
-                  ? form.value.nombre + " " + form.value.apellido
-                  : postulanteSeleccionado?.nombre
-              }}
-            </div>
-
-            <div>
-              <strong>Tipo:</strong>
-
-              {{
-                tipoPostulante === "afiliado"
-                  ? "Afiliado/a"
-                  : "Integrante grupo familiar"
-              }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 🔹 GRUPO FAMILIAR -->
-        <div class="resume-card">
-          <div class="card-header purple">
-            <mat-icon>groups</mat-icon>
-
-            <span>Grupo familiar</span>
-
-            <button mat-icon-button (click)="goToStep(2)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div
-            *ngFor="let f of grupoFamiliar; let i = index"
-            class="resume-row"
-          >
-            <strong>
-              {{ f.nombre }}
-            </strong>
-
-            -
-
-            {{ getParentTypeName(f.parentTypeId) }}
-
-            -
-
-            {{ i === 0 ? form.value.calidadContractual : "PASIVO" }}
-          </div>
-        </div>
-
-        <!-- 🔹 ANTECEDENTES ACADÉMICOS -->
-        <div class="resume-card">
-          <div class="card-header blue">
-            <mat-icon>menu_book</mat-icon>
-
-            <span>Antecedentes académicos</span>
-
-            <button mat-icon-button (click)="goToStep(4)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div class="resume-grid">
-            <div>
-              <strong>Institución:</strong>
-              {{ academico.institucion }}
-            </div>
-
-            <div>
-              <strong>Carrera:</strong>
-              {{ academico.carrera }}
-            </div>
-
-            <div>
-              <strong>Nivel:</strong>
-              {{ getStudyName(academico.studyId) }}
-            </div>
-
-            <div>
-              <strong>Semestre actual:</strong>
-              {{ academico.semestre }}
-            </div>
-
-            <div>
-              <strong>Duración:</strong>
-              {{ academico.duracion }} semestres
-            </div>
-
-            <div>
-              <strong>Estudia en la región:</strong>
-              {{ academico.region === "si" ? "Sí" : "No" }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 🔹 INGRESOS -->
-        <div class="resume-card">
-          <div class="card-header green">
-            <mat-icon>payments</mat-icon>
-
-            <span>Ingresos familiares</span>
-
-            <button mat-icon-button (click)="goToStep(6)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div *ngFor="let i of ingresosFamiliares" class="resume-row">
-            {{ getNombreIngreso(i.familiarId) }} - $ {{ i.monto | number }}
-          </div>
-
-          <div class="resume-total">
-            Total ingresos: $ {{ totalIngresosFamiliares | number }}
-          </div>
-        </div>
-
-        <!-- 🔹 GASTOS -->
-        <div class="resume-card">
-          <div class="card-header orange">
-            <mat-icon>receipt_long</mat-icon>
-
-            <span>Gastos familiares</span>
-
-            <button mat-icon-button (click)="goToStep(7)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div class="resume-grid">
-            <div>
-              <strong>Gastos básicos:</strong>
-              $ {{ totalGastosBasicos | number }}
-            </div>
-
-            <div>
-              <strong>Educación:</strong>
-              $ {{ totalGastosEducacion | number }}
-            </div>
-
-            <div>
-              <strong>Otros gastos:</strong>
-              $ {{ totalOtrosGastos | number }}
-            </div>
-          </div>
-
-          <div class="resume-total">
-            Total gastos: $ {{ totalGastos | number }}
-          </div>
-        </div>
-
-        <!-- 🔹 VIVIENDA -->
-        <div class="resume-card">
-          <div class="card-header blue">
-            <mat-icon>home</mat-icon>
-
-            <span>Vivienda</span>
-
-            <button mat-icon-button (click)="goToStep(8)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div class="resume-grid">
-            <div>
-              <strong>Tipo vivienda:</strong>
-
-              {{ getHousingName(form.value.tipoVivienda) || "No informado" }}
-            </div>
-
-            <div>
-              <strong>Propiedad:</strong>
-
-              {{ getPropertyName(form.value.tipoPropiedad) || "No informado" }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 🔹 SALUD -->
-        <div class="resume-card">
-          <div class="card-header red">
-            <mat-icon>healing</mat-icon>
-
-            <span>Salud</span>
-
-            <button mat-icon-button (click)="goToStep(8)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div *ngFor="let s of salud" class="resume-row">
-            {{ getNombreFamiliar(s.familiarId) }} - {{ s.patologia }} - $
-            {{ s.gasto | number }}
-          </div>
-
-          <div class="resume-total">
-            Total salud: $ {{ totalSalud | number }}
-          </div>
-        </div>
-
-        <!-- 🔹 DOCUMENTOS -->
-        <div class="resume-card">
-          <div class="card-header purple">
-            <mat-icon>attach_file</mat-icon>
-
-            <span>Documentos adjuntos</span>
-
-            <button mat-icon-button (click)="goToStep(9)" type="button">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-
-          <div *ngFor="let doc of documentosObligatorios" class="resume-row">
-            ✔ {{ doc.label }}
-          </div>
-        </div>
-
-        <!-- 🔹 MENSAJE -->
-        <div class="resume-warning">
-          La postulación será revisada conforme a los antecedentes presentados.
-        </div>
-
-        <!-- 🔹 ACTIONS -->
-        <div class="actions">
-          <button mat-stroked-button (click)="previousStep()" type="button">
-            Volver
-          </button>
-
-          <button
-            mat-raised-button
-            class="btn-primary"
-            [disabled]="isSaving || isFinalizing"
-            (click)="guardarFinal($event)"
-            type="button"
-          >
-            {{
-              isSaving || isFinalizing ? "Enviando..." : "Enviar postulación"
-            }}
-          </button>
-
-          <!-- 
+              <!-- 
             <button
               mat-stroked-button
               class="btn-mail"
@@ -2076,137 +2232,143 @@
               Enviar comprobante por correo
             </button>   
          -->
-        </div>
-      </div>
+            </div>
+          </div>
 
-      <!-- ============================
+          <!-- ============================
            🟢 PASO FINAL paso 11
       ============================ -->
-      <div *ngIf="currentStep === 11" class="section step11-container">
-        <!-- ✅ HERO -->
-        <div class="success-hero">
-          <div class="success-icon">
-            <mat-icon>verified</mat-icon>
+          <div *ngIf="currentStep === 11" class="section step11-container">
+            <!-- ✅ HERO -->
+            <div class="success-hero">
+              <div class="success-icon">
+                <mat-icon>verified</mat-icon>
+              </div>
+
+              <div class="success-content">
+                <div class="success-title">Postulación enviada con éxito</div>
+
+                <div class="success-sub">
+                  Tu solicitud fue registrada correctamente en el sistema
+                  Bienestar SSM.
+                </div>
+
+                <div class="success-folio">
+                  {{ codigoPostulacion }}
+                </div>
+              </div>
+            </div>
+
+            <!-- ✅ RESUMEN -->
+            <div class="resumeStep11-card">
+              <div class="resume-header">
+                <mat-icon>description</mat-icon>
+                Resumen de postulación
+              </div>
+
+              <div class="resumeStep11-grid">
+                <div class="item">
+                  <span>Postulante</span>
+                  <strong>
+                    {{ form.value.nombre }}
+                    {{ form.value.apellido }}
+                  </strong>
+                </div>
+
+                <div class="item">
+                  <span>RUT</span>
+                  <strong>{{ form.value.rut }}</strong>
+                </div>
+
+                <div class="item">
+                  <span>Grupo familiar</span>
+                  <strong>{{ grupoFamiliar.length }}</strong>
+                </div>
+
+                <div class="item">
+                  <span>Total ingresos</span>
+                  <strong>
+                    {{
+                      totalIngresosFamiliares
+                        | currency: "CLP" : "symbol" : "1.0-0"
+                    }}
+                  </strong>
+                </div>
+
+                <div class="item">
+                  <span>Total gastos</span>
+                  <strong>
+                    {{ totalGastos | currency: "CLP" : "symbol" : "1.0-0" }}
+                  </strong>
+                </div>
+
+                <div class="item">
+                  <span>Documentos obligatorios</span>
+                  <strong>
+                    {{ getTotalObligatoriosCargados() }}
+                    / {{ documentosObligatorios.length }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- ✅ DOCUMENTOS -->
+            <div class="documents-card">
+              <div class="resume-header">
+                <mat-icon>folder</mat-icon>
+                Documentos adjuntos
+              </div>
+
+              <div class="docs-list">
+                <div
+                  class="doc-item"
+                  *ngFor="let doc of documentosObligatorios"
+                >
+                  <mat-icon [class.ok]="tieneArchivoObligatorio(doc.key)">
+                    {{
+                      tieneArchivoObligatorio(doc.key)
+                        ? "check_circle"
+                        : "cancel"
+                    }}
+                  </mat-icon>
+
+                  <span>{{ doc.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ✅ MENSAJE LEGAL -->
+            <div class="legal-box">
+              <mat-icon>info</mat-icon>
+
+              <span>
+                Este comprobante acredita el ingreso de la postulación al
+                sistema Bienestar SSM 2026. La postulación será revisada
+                conforme a los antecedentes presentados.
+              </span>
+            </div>
+
+            <!-- ✅ ACCIONES -->
+            <div class="finalStep11-actions">
+              <button
+                mat-stroked-button
+                class="btn-pdf"
+                (click)="descargarPDF()"
+                type="button"
+              >
+                <mat-icon>picture_as_pdf</mat-icon>
+                Descargar comprobante
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="nuevaPostulacion()"
+              >
+                Volver a mis postulaciones
+              </button>
+            </div>
           </div>
-
-          <div class="success-content">
-            <div class="success-title">Postulación enviada con éxito</div>
-
-            <div class="success-sub">
-              Tu solicitud fue registrada correctamente en el sistema Bienestar
-              SSM.
-            </div>
-
-            <div class="success-folio">
-              {{ codigoPostulacion }}
-            </div>
-          </div>
-        </div>
-
-        <!-- ✅ RESUMEN -->
-        <div class="resumeStep11-card">
-          <div class="resume-header">
-            <mat-icon>description</mat-icon>
-            Resumen de postulación
-          </div>
-
-          <div class="resumeStep11-grid">
-            <div class="item">
-              <span>Postulante</span>
-              <strong>
-                {{ form.value.nombre }}
-                {{ form.value.apellido }}
-              </strong>
-            </div>
-
-            <div class="item">
-              <span>RUT</span>
-              <strong>{{ form.value.rut }}</strong>
-            </div>
-
-            <div class="item">
-              <span>Grupo familiar</span>
-              <strong>{{ grupoFamiliar.length }}</strong>
-            </div>
-
-            <div class="item">
-              <span>Total ingresos</span>
-              <strong>
-                {{
-                  totalIngresosFamiliares | currency: "CLP" : "symbol" : "1.0-0"
-                }}
-              </strong>
-            </div>
-
-            <div class="item">
-              <span>Total gastos</span>
-              <strong>
-                {{ totalGastos | currency: "CLP" : "symbol" : "1.0-0" }}
-              </strong>
-            </div>
-
-            <div class="item">
-              <span>Documentos obligatorios</span>
-              <strong>
-                {{ getTotalObligatoriosCargados() }}
-                / {{ documentosObligatorios.length }}
-              </strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- ✅ DOCUMENTOS -->
-        <div class="documents-card">
-          <div class="resume-header">
-            <mat-icon>folder</mat-icon>
-            Documentos adjuntos
-          </div>
-
-          <div class="docs-list">
-            <div class="doc-item" *ngFor="let doc of documentosObligatorios">
-              <mat-icon [class.ok]="tieneArchivoObligatorio(doc.key)">
-                {{
-                  tieneArchivoObligatorio(doc.key) ? "check_circle" : "cancel"
-                }}
-              </mat-icon>
-
-              <span>{{ doc.label }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ✅ MENSAJE LEGAL -->
-        <div class="legal-box">
-          <mat-icon>info</mat-icon>
-
-          <span>
-            Este comprobante acredita el ingreso de la postulación al sistema
-            Bienestar SSM 2026. La postulación será revisada conforme a los
-            antecedentes presentados.
-          </span>
-        </div>
-
-        <!-- ✅ ACCIONES -->
-        <div class="finalStep11-actions">
-          <button
-            mat-stroked-button
-            class="btn-pdf"
-            (click)="descargarPDF()"
-            type="button"
-          >
-            <mat-icon>picture_as_pdf</mat-icon>
-            Descargar comprobante
-          </button>
-
-          <button
-            mat-raised-button
-            class="btnStep11-primary"
-            (click)="nuevaPostulacion()"
-            type="button"
-          >
-            <mat-icon>add</mat-icon>
-            Nueva postulación
-          </button>
         </div>
       </div>
     </div>

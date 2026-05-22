@@ -13,7 +13,13 @@ export interface FamilyMemberRequest {
 
   activityId?: number | null;
 
+  // 🔥 Si Actividad = OTRO
+  othersActivities?: string | null;
+
   workPlaceId?: number | null;
+
+  // 🔥 Si Profesión u oficio = OTRO
+  othersWorkplaces?: string | null;
 
   studyLevelId?: number | null;
 
@@ -25,5 +31,5 @@ export interface FamilyMemberRequest {
 
   student?: boolean;
 
-  studyPlace?: string;
+  studyPlace?: string | null;
 }

@@ -17,6 +17,61 @@
   backdrop-filter: blur(4px);
 }
 
+
+.postulation-top-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 8px 0;
+}
+
+.btn-back-selector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 999px;
+  padding: 11px 18px;
+
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(21, 101, 192, 0.28);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+
+.btn-back-selector mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #ffffff;
+}
+
+.btn-back-selector:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 22px rgba(21, 101, 192, 0.38);
+}
+
+.btn-back-selector:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 12px rgba(21, 101, 192, 0.28);
+}
+
+
 .loader-box {
   display: flex;
   flex-direction: column;

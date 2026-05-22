@@ -66,13 +66,25 @@ export class WellbeingMapperService {
 
       lastNames: f.apellido || '',
 
+      birthDate: this.formatDate(f.birthDate),
+
       parentTypeId: f.parentTypeId || null,
 
       civilStateId: f.civilStateId || null,
 
       activityId: f.activityId || null,
 
+      // 🔥 NUEVO CAMPO ACTIVIDAD "OTRO"
+      othersActivities: f.othersActivities
+        ? String(f.othersActivities).trim()
+        : null,
+
       workPlaceId: f.workPlaceId || null,
+
+      // 🔥 NUEVO CAMPO PROFESIÓN / OFICIO "OTRO"
+      othersWorkplaces: f.othersWorkplaces
+        ? String(f.othersWorkplaces).trim()
+        : null,
 
       studyLevelId: f.studyId || null,
 
@@ -84,7 +96,7 @@ export class WellbeingMapperService {
 
       student: f.esEstudiante || false,
 
-      studyPlace: f.lugarEstudio || '',
+      studyPlace: f.studyPlace || f.lugarEstudio || '',
 
       // =====================================
       // 🔥 LEGACY DTO
@@ -124,7 +136,17 @@ export class WellbeingMapperService {
 
       activityId: f.activityId || null,
 
+      // 🔥 NUEVO CAMPO ACTIVIDAD "OTRO"
+      othersActivities: f.othersActivities
+        ? String(f.othersActivities).trim()
+        : null,
+
       workPlaceId: f.workPlaceId || null,
+
+      // 🔥 NUEVO CAMPO PROFESIÓN / OFICIO "OTRO"
+      othersWorkplaces: f.othersWorkplaces
+        ? String(f.othersWorkplaces).trim()
+        : null,
 
       studyLevelId: f.studyId || null,
 
@@ -136,8 +158,7 @@ export class WellbeingMapperService {
 
       student: f.esEstudiante || false,
 
-      studyPlace: f.lugarEstudio || '',
-
+      studyPlace: f.studyPlace || f.lugarEstudio || '',
     };
   }
 
