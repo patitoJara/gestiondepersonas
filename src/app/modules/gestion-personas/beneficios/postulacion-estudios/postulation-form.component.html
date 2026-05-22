@@ -79,21 +79,17 @@
 
       <!-- 🔥 FORMULARIO COMPLETO: STEPPER + STEPS -->
       <div *ngIf="showPostulationForm">
-        <div *ngIf="showPostulationForm">
-          <div class="postulation-top-bar">
-            <button
-              type="button"
-              class="btn-back-selector"
-              (click)="volverAlSelector()"
-            >
-              <mat-icon>arrow_back</mat-icon>
-              <span>Volver a mis postulaciones</span>
-            </button>
-          </div>
-
-          <!-- STEPPER -->
-          <!-- STEPS -->
+        <div class="postulation-top-bar">
+          <button
+            type="button"
+            class="btn-back-selector"
+            (click)="volverAlSelector()"
+          >
+            <mat-icon>arrow_back</mat-icon>
+            <span>Volver a mis postulaciones</span>
+          </button>
         </div>
+        <!-- STEPS -->
         <!-- 🚀 STEPPER PRO -->
         <div class="sirus-stepper">
           <div class="progress-bar">
@@ -318,6 +314,26 @@
            🟣 PASO 2 
       ============================ -->
           <div *ngIf="currentStep === 2" class="step2-container">
+            <!-- 🔥 DEBUG TEMPORAL -->
+            <div
+              style="
+                background: #fff3cd;
+                color: #000;
+                padding: 16px;
+                margin: 16px 0;
+                border: 3px solid #ff9800;
+                font-weight: bold;
+                font-size: 18px;
+                z-index: 9999;
+                position: relative;
+              "
+            >
+              ✅ ESTOY EN STEP 2<br />
+              currentStep: {{ currentStep }}<br />
+              showPostulationForm: {{ showPostulationForm }}<br />
+              familiares: {{ grupoFamiliar.length }}
+            </div>
+
             <div class="step-header-actions">
               <div>
                 <div class="section-title">
@@ -370,12 +386,10 @@
                     formControlName="hogarMonoparental"
                     [value]="false"
                   />
-
                   <span>No</span>
                 </label>
               </div>
             </div>
-            <!-- 🔥 COMPOSICIÓN FAMILIAR -->
 
             <!-- 🔹 LISTA DINÁMICA -->
             <div class="family-list">
@@ -386,21 +400,23 @@
                 <!-- HEADER -->
                 <div
                   class="card-header"
-                  [class.active]="f.open"
+                  [class.active]="f.open === true"
                   (click)="toggleFamiliar(i)"
                 >
                   <div class="title">
                     <mat-icon>person</mat-icon>
+
                     <div *ngIf="i === 0" class="pasivo-badge">
                       <span>Afiliado Identificado</span>
                     </div>
+
                     <div *ngIf="i > 0" class="pasivo-badge">
                       <span>Familiar {{ i }}</span>
                     </div>
                   </div>
 
                   <button
-                    *ngIf="!f.titular"
+                    *ngIf="f.titular !== true"
                     mat-icon-button
                     color="warn"
                     (click)="eliminarFamiliar(i); $event.stopPropagation()"
@@ -411,11 +427,12 @@
                 </div>
 
                 <!-- RESUMEN -->
-                <div *ngIf="!f.open" class="mini-summary">
+                <div *ngIf="f.open !== true" class="mini-summary">
                   <div class="mini-summary-content">
                     <div class="mini-avatar">
                       <mat-icon>family_restroom</mat-icon>
                     </div>
+
                     <div class="mini-info">
                       <div class="mini-name">
                         {{ f.nombre || "Sin nombre" }}
@@ -427,14 +444,18 @@
                     </div>
                   </div>
 
-                  <div class="mini-status" *ngIf="f.titular">Titular</div>
+                  <div class="mini-status" *ngIf="f.titular === true">
+                    Titular
+                  </div>
                 </div>
 
                 <!-- FORM -->
-                <div *ngIf="f.open" class="card-body">
+                <div *ngIf="f.open === true" class="card-body">
                   <!-- 🔹 DATOS -->
                   <div class="ssm-title">Datos básicos / Ingresos</div>
+
                   <div class="ssm-grid-6">
+                    <!-- RUT -->
                     <div class="ssm-field">
                       <label>RUT</label>
 
@@ -442,29 +463,31 @@
                         class="input rut"
                         [(ngModel)]="f.rut"
                         [ngModelOptions]="{ standalone: true }"
-                        [readonly]="f.titular"
-                        [class.readonly-field]="f.titular"
+                        [readonly]="f.titular === true"
+                        [class.readonly-field]="f.titular === true"
                         (keydown.enter)="
                           $event.preventDefault();
-                          !f.titular && validarRutGeneral(f)
+                          f.titular !== true && validarRutGeneral(f)
                         "
-                        (input)="!f.titular && procesarRut($event, f)"
-                        (blur)="!f.titular && validarRutGeneral(f)"
+                        (input)="f.titular !== true && procesarRut($event, f)"
+                        (blur)="f.titular !== true && validarRutGeneral(f)"
                       />
 
                       <!-- 🔥 ENCONTRADO -->
-                      <div *ngIf="f.existsInUsers" class="rut-found">
+                      <div *ngIf="f.existsInUsers === true" class="rut-found">
                         <mat-icon>check_circle</mat-icon>
                         Datos encontrados en sistema
                       </div>
 
                       <!-- 🔥 NO ENCONTRADO -->
-                      <div *ngIf="f.notFound" class="rut-not-found">
+                      <div *ngIf="f.notFound === true" class="rut-not-found">
                         <mat-icon>warning</mat-icon>
                         Usuario no encontrado. Complete antecedentes
                         manualmente.
                       </div>
                     </div>
+
+                    <!-- NOMBRES -->
                     <div class="ssm-field">
                       <label>Nombres</label>
 
@@ -472,10 +495,12 @@
                         class="input"
                         [(ngModel)]="f.nombre"
                         [ngModelOptions]="{ standalone: true }"
-                        [readonly]="f.titular"
-                        [class.readonly-field]="f.titular"
+                        [readonly]="f.titular === true"
+                        [class.readonly-field]="f.titular === true"
                       />
                     </div>
+
+                    <!-- APELLIDOS -->
                     <div class="ssm-field">
                       <label>Apellidos</label>
 
@@ -483,8 +508,8 @@
                         class="input"
                         [(ngModel)]="f.apellido"
                         [ngModelOptions]="{ standalone: true }"
-                        [readonly]="f.titular"
-                        [class.readonly-field]="f.titular"
+                        [readonly]="f.titular === true"
+                        [class.readonly-field]="f.titular === true"
                       />
                     </div>
                     <div class="ssm-field">
@@ -492,10 +517,19 @@
 
                       <input
                         class="input"
-                        [value]="formatFechaVisual(f.birthDate)"
-                        readonly
+                        type="date"
+                        [ngModel]="f.birthDate"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="
+                          onFamilyBirthDateInputChange(f, $event)
+                        "
+                        [readonly]="f.notFound !== true || f.titular === true"
+                        [class.readonly-field]="
+                          f.notFound !== true || f.titular === true
+                        "
                       />
                     </div>
+                    <!-- PREVISIÓN -->
                     <div class="ssm-field">
                       <label>Previsión</label>
 
@@ -509,25 +543,16 @@
                         </option>
                       </select>
                     </div>
-
-                    <!-- 
-                <div class="ssm-field">
-                  <label>Condición integrante</label>
-
-                  <input
-                    class="input ssm-readonly"
-                    [value]="i === 0 ? form.value.calidadContractual : 'PASIVO'"
-                    readonly
-                  />
-                </div>
-                -->
                   </div>
 
                   <!-- 🔹 PERSONAL -->
                   <div class="ssm-title">Información personal</div>
+
                   <div class="ssm-grid-6">
+                    <!-- TIPO PARENTESCO -->
                     <div class="ssm-field">
                       <label>Tipo de Parentesco</label>
+
                       <select
                         class="input"
                         [(ngModel)]="f.parentTypeId"
@@ -540,19 +565,22 @@
                       </select>
                     </div>
 
+                    <!-- ESTADO CIVIL -->
                     <div class="ssm-field">
                       <label>Estado Civil</label>
+
                       <select
                         class="input"
                         [(ngModel)]="f.civilStateId"
                         [ngModelOptions]="{ standalone: true }"
                       >
-                        <option *ngFor="let c of civilStates" [value]="c.id">
+                        <option *ngFor="let c of civilStates" [ngValue]="c.id">
                           {{ c.name }}
                         </option>
                       </select>
                     </div>
 
+                    <!-- ACTIVIDAD -->
                     <div class="ssm-field">
                       <label>Actividad</label>
 
@@ -568,6 +596,7 @@
                       </select>
                     </div>
 
+                    <!-- OTRA ACTIVIDAD -->
                     <div class="ssm-field" *ngIf="isOtherActivitySelected(f)">
                       <label>Indique actividad</label>
 
@@ -580,6 +609,7 @@
                       />
                     </div>
 
+                    <!-- PROFESIÓN U OFICIO -->
                     <div class="ssm-field">
                       <label>Profesión u oficio</label>
 
@@ -595,6 +625,7 @@
                       </select>
                     </div>
 
+                    <!-- OTRA PROFESIÓN U OFICIO -->
                     <div class="ssm-field" *ngIf="isOtherWorkPlaceSelected(f)">
                       <label>Indique profesión u oficio</label>
 
@@ -607,8 +638,10 @@
                       />
                     </div>
 
+                    <!-- NIVEL DE ESTUDIOS -->
                     <div class="ssm-field">
                       <label>Nivel de Estudios</label>
+
                       <select
                         class="input"
                         [(ngModel)]="f.studyId"
@@ -622,6 +655,7 @@
                   </div>
                 </div>
               </div>
+
               <!-- 🔹 ACTIONS -->
               <div class="actions">
                 <button

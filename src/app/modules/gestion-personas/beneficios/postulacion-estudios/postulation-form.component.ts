@@ -1,4 +1,11 @@
-import { Component, inject, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  ViewChild,
+  ElementRef,
+  ChangeDetectorRef,
+  NgZone,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
@@ -536,6 +543,8 @@ export class PostulationFormComponent {
     private usersService: UsersService,
     private tokenService: TokenService,
     public loader: WellbeingLoadingService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
   ) {
     this.form = this.fb.group({
       nombre: [''], // antes: ['', Validators.required]
@@ -1107,37 +1116,12 @@ export class PostulationFormComponent {
 
     // =====================================
     // 🔥 SI YA ESTÁ CARGADA, NO REPETIR
-    // PERO SI ES DRAFT, FORZAR STEP 1
+    // IMPORTANTE:
+    // YA NO FORZAMOS DRAFT A STEP 1 AQUÍ
     // =====================================
 
     if (Number(this.postulationId) === id && this.summary) {
-      const loadedPostulation = this.summary?.postulation || this.summary;
-
-      const loadedStatus = String(
-        loadedPostulation?.status || '',
-      ).toUpperCase();
-
-      if (loadedStatus === 'DRAFT') {
-        this.isSubmitted = false;
-        this.currentStep = 1;
-
-        this.wellbeingStorageService.saveCurrentStep(1);
-        this.saveWorkflow();
-
-        console.log('🔒 DRAFT YA CARGADO FORZADO A STEP 1:', {
-          id,
-          currentStep: this.currentStep,
-        });
-
-        setTimeout(() => {
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-          });
-        }, 0);
-      } else {
-        console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
-      }
+      console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
 
       return;
     }
@@ -1182,8 +1166,7 @@ export class PostulationFormComponent {
       console.log('♻️ RESTORE FULL STATE OK');
 
       // =====================================
-      // 🔥 RESPALDO USERS SOLO PARA BORRADOR
-      // NO bloquea la apertura
+      // 🔥 RESPALDO USERS
       // =====================================
 
       const shouldLoadUsersBackup =
@@ -1219,8 +1202,9 @@ export class PostulationFormComponent {
 
       if (status === 'DRAFT') {
         // =====================================
-        // 🔥 BORRADOR SIEMPRE PARTE EN STEP 1
-        // PERO CON DATOS RESTAURADOS DESDE SUMMARY
+        // 🔥 BORRADOR:
+        // AL ABRIR DESDE MIS POSTULACIONES,
+        // PARTE EN STEP 1 PARA REVISAR
         // =====================================
 
         this.isSubmitted = false;
@@ -1241,26 +1225,20 @@ export class PostulationFormComponent {
         this.currentStep = Number(postulation.currentStep || 1);
       }
 
+      // =====================================
+      // 🔥 STORAGE
+      // =====================================
+
       this.wellbeingStorageService.savePostulationId(this.postulationId);
       this.wellbeingStorageService.saveCurrentStep(this.currentStep);
 
       this.saveWorkflow();
 
       // =====================================
-      // 🔥 SEGURO FINAL
-      // SI ES DRAFT, NO DEJAR QUE STORAGE O RESTORE
-      // LO MANDE A OTRO PASO
+      // 🚨 IMPORTANTE:
+      // SE ELIMINÓ EL BLOQUE FINAL QUE VOLVÍA
+      // A FORZAR EL DRAFT A STEP 1.
       // =====================================
-
-      if (status === 'DRAFT') {
-        this.currentStep = 1;
-
-        this.wellbeingStorageService.saveCurrentStep(1);
-
-        this.saveWorkflow();
-
-        console.log('🔒 DRAFT FORZADO FINALMENTE A STEP 1');
-      }
 
       console.log('✅ POSTULATION OPENED:', {
         id: this.postulationId,
@@ -1695,15 +1673,15 @@ export class PostulationFormComponent {
   }
 
   async saveStep1Affiliate() {
-    // =====================================
-    // 🔥 NO POSTULATION
-    // =====================================
     try {
       const activePostulationId = await this.ensureActiveDraft();
+
       this.isSaving = true;
+
       // =====================================
       // 🔥 UPDATE USER
       // =====================================
+
       const fullUser: any = await firstValueFrom(
         this.usersService.getById(this.loggedUser.id),
       );
@@ -1735,6 +1713,7 @@ export class PostulationFormComponent {
           // =====================================
           // 🔥 AFILIACIÓN
           // =====================================
+
           contract_date:
             this.formatDateOnlyForBackend(this.form.value.fechaAfiliacion) ||
             fullUser.contract_date,
@@ -1744,34 +1723,83 @@ export class PostulationFormComponent {
             : fullUser.contract_type,
         }),
       );
+
+      console.log('✅ USER UPDATED OK');
+
       // =====================================
-      // 🔥 PAYLOAD
+      // 🔥 PAYLOAD AFFILIATE
       // =====================================
+
       const payload = this.wellbeingMapperService.mapAffiliate(this.form.value);
+
       console.log('🚀 AFFILIATE PAYLOAD:', payload);
+
       // =====================================
-      // 🔥 SAVE
+      // 🔥 SAVE AFFILIATE
       // =====================================
+
       await firstValueFrom(
         this.wellbeingPostulationService.saveAffiliate(
           activePostulationId,
           payload,
         ),
       );
+
+      console.log('✅ AFFILIATE SAVED OK');
+
       // =====================================
       // 🔥 SYNC TITULAR
       // =====================================
+
       this.syncAffiliateToFamily();
+
       // =====================================
-      // 🔥 NEXT STEP
+      // 🔥 AVANCE SEGURO A STEP 2
       // =====================================
-      await this.moveToStep(2);
-      // =====================================
-      // 🔥 SUCCESS
-      // =====================================
-      //this.showSuccess('Antecedentes afiliado guardados');
+
+      console.log('➡️ INTENTANDO PASAR A STEP 2');
+
+      try {
+        await firstValueFrom(
+          this.wellbeingPostulationService
+            .updateCurrentStep(activePostulationId, 2)
+            .pipe(timeout(5000)),
+        );
+
+        console.log('✅ CURRENT STEP BACKEND UPDATED TO 2');
+      } catch (stepError) {
+        console.warn(
+          '⚠️ No se pudo actualizar currentStep en backend, pero se avanzará visualmente:',
+          stepError,
+        );
+      }
+
+      this.currentStep = 2;
+
+      this.wellbeingStorageService.saveCurrentStep(2);
+
+      this.saveWorkflow();
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }, 0);
+
+      console.log('✅ YA PASÓ A STEP:', this.currentStep);
+      setTimeout(() => {
+        console.log('🧪 DEBUG DOM STEP 2:', {
+          currentStep: this.currentStep,
+          showPostulationForm: this.showPostulationForm,
+          totalFamiliares: this.grupoFamiliar.length,
+          step2Element: document.querySelector('.step2-container'),
+          step1Element: document.querySelector('.step1-container'),
+        });
+      }, 300);
     } catch (e) {
-      console.error(e);
+      console.error('❌ ERROR SAVE STEP 1 AFFILIATE:', e);
+
       this.showError('Error guardando afiliado');
     } finally {
       this.isSaving = false;
@@ -5973,16 +6001,6 @@ export class PostulationFormComponent {
     return `${d}/${m}/${y}`;
   }
 
-  toDate(value: any): Date | null {
-    if (!value) return null;
-
-    if (value instanceof Date) {
-      return value;
-    }
-
-    return new Date(value);
-  }
-
   private syncAffiliateToFamily(): void {
     // =====================================
     // 🔥 FORM
@@ -5991,6 +6009,7 @@ export class PostulationFormComponent {
     const formValue = this.form.getRawValue();
 
     if (!formValue.rut) {
+      console.warn('⚠️ No se sincroniza titular: formulario sin RUT');
       return;
     }
 
@@ -6001,7 +6020,7 @@ export class PostulationFormComponent {
     let familiar = this.grupoFamiliar.find((f) => f.titular);
 
     // =====================================
-    // 🔥 CREAR TITULAR
+    // 🔥 CREAR TITULAR SI NO EXISTE
     // =====================================
 
     if (!familiar) {
@@ -6011,15 +6030,21 @@ export class PostulationFormComponent {
         rut: '',
 
         nombre: '',
+
         apellido: '',
 
         birthDate: null,
 
         parentTypeId: undefined,
+
         civilStateId: undefined,
+
         activityId: undefined,
+
         workPlaceId: undefined,
+
         studyId: undefined,
+
         previtionId: undefined,
 
         estudiaRegion: '',
@@ -6035,6 +6060,7 @@ export class PostulationFormComponent {
         source: 'AUTH',
 
         searching: false,
+
         notFound: false,
 
         isComplete: true,
@@ -6044,10 +6070,10 @@ export class PostulationFormComponent {
     }
 
     // =====================================
-    // 🔥 DATOS BASE
+    // 🔥 DATOS BASE DESDE STEP 1
     // =====================================
 
-    familiar.id = this.afiliado?.id || -1;
+    familiar.id = this.afiliado?.id || familiar.id || -1;
 
     familiar.rut = formValue.rut || familiar.rut;
 
@@ -6059,28 +6085,20 @@ export class PostulationFormComponent {
       .trim()
       .toUpperCase();
 
-    // =====================================
-    // 🔥 TITULAR DESDE STEP1
-    // =====================================
+    familiar.birthDate =
+      this.formatDateOnlyForBackend(formValue.fechaNacimiento) ||
+      familiar.birthDate ||
+      null;
+
+    familiar.previtionId = familiar.previtionId || formValue.previtionId;
+
+    familiar.workPlaceId = familiar.workPlaceId || formValue.workPlaceId;
 
     // =====================================
-    // 🔥 TITULAR DESDE STEP1
+    // 🔥 FLAGS TITULAR
     // =====================================
 
-    if (familiar.titular) {
-      familiar.birthDate =
-        this.formatDateOnlyForBackend(formValue.fechaNacimiento) ||
-        familiar.birthDate ||
-        null;
-
-      familiar.previtionId = familiar.previtionId || formValue.previtionId;
-
-      familiar.workPlaceId = familiar.workPlaceId || formValue.workPlaceId;
-    }
-
-    // =====================================
-    // 🔥 FLAGS
-    // =====================================
+    familiar.open = true;
 
     familiar.titular = true;
 
@@ -6097,12 +6115,12 @@ export class PostulationFormComponent {
     familiar.isComplete = true;
 
     // =====================================
-    // 🔥 PARENTESCO
+    // 🔥 PARENTESCO TITULAR
     // =====================================
 
     if (!familiar.parentTypeId) {
       const titular = this.parentTypes.find((p: any) => {
-        const name = (p.name || '').toLowerCase();
+        const name = String(p.name || '').toLowerCase();
 
         return name.includes('titular') || name.includes('funcionario');
       });
@@ -6112,7 +6130,18 @@ export class PostulationFormComponent {
       }
     }
 
+    // =====================================
+    // 🔥 DEBUG
+    // =====================================
+
     console.log('✅ TITULAR SINCRONIZADO', familiar);
+
+    console.log('👨‍👩‍👧‍👦 FAMILY AFTER SYNC:', {
+      currentStep: this.currentStep,
+      showPostulationForm: this.showPostulationForm,
+      total: this.grupoFamiliar.length,
+      grupoFamiliar: this.grupoFamiliar,
+    });
   }
 
   private formatCurrencyInput(event: any, callback: (value: number) => void) {
@@ -7533,5 +7562,71 @@ export class PostulationFormComponent {
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  toDate(value: any): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
+
+    const text = String(value).trim();
+
+    // 🔥 Evita desfase de zona horaria con fechas tipo yyyy-MM-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [year, month, day] = text.split('-').map(Number);
+
+      return new Date(year, month - 1, day);
+    }
+
+    // 🔥 Si viene con hora tipo 2026-05-22T00:00:00
+    if (text.includes('T')) {
+      const datePart = text.split('T')[0];
+      const [year, month, day] = datePart.split('-').map(Number);
+
+      return new Date(year, month - 1, day);
+    }
+
+    const date = new Date(text);
+
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  }
+
+  onFamilyBirthDateInputChange(familiar: Familiar, value: string): void {
+    if (familiar.notFound !== true || familiar.titular === true) {
+      return;
+    }
+
+    familiar.birthDate = value || null;
+
+    console.log(
+      '📅 Fecha nacimiento familiar actualizada:',
+      familiar.birthDate,
+    );
+  }
+
+  onFamilyBirthDateChange(familiar: any, value: Date | null): void {
+    if (!value) {
+      familiar.birthDate = null;
+      return;
+    }
+
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+
+    familiar.birthDate = `${year}-${month}-${day}`;
+
+    console.log(
+      '📅 Fecha nacimiento familiar actualizada:',
+      familiar.birthDate,
+    );
   }
 }
