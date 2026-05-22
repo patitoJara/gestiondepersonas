@@ -99,9 +99,11 @@ interface Familiar {
 
   civilStateId?: number;
 
-  activityId?: number;
+  activityId?: number | null;
+  othersActivities?: string;
 
-  workPlaceId?: number;
+  workPlaceId?: number | null;
+  othersWorkplaces?: string;
 
   studyId?: number;
 
@@ -299,6 +301,7 @@ export class PostulationFormComponent {
     medicos: 'CERTIFICADOS_MEDICOS',
     catastroficas: 'GASTOS_ENFERMEDADES',
     divorcio: 'CERTIFICADO_DIVORCIO_CONVIVENCIA',
+    otros: 'OTRO',
   };
 
   documentosObligatorios: Documento[] = [
@@ -377,6 +380,11 @@ export class PostulationFormComponent {
       label: 'Certificado de divorcio o cese de convivencia',
       open: false,
     },
+    {
+      key: 'otros',
+      label: 'Otro Documento',
+      open: false,
+    },
   ];
 
   sexos = [
@@ -413,10 +421,6 @@ export class PostulationFormComponent {
     {
       id: 6,
       name: 'Otro',
-    },
-    {
-      id: 7,
-      name: 'No Aplica',
     },
   ];
 
@@ -590,6 +594,7 @@ export class PostulationFormComponent {
   isSubmitted = false;
   isFinalizing = false;
   isLoading = false;
+  showPostulationForm = false;
 
   // Lista de postulaciones del usuario para poder elegir entre borrador y enviada.
   // Importante: id = postulationId, no userId.
@@ -613,6 +618,60 @@ export class PostulationFormComponent {
   /* ---------------------------------------------------------------------------------------------------
                                             ngOnInit() {
   ------------------------------------------------------------------------------------------------------*/
+
+  async ngOnInit() {
+    try {
+      this.loader.show();
+
+      // =====================================
+      // 🔥 USUARIO LOGEADO
+      // =====================================
+
+      this.loggedUser = this.tokenService.getUserProfile();
+
+      console.log('👤 LOGGED USER:', this.loggedUser);
+
+      // =====================================
+      // 🔥 CATALOGOS
+      // =====================================
+
+      await this.loadCatalogs();
+
+      console.log('🚀 WELLBEING MODULE READY');
+
+      // =====================================
+      // 🔥 NUEVO INICIO CONTROLADO
+      // NO USA startWorkflow()
+      // NO ABRE ENVIADAS AUTOMATICAMENTE
+      // NO CREA NUEVA AUTOMATICAMENTE
+      // =====================================
+
+      await this.prepareInitialFormEntry();
+    } catch (e) {
+      console.error('❌ INIT ERROR:', e);
+
+      this.showError('Error cargando el formulario');
+    } finally {
+      this.isLoading = false;
+      this.openingPostulation = false;
+
+      this.loader.hide();
+
+      setTimeout(() => {
+        this.loader.hide();
+
+        console.log('🔓 INIT FINALIZADO - LOADER OFF', {
+          loaderOverlay: document.querySelectorAll('.loader-overlay').length,
+          postulationId: this.postulationId,
+          currentStep: this.currentStep,
+          selectedPostulationViewId: this.selectedPostulationViewId,
+          availablePostulations: this.availablePostulations.length,
+        });
+      }, 300);
+    }
+  }
+
+  /*
   async ngOnInit() {
     try {
       this.loader.show();
@@ -629,13 +688,176 @@ export class PostulationFormComponent {
 
       this.showError('Error cargando el formulario');
     } finally {
+      this.isLoading = false;
+      this.openingPostulation = false;
+
+      this.loader.hide();
+
+      setTimeout(() => {
+        this.loader.hide();
+
+        console.log('🔓 INIT FINALIZADO - LOADER OFF', {
+          loaderOverlay: document.querySelectorAll('.loader-overlay').length,
+        });
+      }, 300);
+    }
+  }
+*/
+  /* ---------------------------------------------------------------------------------------------------
+                        FIN ngOnInit() {
+  ------------------------------------------------------------------------------------------------------*/
+
+  // =========================================================
+  // 🔥 NUEVO INICIO CONTROLADO DEL FORMULARIO
+  // =========================================================
+
+  private async prepareInitialFormEntry(): Promise<void> {
+    console.log('🧭 PREPARE INITIAL FORM ENTRY');
+
+    const { drafts, active } = await this.loadInitialPostulationLists();
+
+    this.availablePostulations = this.mergePostulationLists(drafts, active);
+
+    console.log(
+      '📦 INITIAL AVAILABLE POSTULATIONS:',
+      this.availablePostulations,
+    );
+
+    // =====================================
+    // 🔥 AL ENTRAR NO SE ABRE NADA AUTOMÁTICO
+    // =====================================
+
+    this.showPostulationForm = false;
+    this.selectedPostulationViewId = null;
+    this.postulationId = null;
+    this.currentStep = 1;
+    this.isSubmitted = false;
+
+    console.log('📌 ESPERANDO ACCIÓN DEL USUARIO EN MIS POSTULACIONES');
+  }
+
+  async openSelectedPostulationByUserAction(): Promise<void> {
+    if (!this.selectedPostulationViewId) {
+      this.showWarning('Seleccione una postulación');
+      return;
+    }
+
+    await this.openPostulationFromSelector(
+      Number(this.selectedPostulationViewId),
+    );
+
+    this.showPostulationForm = true;
+  }
+
+  async startNewPostulationFromSelector(): Promise<void> {
+    try {
+      this.loader.show();
+
+      console.log('🆕 NUEVA POSTULACIÓN DESDE MIS POSTULACIONES');
+
+      this.clearPostulationSession();
+
+      this.isSubmitted = false;
+      this.summary = null;
+      this.postulationId = null;
+      this.selectedPostulationViewId = null;
+      this.codigoPostulacion = '';
+      this.currentStep = 1;
+
+      await this.prepareNewBaseFormFromUsers();
+
+      this.showPostulationForm = true;
+    } catch (e) {
+      console.error('❌ ERROR INICIANDO NUEVA POSTULACIÓN:', e);
+      this.showError('No fue posible iniciar una nueva postulación');
+    } finally {
       this.loader.hide();
     }
   }
 
-  /* ---------------------------------------------------------------------------------------------------
-                        FIN ngOnInit() {
-  ------------------------------------------------------------------------------------------------------*/
+  // =========================================================
+  // 🔥 CARGAR LISTAS INICIALES
+  // =========================================================
+
+  private async loadInitialPostulationLists(): Promise<{
+    drafts: any[];
+    active: any[];
+  }> {
+    let drafts: any[] = [];
+    let active: any[] = [];
+
+    try {
+      drafts = await firstValueFrom(
+        this.wellbeingPostulationService.getMyDrafts(),
+      );
+    } catch (draftError) {
+      console.warn('⚠️ No fue posible consultar borradores', draftError);
+      drafts = [];
+    }
+
+    try {
+      const response: any = await firstValueFrom(
+        this.wellbeingPostulationService.getMyActive(),
+      );
+
+      active = Array.isArray(response) ? response : [];
+    } catch (activeError) {
+      console.warn(
+        '⚠️ No fue posible consultar postulaciones enviadas/activas',
+        activeError,
+      );
+
+      active = [];
+    }
+
+    return { drafts, active };
+  }
+
+  // =========================================================
+  // 🔥 FORMULARIO BASE DESDE USERS
+  // SOLO CUANDO NO HAY DRAFT
+  // =========================================================
+
+  private async prepareNewBaseFormFromUsers(): Promise<void> {
+    // =====================================
+    // 🔥 LIMPIAR SESION DE POSTULACION
+    // IMPORTANTE: NO CREA POSTULACION NUEVA
+    // =====================================
+
+    this.clearPostulationSession();
+
+    this.isSubmitted = false;
+    this.summary = null;
+    this.postulationId = null;
+    this.selectedPostulationViewId = null;
+    this.codigoPostulacion = '';
+    this.currentStep = 1;
+
+    // =====================================
+    // 🔥 CARGAR SOLO DATOS BASE DESDE USERS
+    // =====================================
+
+    await this.loadLoggedAffiliate();
+
+    // =====================================
+    // 🔥 CREAR/SINCRONIZAR TITULAR EN STEP 2
+    // =====================================
+
+    this.syncAffiliateToFamily();
+
+    // =====================================
+    // 🔥 GUARDAR STEP INICIAL LOCAL
+    // =====================================
+
+    this.wellbeingStorageService.saveCurrentStep(this.currentStep);
+
+    console.log('✅ FORMULARIO BASE LISTO DESDE USERS:', {
+      postulationId: this.postulationId,
+      currentStep: this.currentStep,
+      grupoFamiliar: this.grupoFamiliar.length,
+      availablePostulations: this.availablePostulations.length,
+    });
+  }
 
   // =========================================================
   // 🔥 START WORKFLOW
@@ -865,7 +1087,10 @@ export class PostulationFormComponent {
     postulationId: number | string,
   ): Promise<void> {
     const id = Number(postulationId);
-    if (!id) return;
+
+    if (!id) {
+      return;
+    }
 
     // =====================================
     // 🔥 SI YA ESTÁ CARGANDO UNA,
@@ -882,10 +1107,38 @@ export class PostulationFormComponent {
 
     // =====================================
     // 🔥 SI YA ESTÁ CARGADA, NO REPETIR
+    // PERO SI ES DRAFT, FORZAR STEP 1
     // =====================================
 
     if (Number(this.postulationId) === id && this.summary) {
-      console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
+      const loadedPostulation = this.summary?.postulation || this.summary;
+
+      const loadedStatus = String(
+        loadedPostulation?.status || '',
+      ).toUpperCase();
+
+      if (loadedStatus === 'DRAFT') {
+        this.isSubmitted = false;
+        this.currentStep = 1;
+
+        this.wellbeingStorageService.saveCurrentStep(1);
+        this.saveWorkflow();
+
+        console.log('🔒 DRAFT YA CARGADO FORZADO A STEP 1:', {
+          id,
+          currentStep: this.currentStep,
+        });
+
+        setTimeout(() => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+          });
+        }, 0);
+      } else {
+        console.log('ℹ️ Postulación ya cargada, no se vuelve a abrir:', id);
+      }
+
       return;
     }
 
@@ -930,16 +1183,25 @@ export class PostulationFormComponent {
 
       // =====================================
       // 🔥 RESPALDO USERS SOLO PARA BORRADOR
+      // NO bloquea la apertura
       // =====================================
 
-      if (!this.isSubmitted) {
+      const shouldLoadUsersBackup =
+        status === 'DRAFT' ||
+        status === 'OBSERVED' ||
+        status === 'SUBMITTED' ||
+        status === 'UNDER_REVIEW';
+
+      if (shouldLoadUsersBackup) {
         console.log('👤 LOAD LOGGED AFFILIATE BACKUP START');
 
         this.loadLoggedAffiliate({ onlyEmpty: true })
           .then(() => {
             console.log('👤 LOAD LOGGED AFFILIATE BACKUP OK');
 
-            if (this.grupoFamiliar.length === 0) {
+            // 🔥 Solo sincroniza familia si es editable.
+            // Enviadas solo completan visualmente datos vacíos.
+            if (!this.isSubmitted && this.grupoFamiliar.length === 0) {
               this.syncAffiliateToFamily();
             }
           })
@@ -955,9 +1217,27 @@ export class PostulationFormComponent {
       // 🔥 STEP
       // =====================================
 
-      if (status === 'SUBMITTED' || status === 'UNDER_REVIEW') {
-        this.currentStep = Number(postulation.currentStep || 11);
+      if (status === 'DRAFT') {
+        // =====================================
+        // 🔥 BORRADOR SIEMPRE PARTE EN STEP 1
+        // PERO CON DATOS RESTAURADOS DESDE SUMMARY
+        // =====================================
+
+        this.isSubmitted = false;
+        this.currentStep = 1;
+      } else if (status === 'OBSERVED') {
+        this.isSubmitted = false;
+        this.currentStep = Number(postulation.currentStep || 1);
+      } else if (
+        status === 'SUBMITTED' ||
+        status === 'UNDER_REVIEW' ||
+        status === 'CLOSED' ||
+        status === 'FINALIZED'
+      ) {
+        this.isSubmitted = true;
+        this.currentStep = 11;
       } else {
+        this.isSubmitted = false;
         this.currentStep = Number(postulation.currentStep || 1);
       }
 
@@ -965,6 +1245,22 @@ export class PostulationFormComponent {
       this.wellbeingStorageService.saveCurrentStep(this.currentStep);
 
       this.saveWorkflow();
+
+      // =====================================
+      // 🔥 SEGURO FINAL
+      // SI ES DRAFT, NO DEJAR QUE STORAGE O RESTORE
+      // LO MANDE A OTRO PASO
+      // =====================================
+
+      if (status === 'DRAFT') {
+        this.currentStep = 1;
+
+        this.wellbeingStorageService.saveCurrentStep(1);
+
+        this.saveWorkflow();
+
+        console.log('🔒 DRAFT FORZADO FINALMENTE A STEP 1');
+      }
 
       console.log('✅ POSTULATION OPENED:', {
         id: this.postulationId,
@@ -974,7 +1270,10 @@ export class PostulationFormComponent {
       });
 
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
       }, 0);
     } catch (e) {
       console.error('❌ ERROR OPEN POSTULATION:', e);
@@ -983,6 +1282,28 @@ export class PostulationFormComponent {
     } finally {
       this.isLoading = false;
       this.openingPostulation = false;
+
+      // =====================================
+      // 🔥 MATAR SPINNER / LOADER VISUAL
+      // =====================================
+
+      this.loader.hide();
+
+      setTimeout(() => {
+        this.loader.hide();
+
+        console.log('🔓 OPEN POSTULATION FINALIZADO:', {
+          isLoading: this.isLoading,
+          openingPostulation: this.openingPostulation,
+          postulationId: this.postulationId,
+          currentStep: this.currentStep,
+          isSubmitted: this.isSubmitted,
+          loaderOverlay: document.querySelectorAll('.loader-overlay').length,
+          cdkBackdrop: document.querySelectorAll('.cdk-overlay-backdrop')
+            .length,
+          cdkPane: document.querySelectorAll('.cdk-overlay-pane').length,
+        });
+      }, 300);
 
       // =====================================
       // 🔥 SI EL USUARIO CAMBIÓ OTRA VEZ
@@ -1005,24 +1326,41 @@ export class PostulationFormComponent {
 
   getPostulationOptionLabel(postulation: any): string {
     const id = postulation?.id ?? '-';
+
     const code = postulation?.code || `Postulación ${id}`;
+
     const status = String(postulation?.status || '').toUpperCase();
-    const step = postulation?.currentStep ?? 1;
+
+    const step = Number(postulation?.currentStep || 1);
+
+    const fecha =
+      postulation?.updatedAt ||
+      postulation?.createdAt ||
+      postulation?.submittedAt;
+
+    const fechaTexto = fecha ? ` · ${this.formatFechaVisual(fecha)}` : '';
 
     if (status === 'DRAFT') {
-      return `Borrador #${id} · Paso ${step} · ${code}`;
-    }
-    if (status === 'SUBMITTED') {
-      return `Enviada #${id} · ${code}`;
-    }
-    if (status === 'UNDER_REVIEW') {
-      return `En revisión #${id} · ${code}`;
-    }
-    if (status === 'OBSERVED') {
-      return `Observada #${id} · Paso ${step} · ${code}`;
+      return `Borrador editable #${id} · Revisar desde el inicio · ${code}${fechaTexto}`;
     }
 
-    return `${status || 'Postulación'} #${id} · ${code}`;
+    if (status === 'SUBMITTED') {
+      return `Enviada #${id} · Solo lectura · ${code}${fechaTexto}`;
+    }
+
+    if (status === 'UNDER_REVIEW') {
+      return `En revisión #${id} · Solo lectura · ${code}${fechaTexto}`;
+    }
+
+    if (status === 'OBSERVED') {
+      return `Observada #${id} · Corregir desde paso ${step} · ${code}${fechaTexto}`;
+    }
+
+    if (status === 'CLOSED' || status === 'FINALIZED') {
+      return `Cerrada #${id} · Descargar copia · ${code}${fechaTexto}`;
+    }
+
+    return `${status || 'Postulación'} #${id} · ${code}${fechaTexto}`;
   }
 
   getSelectedPostulationStatus(): string {
@@ -1932,7 +2270,7 @@ export class PostulationFormComponent {
       this.isSaving = true;
 
       // =====================================
-      // 🔥 1) LOAD SUMMARY ACTUAL
+      // 🔥 1) CARGAR SUMMARY ACTUAL
       // =====================================
 
       await this.loadSummary();
@@ -1966,16 +2304,50 @@ export class PostulationFormComponent {
       // =====================================
 
       for (const ingreso of this.ingresosFamiliares) {
-        if (!ingreso.familiarId) {
+        const selectedFamilyId = Number(ingreso.familiarId || 0);
+        const amount = Number(ingreso.monto || 0);
+
+        if (!selectedFamilyId) {
+          console.warn(
+            '⚠️ Ingreso sin familiar seleccionado, se omite:',
+            ingreso,
+          );
           continue;
         }
 
-        const familiar = this.grupoFamiliar.find(
-          (f) => Number(f.id) === Number(ingreso.familiarId),
+        if (amount <= 0) {
+          console.warn('⚠️ Ingreso con monto 0, se omite:', ingreso);
+          continue;
+        }
+
+        const familiar = this.grupoFamiliar.find((f: any) => {
+          return (
+            Number(f.backendId) === selectedFamilyId ||
+            Number(f.id) === selectedFamilyId
+          );
+        });
+
+        if (!familiar) {
+          console.warn('⚠️ No se encontró familiar para guardar ingreso:', {
+            ingreso,
+            selectedFamilyId,
+            grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+              id: f.id,
+              backendId: f.backendId,
+              nombre: f.nombre,
+              parentTypeId: f.parentTypeId,
+            })),
+          });
+
+          continue;
+        }
+
+        const backendFamilyMemberId = Number(
+          familiar.backendId || familiar.id || selectedFamilyId,
         );
 
-        if (!familiar?.backendId) {
-          console.warn('⚠️ Familiar sin backendId, no se guarda ingreso:', {
+        if (!backendFamilyMemberId) {
+          console.warn('⚠️ Familiar sin ID backend válido:', {
             ingreso,
             familiar,
           });
@@ -1983,19 +2355,9 @@ export class PostulationFormComponent {
           continue;
         }
 
-        const amount = Number(ingreso.monto || 0);
-
-        if (amount <= 0) {
-          continue;
-        }
-
         const payload = {
-          familyMemberId: Number(familiar.backendId),
-
-          // Según documentación anterior puede ser contractTypeId.
-          // Dejamos incomeTypeId porque así veníamos trabajando.
+          familyMemberId: backendFamilyMemberId,
           incomeTypeId: 1,
-
           amount,
         };
 
@@ -2663,25 +3025,32 @@ export class PostulationFormComponent {
 
       const activePostulationId = await this.ensureActiveDraft();
 
-      // Cargar resumen antes de guardar para pintar documentos ya registrados y evitar duplicados.
+      // =====================================
+      // 🔥 1) CARGAR RESUMEN ACTUAL
+      // =====================================
+
       await this.loadSummary();
       this.restoreDocumentsFromSummary(this.summary);
       this.seedUploadedDocumentFingerprintsFromSummary();
 
+      // =====================================
+      // 🔥 2) VALIDAR SI YA TIENE OBLIGATORIOS
+      // ANTES DE GUARDAR NUEVOS
+      // =====================================
+
       const pendingDocuments = this.collectSelectedDocumentsForBackend();
 
-      if (!pendingDocuments.length) {
-        if (this.hasAllRequiredDocuments()) {
-          await this.moveToStep(10);
-          this.showSuccess('Documentos ya se encontraban registrados');
-          return;
-        }
-
+      if (!pendingDocuments.length && !this.hasAllRequiredDocuments()) {
         this.showWarning(
-          'Debe adjuntar al menos los documentos obligatorios antes de continuar',
+          'Debe adjuntar todos los documentos obligatorios antes de continuar',
         );
         return;
       }
+
+      // =====================================
+      // 🔥 3) GUARDAR DOCUMENTOS PENDIENTES
+      // PUEDEN SER OBLIGATORIOS U OPCIONALES
+      // =====================================
 
       console.log('📎 DOCUMENTS TO SAVE:', pendingDocuments);
 
@@ -2713,9 +3082,30 @@ export class PostulationFormComponent {
         savedCount++;
       }
 
+      // =====================================
+      // 🔥 4) RECARGAR SUMMARY DESPUÉS DE GUARDAR
+      // =====================================
+
       await this.loadSummary();
       this.restoreDocumentsFromSummary(this.summary);
       this.seedUploadedDocumentFingerprintsFromSummary();
+
+      // =====================================
+      // 🔥 5) VALIDACIÓN FINAL REAL
+      // AQUÍ ESTABA EL ERROR
+      // =====================================
+
+      if (!this.hasAllRequiredDocuments()) {
+        this.showWarning(
+          'Debe adjuntar todos los documentos obligatorios antes de continuar',
+        );
+        return;
+      }
+
+      // =====================================
+      // 🔥 6) SOLO SI ESTÁ TODO OK AVANZA
+      // =====================================
+
       await this.moveToStep(10);
 
       this.showSuccess(
@@ -2725,6 +3115,7 @@ export class PostulationFormComponent {
       );
     } catch (e) {
       console.error('❌ ERROR SAVING DOCUMENTS:', e);
+
       this.showError(
         'Error guardando documentos. Verifique sesión, postulación activa y tipos de documento.',
       );
@@ -3294,10 +3685,43 @@ export class PostulationFormComponent {
     }
   }
 
-  async previousStep() {
+  previousStep() {
     if (this.currentStep > 1) {
-      await this.moveToStep(this.currentStep - 1);
+      this.currentStep--;
+
+      if (this.currentStep === 6) {
+        this.normalizarIngresosParaStep6();
+      }
     }
+  }
+
+  private normalizarIngresosParaStep6(): void {
+    this.ingresosFamiliares = this.ingresosFamiliares.map((ingreso: any) => {
+      const familiar = this.grupoFamiliar.find((f: any) => {
+        return (
+          Number(f.backendId) === Number(ingreso.familiarId) ||
+          Number(f.id) === Number(ingreso.familiarId)
+        );
+      });
+
+      if (!familiar) {
+        return ingreso;
+      }
+
+      return {
+        ...ingreso,
+        familiarId: Number(familiar.backendId || familiar.id),
+      };
+    });
+
+    console.log('🔁 INGRESOS NORMALIZADOS STEP 6:', {
+      ingresosFamiliares: this.ingresosFamiliares,
+      grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+        id: f.id,
+        backendId: f.backendId,
+        nombre: f.nombre,
+      })),
+    });
   }
 
   refreshFamilySummary() {
@@ -3384,7 +3808,40 @@ export class PostulationFormComponent {
       .reduce((acc, val) => acc + val, 0);
   }
 
+  getStablishmentName(id: any): string {
+    const establecimiento = this.establecimientos.find((e: any) => {
+      return Number(e.id) === Number(id);
+    });
+
+    return establecimiento?.name || '';
+  }
+
+  getSexoName(value: any): string {
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const raw = String(value).trim().toUpperCase();
+
+    if (raw === 'M' || raw === '1' || raw === 'MASCULINO') {
+      return 'Masculino';
+    }
+
+    if (raw === 'F' || raw === '2' || raw === 'FEMENINO') {
+      return 'Femenino';
+    }
+
+    const sexo = this.sexos.find((s: any) => {
+      return Number(s.id) === Number(value);
+    });
+
+    return sexo?.name || String(value);
+  }
+
   isStepValid(step: number): boolean {
+    if (this.isSubmitted) {
+      return true;
+    }
     switch (step) {
       case 1:
         return this.getStep1Errors().length === 0;
@@ -3424,8 +3881,59 @@ export class PostulationFormComponent {
     }
   }
 
-  goToStep(step: number) {
-    this.irAlPaso(step);
+  goToStep(step: number): void {
+    // =====================================
+    // 🔒 STEP 11 NO SE NAVEGA MANUALMENTE
+    // =====================================
+
+    if (step === 11) {
+      console.warn('⛔ Step 11 solo se alcanza al finalizar la postulación');
+      return;
+    }
+
+    // =====================================
+    // 🔒 DRAFT / OBSERVED
+    // No permite saltar hacia adelante.
+    //
+    // 🔓 SUBMITTED / UNDER_REVIEW
+    // Permite navegar libremente SOLO PARA MIRAR.
+    // =====================================
+
+    if (!this.isSubmitted && step > this.currentStep) {
+      console.warn('⛔ No se puede saltar hacia pasos superiores:', {
+        requestedStep: step,
+        currentStep: this.currentStep,
+      });
+      return;
+    }
+
+    // =====================================
+    // 👀 SOLO CAMBIO VISUAL
+    // NO GUARDA EN BACKEND
+    // =====================================
+
+    this.currentStep = step;
+
+    // =====================================
+    // 🔥 FIX STEP 6
+    // Cuando entra a ingresos, normaliza integrante
+    // =====================================
+
+    if (this.currentStep === 6) {
+      this.normalizarIngresosParaStep6();
+    }
+
+    this.wellbeingStorageService.saveCurrentStep(step);
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    console.log('👀 STEP VIEW ONLY:', {
+      step,
+      isSubmitted: this.isSubmitted,
+    });
   }
 
   async irAlPaso(step: number) {
@@ -3661,9 +4169,22 @@ export class PostulationFormComponent {
   }
 
   private hasAllRequiredDocuments(): boolean {
-    return this.documentosObligatorios.every((doc) =>
-      this.tieneArchivoObligatorio(doc.key),
-    );
+    const faltantes = this.documentosObligatorios.filter((doc: any) => {
+      return !this.tieneArchivoObligatorio(doc.key);
+    });
+
+    console.log('📎 VALIDACIÓN DOCUMENTOS OBLIGATORIOS:', {
+      totalObligatorios: this.documentosObligatorios.length,
+      faltantes: faltantes.map((d: any) => ({
+        key: d.key,
+        label: d.label,
+      })),
+      filesObligatorios: this.filesObligatorios,
+      filesOpcionales: this.filesOpcionales,
+      uploadedDocumentsByKey: this.uploadedDocumentsByKey,
+    });
+
+    return faltantes.length === 0;
   }
 
   onFileSelectedOpcional(event: any, key: string) {
@@ -4005,8 +4526,7 @@ export class PostulationFormComponent {
                   Nombre: ${this.form.value.nombre} ${this.form.value.apellido}
                   RUT: ${this.form.value.rut}
                   Correo: ${this.form.value.email}
-                  Teléfono: ${this.form.value.telefono || 'No informado'}
-                  Tipo afiliado: ${this.form.value.tipoAfiliado || 'No informado'}
+                  Teléfono: ${this.form.value.telefono || 'No informado'}                  
                   Calidad contractual: ${this.form.value.calidadContractual || 'No informado'}
 
                   Resumen:
@@ -4162,10 +4682,10 @@ export class PostulationFormComponent {
         (ingreso: any, index: number) => `
         <tr>
           <td>${index + 1}</td>
-          <td>${clean(this.getNombreIngreso(ingreso.familiarId))}</td>
+          <td>${clean(this.getNombreIngresoComprobante(ingreso))}</td>
           <td style="text-align:right;">$ ${formatMoney(ingreso.monto)}</td>
         </tr>
-      `,
+  `,
       )
       .join('');
 
@@ -4344,10 +4864,6 @@ export class PostulationFormComponent {
       <tr>
         <td><strong>Dirección</strong></td>
         <td>${clean(f.direccion)}</td>
-      </tr>
-      <tr>
-        <td><strong>Tipo afiliado</strong></td>
-        <td>${clean(f.tipoAfiliado)}</td>
       </tr>
       <tr>
         <td><strong>Calidad contractual</strong></td>
@@ -4658,6 +5174,110 @@ export class PostulationFormComponent {
   `;
   }
 
+  getNombreIngresoComprobante(ingreso: any): string {
+    const familiarId = Number(
+      ingreso?.familiarId ||
+        ingreso?.familyMemberId ||
+        ingreso?.family_member_id ||
+        ingreso?.backendFamilyMemberId ||
+        0,
+    );
+
+    if (!familiarId) {
+      return 'No informado';
+    }
+
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return (
+        Number(f.backendId) === familiarId ||
+        Number(f.id) === familiarId ||
+        Number(f.familyMemberId) === familiarId
+      );
+    });
+
+    return familiar?.nombre || 'No informado';
+  }
+
+  getNombreIntegranteIngreso(familiarId: number | string | null): string {
+    if (familiarId === null || familiarId === undefined || familiarId === '') {
+      return 'No informado';
+    }
+
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return (
+        Number(f.backendId) === Number(familiarId) ||
+        Number(f.id) === Number(familiarId)
+      );
+    });
+
+    return familiar?.nombre || 'No informado';
+  }
+
+  getParentescoIntegranteIngreso(familiarId: number | string | null): string {
+    if (familiarId === null || familiarId === undefined || familiarId === '') {
+      return '';
+    }
+
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return (
+        Number(f.backendId) === Number(familiarId) ||
+        Number(f.id) === Number(familiarId)
+      );
+    });
+
+    if (!familiar) {
+      return '';
+    }
+
+    return this.getParentTypeName(familiar.parentTypeId);
+  }
+
+  async nuevaPostulacion() {
+    // =====================================
+    // 🔥 CLEAR WORKFLOW LOCAL
+    // =====================================
+
+    this.wellbeingStorageService.clearAll();
+
+    // =====================================
+    // 🔥 CLEAR CURRENT POSTULATION
+    // =====================================
+
+    this.postulationId = null;
+    this.summary = null;
+    this.selectedPostulationViewId = null;
+
+    // =====================================
+    // 🔥 CLEAR SUBMITTED MODE
+    // =====================================
+
+    this.isSubmitted = false;
+
+    // =====================================
+    // 🔥 RESET STEP
+    // =====================================
+
+    this.currentStep = 1;
+
+    // =====================================
+    // 🔥 RETURN TO SELECTOR
+    // =====================================
+
+    this.showPostulationForm = false;
+
+    // =====================================
+    // 🔥 SCROLL TOP
+    // =====================================
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    console.log('🆕 VOLVIENDO A SELECTOR DE POSTULACIONES');
+  }
+
+  /*
   async nuevaPostulacion() {
     // =====================================
     // 🔥 BACKUP STEP 1
@@ -4802,15 +5422,105 @@ export class PostulationFormComponent {
 
     console.log('🆕 NUEVA POSTULACIÓN');
   }
+  */
 
-  getParentTypeName(id: number | undefined): string {
-    if (!id) {
+  volverAlSelector(): void {
+    // =====================================
+    // 🔥 VOLVER AL MENÚ DE MIS POSTULACIONES
+    // =====================================
+
+    this.showPostulationForm = false;
+
+    // =====================================
+    // 🔥 LIMPIAR SELECCIÓN VISUAL
+    // =====================================
+
+    this.selectedPostulationViewId = null;
+
+    // =====================================
+    // 🔥 NO BORRAMOS LA POSTULACIÓN NI LOS DATOS
+    // =====================================
+    // Importante:
+    // Si estás en Step 1, 2, 3, etc., solo salimos de la vista.
+    // No limpiamos postulationId.
+    // No hacemos form.reset().
+    // No hacemos clearAll().
+    // No creamos nueva postulación.
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    console.log('↩️ VOLVIENDO AL SELECTOR SIN BORRAR DATOS');
+  }
+
+  isOtherActivitySelected(f: any): boolean {
+    const activityId = Number(f?.activityId || 0);
+
+    if (!activityId) {
+      return false;
+    }
+
+    const activity = this.activities?.find((a: any) => {
+      return Number(a.id) === activityId;
+    });
+
+    if (!activity) {
+      return false;
+    }
+
+    const name = String(activity.name || '')
+      .trim()
+      .toUpperCase();
+
+    return name === 'OTRO' || name === 'OTRA' || name.includes('OTRO');
+  }
+
+  onFamilyActivityChange(f: any): void {
+    if (!this.isOtherActivitySelected(f)) {
+      f.othersActivities = '';
+    }
+  }
+
+  isOtherWorkPlaceSelected(f: any): boolean {
+    const workPlaceId = Number(f?.workPlaceId || 0);
+
+    if (!workPlaceId) {
+      return false;
+    }
+
+    const workPlace = this.workPlaces?.find((w: any) => {
+      return Number(w.id) === workPlaceId;
+    });
+
+    if (!workPlace) {
+      return false;
+    }
+
+    const name = String(workPlace.name || '')
+      .trim()
+      .toUpperCase();
+
+    return name === 'OTRO' || name === 'OTRA' || name.includes('OTRO');
+  }
+
+  onFamilyWorkPlaceChange(f: any): void {
+    if (!this.isOtherWorkPlaceSelected(f)) {
+      f.othersWorkplaces = '';
+    }
+  }
+
+  getParentTypeName(id: number | string | undefined | null): string {
+    if (id === null || id === undefined || id === '') {
       return '';
     }
 
-    const parent = this.parentTypes.find((p: any) => p.id === id);
+    const parent = this.parentTypes.find(
+      (p: any) => Number(p.id) === Number(id),
+    );
 
-    return (parent?.name || '').toUpperCase();
+    return parent?.name || '';
   }
 
   private toDateInputValue(value: any): string {
@@ -4819,6 +5529,58 @@ export class PostulationFormComponent {
     }
 
     return String(value).substring(0, 10);
+  }
+
+  private asegurarSeleccionVisualIngresos(): void {
+    if (!this.ingresosFamiliares?.length || !this.grupoFamiliar?.length) {
+      return;
+    }
+
+    this.ingresosFamiliares = this.ingresosFamiliares.map(
+      (ingreso: any, index: number) => {
+        // =====================================
+        // 🔎 1. INTENTAR RESPETAR EL FAMILIAR YA GUARDADO
+        // =====================================
+
+        const familiarExistente = this.grupoFamiliar.find((f: any) => {
+          return (
+            Number(f.id) === Number(ingreso.familiarId) ||
+            Number(f.backendId) === Number(ingreso.familiarId)
+          );
+        });
+
+        if (familiarExistente) {
+          return {
+            ...ingreso,
+            familiarId: familiarExistente.id,
+          };
+        }
+
+        // =====================================
+        // 🔥 2. SI NO CALZA, USAR EL MISMO ÍNDICE DEL CARD
+        // Ingreso 1 -> Familiar 1
+        // Ingreso 2 -> Familiar 2
+        // =====================================
+
+        const familiarPorIndex =
+          this.grupoFamiliar[index] || this.grupoFamiliar[0];
+
+        return {
+          ...ingreso,
+          familiarId: familiarPorIndex?.id ?? null,
+        };
+      },
+    );
+
+    console.log('🔁 INGRESOS AJUSTADOS VISUALMENTE:', {
+      ingresosFamiliares: this.ingresosFamiliares,
+      grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+        id: f.id,
+        backendId: f.backendId,
+        nombre: f.nombre,
+        parentTypeId: f.parentTypeId,
+      })),
+    });
   }
 
   agregarFamiliar() {
@@ -4841,6 +5603,7 @@ export class PostulationFormComponent {
       source: 'MANUAL',
       searching: false,
       isComplete: false,
+
       // =====================================
       // 🔥 DATOS
       // =====================================
@@ -4852,9 +5615,16 @@ export class PostulationFormComponent {
       previtionId: undefined,
       parentTypeId: undefined,
       civilStateId: undefined,
+
       activityId: undefined,
+      othersActivities: '',
+
       workPlaceId: undefined,
+      othersWorkplaces: '',
+
       studyId: undefined,
+      studyPlace: '',
+
       estudiaRegion: '',
     });
     console.log('👨‍👩‍👧 Familiar agregado:', this.grupoFamiliar);
@@ -4886,31 +5656,145 @@ export class PostulationFormComponent {
     });
   }
 
-  getParentescoIngreso(familiarId: number | null): string {
-    if (!familiarId) {
+  getParentescoIngreso(familiarId: number | string | null): string {
+    if (familiarId === null || familiarId === undefined || familiarId === '') {
       return '';
     }
 
-    const familiar = this.grupoFamiliar.find((f) => f.id === familiarId);
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return (
+        Number(f.id) === Number(familiarId) ||
+        Number(f.backendId) === Number(familiarId)
+      );
+    });
 
     if (!familiar) {
       return '';
     }
 
-    return this.getParentTypeName(familiar.parentTypeId) || 'SIN PARENTESCO';
+    return this.getParentTypeName(familiar.parentTypeId) || '';
   }
 
-  estaSeleccionado(id: number, actualIndex: number): boolean {
+  getFamilyBackendKey(f: any): number | null {
+    const id = Number(f?.backendId || f?.id || 0);
+
+    return id > 0 ? id : null;
+  }
+
+  compareIds = (a: any, b: any): boolean => {
+    if (a === null || a === undefined || b === null || b === undefined) {
+      return a === b;
+    }
+
+    return Number(a) === Number(b);
+  };
+
+  onIngresoFamiliarChange(value: any, index: number): void {
+    const selectedId = Number(value);
+
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return Number(f.backendId) === selectedId || Number(f.id) === selectedId;
+    });
+
+    if (!familiar) {
+      this.ingresosFamiliares[index].familiarId = null;
+      return;
+    }
+
+    this.ingresosFamiliares[index].familiarId = Number(
+      familiar.backendId || familiar.id,
+    );
+
+    console.log('💰 INGRESO FAMILIAR SELECCIONADO:', {
+      index,
+      familiarId: this.ingresosFamiliares[index].familiarId,
+      frontendId: familiar.id,
+      backendId: familiar.backendId,
+      nombre: familiar.nombre,
+      parentTypeId: familiar.parentTypeId,
+    });
+  }
+
+  private normalizeIngresosFamiliaresSelection(): void {
+    this.ingresosFamiliares = this.ingresosFamiliares.map((ingreso: any) => {
+      const familiar = this.grupoFamiliar.find((f: any) => {
+        return (
+          Number(f.id) === Number(ingreso.familiarId) ||
+          Number(f.backendId) === Number(ingreso.familiarId)
+        );
+      });
+
+      if (!familiar) {
+        return {
+          ...ingreso,
+          familiarId: ingreso.familiarId ?? null,
+        };
+      }
+
+      return {
+        ...ingreso,
+        familiarId: familiar.id,
+      };
+    });
+
+    console.log('🔁 INGRESOS NORMALIZADOS PARA SELECT:', {
+      ingresosFamiliares: this.ingresosFamiliares,
+      grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+        id: f.id,
+        backendId: f.backendId,
+        nombre: f.nombre,
+        parentTypeId: f.parentTypeId,
+      })),
+    });
+  }
+
+  estaSeleccionado(id: number | string, actualIndex: number): boolean {
     return this.ingresosFamiliares.some(
-      (ing, i) => i !== actualIndex && ing.familiarId === id,
+      (ing, i) => i !== actualIndex && Number(ing.familiarId) === Number(id),
     );
   }
 
-  getNombreIngreso(familiarId: number | null): string {
-    if (!familiarId) return 'Sin seleccionar';
+  getNombreIngreso(value: any): string {
+    const familiarId = Number(
+      typeof value === 'object'
+        ? value?.familiarId ||
+            value?.familyMemberId ||
+            value?.family_member_id ||
+            value?.backendFamilyMemberId ||
+            0
+        : value || 0,
+    );
 
-    const f = this.grupoFamiliar.find((x) => x.id === familiarId);
-    return f?.nombre || 'Sin nombre';
+    if (!familiarId) {
+      console.warn('⚠️ INGRESO SIN FAMILIAR ID:', value);
+      return 'No informado';
+    }
+
+    const familiar = this.grupoFamiliar.find((f: any) => {
+      return (
+        Number(f.backendId) === familiarId ||
+        Number(f.id) === familiarId ||
+        Number(f.familyMemberId) === familiarId
+      );
+    });
+
+    if (!familiar) {
+      console.warn('⚠️ NO SE ENCONTRÓ FAMILIAR PARA INGRESO:', {
+        familiarId,
+        value,
+        grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+          id: f.id,
+          backendId: f.backendId,
+          familyMemberId: f.familyMemberId,
+          nombre: f.nombre,
+          parentTypeId: f.parentTypeId,
+        })),
+      });
+
+      return 'No informado';
+    }
+
+    return familiar.nombre || 'No informado';
   }
 
   ngAfterViewChecked() {
@@ -5867,7 +6751,19 @@ export class PostulationFormComponent {
 
   private restoreAcademicInfoFromSummary(summary: any): void {
     const academic = summary?.academicInfo;
-    if (!academic) return;
+
+    if (!academic) {
+      return;
+    }
+
+    const rawStudiesInRegion =
+      academic.studiesInRegion ?? academic.studies_in_region;
+
+    const studiesInRegion =
+      rawStudiesInRegion === true ||
+      rawStudiesInRegion === 1 ||
+      rawStudiesInRegion === '1' ||
+      String(rawStudiesInRegion).toLowerCase() === 'true';
 
     this.academico = {
       institucion: academic.institution || '',
@@ -5877,11 +6773,19 @@ export class PostulationFormComponent {
         ? Number(academic.currentSemester)
         : null,
       duracion: academic.careerDurationSemesters || null,
-      region: academic.studiesInRegion ? 'Si' : 'No',
+
+      // 🔥 El select espera 'si' o 'no'
+      region: studiesInRegion ? 'si' : 'no',
     };
 
     this.form.patchValue({
       beneficiado: academic.hadPreviousBenefit ? 'si' : 'no',
+    });
+
+    console.log('🎓 RESTORE STEP 4 REGION:', {
+      rawStudiesInRegion,
+      studiesInRegion,
+      regionFrontend: this.academico.region,
     });
   }
 
@@ -5906,20 +6810,36 @@ export class PostulationFormComponent {
     const incomes = Array.isArray(summary?.incomes) ? summary.incomes : [];
 
     if (!incomes.length) {
+      this.ingresosFamiliares = [
+        {
+          familiarId: null,
+          monto: 0,
+          open: true,
+        },
+      ];
+
       return;
     }
 
     const map = new Map<string, any>();
 
     for (const income of incomes) {
-      const familyMemberId = Number(income.familyMemberId || 0);
-      const incomeTypeId = Number(income.incomeTypeId || 1);
+      const backendFamilyMemberId = Number(
+        income.familyMemberId ||
+          income.family_member_id ||
+          income.familyMember?.id ||
+          0,
+      );
 
-      if (!familyMemberId) {
+      const incomeTypeId = Number(
+        income.incomeTypeId || income.income_type_id || income.typeId || 1,
+      );
+
+      if (!backendFamilyMemberId) {
         continue;
       }
 
-      const key = `${familyMemberId}|${incomeTypeId}`;
+      const key = `${backendFamilyMemberId}|${incomeTypeId}`;
 
       map.set(key, income);
     }
@@ -5928,21 +6848,47 @@ export class PostulationFormComponent {
 
     this.ingresosFamiliares = incomesUnicos.map(
       (income: any, index: number) => {
-        const backendFamilyMemberId = Number(income.familyMemberId || 0);
-
-        const familiar = this.grupoFamiliar.find(
-          (f: any) => Number(f.backendId) === backendFamilyMemberId,
+        const backendFamilyMemberId = Number(
+          income.familyMemberId ||
+            income.family_member_id ||
+            income.familyMember?.id ||
+            0,
         );
 
+        const familiar = this.grupoFamiliar.find((f: any) => {
+          return (
+            Number(f.backendId) === backendFamilyMemberId ||
+            Number(f.id) === backendFamilyMemberId
+          );
+        });
+
         return {
-          familiarId: familiar?.id || null,
-          monto: Number(income.amount || 0),
+          // 🔥 ahora usamos backendId, porque eso es lo que viene guardado
+          familiarId: familiar
+            ? Number(familiar.backendId || familiar.id)
+            : backendFamilyMemberId,
+
+          monto: Number(
+            income.amount || income.monthlyIncome || income.monthly_income || 0,
+          ),
+
           open: index === 0,
         };
       },
     );
 
-    console.log('💰 INCOMES RESTORED DEDUP:', this.ingresosFamiliares);
+    this.normalizeIngresosFamiliaresSelection();
+
+    console.log('💰 INCOMES RESTORED FOR STEP 6:', {
+      incomesBackend: incomes,
+      grupoFamiliar: this.grupoFamiliar.map((f: any) => ({
+        id: f.id,
+        backendId: f.backendId,
+        nombre: f.nombre,
+        parentTypeId: f.parentTypeId,
+      })),
+      ingresosFamiliares: this.ingresosFamiliares,
+    });
   }
 
   /*
@@ -6254,33 +7200,123 @@ export class PostulationFormComponent {
       return;
     }
 
-    this.grupoFamiliar = members.map((m: any, index: number) => ({
-      id: index === 0 ? -1 : Date.now() + index,
-      backendId: m.id,
-      rut: m.rut || '',
-      nombre: m.names || '',
-      apellido: m.lastNames || '',
-      parentTypeId: m.parentTypeId || undefined,
-      civilStateId: m.civilStateId || undefined,
-      activityId: m.activityId || undefined,
-      workPlaceId: m.workPlaceId || undefined,
-      studyId: m.studyLevelId || undefined,
-      previtionId: m.previtionId || undefined,
-      incomeTypeId: m.incomeTypeId || undefined,
-      monthlyIncome: Number(m.monthlyIncome || 0),
-      student: Boolean(m.student),
-      studyPlace: m.studyPlace || '',
-      birthDate: m.birthDate || null,
-      estudiaRegion: '',
-      open: true,
-      titular: index === 0,
-      existsInUsers: index === 0,
-      mustCreatePassive: false,
-      source: index === 0 ? 'AUTH' : 'MANUAL',
-      searching: false,
-      notFound: false,
-      isComplete: true,
-    }));
+    this.grupoFamiliar = members.map((m: any, index: number) => {
+      // =====================================
+      // 🔥 CAMPOS OTRO DESDE BACKEND
+      // backend devuelve snake_case
+      // =====================================
+
+      const othersActivities = m.othersActivities || m.others_activities || '';
+
+      const othersWorkplaces = m.othersWorkplaces || m.others_workplaces || '';
+
+      // =====================================
+      // 🔥 ACTIVIDAD
+      // activity_id OTRO = 7
+      // Si viene texto en others_activities,
+      // forzamos activityId = 7 para mostrar input
+      // =====================================
+
+      const activityId =
+        Number(m.activityId || m.activity_id || m.activity?.id || 0) ||
+        (othersActivities ? 7 : null);
+
+      // =====================================
+      // 🔥 PROFESIÓN / OFICIO
+      // work_place_id OTRO = 9
+      // Si viene texto en others_workplaces,
+      // forzamos workPlaceId = 9 para mostrar input
+      // =====================================
+
+      const workPlaceId =
+        Number(m.workPlaceId || m.work_place_id || m.workPlace?.id || 0) ||
+        (othersWorkplaces ? 9 : null);
+
+      return {
+        id: Number(m.id || 0) || (index === 0 ? -1 : Date.now() + index),
+
+        backendId: Number(m.id || 0) || undefined,
+
+        rut: m.rut || '',
+
+        nombre: m.names || '',
+
+        apellido: m.lastNames || '',
+
+        parentTypeId: m.parentTypeId || undefined,
+
+        civilStateId: m.civilStateId || undefined,
+
+        // =====================================
+        // 🔥 ACTIVIDAD
+        // =====================================
+
+        activityId,
+
+        othersActivities,
+
+        // =====================================
+        // 🔥 PROFESIÓN / OFICIO
+        // =====================================
+
+        workPlaceId,
+
+        othersWorkplaces,
+
+        // =====================================
+        // 🔥 ESTUDIOS / PREVISIÓN / INGRESOS
+        // =====================================
+
+        studyId: m.studyLevelId || undefined,
+
+        previtionId: m.previtionId || undefined,
+
+        incomeTypeId: m.incomeTypeId || undefined,
+
+        monthlyIncome: Number(m.monthlyIncome || 0),
+
+        student: Boolean(m.student),
+
+        studyPlace: m.studyPlace || '',
+
+        birthDate: m.birthDate || null,
+
+        estudiaRegion: '',
+
+        // =====================================
+        // 🔥 UI
+        // =====================================
+
+        open: true,
+
+        titular: index === 0,
+
+        existsInUsers: index === 0,
+
+        mustCreatePassive: false,
+
+        source: index === 0 ? 'AUTH' : 'MANUAL',
+
+        searching: false,
+
+        notFound: false,
+
+        isComplete: true,
+      };
+    });
+
+    console.log(
+      '🧪 FAMILY OTHERS RESTORED:',
+      this.grupoFamiliar.map((f: any) => ({
+        nombre: f.nombre,
+        activityId: f.activityId,
+        othersActivities: f.othersActivities,
+        workPlaceId: f.workPlaceId,
+        othersWorkplaces: f.othersWorkplaces,
+        isOtherActivity: this.isOtherActivitySelected(f),
+        isOtherWorkPlace: this.isOtherWorkPlaceSelected(f),
+      })),
+    );
   }
 
   private restoreAffiliateFromResponse(affiliate: any) {
