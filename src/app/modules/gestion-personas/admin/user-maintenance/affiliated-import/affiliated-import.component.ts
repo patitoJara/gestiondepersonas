@@ -1003,7 +1003,7 @@ export class AffiliatedImportComponent {
       console.error('❌ ERROR UPDATE USER:', error);
     }
   }
-
+  
   generateUniqueUsername(base: string): string {
     let username = base;
 
@@ -1021,4 +1021,108 @@ export class AffiliatedImportComponent {
 
     return username;
   }
+
+  // ====================================================================================
+  // 🔥 ACTUALIZAR SOLO FECHA NACIMIENTO Y FECHA AFILIACIÓN
+  // ====================================================================================
+  // ====================================================================================
+  // 🔥 ACTUALIZAR SOLO FECHAS
+  // 🔥 SOLO birth_date Y contract_date
+  // ====================================================================================
+
+  async processOnlyDatesUpdate(): Promise<void> {
+    console.log('🔥 CLICK ACTUALIZAR SOLO FECHAS');
+
+    if (!this.results.length) {
+      console.warn('⚠️ Primero debes procesar el TXT');
+      return;
+    }
+
+    this.loading = true;
+
+    let updated = 0;
+    let skipped = 0;
+    let invalid = 0;
+    let errors = 0;
+
+    try {
+      for (const item of this.results) {
+        try {
+          if (!item.valid) {
+            invalid++;
+            console.warn('❌ Registro inválido:', item.rutOriginal);
+            continue;
+          }
+
+          const existsUser = await this.validateUserExists(item.rutOriginal);
+
+          if (!existsUser?.exists || !existsUser?.user?.id) {
+            skipped++;
+            console.warn('⚠️ Usuario no existe, se omite:', item.rutOriginal);
+            continue;
+          }
+
+          const fullUser: any = await firstValueFrom(
+            this.usersService.getById(existsUser.user.id),
+          );
+
+          const payload: any = {
+            ...fullUser,
+          };
+
+          // ✅ SOLO MODIFICAR FECHA NACIMIENTO
+          if (item.payloadUser.birth_date) {
+            payload.birth_date = item.payloadUser.birth_date;
+          }
+
+          // ✅ SOLO MODIFICAR FECHA AFILIACIÓN
+          if (item.payloadUser.contract_date) {
+            payload.contract_date = item.payloadUser.contract_date;
+          }
+
+          // 🔥 LIMPIAR CAMPOS QUE NO VAN EN UPDATE
+          delete payload.createdAt;
+          delete payload.updatedAt;
+          delete payload.deletedAt;
+
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log('📅 ACTUALIZANDO SOLO FECHAS');
+          console.log({
+            id: fullUser.id,
+            rut: fullUser.rut,
+            birth_date: payload.birth_date,
+            contract_date: payload.contract_date,
+          });
+
+          await firstValueFrom(
+            this.usersService.updateUser(fullUser.id, payload),
+          );
+
+          updated++;
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR ACTUALIZANDO FECHAS:', {
+            rut: item.rutOriginal,
+            error,
+          });
+        }
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ ACTUALIZACIÓN SOLO FECHAS FINALIZADA');
+
+      console.table({
+        totalTXT: this.results.length,
+        updated,
+        skipped,
+        invalid,
+        errors,
+      });
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  
 }

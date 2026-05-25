@@ -1481,48 +1481,80 @@ export class PostulationFormComponent {
   // 🔥 RESTORE AFFILIATE FROM POSTULATION
   // =========================================================
 
-  private restoreAffiliateFromPostulation(postulation: any) {
+  private restoreAffiliateFromPostulation(postulation: any): void {
     const affiliate = postulation.affiliate || {};
 
+    const toDateOnlyString = (value: any): string | null => {
+      if (!value) {
+        return null;
+      }
+
+      const text = String(value).trim();
+
+      if (
+        text === '' ||
+        text.toLowerCase() === 'null' ||
+        text.toLowerCase() === 'undefined' ||
+        text.toLowerCase() === 'invalid date'
+      ) {
+        return null;
+      }
+
+      // yyyy-MM-dd
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+        return text;
+      }
+
+      // yyyy-MM-ddTHH:mm:ss
+      if (text.includes('T')) {
+        const datePart = text.split('T')[0];
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+          return datePart;
+        }
+      }
+
+      return null;
+    };
+
+    const fechaNacimiento =
+      toDateOnlyString(affiliate.birthDate) ||
+      toDateOnlyString(affiliate.birth_date) ||
+      toDateOnlyString(postulation.birthDate) ||
+      null;
+
+    const fechaAfiliacion =
+      toDateOnlyString(affiliate.affiliateDate) ||
+      toDateOnlyString(affiliate.affiliationDate) ||
+      toDateOnlyString(affiliate.contractDate) ||
+      toDateOnlyString(affiliate.contract_date) ||
+      toDateOnlyString(postulation.affiliateDate) ||
+      toDateOnlyString(postulation.affiliationDate) ||
+      toDateOnlyString(postulation.contractDate) ||
+      toDateOnlyString(postulation.contract_date) ||
+      null;
+
     this.form.patchValue({
-      // =====================================
-      // 🔥 IDENTIFICACIÓN
-      // =====================================
-
       rut: affiliate.rut || '',
-
       nombre: affiliate.names || '',
-
       apellido: affiliate.lastNames || '',
-
-      // =====================================
-      // 🔥 CONTACTO
-      // =====================================
-
       telefono: affiliate.phone || '',
-
       email: affiliate.email || '',
-
       direccion: affiliate.address || '',
-
-      // =====================================
-      // 🔥 PERSONALES
-      // =====================================
-
-      fechaNacimiento: this.parseDateOnlyLocal(affiliate.birthDate),
-
+      fechaNacimiento,
       sexo: affiliate.sex || '',
-
-      // =====================================
-      // 🔥 AFILIACIÓN
-      // =====================================
-
-      fechaAfiliacion: this.parseDateOnlyLocal(affiliate.affiliateDate),
-      // =====================================
-      // 🔥 POSTULATION
-      // =====================================
-
+      fechaAfiliacion,
       establecimiento: postulation.stablishmentId || null,
+    });
+
+    console.log('♻️ RESTORE AFFILIATE FROM POSTULATION:', {
+      affiliate,
+      rawAffiliateDate: affiliate.affiliateDate,
+      rawAffiliationDate: affiliate.affiliationDate,
+      rawContractDate: affiliate.contract_date || affiliate.contractDate,
+      fechaNacimiento,
+      fechaAfiliacion,
+      formFechaAfiliacion: this.form.value.fechaAfiliacion,
     });
   }
 
@@ -1593,10 +1625,41 @@ export class PostulationFormComponent {
       return fallback;
     };
 
+    const toDateOnlyString = (value: any): string | null => {
+      if (!value) {
+        return null;
+      }
+
+      const text = String(value).trim();
+
+      if (
+        text === '' ||
+        text.toLowerCase() === 'null' ||
+        text.toLowerCase() === 'undefined' ||
+        text.toLowerCase() === 'invalid date'
+      ) {
+        return null;
+      }
+
+      // yyyy-MM-dd
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+        return text;
+      }
+
+      // yyyy-MM-ddTHH:mm:ss
+      if (text.includes('T')) {
+        const datePart = text.split('T')[0];
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+          return datePart;
+        }
+      }
+
+      return null;
+    };
+
     // =====================================
     // 🔥 NOMBRE Y APELLIDO DESDE USERS
-    // users.firstName + users.secondName => nombre
-    // users.firstLastName + users.secondLastName => apellido
     // =====================================
 
     const nombre = `${user.firstName || ''} ${user.secondName || ''}`
@@ -1609,15 +1672,33 @@ export class PostulationFormComponent {
       .trim()
       .toUpperCase();
 
+    // =====================================
+    // 🔥 CALIDAD CONTRACTUAL
+    // =====================================
+
     const calidadContractual = user.contract_type
       ? String(user.contract_type).trim().toUpperCase()
       : 'CONTRATA';
 
-    this.form.patchValue({
-      // =====================================
-      // 🔥 SOLO DATOS BASE DESDE USERS
-      // =====================================
+    // =====================================
+    // 🔥 FECHAS DESDE USERS
+    // =====================================
 
+    const fechaNacimientoUser =
+      user.birth_date || user.birthDate || user.fechaNacimiento || null;
+
+    const fechaAfiliacionUser =
+      user.contract_date ||
+      user.contractDate ||
+      user.affiliationDate ||
+      user.affiliateDate ||
+      user.fechaAfiliacion ||
+      null;
+
+    const fechaNacimientoFinal = toDateOnlyString(fechaNacimientoUser);
+    const fechaAfiliacionFinal = toDateOnlyString(fechaAfiliacionUser);
+
+    this.form.patchValue({
       rut: keepOrSet('rut', user.rut, ''),
 
       nombre: keepOrSet('nombre', nombre, ''),
@@ -1626,17 +1707,9 @@ export class PostulationFormComponent {
 
       email: keepOrSet('email', user.email, ''),
 
-      fechaNacimiento: keepOrSet(
-        'fechaNacimiento',
-        this.parseDateOnlyLocal(user.birth_date),
-        null,
-      ),
+      fechaNacimiento: keepOrSet('fechaNacimiento', fechaNacimientoFinal, null),
 
-      fechaAfiliacion: keepOrSet(
-        'fechaAfiliacion',
-        this.parseDateOnlyLocal(user.contract_date),
-        null,
-      ),
+      fechaAfiliacion: keepOrSet('fechaAfiliacion', fechaAfiliacionFinal, null),
 
       calidadContractual: keepOrSet(
         'calidadContractual',
@@ -1649,20 +1722,16 @@ export class PostulationFormComponent {
 
     console.log('🧩 PATCH USERS STEP 1:', {
       onlyEmpty,
+      rawBirthDate: fechaNacimientoUser,
+      rawContractDate: fechaAfiliacionUser,
+      fechaNacimientoFinal,
+      fechaAfiliacionFinal,
+      formFechaNacimiento: this.form.value.fechaNacimiento,
+      formFechaAfiliacion: this.form.value.fechaAfiliacion,
       rut: this.form.value.rut,
       nombre: this.form.value.nombre,
       apellido: this.form.value.apellido,
       email: this.form.value.email,
-      fechaNacimiento: keepOrSet(
-        'fechaNacimiento',
-        this.parseDateOnlyLocal(user.birth_date),
-        null,
-      ),
-      fechaAfiliacion: keepOrSet(
-        'fechaAfiliacion',
-        this.parseDateOnlyLocal(user.contract_date),
-        null,
-      ),
       calidadContractual: this.form.value.calidadContractual,
       tipoAfiliado: this.form.value.tipoAfiliado,
     });
@@ -7761,60 +7830,101 @@ export class PostulationFormComponent {
     }
   }
 
+  hasFamilyBirthDate(value: any): boolean {
+    if (value === null || value === undefined) {
+      return false;
+    }
 
+    const text = String(value).trim();
 
-hasFamilyBirthDate(value: any): boolean {
-  if (value === null || value === undefined) {
+    if (
+      text === '' ||
+      text.toLowerCase() === 'null' ||
+      text.toLowerCase() === 'undefined' ||
+      text.toLowerCase() === 'invalid date'
+    ) {
+      return false;
+    }
+
+    // yyyy-MM-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return true;
+    }
+
+    // yyyy-MM-ddTHH:mm:ss
+    if (text.includes('T')) {
+      const datePart = text.split('T')[0];
+      return /^\d{4}-\d{2}-\d{2}$/.test(datePart);
+    }
+
     return false;
   }
 
-  const text = String(value).trim();
+  hasValidDate(value: any): boolean {
+    if (value === null || value === undefined) {
+      return false;
+    }
 
-  if (
-    text === '' ||
-    text.toLowerCase() === 'null' ||
-    text.toLowerCase() === 'undefined' ||
-    text.toLowerCase() === 'invalid date'
-  ) {
+    const text = String(value).trim();
+
+    if (
+      text === '' ||
+      text.toLowerCase() === 'null' ||
+      text.toLowerCase() === 'undefined' ||
+      text.toLowerCase() === 'invalid date'
+    ) {
+      return false;
+    }
+
+    // yyyy-MM-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return true;
+    }
+
+    // yyyy-MM-ddTHH:mm:ss
+    if (text.includes('T')) {
+      const datePart = text.split('T')[0];
+      return /^\d{4}-\d{2}-\d{2}$/.test(datePart);
+    }
+
     return false;
   }
 
-  // yyyy-MM-dd
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return true;
+  onAffiliationDateNativeChange(value: string): void {
+    this.form.patchValue({
+      fechaAfiliacion: value,
+    });
+
+    this.form.get('fechaAfiliacion')?.markAsDirty();
+    this.form.get('fechaAfiliacion')?.markAsTouched();
+
+    console.log('📅 FECHA AFILIACIÓN INGRESADA:', value);
   }
 
-  // yyyy-MM-ddTHH:mm:ss
-  if (text.includes('T')) {
-    const datePart = text.split('T')[0];
-    return /^\d{4}-\d{2}-\d{2}$/.test(datePart);
-  }
+  normalizeDateInput(value: any): string | null {
+    if (!this.hasFamilyBirthDate(value)) {
+      return null;
+    }
 
-  return false;
-}
+    const text = String(value).trim();
 
-normalizeDateInput(value: any): string | null {
-  if (!this.hasFamilyBirthDate(value)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return text;
+    }
+
+    if (text.includes('T')) {
+      return text.split('T')[0];
+    }
+
     return null;
   }
 
-  const text = String(value).trim();
+  onFamilyBirthDateNativeChange(familiar: Familiar, value: string): void {
+    familiar.birthDate = value || null;
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return text;
+    console.log(
+      '📅 Fecha nacimiento familiar actualizada:',
+      familiar.birthDate,
+    );
   }
-
-  if (text.includes('T')) {
-    return text.split('T')[0];
-  }
-
-  return null;
-}
-
-onFamilyBirthDateNativeChange(familiar: Familiar, value: string): void {
-  familiar.birthDate = value || null;
-
-  console.log('📅 Fecha nacimiento familiar actualizada:', familiar.birthDate);
-}
-
 }

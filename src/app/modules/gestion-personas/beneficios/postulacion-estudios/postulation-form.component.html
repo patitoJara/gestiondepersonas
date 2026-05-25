@@ -289,11 +289,38 @@
                   <div class="ssm-field">
                     <label>Fecha afiliación</label>
 
+                    <!-- ✅ SI TIENE FECHA VÁLIDA: SOLO LECTURA -->
                     <input
+                      *ngIf="hasValidDate(form.value.fechaAfiliacion)"
                       class="input ssm-readonly"
                       [value]="formatFechaVisual(form.value.fechaAfiliacion)"
                       readonly
                     />
+
+                    <!-- 🔥 SI NO TIENE FECHA VÁLIDA: PERMITIR INGRESAR -->
+                    <div
+                      *ngIf="!hasValidDate(form.value.fechaAfiliacion)"
+                      class="native-date-wrapper"
+                    >
+                      <input
+                        #affiliationDateInput
+                        class="input native-date-input"
+                        type="date"
+                        [ngModel]="
+                          normalizeDateInput(form.value.fechaAfiliacion)
+                        "
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onAffiliationDateNativeChange($event)"
+                      />
+
+                      <button
+                        type="button"
+                        class="native-date-button"
+                        (click)="openNativeDatePicker(affiliationDateInput)"
+                      >
+                        <mat-icon>calendar_month</mat-icon>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -47,11 +47,7 @@
       (change)="onFileSelected($event)"
     />
 
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="fileInput.click()"
-    >
+    <button mat-raised-button color="primary" (click)="fileInput.click()">
       <mat-icon>upload</mat-icon>
       Seleccionar TXT
     </button>
@@ -71,6 +67,16 @@
       <mat-icon>cloud_upload</mat-icon>
 
       Importar Usuarios
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="loading || !results.length"
+      (click)="processOnlyDatesUpdate()"
+    >
+      Actualizar solo fechas
     </button>
   </div>
 
