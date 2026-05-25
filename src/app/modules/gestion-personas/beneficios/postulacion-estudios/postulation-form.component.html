@@ -506,16 +506,18 @@
                           (ngModelChange)="
                             onFamilyBirthDateNativeChange(f, $event)
                           "
-                          [disabled]="hasFamilyBirthDate(f.birthDate)"
+                          [disabled]="
+                            i === 0 && hasFamilyBirthDate(f.birthDate)
+                          "
                           [class.readonly-field]="
-                            hasFamilyBirthDate(f.birthDate)
+                            i === 0 && hasFamilyBirthDate(f.birthDate)
                           "
                         />
 
                         <button
                           type="button"
                           class="native-date-button"
-                          *ngIf="!hasFamilyBirthDate(f.birthDate)"
+                          *ngIf="i > 0 || !hasFamilyBirthDate(f.birthDate)"
                           (click)="openNativeDatePicker(familyBirthInput)"
                         >
                           <mat-icon>calendar_month</mat-icon>
