@@ -8317,6 +8317,12 @@ export class PostulationFormComponent {
     }, 60000);
   }
 
+  hasAnyOptionalDocument(): boolean {
+    return this.documentosOpcionales.some((doc) =>
+      this.tieneArchivoOpcional(doc.key),
+    );
+  }
+
   getFamilyBirthDatePickerValue(value: string | null | undefined): Date | null {
     if (!value) {
       return null;

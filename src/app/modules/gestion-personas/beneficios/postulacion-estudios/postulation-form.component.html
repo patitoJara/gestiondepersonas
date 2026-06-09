@@ -2366,22 +2366,181 @@
             </div>
 
             <!-- 🔹 DOCUMENTOS -->
+            <!-- ===================================== -->
+            <!-- 🔹 DOCUMENTOS ADJUNTOS -->
+            <!-- ===================================== -->
+
+            <!-- ===================================== -->
+            <!-- 🔹 DOCUMENTOS ADJUNTOS -->
+            <!-- ===================================== -->
+
             <div class="resume-card">
               <div class="card-header purple">
                 <mat-icon>attach_file</mat-icon>
 
                 <span>Documentos adjuntos</span>
 
-                <button mat-icon-button (click)="goToStep(9)" type="button">
+                <button type="button" mat-icon-button (click)="goToStep(9)">
                   <mat-icon>edit</mat-icon>
                 </button>
               </div>
 
-              <div
-                *ngFor="let doc of documentosObligatorios"
-                class="resume-row"
-              >
-                ✔ {{ doc.label }}
+              <!-- ===================================== -->
+              <!-- 🔥 DOCUMENTOS REQUERIDOS -->
+              <!-- ===================================== -->
+
+              <div class="resume-doc-group">
+                <div class="resume-doc-group-title">Documentos requeridos</div>
+
+                <div
+                  *ngFor="let doc of documentosObligatorios"
+                  class="resume-doc-category"
+                >
+                  <div class="resume-row resume-doc-header">
+                    <mat-icon
+                      [class.resume-doc-ok]="tieneArchivoObligatorio(doc.key)"
+                      [class.resume-doc-pending]="
+                        !tieneArchivoObligatorio(doc.key)
+                      "
+                    >
+                      {{
+                        tieneArchivoObligatorio(doc.key)
+                          ? "check_circle"
+                          : "cancel"
+                      }}
+                    </mat-icon>
+
+                    <strong>
+                      {{ doc.label }}
+                    </strong>
+                  </div>
+
+                  <!-- ARCHIVOS GUARDADOS EN BACKEND -->
+                  <div
+                    *ngFor="let d of getBackendDocumentsForKey(doc.key)"
+                    class="resume-doc-file"
+                  >
+                    <mat-icon>description</mat-icon>
+
+                    <span>
+                      {{
+                        d.originalFilename || d.original_filename || d.fileName
+                      }}
+                    </span>
+
+                    <button
+                      type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Descargar documento"
+                      (click)="
+                        downloadBackendDocument(d); $event.stopPropagation()
+                      "
+                    >
+                      <mat-icon>download</mat-icon>
+                    </button>
+                  </div>
+
+                  <!-- ARCHIVOS LOCALES PENDIENTES -->
+                  <div
+                    *ngFor="let f of filesObligatorios[doc.key]"
+                    class="resume-doc-file"
+                  >
+                    <mat-icon>description</mat-icon>
+
+                    <span>
+                      {{ f.name }}
+                    </span>
+
+                    <button
+                      type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="Ver archivo"
+                      (click)="
+                        openLocalFilePreview(f); $event.stopPropagation()
+                      "
+                    >
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ===================================== -->
+              <!-- 🔥 DOCUMENTOS ADICIONALES -->
+              <!-- SOLO APARECEN SI EXISTE AL MENOS UNO -->
+              <!-- ===================================== -->
+
+              <div *ngIf="hasAnyOptionalDocument()" class="resume-doc-group">
+                <div class="resume-doc-group-title">Documentos adicionales</div>
+
+                <ng-container *ngFor="let doc of documentosOpcionales">
+                  <div
+                    *ngIf="tieneArchivoOpcional(doc.key)"
+                    class="resume-doc-category"
+                  >
+                    <div class="resume-row resume-doc-header">
+                      <mat-icon class="resume-doc-ok"> check_circle </mat-icon>
+
+                      <strong>
+                        {{ doc.label }}
+                      </strong>
+                    </div>
+
+                    <!-- ARCHIVOS GUARDADOS EN BACKEND -->
+                    <div
+                      *ngFor="let d of getBackendDocumentsForKey(doc.key)"
+                      class="resume-doc-file"
+                    >
+                      <mat-icon>description</mat-icon>
+
+                      <span>
+                        {{
+                          d.originalFilename ||
+                            d.original_filename ||
+                            d.fileName
+                        }}
+                      </span>
+
+                      <button
+                        type="button"
+                        mat-icon-button
+                        color="primary"
+                        matTooltip="Descargar documento"
+                        (click)="
+                          downloadBackendDocument(d); $event.stopPropagation()
+                        "
+                      >
+                        <mat-icon>download</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- ARCHIVOS LOCALES PENDIENTES -->
+                    <div
+                      *ngFor="let f of filesOpcionales[doc.key]"
+                      class="resume-doc-file"
+                    >
+                      <mat-icon>description</mat-icon>
+
+                      <span>
+                        {{ f.name }}
+                      </span>
+
+                      <button
+                        type="button"
+                        mat-icon-button
+                        color="primary"
+                        matTooltip="Ver archivo"
+                        (click)="
+                          openLocalFilePreview(f); $event.stopPropagation()
+                        "
+                      >
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
               </div>
             </div>
 

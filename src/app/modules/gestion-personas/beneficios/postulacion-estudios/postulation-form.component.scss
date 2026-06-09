@@ -2969,3 +2969,49 @@ Step 1 - 2 -
 
   white-space: nowrap;
 }
+
+.resume-doc-group {
+  padding: 14px 16px;
+}
+
+.resume-doc-group + .resume-doc-group {
+  border-top: 1px solid #e5e7eb;
+}
+
+.resume-doc-group-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.resume-doc-category {
+  margin-bottom: 12px;
+}
+
+.resume-doc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-doc-ok {
+  color: #16a34a;
+}
+
+.resume-doc-pending {
+  color: #dc2626;
+}
+
+.resume-doc-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 4px 32px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.resume-doc-file span {
+  flex: 1;
+}
