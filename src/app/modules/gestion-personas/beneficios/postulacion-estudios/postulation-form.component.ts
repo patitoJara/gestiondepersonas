@@ -1250,7 +1250,7 @@ export class PostulationFormComponent {
       setTimeout(() => {
         window.scrollTo({
           top: 0,
-          behavior: 'smooth',
+          behavior: 'auto',
         });
       }, 0);
     } catch (e) {
@@ -1852,7 +1852,7 @@ export class PostulationFormComponent {
       setTimeout(() => {
         window.scrollTo({
           top: 0,
-          behavior: 'smooth',
+          behavior: 'auto',
         });
       }, 0);
 
@@ -3116,105 +3116,215 @@ export class PostulationFormComponent {
   // 🔥 SAVE STEP 9 DOCUMENTS
   // =========================================================
 
-  async saveStep9Documents() {
+  async saveStep9Documents(): Promise<void> {
     try {
       this.isSaving = true;
 
+      console.groupCollapsed('🚀 SAVE STEP 9 PHYSICAL DOCUMENTS');
+
       const activePostulationId = await this.ensureActiveDraft();
+
+      console.log('🆔 POSTULACIÓN ACTIVA:', activePostulationId);
 
       // =====================================
       // 🔥 1) CARGAR RESUMEN ACTUAL
       // =====================================
 
       await this.loadSummary();
+
       this.restoreDocumentsFromSummary(this.summary);
       this.seedUploadedDocumentFingerprintsFromSummary();
 
+      console.log('📊 DOCUMENTOS YA REGISTRADOS EN BACKEND:', {
+        summaryDocuments: this.summary?.documents || [],
+        uploadedDocumentsByKey: this.uploadedDocumentsByKey,
+        fingerprints: Array.from(this.uploadedDocumentFingerprints),
+      });
+
       // =====================================
-      // 🔥 2) VALIDAR SI YA TIENE OBLIGATORIOS
-      // ANTES DE GUARDAR NUEVOS
+      // 🔥 2) RECOPILAR ARCHIVOS FÍSICOS
       // =====================================
 
       const pendingDocuments = this.collectSelectedDocumentsForBackend();
 
+      console.log(
+        '📎 TOTAL ARCHIVOS FÍSICOS PENDIENTES:',
+        pendingDocuments.length,
+      );
+
+      console.table(
+        pendingDocuments.map((doc, index) => ({
+          orden: index + 1,
+          key: doc.key,
+          documentTypeId: doc.documentTypeId,
+          originalFilename: doc.file.name,
+          contentType: doc.file.type,
+          sizeBytes: doc.file.size,
+        })),
+      );
+
       if (!pendingDocuments.length && !this.hasAllRequiredDocuments()) {
+        console.warn('⚠️ FALTAN DOCUMENTOS OBLIGATORIOS');
+
         this.showWarning(
           'Debe adjuntar todos los documentos obligatorios antes de continuar',
         );
+
+        console.groupEnd();
+
         return;
       }
 
       // =====================================
-      // 🔥 3) GUARDAR DOCUMENTOS PENDIENTES
-      // PUEDEN SER OBLIGATORIOS U OPCIONALES
+      // 🔥 3) SUBIR ARCHIVOS FÍSICOS UNO POR UNO
       // =====================================
-
-      console.log('📎 DOCUMENTS TO SAVE:', pendingDocuments);
 
       let savedCount = 0;
 
-      for (const doc of pendingDocuments) {
+      for (let index = 0; index < pendingDocuments.length; index++) {
+        const doc = pendingDocuments[index];
+
         const fingerprint = this.buildDocumentFingerprint(
           doc.documentTypeId,
-          doc.originalFilename,
-          doc.sizeBytes,
+          doc.file.name,
+          doc.file.size,
         );
 
+        console.groupCollapsed(
+          `📤 SUBIENDO ARCHIVO ${index + 1}/${pendingDocuments.length}: ${doc.file.name}`,
+        );
+
+        console.log('🧾 ARCHIVO QUE SE ENVIARÁ:', {
+          postulationId: activePostulationId,
+          key: doc.key,
+          documentTypeId: doc.documentTypeId,
+          originalFilename: doc.file.name,
+          contentType: doc.file.type,
+          sizeBytes: doc.file.size,
+        });
+
+        console.log('🔐 FINGERPRINT:', fingerprint);
+
         if (this.uploadedDocumentFingerprints.has(fingerprint)) {
-          console.log(
-            '📎 DOCUMENT ALREADY REGISTERED, SKIPPING:',
-            doc.originalFilename,
-          );
+          console.warn('⏭️ DOCUMENTO YA REGISTRADO, SE OMITE:', {
+            fingerprint,
+            fileName: doc.file.name,
+          });
+
+          console.groupEnd();
+
           continue;
         }
 
-        await firstValueFrom(
-          this.wellbeingDocumentsService.createDocument(
-            activePostulationId,
-            doc,
-          ),
-        );
+        try {
+          const response = await firstValueFrom(
+            this.wellbeingDocumentsService.uploadDocument(
+              activePostulationId,
+              doc.documentTypeId,
+              doc.file,
+            ),
+          );
 
-        this.uploadedDocumentFingerprints.add(fingerprint);
-        savedCount++;
+          console.log('✅ ARCHIVO FÍSICO SUBIDO CORRECTAMENTE:', {
+            fileName: doc.file.name,
+            response,
+          });
+
+          this.uploadedDocumentFingerprints.add(fingerprint);
+
+          // =====================================
+          // 🔥 RETIRAR ARCHIVO DE LA LISTA LOCAL
+          // DESPUÉS DE QUE BACKEND CONFIRMA LA SUBIDA
+          // =====================================
+
+          this.removeUploadedFileFromPending(doc.key, doc.file);
+
+          savedCount++;
+        } catch (documentError: any) {
+          console.error('❌ FALLÓ LA SUBIDA DEL ARCHIVO FÍSICO:', {
+            orden: index + 1,
+            total: pendingDocuments.length,
+            postulationId: activePostulationId,
+            key: doc.key,
+            documentTypeId: doc.documentTypeId,
+            fileName: doc.file.name,
+            contentType: doc.file.type,
+            sizeBytes: doc.file.size,
+            fingerprint,
+            status: documentError?.status,
+            statusText: documentError?.statusText,
+            url: documentError?.url,
+            message: documentError?.message,
+            backendError: documentError?.error,
+            fullError: documentError,
+          });
+
+          console.groupEnd();
+
+          throw documentError;
+        }
+
+        console.groupEnd();
       }
 
       // =====================================
-      // 🔥 4) RECARGAR SUMMARY DESPUÉS DE GUARDAR
+      // 🔥 4) RECARGAR SUMMARY
       // =====================================
 
       await this.loadSummary();
+
       this.restoreDocumentsFromSummary(this.summary);
       this.seedUploadedDocumentFingerprintsFromSummary();
 
+      console.log('📊 DOCUMENTOS DESPUÉS DE LA SUBIDA FÍSICA:', {
+        savedCount,
+        summaryDocuments: this.summary?.documents || [],
+        uploadedDocumentsByKey: this.uploadedDocumentsByKey,
+      });
+
       // =====================================
-      // 🔥 5) VALIDACIÓN FINAL REAL
-      // AQUÍ ESTABA EL ERROR
+      // 🔥 5) VALIDACIÓN FINAL
       // =====================================
 
       if (!this.hasAllRequiredDocuments()) {
+        console.warn('⚠️ VALIDACIÓN FINAL: FALTAN DOCUMENTOS OBLIGATORIOS');
+
         this.showWarning(
           'Debe adjuntar todos los documentos obligatorios antes de continuar',
         );
+
+        console.groupEnd();
+
         return;
       }
 
       // =====================================
-      // 🔥 6) SOLO SI ESTÁ TODO OK AVANZA
+      // 🔥 6) AVANZAR
       // =====================================
 
       await this.moveToStep(10);
 
       this.showSuccess(
         savedCount > 0
-          ? `Documentos registrados correctamente (${savedCount})`
+          ? `Documentos físicos subidos correctamente (${savedCount})`
           : 'Documentos ya se encontraban registrados',
       );
-    } catch (e) {
-      console.error('❌ ERROR SAVING DOCUMENTS:', e);
+
+      console.log('✅ STEP 9 COMPLETADO CORRECTAMENTE');
+
+      console.groupEnd();
+    } catch (error: any) {
+      console.error('❌ ERROR GENERAL SUBIENDO DOCUMENTOS FÍSICOS:', {
+        status: error?.status,
+        statusText: error?.statusText,
+        url: error?.url,
+        message: error?.message,
+        backendError: error?.error,
+        fullError: error,
+      });
 
       this.showError(
-        'Error guardando documentos. Verifique sesión, postulación activa y tipos de documento.',
+        'Error subiendo documentos físicos. Revise la consola para identificar el archivo rechazado.',
       );
     } finally {
       this.isSaving = false;
@@ -3222,66 +3332,149 @@ export class PostulationFormComponent {
   }
 
   private collectSelectedDocumentsForBackend(): Array<{
+    key: string;
     documentTypeId: number;
-    originalFilename: string;
-    contentType: string;
-    sizeBytes: number;
-    storagePath: string;
-    checksum: string;
+    file: File;
   }> {
     const result: Array<{
+      key: string;
       documentTypeId: number;
-      originalFilename: string;
-      contentType: string;
-      sizeBytes: number;
-      storagePath: string;
-      checksum: string;
+      file: File;
     }> = [];
 
-    const appendFiles = (key: string, files: File[] | undefined) => {
-      if (!files?.length) return;
+    console.groupCollapsed('🧩 CONSTRUCCIÓN DE ARCHIVOS FÍSICOS PARA BACKEND');
+
+    const appendFiles = (
+      group: 'OBLIGATORIO' | 'OPCIONAL',
+      key: string,
+      files: File[] | undefined,
+    ): void => {
+      if (!files?.length) {
+        return;
+      }
+
+      console.groupCollapsed(`📂 ${group}: ${key}`);
+
+      const expectedCode = this.documentTypeCodeByKey[key];
 
       const documentTypeId = this.getDocumentTypeIdByKey(key);
 
+      console.log('📌 CATEGORÍA DOCUMENTAL:', {
+        group,
+        key,
+        expectedCode,
+        documentTypeId,
+        totalFiles: files.length,
+      });
+
       for (const file of files) {
         result.push({
+          key,
+          documentTypeId,
+          file,
+        });
+
+        console.log('📦 ARCHIVO FÍSICO PREPARADO:', {
+          group,
+          key,
+          expectedCode,
           documentTypeId,
           originalFilename: file.name,
-          contentType: file.type || 'application/octet-stream',
+          contentType: file.type,
           sizeBytes: file.size,
-          storagePath: this.buildDocumentStoragePath(key, file),
-          checksum: this.buildDocumentChecksum(key, file),
         });
       }
+
+      console.groupEnd();
     };
 
-    Object.entries(this.filesObligatorios).forEach(([key, files]) =>
-      appendFiles(key, files),
-    );
+    Object.entries(this.filesObligatorios).forEach(([key, files]) => {
+      appendFiles('OBLIGATORIO', key, files);
+    });
 
-    Object.entries(this.filesOpcionales).forEach(([key, files]) =>
-      appendFiles(key, files),
-    );
+    Object.entries(this.filesOpcionales).forEach(([key, files]) => {
+      appendFiles('OPCIONAL', key, files);
+    });
+
+    console.groupEnd();
 
     return result;
+  }
+
+  private removeUploadedFileFromPending(key: string, uploadedFile: File): void {
+    if (this.filesObligatorios[key]?.length) {
+      this.filesObligatorios[key] = this.filesObligatorios[key].filter(
+        (file) =>
+          !(
+            file.name === uploadedFile.name &&
+            file.size === uploadedFile.size &&
+            file.lastModified === uploadedFile.lastModified
+          ),
+      );
+    }
+
+    if (this.filesOpcionales[key]?.length) {
+      this.filesOpcionales[key] = this.filesOpcionales[key].filter(
+        (file) =>
+          !(
+            file.name === uploadedFile.name &&
+            file.size === uploadedFile.size &&
+            file.lastModified === uploadedFile.lastModified
+          ),
+      );
+    }
   }
 
   private getDocumentTypeIdByKey(key: string): number {
     const expectedCode = this.documentTypeCodeByKey[key];
 
+    console.groupCollapsed(`🔎 RESOLVIENDO TIPO DOCUMENTAL: ${key}`);
+
+    console.log('🔑 KEY FRONTEND:', key);
+    console.log('🏷️ CÓDIGO BACKEND ESPERADO:', expectedCode);
+
     if (!expectedCode) {
+      console.error('❌ NO EXISTE MAPEO FRONTEND PARA LA KEY:', key);
+      console.groupEnd();
+
       throw new Error(`No existe mapeo frontend para el documento ${key}`);
     }
 
     const found = this.documentTypes.find(
-      (type: any) => String(type.code || '').toUpperCase() === expectedCode,
+      (type: any) =>
+        String(type.code || '')
+          .trim()
+          .toUpperCase() === String(expectedCode).trim().toUpperCase(),
     );
 
     if (!found?.id) {
+      console.error('❌ TIPO DOCUMENTAL NO ENCONTRADO EN EL CATÁLOGO BACKEND');
+
+      console.table(
+        this.documentTypes.map((type: any) => ({
+          id: type.id,
+          code: type.code,
+          name: type.name,
+          required: type.required,
+          documentGroup: type.documentGroup,
+        })),
+      );
+
+      console.groupEnd();
+
       throw new Error(
         `No existe tipo de documento backend para el código ${expectedCode}`,
       );
     }
+
+    console.log('✅ TIPO DOCUMENTAL RESUELTO:', {
+      key,
+      expectedCode,
+      documentTypeId: Number(found.id),
+      backendType: found,
+    });
+
+    console.groupEnd();
 
     return Number(found.id);
   }
@@ -3474,9 +3667,12 @@ export class PostulationFormComponent {
         this.wellbeingStorageService.saveCurrentStep(11);
         this.saveWorkflow();
 
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth',
+        requestAnimationFrame(() => {
+          window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'auto',
+          });
         });
 
         this.showWarning(
@@ -3549,9 +3745,12 @@ export class PostulationFormComponent {
 
       this.dialog.closeAll();
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'auto',
+        });
       });
 
       // =====================================
@@ -4024,7 +4223,7 @@ export class PostulationFormComponent {
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
 
     console.log('👀 STEP VIEW ONLY:', {
@@ -4284,10 +4483,20 @@ export class PostulationFormComponent {
     return faltantes.length === 0;
   }
 
-  onFileSelectedOpcional(event: any, key: string) {
+  onFileSelectedOpcional(event: any, key: string): void {
     const files: FileList = event.target.files;
 
-    if (!files) return;
+    console.groupCollapsed(`📎 ARCHIVO OPCIONAL SELECCIONADO: ${key}`);
+
+    console.log('🔑 KEY FRONTEND:', key);
+    console.log('🏷️ CÓDIGO BACKEND ESPERADO:', this.documentTypeCodeByKey[key]);
+    console.log('📦 CANTIDAD DE ARCHIVOS SELECCIONADOS:', files?.length || 0);
+
+    if (!files?.length) {
+      console.warn('⚠️ No se seleccionaron archivos');
+      console.groupEnd();
+      return;
+    }
 
     if (!this.filesOpcionales[key]) {
       this.filesOpcionales[key] = [];
@@ -4296,19 +4505,49 @@ export class PostulationFormComponent {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
+      console.log(`📄 ARCHIVO ${i + 1}:`, {
+        key,
+        name: file.name,
+        type: file.type,
+        sizeBytes: file.size,
+        sizeMb: Number((file.size / 1024 / 1024).toFixed(2)),
+        lastModified: file.lastModified,
+      });
+
       if (file.size > 5 * 1024 * 1024) {
+        console.warn('⛔ ARCHIVO RECHAZADO POR TAMAÑO:', file.name);
         this.showWarning(`${file.name} supera 5MB`);
         continue;
       }
 
       const existe = this.filesOpcionales[key].some(
-        (f) => f.name === file.name && f.size === file.size,
+        (existingFile) =>
+          existingFile.name === file.name && existingFile.size === file.size,
       );
 
-      if (!existe) {
-        this.filesOpcionales[key].push(file);
+      if (existe) {
+        console.warn('⚠️ ARCHIVO DUPLICADO, NO SE AGREGA:', file.name);
+        continue;
       }
+
+      this.filesOpcionales[key].push(file);
+
+      console.log('✅ ARCHIVO OPCIONAL AGREGADO AL FRONTEND:', {
+        key,
+        fileName: file.name,
+        totalArchivosEnCategoria: this.filesOpcionales[key].length,
+      });
     }
+
+    console.log(
+      '📚 ESTADO ACTUAL DE ARCHIVOS OPCIONALES:',
+      this.filesOpcionales,
+    );
+
+    console.groupEnd();
+
+    // Permite volver a seleccionar el mismo archivo si se elimina manualmente.
+    event.target.value = '';
   }
 
   toggleDoc(doc: any) {
@@ -5513,7 +5752,7 @@ export class PostulationFormComponent {
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
 
     console.log('🆕 VOLVIENDO A SELECTOR DE POSTULACIONES - FORM LIMPIO', {
@@ -5552,7 +5791,7 @@ export class PostulationFormComponent {
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
 
     console.log('↩️ VOLVIENDO AL SELECTOR SIN BORRAR DATOS');
@@ -5902,7 +6141,7 @@ export class PostulationFormComponent {
 
   ngAfterViewChecked() {
     const el = document.querySelector('.step.active');
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+    el?.scrollIntoView({ behavior: 'auto', inline: 'center' });
   }
 
   getStepState(stepId: number) {
@@ -6598,7 +6837,7 @@ export class PostulationFormComponent {
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
 
     // =====================================
@@ -7383,7 +7622,7 @@ export class PostulationFormComponent {
 
         studyPlace: m.studyPlace || '',
 
-        birthDate: m.birthDate || null,
+        birthDate: m.birthDate || m.birth_date || null,
 
         estudiaRegion: '',
 
@@ -7413,6 +7652,7 @@ export class PostulationFormComponent {
       '🧪 FAMILY OTHERS RESTORED:',
       this.grupoFamiliar.map((f: any) => ({
         nombre: f.nombre,
+        birthDate: f.birthDate,
         activityId: f.activityId,
         othersActivities: f.othersActivities,
         workPlaceId: f.workPlaceId,
@@ -7926,5 +8166,109 @@ export class PostulationFormComponent {
       '📅 Fecha nacimiento familiar actualizada:',
       familiar.birthDate,
     );
+  }
+
+  async downloadBackendDocument(document: any): Promise<void> {
+    const documentId = Number(document?.id || document?.documentId || 0);
+
+    if (!documentId) {
+      this.showWarning('No fue posible identificar el documento');
+
+      return;
+    }
+
+    try {
+      console.log('⬇️ DESCARGANDO DOCUMENTO FÍSICO:', {
+        documentId,
+        document,
+      });
+
+      const blob = await firstValueFrom(
+        this.wellbeingDocumentsService.downloadDocument(documentId),
+      );
+
+      const fileName =
+        document.originalFilename ||
+        document.original_filename ||
+        document.fileName ||
+        `documento-${documentId}`;
+
+      const url = URL.createObjectURL(blob);
+
+      const link = window.document.createElement('a');
+
+      link.href = url;
+      link.download = fileName;
+
+      window.document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      URL.revokeObjectURL(url);
+
+      console.log('✅ DOCUMENTO DESCARGADO:', {
+        documentId,
+        fileName,
+      });
+    } catch (error: any) {
+      console.error('❌ ERROR DESCARGANDO DOCUMENTO:', {
+        documentId,
+        status: error?.status,
+        statusText: error?.statusText,
+        url: error?.url,
+        message: error?.message,
+        backendError: error?.error,
+        fullError: error,
+      });
+
+      this.showError(
+        'No fue posible descargar el documento. Es posible que el registro corresponda a una carga antigua sin archivo físico.',
+      );
+    }
+  }
+
+  getFamilyBirthDatePickerValue(value: string | null | undefined): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    const text = String(value).trim();
+
+    const dateOnly = text.includes('T') ? text.split('T')[0] : text;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+      return null;
+    }
+
+    const [year, month, day] = dateOnly.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+  }
+
+  onFamilyBirthDatePickerChange(
+    familiar: Familiar,
+    selectedDate: Date | null,
+  ): void {
+    if (!selectedDate) {
+      familiar.birthDate = null;
+
+      return;
+    }
+
+    const year = selectedDate.getFullYear();
+
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+
+    familiar.birthDate = `${year}-${month}-${day}`;
+
+    console.log('📅 FECHA NACIMIENTO FAMILIAR ACTUALIZADA:', {
+      familiar: `${familiar.nombre || ''} ${familiar.apellido || ''}`.trim(),
+
+      birthDate: familiar.birthDate,
+    });
   }
 }

@@ -241,6 +241,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // 🔥 BLOQUEAR MARCAJE FUERA DEL HORARIO PERMITIDO
+    if (type === 'ING' && !this.canMarkIngresoByTime) {
+      this.showWarning(
+        'El ingreso solamente puede registrarse entre las 08:00 y las 08:30 hrs.',
+        'Fuera de rango de marcaje',
+      );
+
+      return;
+    }
+
+    if (type === 'SAL' && !this.canMarkSalidaByTime) {
+      this.showWarning(
+        `La salida solamente puede registrarse entre las ${this.salidaAllowedRangeText}.`,
+        'Fuera de rango de marcaje',
+      );
+
+      return;
+    }
+
     // 🔥 Evita marcar mientras carga o mientras ya está guardando
     if (this.loadingRegisters || this.isMarking) {
       return;
@@ -364,13 +383,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  showWarning(message: string) {
+  showWarning(message: string, title = 'Periodo inválido') {
     this.dialog.open(ConfirmDialogOkComponent, {
       width: '420px',
       disableClose: true,
       data: {
-        title: 'Periodo inválido',
-        message: message,
+        title,
+        message,
         icon: 'warning',
         color: 'warn',
         confirmText: 'Aceptar',
@@ -378,6 +397,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  get markingRangeMessage(): string {
+    const day = this.serverNow.getDay();
+
+    // Sábado o domingo
+    if (day === 0 || day === 6) {
+      return 'No se permiten marcajes durante el fin de semana.';
+    }
+
+    const currentMinutes =
+      this.serverNow.getHours() * 60 + this.serverNow.getMinutes();
+
+    const ingresoInicio = 8 * 60;
+    const ingresoFin = ingresoInicio + 30;
+
+    const salidaInicio = day === 5 ? 16 * 60 : 17 * 60;
+    const salidaFin = salidaInicio + 30;
+
+    // Antes del horario de ingreso
+    if (currentMinutes < ingresoInicio) {
+      return 'Ingreso fuera de rango. Horario permitido: 08:00 a 08:30 hrs.';
+    }
+
+    // Después del margen de ingreso y antes de la salida
+    if (
+      currentMinutes > ingresoFin &&
+      currentMinutes < salidaInicio &&
+      !this.hasSalida
+    ) {
+      return `Salida fuera de rango. Horario permitido: ${this.salidaAllowedRangeText}.`;
+    }
+
+    // Después del margen permitido para la salida
+    if (currentMinutes > salidaFin && !this.hasSalida) {
+      return `Marcaje fuera de rango. La salida solamente puede registrarse entre las ${this.salidaAllowedRangeText}.`;
+    }
+
+    return '';
+  }
+  
   get teleworkStatus(): string {
     return this.canMarkToday
       ? '🟢 Teletrabajo habilitado hoy'
@@ -630,6 +688,59 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   hasSalidaToday(): boolean {
     return this.todayEvents?.some((e) => e.type === 'SAL');
+  }
+
+  // =====================================================
+  // 🕒 RANGOS HORARIOS DE MARCAJE
+  // Margen permitido: 30 minutos solamente hacia adelante
+  // =====================================================
+
+  get canMarkIngresoByTime(): boolean {
+    const day = this.serverNow.getDay();
+
+    // Domingo = 0 | Sábado = 6
+    if (day === 0 || day === 6) {
+      return false;
+    }
+
+    return this.isWithinForwardTimeRange(8, 0, 30);
+  }
+
+  get canMarkSalidaByTime(): boolean {
+    const day = this.serverNow.getDay();
+
+    // Domingo = 0 | Sábado = 6
+    if (day === 0 || day === 6) {
+      return false;
+    }
+
+    // Viernes = 5 → salida entre 16:00 y 16:30
+    if (day === 5) {
+      return this.isWithinForwardTimeRange(16, 0, 30);
+    }
+
+    // Lunes a jueves → salida entre 17:00 y 17:30
+    return this.isWithinForwardTimeRange(17, 0, 30);
+  }
+
+  get salidaAllowedRangeText(): string {
+    return this.serverNow.getDay() === 5
+      ? '16:00 a 16:30 hrs'
+      : '17:00 a 17:30 hrs';
+  }
+
+  private isWithinForwardTimeRange(
+    startHour: number,
+    startMinute: number,
+    marginMinutes: number,
+  ): boolean {
+    const currentMinutes =
+      this.serverNow.getHours() * 60 + this.serverNow.getMinutes();
+
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = startMinutes + marginMinutes;
+
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
   }
 
   get hasIngreso(): boolean {

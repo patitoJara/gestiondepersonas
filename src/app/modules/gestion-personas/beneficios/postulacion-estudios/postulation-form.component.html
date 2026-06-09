@@ -523,33 +523,29 @@
                     <div class="ssm-field">
                       <label>Fecha nacimiento</label>
 
-                      <div class="native-date-wrapper">
+                      <mat-form-field class="ssm-datepicker">
                         <input
-                          #familyBirthInput
-                          class="input native-date-input"
-                          type="date"
-                          [ngModel]="normalizeDateInput(f.birthDate)"
-                          [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="
-                            onFamilyBirthDateNativeChange(f, $event)
+                          matInput
+                          [matDatepicker]="familyBirthPicker"
+                          [value]="getFamilyBirthDatePickerValue(f.birthDate)"
+                          (dateChange)="
+                            onFamilyBirthDatePickerChange(f, $event.value)
                           "
+                          readonly
                           [disabled]="
-                            i === 0 && hasFamilyBirthDate(f.birthDate)
-                          "
-                          [class.readonly-field]="
                             i === 0 && hasFamilyBirthDate(f.birthDate)
                           "
                         />
 
-                        <button
-                          type="button"
-                          class="native-date-button"
+                        <mat-datepicker-toggle
+                          matIconSuffix
+                          [for]="familyBirthPicker"
                           *ngIf="i > 0 || !hasFamilyBirthDate(f.birthDate)"
-                          (click)="openNativeDatePicker(familyBirthInput)"
                         >
-                          <mat-icon>calendar_month</mat-icon>
-                        </button>
-                      </div>
+                        </mat-datepicker-toggle>
+
+                        <mat-datepicker #familyBirthPicker> </mat-datepicker>
+                      </mat-form-field>
                     </div>
 
                     <!-- PREVISIÓN -->
@@ -1680,7 +1676,6 @@
 
                     <span>{{ doc.label }}</span>
 
-                    <!-- 🔥 ICONO AYUDA -->
                     <mat-icon
                       *ngIf="doc.help"
                       class="help-icon"
@@ -1695,10 +1690,11 @@
                   <div class="doc-content" *ngIf="doc.open !== false">
                     <!-- UPLOAD -->
                     <div class="file-upload" (click)="triggerFile(doc.key)">
-                      <mat-icon class="doc-icon">upload_file</mat-icon>
+                      <mat-icon class="doc-icon"> upload_file </mat-icon>
 
                       <div>
                         <div class="file-title">Adjuntar archivos</div>
+
                         <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
                       </div>
 
@@ -1722,23 +1718,44 @@
                       Sin archivos adjuntos
                     </div>
 
-                    <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
+                    <!-- DOCUMENTOS YA REGISTRADOS -->
                     <div
                       *ngIf="hasBackendDocumentsForKey(doc.key)"
                       class="file-list uploaded-documents"
                     >
                       <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
                         <div class="file-left">
-                          <mat-icon color="primary">cloud_done</mat-icon>
-                          <span>{{
-                            d.originalFilename || d.original_filename
-                          }}</span>
+                          <mat-icon color="primary"> cloud_done </mat-icon>
+
+                          <span>
+                            {{
+                              d.originalFilename ||
+                                d.original_filename ||
+                                d.fileName
+                            }}
+                          </span>
                         </div>
-                        <span class="hint">Documento ya registrado</span>
+
+                        <div class="file-actions">
+                          <span class="hint"> Documento ya registrado </span>
+
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="Descargar documento"
+                            (click)="
+                              downloadBackendDocument(d);
+                              $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon>download</mat-icon>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- PREVIEW ARCHIVOS NUEVOS -->
+                    <!-- ARCHIVOS NUEVOS PENDIENTES -->
                     <div
                       *ngIf="filesObligatorios[doc.key]?.length"
                       class="file-list"
@@ -1751,14 +1768,15 @@
                       >
                         <div class="file-left">
                           <mat-icon>description</mat-icon>
+
                           <span>{{ f.name }}</span>
                         </div>
 
                         <button
                           mat-icon-button
                           color="warn"
-                          (click)="removeFile(doc.key, i)"
                           type="button"
+                          (click)="removeFile(doc.key, i)"
                         >
                           <mat-icon>close</mat-icon>
                         </button>
@@ -1774,8 +1792,7 @@
               <div class="section-title">Documentos adicionales</div>
 
               <div class="section-sub">
-                Adjuntar informacion complementaria necesaria Debajo de
-                Documentos adicionales
+                Adjunte información complementaria cuando corresponda.
               </div>
 
               <div class="docs-grid">
@@ -1803,7 +1820,6 @@
 
                     <span>{{ doc.label }}</span>
 
-                    <!-- 🔥 ICONO AYUDA -->
                     <mat-icon
                       *ngIf="doc.help"
                       class="help-icon"
@@ -1821,10 +1837,11 @@
                       class="file-upload"
                       (click)="triggerFileOpcional(doc.key)"
                     >
-                      <mat-icon class="doc-icon">upload_file</mat-icon>
+                      <mat-icon class="doc-icon"> upload_file </mat-icon>
 
                       <div>
                         <div class="file-title">Adjuntar archivos</div>
+
                         <div class="hint">PDF / JPG / PNG - máx 5MB c/u</div>
                       </div>
 
@@ -1848,23 +1865,44 @@
                       Sin archivos adjuntos
                     </div>
 
-                    <!-- DOCUMENTOS YA REGISTRADOS EN BACKEND -->
+                    <!-- DOCUMENTOS YA REGISTRADOS -->
                     <div
                       *ngIf="hasBackendDocumentsForKey(doc.key)"
                       class="file-list uploaded-documents"
                     >
                       <div *ngFor="let d of getBackendDocumentsForKey(doc.key)">
                         <div class="file-left">
-                          <mat-icon color="primary">cloud_done</mat-icon>
-                          <span>{{
-                            d.originalFilename || d.original_filename
-                          }}</span>
+                          <mat-icon color="primary"> cloud_done </mat-icon>
+
+                          <span>
+                            {{
+                              d.originalFilename ||
+                                d.original_filename ||
+                                d.fileName
+                            }}
+                          </span>
                         </div>
-                        <span class="hint">Documento ya registrado</span>
+
+                        <div class="file-actions">
+                          <span class="hint"> Documento ya registrado </span>
+
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="Descargar documento"
+                            (click)="
+                              downloadBackendDocument(d);
+                              $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon>download</mat-icon>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <!-- PREVIEW ARCHIVOS NUEVOS -->
+                    <!-- ARCHIVOS NUEVOS PENDIENTES -->
                     <div
                       *ngIf="filesOpcionales[doc.key]?.length"
                       class="file-list"
@@ -1877,14 +1915,15 @@
                       >
                         <div class="file-left">
                           <mat-icon>description</mat-icon>
+
                           <span>{{ f.name }}</span>
                         </div>
 
                         <button
                           mat-icon-button
                           color="warn"
-                          (click)="removeFileOpcional(doc.key, i)"
                           type="button"
+                          (click)="removeFileOpcional(doc.key, i)"
                         >
                           <mat-icon>close</mat-icon>
                         </button>
@@ -1897,9 +1936,10 @@
 
             <!-- BOTONES -->
             <div class="actions">
-              <button mat-stroked-button (click)="previousStep()" type="button">
+              <button mat-stroked-button type="button" (click)="previousStep()">
                 Volver
               </button>
+
               <button
                 type="button"
                 mat-raised-button

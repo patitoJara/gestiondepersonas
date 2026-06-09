@@ -1,20 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-
 import { HttpClient } from '@angular/common/http';
-
 import { Observable } from 'rxjs';
-
 import { environment } from 'src/environments/environment';
-
 import { DocumentTypeResponse } from '../models/document-type-response.model';
-
 import { DocumentResponse } from '../models/document-response.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WellbeingDocumentsService {
-
   // =========================================
   // 🔥 INJECTS
   // =========================================
@@ -25,8 +19,7 @@ export class WellbeingDocumentsService {
   // 🔥 BASE URL
   // =========================================
 
-  private apiUrl =
-    `${environment.apiUrl}/wellbeing/postulations`;
+  private apiUrl = `${environment.apiUrl}/wellbeing/postulations`;
 
   constructor() {}
 
@@ -34,9 +27,7 @@ export class WellbeingDocumentsService {
   // 🔥 DOCUMENT TYPES
   // =========================================
 
-  getDocumentTypes():
-    Observable<DocumentTypeResponse[]> {
-
+  getDocumentTypes(): Observable<DocumentTypeResponse[]> {
     return this.http.get<DocumentTypeResponse[]>(
       `${this.apiUrl}/document-types`,
     );
@@ -46,66 +37,50 @@ export class WellbeingDocumentsService {
   // 🔥 GET DOCUMENTS
   // =========================================
 
-  getDocuments(
-    postulationId: number,
-  ): Observable<DocumentResponse[]> {
-
+  getDocuments(postulationId: number): Observable<DocumentResponse[]> {
     return this.http.get<DocumentResponse[]>(
       `${this.apiUrl}/my/${postulationId}/documents`,
     );
   }
 
   // =========================================
-  // 🔥 DOWNLOAD DOCUMENT
+  // 🔥 UPLOAD PHYSICAL DOCUMENT
+  // =========================================
+  // No agregar Content-Type manualmente.
+  // Angular incorpora automáticamente el boundary.
   // =========================================
 
-  downloadDocument(
+  uploadDocument(
     postulationId: number,
-    documentId: number,
-  ): Observable<Blob> {
+    documentTypeId: number,
+    file: File,
+  ): Observable<DocumentResponse> {
+    const formData = new FormData();
 
-    return this.http.get(
-      `${this.apiUrl}/my/${postulationId}/documents/${documentId}/download`,
-      {
-        responseType: 'blob',
-      },
+    formData.append('documentTypeId', String(documentTypeId));
+    formData.append('file', file, file.name);
+
+    return this.http.post<DocumentResponse>(
+      `${this.apiUrl}/${postulationId}/documents/upload`,
+      formData,
     );
   }
 
-
   // =========================================
-  // 🔥 CREATE DOCUMENT METADATA
+  // 🔥 DOWNLOAD PHYSICAL DOCUMENT
   // =========================================
 
-  createDocument(
-    postulationId: number,
-    payload: {
-      documentTypeId: number;
-      originalFilename: string;
-      contentType: string;
-      sizeBytes: number;
-      storagePath: string;
-      checksum: string;
-    },
-  ): Observable<DocumentResponse> {
-
-    return this.http.post<DocumentResponse>(
-      `${this.apiUrl}/my/${postulationId}/documents`,
-      payload,
-    );
+  downloadDocument(documentId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/documents/${documentId}/download`, {
+      responseType: 'blob',
+    });
   }
 
   // =========================================
   // 🔥 DELETE DOCUMENT
   // =========================================
 
-  deleteDocument(
-    postulationId: number,
-    documentId: number,
-  ): Observable<any> {
-
-    return this.http.delete(
-      `${this.apiUrl}/my/documents/${documentId}`,
-    );
+  deleteDocument(documentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/my/documents/${documentId}`);
   }
 }

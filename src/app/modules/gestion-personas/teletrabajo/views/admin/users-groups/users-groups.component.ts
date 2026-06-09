@@ -14,7 +14,6 @@ import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services
 import { UsersGroupService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users-group.service';
 import { GroupReportService } from '@app/modules/gestion-personas/teletrabajo/services/reports/group-report.service';
 
-
 interface GroupReportItem {
   nombre: string;
   roles: string;
@@ -52,19 +51,30 @@ export class UsersGroupsComponent implements OnInit {
     this.loadData();
   }
 
-  async loadData() {
+  async loadData(): Promise<void> {
     this.loader.show();
 
     try {
       // ============================
       // 🔥 1. TRAER DATOS
       // ============================
-      const [groups, usersRaw, relationsRaw]: [any[], any[], any[]] =
-        await Promise.all([
-          firstValueFrom(this.groupService.getAll()),
-          firstValueFrom(this.usersService.getAllUsersRoles()), // 🔥 fuente correcta
-          firstValueFrom(this.usersGroupService.getAll()),
-        ]);
+      const [groups, usersRaw, usersRolesRaw, relationsRaw]: [
+        any[],
+        any[],
+        any[],
+        any[],
+      ] = await Promise.all([
+        firstValueFrom(this.groupService.getAll()),
+
+        // 🔥 Base completa de usuarios
+        firstValueFrom(this.usersService.getAll()),
+
+        // 🔥 Relaciones user-role
+        firstValueFrom(this.usersService.getAllUsersRoles()),
+
+        // 🔥 Relaciones user-group
+        firstValueFrom(this.usersGroupService.getAll()),
+      ]);
 
       // ============================
       // 🔥 2. ASIGNAR BASE
@@ -73,60 +83,63 @@ export class UsersGroupsComponent implements OnInit {
       this.relations = relationsRaw;
 
       console.log('USERS RAW:', usersRaw);
+      console.log('USERS ROLES RAW:', usersRolesRaw);
       console.log('RELATIONS RAW:', relationsRaw);
 
       // ============================
-      // 🧠 3. AGRUPAR USUARIOS POR ROLES
+      // 🧠 3. USUARIOS ACTIVOS CON ROLES ACTIVOS
       // ============================
-      const groupedUsers = this.groupUsersWithRoles(usersRaw);
-      console.log('GROUPED USERS:', groupedUsers);
+      const usersWithRoles = this.mergeUsersWithActiveRoles(
+        usersRaw,
+        usersRolesRaw,
+      );
+
+      console.log('USERS WITH ACTIVE ROLES:', usersWithRoles);
 
       // ============================
       // 🔥 4. FILTRAR USUARIOS SISTEMA
       // ============================
-      const filteredUsers = groupedUsers.filter(
+      const filteredUsers = usersWithRoles.filter(
         (u: any) => !this.systemUserIds.includes(u.id),
       );
 
-      console.log('FILTERED USERS:', filteredUsers);
-
       // ============================
-      // 🟦 5. BASE USUARIOS FINAL
+      // 🟦 5. BASE FINAL DE USUARIOS
       // ============================
       this.users = this.sortByName(filteredUsers);
 
-      // ============================
-      // 🟪 6. TODOS LOS USUARIOS
-      // ============================
       this.allUsers = [...this.users];
 
       // ============================
-      // 🟦 7. RELACIONES ACTIVAS (SIN BORRADOS)
+      // 🟦 6. RELACIONES ACTIVAS DE GRUPOS
       // ============================
-      const activeRelations = this.relations.filter((r: any) => !r.deletedAt);
+      const activeRelations = this.relations.filter((r: any) =>
+        this.isActiveRelation(r),
+      );
 
       // ============================
-      // 🟦 8. IDS CON GRUPO
+      // 🟦 7. IDS DE USUARIOS CON GRUPO
       // ============================
       const usersWithGroupIds = activeRelations
         .map((r: any) => r.user?.id)
         .filter((id: any) => !!id);
 
-      console.log('USERS WITH GROUP IDS:', usersWithGroupIds);
-
       // ============================
-      // 🟨 9. USUARIOS DISPONIBLES
+      // 🟨 8. USUARIOS ADMINISTRATIVOS SIN GRUPO
       // ============================
       this.usersWithoutGroup = this.sortByName(
         this.users.filter((u: any) => {
           const tieneGrupo = usersWithGroupIds.includes(u.id);
+
           const esAdministrativo = this.isAdministrativo(u);
 
           return esAdministrativo && !tieneGrupo;
         }),
       );
 
-      console.log('USERS WITHOUT GROUP:', this.usersWithoutGroup);
+      console.log('USERS FINAL:', this.users.length);
+
+      console.log('USERS WITHOUT GROUP:', this.usersWithoutGroup.length);
     } catch (error) {
       console.error('ERROR loadData:', error);
     } finally {
@@ -138,8 +151,9 @@ export class UsersGroupsComponent implements OnInit {
     this.selectedGroup = group;
 
     const ids = this.relations
-      .filter((r: any) => !r.deletedAt && r.group.id === group.id)
-      .map((r: any) => r.user.id);
+      .filter((r: any) => this.isActiveRelation(r) && r.group?.id === group.id)
+      .map((r: any) => r.user?.id)
+      .filter((id: any) => !!id);
 
     this.usersInGroup = this.sortByName(
       this.users.filter((u: any) => {
@@ -178,6 +192,21 @@ export class UsersGroupsComponent implements OnInit {
     return (u.roles || []).some((r: any) => r.name?.toUpperCase() === roleName);
   }
 
+  private hasContractDate(u: any): boolean {
+    const contractDate =
+      u?.contractDate ||
+      u?.contract_date ||
+      u?.fechaAfiliacion ||
+      u?.affiliateDate ||
+      u?.affiliate_date;
+
+    return (
+      contractDate !== null &&
+      contractDate !== undefined &&
+      String(contractDate).trim() !== ''
+    );
+  }
+
   private sortByName(list: any[]): any[] {
     return list.sort((a, b) => {
       const nameA = (
@@ -194,34 +223,51 @@ export class UsersGroupsComponent implements OnInit {
     });
   }
 
-  private groupUsersWithRoles(data: any[]): any[] {
-    const map = new Map<number, any>();
+  private mergeUsersWithActiveRoles(users: any[], usersRoles: any[]): any[] {
+    const rolesByUserId = new Map<number, any[]>();
 
-    data.forEach((item: any) => {
-      const user = item.user;
-      const role = item.role;
-
-      if (!user || !user.id) return;
-
-      if (!map.has(user.id)) {
-        map.set(user.id, {
-          ...user,
-          roles: [],
-        });
+    // ============================
+    // 🔥 AGRUPAR SOLAMENTE ROLES ACTIVOS
+    // ============================
+    usersRoles.forEach((item: any) => {
+      if (item.deletedAt || item.deleted_at) {
+        return;
       }
 
-      const existing = map.get(user.id);
+      const userId = item.user?.id;
+      const role = item.role;
 
-      if (role && role.id) {
-        const alreadyExists = existing.roles.some((r: any) => r.id === role.id);
+      if (!userId || !role?.id) {
+        return;
+      }
 
-        if (!alreadyExists) {
-          existing.roles.push(role);
-        }
+      if (!rolesByUserId.has(userId)) {
+        rolesByUserId.set(userId, []);
+      }
+
+      const roles = rolesByUserId.get(userId)!;
+
+      const alreadyExists = roles.some((r: any) => r.id === role.id);
+
+      if (!alreadyExists) {
+        roles.push(role);
       }
     });
 
-    return Array.from(map.values());
+    // ============================
+    // 🔥 CONSERVAR TODOS LOS USERS ACTIVOS
+    // AUNQUE NO TENGAN ROLES
+    // ============================
+    return users
+      .filter((user: any) => user?.id && !user.deletedAt && !user.deleted_at)
+      .map((user: any) => ({
+        ...user,
+        roles: rolesByUserId.get(user.id) || [],
+      }));
+  }
+
+  private getGroupedUserById(userId: number): any {
+    return this.users.find((u: any) => u.id === userId);
   }
 
   showWarning(message: string) {
@@ -252,10 +298,11 @@ export class UsersGroupsComponent implements OnInit {
     try {
       const data = this.relations
         .filter(
-          (r: any) => !r.deletedAt && r.group?.id === this.selectedGroup.id,
+          (r: any) =>
+            this.isActiveRelation(r) && r.group?.id === this.selectedGroup.id,
         )
         .map((r: any) => ({
-          ...this.mapUserToExcel(r.user),
+          ...this.mapUserToExcel(this.getGroupedUserById(r.user?.id) || r.user),
           Grupo: r.group.name,
           Jefatura: this.getFullName(r.group.user),
         }));
@@ -273,7 +320,9 @@ export class UsersGroupsComponent implements OnInit {
   }
 
   exportSinGrupo() {
-    const relationsActivas = this.relations.filter((r: any) => !r.deletedAt);
+    const relationsActivas = this.relations.filter((r: any) =>
+      this.isActiveRelation(r),
+    );
 
     const usersWithGroupIds = relationsActivas.map((r: any) => r.user?.id);
 
@@ -360,16 +409,21 @@ export class UsersGroupsComponent implements OnInit {
 
         data = this.relations
           .filter(
-            (r: any) => !r.deletedAt && r.group?.id === this.selectedGroup.id,
+            (r: any) =>
+              this.isActiveRelation(r) && r.group?.id === this.selectedGroup.id,
           )
-          .map((r: any) => ({
-            nombre: this.getFullName(r.user),
-            rut: r.user.rut,
-            email: r.user.email,
-            roles: this.getRoles(r.user),
-            grupo: r.group.name,
-            jefatura: this.getFullName(r.group.user),
-          }));
+          .map((r: any) => {
+            const groupedUser = this.getGroupedUserById(r.user?.id) || r.user;
+
+            return {
+              nombre: this.getFullName(groupedUser),
+              rut: groupedUser?.rut || '',
+              email: groupedUser?.email || '',
+              roles: this.getRoles(groupedUser),
+              grupo: r.group?.name || '',
+              jefatura: this.getFullName(r.group?.user),
+            };
+          });
       }
 
       // ============================
@@ -378,26 +432,26 @@ export class UsersGroupsComponent implements OnInit {
       if (tipo === 'sin-grupo') {
         titulo = 'Usuarios sin grupo';
 
-        const relationsActivas = this.relations.filter(
-          (r: any) => !r.deletedAt,
+        const relationsActivas = this.relations.filter((r: any) =>
+          this.isActiveRelation(r),
         );
 
-        const usersWithGroupIds = relationsActivas.map((r: any) => r.user?.id);
+        const usersWithGroupIds = relationsActivas
+          .map((r: any) => r.user?.id)
+          .filter((id: any) => !!id);
 
         const usersWithoutGroup = this.users.filter((u: any) => {
           const tieneGrupo = usersWithGroupIds.includes(u.id);
 
-          const esAdministrativo = (u.roles || []).some(
-            (r: any) => r.name?.toUpperCase() === 'ADMINISTRATIVO',
-          );
+          const esAdministrativo = this.isAdministrativo(u);
 
           return !tieneGrupo && esAdministrativo;
         });
 
         data = usersWithoutGroup.map((u: any) => ({
           nombre: this.getFullName(u),
-          rut: u.rut,
-          email: u.email,
+          rut: u.rut || '',
+          email: u.email || '',
           roles: this.getRoles(u),
         }));
       }
@@ -410,8 +464,8 @@ export class UsersGroupsComponent implements OnInit {
 
         data = this.users.map((u: any) => ({
           nombre: this.getFullName(u),
-          rut: u.rut,
-          email: u.email,
+          rut: u.rut || '',
+          email: u.email || '',
           roles: this.getRoles(u),
         }));
       }
@@ -435,10 +489,15 @@ export class UsersGroupsComponent implements OnInit {
       this.teleworkReport.printPdf(html);
     } catch (error) {
       console.error(error);
+
       this.showWarning('Error generando PDF');
     } finally {
       this.loader.hide();
     }
+  }
+
+  private isActiveRelation(relation: any): boolean {
+    return !relation?.deletedAt && !relation?.deleted_at;
   }
 
   private exportToExcel(data: any[], sheetName: string, fileName: string) {

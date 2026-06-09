@@ -12,14 +12,22 @@ export interface User {
   firstLastName: string;
   secondLastName?: string;
 
+  full_name?: string;
+
   email: string;
   username: string;
 
   rut: string;
 
+  birth_date?: string | null;
+  contract_date?: string | null;
+  contract_type?: string | null;
+
+  password?: string | null;
+
   createdAt?: string;
   updatedAt?: string;
-  deletedAt?: string;
+  deletedAt?: string | null;
 
-  roles?: Role[]; // 🔥 AQUÍ ESTÁ LA MAGIA
+  roles?: Role[];
 }

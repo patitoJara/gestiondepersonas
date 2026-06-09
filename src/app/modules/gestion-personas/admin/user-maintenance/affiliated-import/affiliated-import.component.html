@@ -47,7 +47,12 @@
       (change)="onFileSelected($event)"
     />
 
-    <button mat-raised-button color="primary" (click)="fileInput.click()">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="fileInput.click()"
+    >
       <mat-icon>upload</mat-icon>
       Seleccionar TXT
     </button>
@@ -59,16 +64,18 @@
       <span>{{ selectedFileName }}</span>
     </div>
 
+    <!-- 🔥 IMPORTACIÓN GENERAL -->
     <button
       class="btn-import"
+      type="button"
       (click)="processImport()"
       [disabled]="loading || !results.length"
     >
       <mat-icon>cloud_upload</mat-icon>
-
       Importar Usuarios
     </button>
 
+    <!-- 🔥 COMPLETAR SOLAMENTE FECHAS VACÍAS -->
     <button
       mat-raised-button
       color="primary"
@@ -76,7 +83,44 @@
       [disabled]="loading || !results.length"
       (click)="processOnlyDatesUpdate()"
     >
+      <mat-icon>event</mat-icon>
       Actualizar solo fechas
+    </button>
+
+    <!-- 🔥 FECHAS Y PERFIL 5 CUANDO NO EXISTE CONTRATO -->
+    <button
+      mat-raised-button
+      color="accent"
+      type="button"
+      [disabled]="loading || !results.length"
+      (click)="processDatesAndUnassignedProfileUpdate()"
+    >
+      <mat-icon>event_available</mat-icon>
+      Completar fechas y perfiles pendientes
+    </button>
+
+    <!-- 🔥 REPARACIÓN HISTÓRICA CONTROLADA -->
+    <button
+      mat-raised-button
+      color="warn"
+      type="button"
+      [disabled]="loading"
+      (click)="processFixAccidentalJefaturas()"
+    >
+      <mat-icon>build_circle</mat-icon>
+      Reparar jefaturas accidentales
+    </button>
+
+    <!-- 🔥 REPARAR USERNAME IGUAL AL RUT SIN DV -->
+    <button
+      mat-raised-button
+      color="warn"
+      type="button"
+      [disabled]="loading || !results.length"
+      (click)="processFixUsernameFromRut()"
+    >
+      <mat-icon>person_edit</mat-icon>
+      Corregir username desde RUT
     </button>
   </div>
 

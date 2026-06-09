@@ -43,7 +43,13 @@
           <button
             class="btn btn-big btn-green"
             (click)="mark('ING')"
-            [disabled]="!canMarkToday || hasIngreso || loadingRegisters || isMarking"
+            [disabled]="
+              !canMarkToday ||
+              hasIngreso ||
+              !canMarkIngresoByTime ||
+              loadingRegisters ||
+              isMarking
+            "
           >
             <mat-icon>login</mat-icon>
             Ingreso
@@ -52,11 +58,28 @@
           <button
             class="btn btn-big btn-orange"
             (click)="mark('SAL')"
-            [disabled]="!canMarkToday || hasSalida || loadingRegisters || isMarking"
+            [disabled]="
+              !canMarkToday ||
+              hasSalida ||
+              !canMarkSalidaByTime ||
+              loadingRegisters ||
+              isMarking
+            "
           >
             <mat-icon>logout</mat-icon>
             Salida
           </button>
+        </div>
+
+        <div
+          *ngIf="canMarkToday && markingRangeMessage"
+          class="marking-warning"
+        >
+          <mat-icon>schedule</mat-icon>
+
+          <span>
+            {{ markingRangeMessage }}
+          </span>
         </div>
 
         <div class="user-name">
@@ -97,13 +120,13 @@
       <div class="col">
         <div class="card-header purple">
           <mat-icon>task</mat-icon>
-          Actividades del día
+          Minuta del día
         </div>
 
         <div class="toolbar">
           <button class="btn btn-md btn-purple" (click)="crearWork()">
             <mat-icon>add</mat-icon>
-            Nueva
+            Nueva Minuta
           </button>
         </div>
 
@@ -151,7 +174,7 @@
 
         <div *ngIf="!works.length" class="empty">
           <mat-icon>inbox</mat-icon>
-          <p>Sin actividades</p>
+          <p>Sin Minuta Ingresada</p>
         </div>
       </div>
 

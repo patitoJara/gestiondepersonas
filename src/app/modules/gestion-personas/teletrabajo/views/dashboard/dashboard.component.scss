@@ -318,8 +318,7 @@
 
   border-color: rgba(126, 87, 194, 0.25);
 
-  box-shadow:
-    0 6px 14px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
 .work-left {
@@ -422,6 +421,34 @@
 .action-btn.delete {
   background: rgba(198, 40, 40, 0.1);
   color: #c62828;
+}
+
+/* =========================================================
+   ⚠️ ADVERTENCIA RANGO DE MARCAJE
+========================================================= */
+
+.marking-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 12px;
+  padding: 8px 10px;
+
+  border-radius: 8px;
+
+  background: rgba(245, 124, 0, 0.1);
+  color: #ef6c00;
+
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.marking-warning mat-icon {
+  width: 18px;
+  height: 18px;
+
+  font-size: 18px;
 }
 
 /* =========================================================

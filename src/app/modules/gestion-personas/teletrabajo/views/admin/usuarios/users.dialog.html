@@ -14,6 +14,7 @@
         <input
           matInput
           formControlName="rut"
+          [readonly]="!!data?.id"
           (input)="formatRut($event)"
           (blur)="validarRutBlur()"
         />
@@ -69,6 +70,65 @@
       </mat-form-field>
     </div>
 
+    <!-- FECHA DE NACIMIENTO -->
+    <div class="form-field col-1">
+      <label>Fecha de nacimiento</label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="birth_date"
+          [matDatepicker]="birthDatePicker"
+          placeholder="dd/mm/aaaa"
+          (dateChange)="onDateChange('birth_date', $event)"
+        />
+
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="birthDatePicker"
+        ></mat-datepicker-toggle>
+
+        <mat-datepicker #birthDatePicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- FECHA DE CONTRATO -->
+    <div class="form-field col-1">
+      <label>Fecha de contrato</label>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          formControlName="contract_date"
+          [matDatepicker]="contractDatePicker"
+          placeholder="dd/mm/aaaa"
+          (dateChange)="onDateChange('contract_date', $event)"
+        />
+
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="contractDatePicker"
+        ></mat-datepicker-toggle>
+
+        <mat-datepicker #contractDatePicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- CALIDAD CONTRACTUAL -->
+    <div class="form-field col-2">
+      <label>Calidad contractual</label>
+
+      <mat-form-field appearance="outline">
+        <mat-select formControlName="contract_type">
+          <mat-option value=""> Sin información </mat-option>
+
+          <mat-option *ngFor="let type of contractTypes" [value]="type">
+            {{ type }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
     <!-- USERNAME -->
     <div class="form-field col-2">
       <label>Username *</label>
@@ -94,18 +154,40 @@
           matInput
           [type]="hide ? 'password' : 'text'"
           formControlName="password"
+          autocomplete="new-password"
+          [readonly]="!!data?.id && !allowPasswordUpdate"
         />
 
         <div matSuffix class="password-actions">
-          <button type="button" mat-icon-button (click)="hide = !hide">
-            <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
+          <!-- EDITAR: habilitar cambio explícitamente -->
+          <button
+            *ngIf="data?.id && !allowPasswordUpdate"
+            type="button"
+            mat-icon-button
+            (click)="enablePasswordChange()"
+            title="Cambiar clave"
+          >
+            <mat-icon>lock_reset</mat-icon>
+          </button>
+
+          <!-- NUEVO USUARIO O CAMBIO HABILITADO -->
+          <button
+            *ngIf="!data?.id || allowPasswordUpdate"
+            type="button"
+            mat-icon-button
+            (click)="hide = !hide"
+            title="Mostrar u ocultar clave"
+          >
+            <mat-icon>{{ hide ? "visibility" : "visibility_off" }}</mat-icon>
           </button>
 
           <button
+            *ngIf="!data?.id || allowPasswordUpdate"
             type="button"
             mat-icon-button
             class="btn-generate"
             (click)="generarClave()"
+            title="Generar clave"
           >
             <mat-icon>vpn_key</mat-icon>
           </button>
@@ -115,6 +197,7 @@
             type="button"
             mat-icon-button
             (click)="copiarClave()"
+            title="Copiar clave"
           >
             <mat-icon>content_copy</mat-icon>
           </button>

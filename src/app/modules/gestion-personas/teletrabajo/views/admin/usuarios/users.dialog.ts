@@ -33,6 +33,8 @@ import { generarPassword } from '@app/shared/utils/password.util';
 import { rutValidator } from '@app/shared/utils/rut.validator';
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 import { firstValueFrom } from 'rxjs';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 @Component({
   standalone: true,
@@ -49,6 +51,8 @@ import { firstValueFrom } from 'rxjs';
     MatCardModule,
     MatListModule,
     MatIconModule,
+    MatSelectModule,
+    MatDatepickerModule,
   ],
 })
 export class UsuariosDialogComponent implements OnInit {
@@ -63,12 +67,23 @@ export class UsuariosDialogComponent implements OnInit {
   passwordGenerada: string = '';
   isSelfEdit: boolean = false;
 
+  // 🔒 La clave solo se actualiza cuando el usuario lo solicita explícitamente
+  allowPasswordUpdate = false;
+
   roleConfig: any = {
     ADMIN: { icon: 'admin_panel_settings', color: 'role-admin' },
     SUPERVISOR: { icon: 'supervisor_account', color: 'role-supervisor' },
     JEFATURA: { icon: 'badge', color: 'role-jefatura' },
     ADMINISTRATIVO: { icon: 'person', color: 'role-administrativo' },
   };
+
+  contractTypes: string[] = [
+    'PLANTA',
+    'CONTRATA',
+    'HONORARIOS',
+    'SUPLENTE',
+    'SIN PERFIL ASIGNADO',
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -83,14 +98,24 @@ export class UsuariosDialogComponent implements OnInit {
 
     this.form = this.fb.group({
       id: [this.data?.id ?? null],
+
       username: [this.data?.username ?? '', Validators.required],
       email: [this.data?.email ?? '', [Validators.required, Validators.email]],
+
       rut: [this.data?.rut ?? '', [Validators.required, rutValidator()]],
+
       firstName: [this.data?.firstName ?? '', Validators.required],
       secondName: [this.data?.secondName ?? ''],
+
       firstLastName: [this.data?.firstLastName ?? '', Validators.required],
       secondLastName: [this.data?.secondLastName ?? ''],
+
+      birth_date: [this.parseDateCL(this.data?.birth_date)],
+      contract_date: [this.parseDateCL(this.data?.contract_date)],
+      contract_type: [this.data?.contract_type ?? ''],
+
       password: [''],
+
       roles: [[], Validators.required],
     });
 
@@ -124,8 +149,91 @@ export class UsuariosDialogComponent implements OnInit {
     // 🔥 LIMPIAR PASSWORD
     // =========================================
     setTimeout(() => {
-      this.form.get('password')?.setValue('');
+      const passwordControl = this.form.get('password');
+
+      passwordControl?.setValue('');
+      passwordControl?.markAsPristine();
+      passwordControl?.markAsUntouched();
     }, 0);
+  }
+
+  parseDateCL(date: any): Date | null {
+    if (!date) return null;
+
+    let d: Date;
+
+    // ✅ Si ya viene como Date
+    if (date instanceof Date) {
+      d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    // ✅ String backend: YYYY-MM-DD o ISO
+    else if (typeof date === 'string') {
+      const [year, month, day] = date.split('T')[0].split('-');
+
+      d = new Date(+year, +month - 1, +day);
+    }
+
+    // ✅ Fallback
+    else {
+      d = new Date(date);
+    }
+
+    d.setHours(0, 0, 0, 0);
+
+    return d;
+  }
+
+  enablePasswordChange(): void {
+    this.allowPasswordUpdate = true;
+    this.passwordGenerada = '';
+
+    const passwordControl = this.form.get('password');
+
+    passwordControl?.setValue('');
+    passwordControl?.markAsPristine();
+    passwordControl?.markAsUntouched();
+  }
+
+  formatDateCL(date: any): string {
+    if (!date) return '';
+
+    const d = this.parseDateCL(date);
+
+    if (!d) return '';
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  }
+
+  toBackendDate(date: Date | null): string | null {
+    if (!date) return null;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  onDateChange(field: 'birth_date' | 'contract_date', event: any): void {
+    const value = event.value;
+
+    if (!value) {
+      this.form.get(field)?.setValue(null);
+      return;
+    }
+
+    const cleanDate = new Date(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate(),
+    );
+
+    this.form.get(field)?.setValue(cleanDate);
   }
 
   loadRoles(): void {
@@ -159,26 +267,91 @@ export class UsuariosDialogComponent implements OnInit {
     try {
       const v = this.form.getRawValue();
 
-      const userPayload: any = { ...v };
-      delete userPayload.roles;
+      let savedUser: any;
 
-      if (!userPayload.password) {
-        delete userPayload.password;
+      // =====================================================
+      // ✏️ EDITAR USUARIO EXISTENTE
+      // =====================================================
+      if (v.id) {
+        const currentUser: any = await firstValueFrom(
+          this.usersService.getById(v.id),
+        );
+
+        const userPayload: any = {
+          ...currentUser,
+
+          username: v.username,
+          email: v.email,
+
+          firstName: v.firstName,
+          secondName: v.secondName,
+
+          firstLastName: v.firstLastName,
+          secondLastName: v.secondLastName,
+
+          birth_date: this.toBackendDate(v.birth_date),
+          contract_date: this.toBackendDate(v.contract_date),
+          contract_type: v.contract_type || null,
+
+          rut: currentUser.rut,
+        };
+
+        // Los roles se administran por separado
+        delete userPayload.roles;
+
+        // 🔐 EDITAR:
+        // cambiar clave solamente cuando el administrador
+        // habilitó explícitamente el cambio
+        if (this.allowPasswordUpdate && v.password?.trim()) {
+          userPayload.password = v.password.trim();
+        } else {
+          delete userPayload.password;
+        }
+
+        savedUser = await firstValueFrom(
+          this.usersService.updateUser(v.id, userPayload),
+        );
       }
 
-      // 🔹 guardar usuario
-      const savedUser: any = await firstValueFrom(
-        v.id
-          ? this.usersService.updateUser(v.id, userPayload)
-          : this.usersService.createUser(userPayload),
-      );
+      // =====================================================
+      // ➕ CREAR USUARIO NUEVO
+      // =====================================================
+      else {
+        const userPayload: any = {
+          rut: v.rut,
+
+          firstName: v.firstName,
+          secondName: v.secondName,
+          firstLastName: v.firstLastName,
+          secondLastName: v.secondLastName,
+
+          birth_date: this.toBackendDate(v.birth_date),
+          contract_date: this.toBackendDate(v.contract_date),
+          contract_type: v.contract_type || null,
+
+          username: v.username,
+          email: v.email,
+        };
+
+        if (v.password?.trim()) {
+          userPayload.password = v.password.trim();
+        }
+
+        savedUser = await firstValueFrom(
+          this.usersService.createUser(userPayload),
+        );
+      }
 
       const userId = savedUser.id ?? v.id;
 
-      // 🔹 sync roles
+      // =====================================================
+      // 🔹 SINCRONIZAR ROLES
+      // =====================================================
       await this.syncRoles(userId, v.roles);
 
-      // 🔹 traer datos actualizados
+      // =====================================================
+      // 🔹 TRAER DATOS ACTUALIZADOS
+      // =====================================================
       const userFromApi = await firstValueFrom(
         this.usersService.getById(userId),
       );
@@ -187,14 +360,13 @@ export class UsuariosDialogComponent implements OnInit {
         this.usersService.getUserRoles(userId),
       );
 
-      // 🔥 usar mapper
       const fullUser = this.mapUserToUI(userFromApi, rolesRes);
 
-      // 🔥 cerrar UNA VEZ con data correcta
       this.ref.close(fullUser);
     } catch (err) {
       this.form.enable();
-      console.error(err);
+
+      console.error('Error guardando usuario', err);
     }
   }
 
@@ -250,14 +422,13 @@ export class UsuariosDialogComponent implements OnInit {
    ================================= */
 
   generarClave(): void {
+    this.allowPasswordUpdate = true;
     this.passwordGenerada = generarPassword(10);
 
-    // opcional: setear en el form
     this.form.patchValue({
       password: this.passwordGenerada,
     });
   }
-
   copiarClave(): void {
     if (!this.passwordGenerada) return;
 

@@ -131,10 +131,11 @@ export class AffiliatedImportComponent {
   // 🔥 CONSTANTES
   // ====================================================================================
 
-  // TODO:
-  // validar ID real en BD
-  private readonly ADMINISTRATIVO_ROLE_ID = 4;
-  private readonly PASIVO_ROLE_ID = 5;
+  private readonly ADMIN_ROLE_ID = 1;
+  private readonly ADMINISTRATIVO_ROLE_ID = 2;
+  private readonly SUPERVISOR_ROLE_ID = 3;
+  private readonly JEFATURA_ROLE_ID = 4;
+  private readonly SIN_PERFIL_ASIGNADO_ROLE_ID = 5;
 
   @ViewChild('fileInput')
   fileInput!: ElementRef<HTMLInputElement>;
@@ -376,6 +377,24 @@ export class AffiliatedImportComponent {
     reader.readAsText(file, 'UTF-8');
   }
 
+  private usernameIsRut(
+    username?: string | null,
+    rut?: string | null,
+  ): boolean {
+    const cleanUsername = String(username || '')
+      .replace(/\./g, '')
+      .replace(/-/g, '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+
+    const cleanRut = this.cleanRut(rut);
+
+    // 🔥 Quitar último carácter: dígito verificador
+    const rutWithoutDv = cleanRut.slice(0, -1);
+
+    return !!cleanUsername && cleanUsername === rutWithoutDv;
+  }
+
   // ====================================================================================
   // 🔥 VALIDAR SI EXISTE RUT
   // ====================================================================================
@@ -425,9 +444,11 @@ export class AffiliatedImportComponent {
 
     const tipoAfiliado = (row.TIPO_AFILIADO || '').trim().toUpperCase();
 
-    const isPasivo = tipoAfiliado === 'PASIVO';
-
-    const roleId = isPasivo ? this.PASIVO_ROLE_ID : this.ADMINISTRATIVO_ROLE_ID;
+    // 🔥 Importación normal:
+    // los usuarios nuevos reciben el perfil ADMINISTRATIVO.
+    // El perfil 5 "SIN PERFIL ASIGNADO" se aplica solamente
+    // mediante el proceso especial cuando no existe fecha de contrato.
+    const roleId = this.ADMINISTRATIVO_ROLE_ID;
 
     if (!rutOriginal) {
       errors.push('RUT vacío');
@@ -881,7 +902,9 @@ export class AffiliatedImportComponent {
         this.usersService.getUserRoles(userId),
       );
 
-      return roles.some((r: any) => r.role?.id === roleId);
+      return roles.some(
+        (r: any) => this.isActiveUserRole(r) && this.getRoleId(r) === roleId,
+      );
     } catch (error) {
       console.error('❌ ERROR VALIDANDO ROLE:', error);
 
@@ -907,85 +930,113 @@ export class AffiliatedImportComponent {
       );
 
       // =====================================================
-      // 🔥 BUILD UPDATE
+      // 🔥 CONSERVAR DATOS ACTUALES
       // =====================================================
 
       const payload: any = {
         ...fullUser,
       };
 
+      let mustUpdateUser = false;
+
       // =====================================================
       // 🔥 NOMBRES
+      // COMPLETAR SOLAMENTE SI ESTÁN VACÍOS
       // =====================================================
 
-      payload.firstName = item.payloadUser.firstName || fullUser.firstName;
+      if (!fullUser.firstName && item.payloadUser.firstName) {
+        payload.firstName = item.payloadUser.firstName;
+        mustUpdateUser = true;
+      }
 
-      payload.secondName = item.payloadUser.secondName || fullUser.secondName;
+      if (!fullUser.secondName && item.payloadUser.secondName) {
+        payload.secondName = item.payloadUser.secondName;
+        mustUpdateUser = true;
+      }
 
-      payload.firstLastName =
-        item.payloadUser.firstLastName || fullUser.firstLastName;
+      if (!fullUser.firstLastName && item.payloadUser.firstLastName) {
+        payload.firstLastName = item.payloadUser.firstLastName;
+        mustUpdateUser = true;
+      }
 
-      payload.secondLastName =
-        item.payloadUser.secondLastName || fullUser.secondLastName;
+      if (!fullUser.secondLastName && item.payloadUser.secondLastName) {
+        payload.secondLastName = item.payloadUser.secondLastName;
+        mustUpdateUser = true;
+      }
 
-      payload.full_name = item.payloadUser.full_name || fullUser.full_name;
+      if (!fullUser.full_name && item.payloadUser.full_name) {
+        payload.full_name = item.payloadUser.full_name;
+        mustUpdateUser = true;
+      }
 
       // =====================================================
       // 🔥 EMAIL
-      // SOLO SI VACÍO
+      // COMPLETAR SOLAMENTE SI ESTÁ VACÍO
       // =====================================================
 
       if (!fullUser.email && item.payloadUser.email) {
         payload.email = item.payloadUser.email;
+        mustUpdateUser = true;
       }
 
       // =====================================================
       // 🔥 USERNAME
-      // SOLO SI VACÍO
+      // COMPLETAR SOLAMENTE SI ESTÁ VACÍO
+      // La reparación de usernames iguales al RUT
+      // se ejecuta mediante un proceso independiente.
       // =====================================================
 
       if (!fullUser.username && item.username) {
         payload.username = item.username;
+        mustUpdateUser = true;
       }
 
       // =====================================================
-      // 🔥 PASSWORD
-      // FORZAR CAMBIO
-      // =====================================================
-
-      //payload.password = item.payloadUser.password;
-      payload.password = '123456';
-
+      // 🔥 FECHAS
+      // COMPLETAR SOLAMENTE SI ESTÁN VACÍAS
       // =====================================================
 
       if (!fullUser.birth_date && item.payloadUser.birth_date) {
         payload.birth_date = item.payloadUser.birth_date;
+        mustUpdateUser = true;
       }
 
       if (!fullUser.contract_date && item.payloadUser.contract_date) {
         payload.contract_date = item.payloadUser.contract_date;
+        mustUpdateUser = true;
       }
 
-      if (!fullUser.contract_type) {
+      if (!fullUser.contract_type && item.payloadUser.contract_type) {
         payload.contract_type = item.payloadUser.contract_type;
+        mustUpdateUser = true;
       }
 
       // =====================================================
-      // 🔥 LIMPIAR CAMPOS
+      // 🔒 NUNCA MODIFICAR DATOS SENSIBLES NI RELACIONES
       // =====================================================
+
+      delete payload.password;
+      delete payload.roles;
 
       delete payload.createdAt;
       delete payload.updatedAt;
       delete payload.deletedAt;
 
       // =====================================================
-      // 🔥 UPDATE USER
+      // 🔥 NO HACER PUT SI NO EXISTEN CAMBIOS
       // =====================================================
 
+      if (!mustUpdateUser) {
+        console.log('✅ USER EXISTENTE SIN CAMBIOS:', {
+          id: fullUser.id,
+          rut: fullUser.rut,
+        });
+
+        return;
+      }
+
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-      console.log('🔄 UPDATING USER');
-
+      console.log('🔄 COMPLETANDO DATOS FALTANTES DEL USER');
       console.log(payload);
 
       await firstValueFrom(
@@ -994,16 +1045,13 @@ export class AffiliatedImportComponent {
 
       console.log('✅ USER UPDATED');
 
-      // =====================================================
-      // 🔥 SYNC ROLE
-      // =====================================================
-
-      await this.assignRoleIfNeeded(existingUser.id, item.roleId);
+      // 🔒 No modificar perfiles de usuarios existentes.
+      // La asignación automática se mantiene solamente para usuarios nuevos.
     } catch (error) {
       console.error('❌ ERROR UPDATE USER:', error);
     }
   }
-  
+
   generateUniqueUsername(base: string): string {
     let username = base;
 
@@ -1023,15 +1071,16 @@ export class AffiliatedImportComponent {
   }
 
   // ====================================================================================
-  // 🔥 ACTUALIZAR SOLO FECHA NACIMIENTO Y FECHA AFILIACIÓN
+  // 🔥 ACTUALIZAR SOLAMENTE FECHAS FALTANTES
   // ====================================================================================
-  // ====================================================================================
-  // 🔥 ACTUALIZAR SOLO FECHAS
-  // 🔥 SOLO birth_date Y contract_date
+  // ✅ Completa birth_date solo si está vacío en BD.
+  // ✅ Completa contract_date solo si está vacío en BD.
+  // ✅ No sobrescribe datos corregidos manualmente.
+  // ✅ No modifica RUT, password, roles ni otros datos.
   // ====================================================================================
 
   async processOnlyDatesUpdate(): Promise<void> {
-    console.log('🔥 CLICK ACTUALIZAR SOLO FECHAS');
+    console.log('🔥 CLICK ACTUALIZAR SOLO FECHAS FALTANTES');
 
     if (!this.results.length) {
       console.warn('⚠️ Primero debes procesar el TXT');
@@ -1041,6 +1090,7 @@ export class AffiliatedImportComponent {
     this.loading = true;
 
     let updated = 0;
+    let unchanged = 0;
     let skipped = 0;
     let invalid = 0;
     let errors = 0;
@@ -1050,7 +1100,9 @@ export class AffiliatedImportComponent {
         try {
           if (!item.valid) {
             invalid++;
+
             console.warn('❌ Registro inválido:', item.rutOriginal);
+
             continue;
           }
 
@@ -1058,7 +1110,9 @@ export class AffiliatedImportComponent {
 
           if (!existsUser?.exists || !existsUser?.user?.id) {
             skipped++;
+
             console.warn('⚠️ Usuario no existe, se omite:', item.rutOriginal);
+
             continue;
           }
 
@@ -1070,28 +1124,52 @@ export class AffiliatedImportComponent {
             ...fullUser,
           };
 
-          // ✅ SOLO MODIFICAR FECHA NACIMIENTO
-          if (item.payloadUser.birth_date) {
+          let mustUpdateUser = false;
+
+          // ✅ Completar solamente fecha de nacimiento faltante
+          if (!fullUser.birth_date && item.payloadUser.birth_date) {
             payload.birth_date = item.payloadUser.birth_date;
+
+            mustUpdateUser = true;
           }
 
-          // ✅ SOLO MODIFICAR FECHA AFILIACIÓN
-          if (item.payloadUser.contract_date) {
+          // ✅ Completar solamente fecha de contrato faltante
+          if (!fullUser.contract_date && item.payloadUser.contract_date) {
             payload.contract_date = item.payloadUser.contract_date;
+
+            mustUpdateUser = true;
           }
 
-          // 🔥 LIMPIAR CAMPOS QUE NO VAN EN UPDATE
+          // 🔒 No enviar datos sensibles ni relaciones
+          delete payload.password;
+          delete payload.roles;
+
           delete payload.createdAt;
           delete payload.updatedAt;
           delete payload.deletedAt;
 
+          if (!mustUpdateUser) {
+            unchanged++;
+
+            console.log('✅ SIN CAMBIOS:', {
+              id: fullUser.id,
+              rut: fullUser.rut,
+            });
+
+            continue;
+          }
+
           console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('📅 ACTUALIZANDO SOLO FECHAS');
+
+          console.log('📅 COMPLETANDO FECHAS FALTANTES');
+
           console.log({
             id: fullUser.id,
             rut: fullUser.rut,
-            birth_date: payload.birth_date,
-            contract_date: payload.contract_date,
+            birth_date_anterior: fullUser.birth_date,
+            birth_date_nueva: payload.birth_date,
+            contract_date_anterior: fullUser.contract_date,
+            contract_date_nueva: payload.contract_date,
           });
 
           await firstValueFrom(
@@ -1110,11 +1188,13 @@ export class AffiliatedImportComponent {
       }
 
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
       console.log('✅ ACTUALIZACIÓN SOLO FECHAS FINALIZADA');
 
       console.table({
         totalTXT: this.results.length,
         updated,
+        unchanged,
         skipped,
         invalid,
         errors,
@@ -1124,5 +1204,696 @@ export class AffiliatedImportComponent {
     }
   }
 
-  
+  // ====================================================================================
+  // 🔥 ACTUALIZAR SOLAMENTE FECHAS FALTANTES
+  // 🔥 Y CONVERTIR EN NO FUNCIONARIO CUANDO EL TXT NO TRAE CONTRATO
+  // ====================================================================================
+  // ✅ No modifica nombres
+  // ✅ No modifica email
+  // ✅ No modifica username
+  // ✅ No modifica RUT
+  // ✅ No modifica password
+  // ✅ No modifica otros datos
+  //
+  // REGLAS:
+  // 1. birth_date:
+  //    completar solamente si está vacío en BD y viene informado en TXT.
+  //
+  // 2. contract_date:
+  //    completar solamente si está vacío en BD y viene informado en TXT.
+  //
+  // 3. SIN FECHA DE CONTRATO EN TXT:
+  //    forzar contract_date = null.
+  //    forzar contract_type = 'SIN PERFIL ASIGNADO'.
+  //    eliminar roles anteriores.
+  //    dejar únicamente rol 5.
+  // ====================================================================================
+
+  async processDatesAndUnassignedProfileUpdate(): Promise<void> {
+    console.log('🔥 CLICK ACTUALIZAR FECHAS Y PERFILES PENDIENTES');
+
+    if (!this.results.length) {
+      console.warn('⚠️ Primero debes procesar el TXT');
+      return;
+    }
+
+    this.loading = true;
+
+    let updated = 0;
+    let unchanged = 0;
+    let roleReplaced = 0;
+    let skipped = 0;
+    let invalid = 0;
+    let errors = 0;
+
+    try {
+      for (const item of this.results) {
+        try {
+          // =====================================================
+          // 🔥 OMITIR REGISTROS INVÁLIDOS
+          // =====================================================
+
+          if (!item.valid) {
+            invalid++;
+
+            console.warn('❌ Registro inválido:', item.rutOriginal);
+
+            continue;
+          }
+
+          // =====================================================
+          // 🔥 BUSCAR USUARIO EXISTENTE
+          // =====================================================
+
+          const existsUser = await this.validateUserExists(item.rutOriginal);
+
+          if (!existsUser?.exists || !existsUser?.user?.id) {
+            skipped++;
+
+            console.warn('⚠️ Usuario no existe, se omite:', item.rutOriginal);
+
+            continue;
+          }
+
+          const fullUser: any = await firstValueFrom(
+            this.usersService.getById(existsUser.user.id),
+          );
+
+          // =====================================================
+          // 🔥 CONSERVAR TODOS LOS DATOS ACTUALES
+          // =====================================================
+
+          const payload: any = {
+            ...fullUser,
+          };
+
+          let mustUpdateUser = false;
+
+          // =====================================================
+          // 🔥 FECHA DE NACIMIENTO
+          // Completar solamente cuando no existe en BD.
+          // =====================================================
+
+          if (!fullUser.birth_date && item.payloadUser.birth_date) {
+            payload.birth_date = item.payloadUser.birth_date;
+
+            mustUpdateUser = true;
+          }
+
+          // =====================================================
+          // 🔥 FECHA DE CONTRATO
+          // =====================================================
+
+          const hasContractDateInTxt = !!String(
+            item.payloadUser.contract_date || '',
+          ).trim();
+
+          if (hasContractDateInTxt) {
+            // ✅ Completar solamente si actualmente no existe.
+            // No sobrescribir fechas corregidas manualmente.
+            if (!fullUser.contract_date) {
+              payload.contract_date = item.payloadUser.contract_date;
+
+              mustUpdateUser = true;
+            }
+          } else {
+            // 🔥 REGLA OBLIGATORIA:
+            // si el TXT no trae fecha de contrato:
+            // - limpiar contract_date
+            // - establecer contract_type = SIN RELACION
+            // - luego dejar solamente el perfil 5
+
+            if (
+              fullUser.contract_date ||
+              fullUser.contract_type !== 'SIN RELACION'
+            ) {
+              payload.contract_date = null;
+              payload.contract_type = 'SIN RELACION';
+
+              mustUpdateUser = true;
+            }
+          }
+
+          // =====================================================
+          // 🔥 LIMPIAR CAMPOS QUE JAMÁS DEBEN ENVIARSE
+          // =====================================================
+
+          delete payload.password;
+          delete payload.roles;
+
+          delete payload.createdAt;
+          delete payload.updatedAt;
+          delete payload.deletedAt;
+
+          // =====================================================
+          // 🔥 ACTUALIZAR USER SOLAMENTE SI CAMBIÓ ALGO
+          // =====================================================
+
+          if (mustUpdateUser) {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+            console.log('📅 ACTUALIZANDO DATOS PERMITIDOS');
+
+            console.log({
+              id: fullUser.id,
+              rut: fullUser.rut,
+              birth_date_anterior: fullUser.birth_date,
+              birth_date_nueva: payload.birth_date,
+              contract_date_anterior: fullUser.contract_date,
+              contract_date_nueva: payload.contract_date,
+              contract_type_anterior: fullUser.contract_type,
+              contract_type_nuevo: payload.contract_type,
+            });
+
+            await firstValueFrom(
+              this.usersService.updateUser(fullUser.id, payload),
+            );
+
+            updated++;
+          } else {
+            unchanged++;
+
+            console.log('✅ SIN CAMBIOS EN USER:', {
+              id: fullUser.id,
+              rut: fullUser.rut,
+            });
+          }
+
+          // =====================================================
+          // 🔥 SIN CONTRATO EN TXT:
+          // ELIMINAR ROLES ACTUALES Y DEJAR SOLAMENTE ROL 5
+          // =====================================================
+
+          if (!hasContractDateInTxt) {
+            await this.replaceUserRolesWithSingleRole(
+              fullUser.id,
+              this.SIN_PERFIL_ASIGNADO_ROLE_ID,
+            );
+
+            roleReplaced++;
+          }
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR ACTUALIZANDO USUARIO:', {
+            rut: item.rutOriginal,
+            error,
+          });
+        }
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      console.log('✅ PROCESO FINALIZADO');
+
+      console.table({
+        totalTXT: this.results.length,
+        updated,
+        unchanged,
+        roleReplaced,
+        skipped,
+        invalid,
+        errors,
+      });
+    } finally {
+      this.loading = false;
+    }
+  }
+  // ====================================================================================
+  // 🔥 DEJAR UN ÚNICO PERFIL ACTIVO
+  // ====================================================================================
+  // ✅ Elimina perfiles anteriores distintos al solicitado.
+  // ✅ Mantiene el perfil solicitado si ya existe.
+  // ✅ Agrega el perfil solicitado cuando todavía no existe.
+  // ====================================================================================
+
+  async replaceUserRolesWithSingleRole(
+    userId: number,
+    roleId: number,
+  ): Promise<void> {
+    try {
+      const currentRoles: any[] = await firstValueFrom(
+        this.usersService.getUserRoles(userId),
+      );
+
+      const activeRoles = currentRoles.filter((userRole: any) =>
+        this.isActiveUserRole(userRole),
+      );
+
+      for (const userRole of activeRoles) {
+        const currentRoleId = this.getRoleId(userRole);
+
+        if (!currentRoleId || currentRoleId === roleId) {
+          continue;
+        }
+
+        console.log('🗑️ ELIMINANDO PERFIL ANTERIOR:', {
+          userId,
+          roleId: currentRoleId,
+        });
+
+        await firstValueFrom(
+          this.usersService.deleteUserRole(userId, currentRoleId),
+        );
+      }
+
+      await this.assignRoleIfNeeded(userId, roleId);
+
+      console.log('✅ USUARIO QUEDÓ CON PERFIL ÚNICO:', {
+        userId,
+        roleId,
+      });
+    } catch (error) {
+      console.error('❌ ERROR REEMPLAZANDO PERFILES:', {
+        userId,
+        roleId,
+        error,
+      });
+
+      throw error;
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 GENERAR USERNAME ÚNICO EXCLUYENDO AL USUARIO ACTUAL
+  // ====================================================================================
+
+  private generateUniqueUsernameExcludingUser(
+    base: string,
+    excludedUserId: number,
+  ): string {
+    let username = base;
+    let counter = 1;
+
+    while (
+      this.allUsers.some(
+        (u: any) =>
+          u.id !== excludedUserId &&
+          u.username?.toLowerCase() === username.toLowerCase(),
+      )
+    ) {
+      username = `${base}${counter}`;
+      counter++;
+    }
+
+    return username;
+  }
+
+  // ====================================================================================
+  // 🔥 CORREGIR USERNAME CUANDO QUEDÓ COMO RUT SIN DÍGITO VERIFICADOR
+  // ====================================================================================
+  // ✅ Solo revisa usuarios incluidos en el TXT procesado.
+  // ✅ Solo modifica username.
+  // ✅ No modifica contraseña, perfiles, fechas ni otros datos.
+  // ====================================================================================
+
+  async processFixUsernameFromRut(): Promise<void> {
+    console.log('🔥 CLICK CORREGIR USERNAME DESDE RUT');
+
+    if (!this.results.length) {
+      console.warn('⚠️ Primero debes procesar el TXT');
+      return;
+    }
+
+    this.loading = true;
+
+    let repaired = 0;
+    let unchanged = 0;
+    let skipped = 0;
+    let invalid = 0;
+    let errors = 0;
+
+    try {
+      for (const item of this.results) {
+        try {
+          if (!item.valid) {
+            invalid++;
+            continue;
+          }
+
+          const existsUser = await this.validateUserExists(item.rutOriginal);
+
+          if (!existsUser?.exists || !existsUser?.user?.id) {
+            skipped++;
+            continue;
+          }
+
+          const fullUser: any = await firstValueFrom(
+            this.usersService.getById(existsUser.user.id),
+          );
+
+          if (!this.usernameIsRut(fullUser.username, fullUser.rut)) {
+            unchanged++;
+            continue;
+          }
+
+          const firstName =
+            fullUser.firstName || item.payloadUser.firstName || '';
+          const firstLastName =
+            fullUser.firstLastName || item.payloadUser.firstLastName || '';
+
+          const baseUsername = this.generateUsername(firstName, firstLastName);
+
+          const newUsername = this.generateUniqueUsernameExcludingUser(
+            baseUsername,
+            fullUser.id,
+          );
+
+          const payload: any = {
+            ...fullUser,
+            username: newUsername,
+          };
+
+          delete payload.password;
+          delete payload.roles;
+          delete payload.createdAt;
+          delete payload.updatedAt;
+          delete payload.deletedAt;
+
+          console.log('👤 CORRIGIENDO USERNAME:', {
+            id: fullUser.id,
+            rut: fullUser.rut,
+            username_anterior: fullUser.username,
+            username_nuevo: newUsername,
+          });
+
+          await firstValueFrom(
+            this.usersService.updateUser(fullUser.id, payload),
+          );
+
+          const cachedUser = this.allUsers.find(
+            (u: any) => u.id === fullUser.id,
+          );
+
+          if (cachedUser) {
+            cachedUser.username = newUsername;
+          }
+
+          repaired++;
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR CORRIGIENDO USERNAME:', {
+            rut: item.rutOriginal,
+            error,
+          });
+        }
+      }
+
+      console.log('✅ REPARACIÓN DE USERNAMES FINALIZADA');
+
+      console.table({
+        totalTXT: this.results.length,
+        repaired,
+        unchanged,
+        skipped,
+        invalid,
+        errors,
+      });
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 OBTENER ID DEL PERFIL
+  // Soporta distintas formas de respuesta del backend.
+  // ====================================================================================
+
+  private getRoleId(userRole: any): number {
+    return Number(
+      userRole?.role?.id || userRole?.roleId || userRole?.role_id || 0,
+    );
+  }
+
+  // ====================================================================================
+  // 🔥 VALIDAR SI PERFIL ESTÁ ACTIVO
+  // ====================================================================================
+
+  private isActiveUserRole(userRole: any): boolean {
+    return !userRole?.deletedAt && !userRole?.deleted_at;
+  }
+
+  // ====================================================================================
+  // 🔥 NORMALIZAR FECHA DE RELACIÓN USER-ROLE
+  // Soporta:
+  // 2026-05-19T15:12:35
+  // 2026-05-19 15:12:35
+  // ====================================================================================
+
+  private normalizeUserRoleCreatedAt(userRole: any): string {
+    return String(userRole?.createdAt || userRole?.created_at || '')
+      .replace('T', ' ')
+      .slice(0, 19);
+  }
+
+  // ====================================================================================
+  // 🔥 DETECTAR JEFATURA CREADA DURANTE LOTES ACCIDENTALES
+  // ====================================================================================
+
+  private isAccidentalJefaturaRole(userRole: any): boolean {
+    if (!this.isActiveUserRole(userRole)) {
+      return false;
+    }
+
+    if (this.getRoleId(userRole) !== this.JEFATURA_ROLE_ID) {
+      return false;
+    }
+
+    const createdAt = this.normalizeUserRoleCreatedAt(userRole);
+
+    if (!createdAt) {
+      return false;
+    }
+
+    const isFirstAccidentalBatch =
+      createdAt >= '2026-05-16 19:51:00' && createdAt < '2026-05-16 20:00:00';
+
+    const isSecondAccidentalBatch =
+      createdAt >= '2026-05-19 15:12:00' && createdAt < '2026-05-19 15:24:00';
+
+    return isFirstAccidentalBatch || isSecondAccidentalBatch;
+  }
+
+  // ====================================================================================
+  // 🔥 REPARAR JEFATURAS ASIGNADAS ACCIDENTALMENTE
+  // ====================================================================================
+  // ✅ Recorre todos los usuarios activos.
+  // ✅ Solo elimina rol 4 creado dentro de los lotes accidentales.
+  // ✅ Asegura rol 2 - ADMINISTRATIVO.
+  // ✅ Omite casos ambiguos para revisión manual.
+  // ✅ No modifica datos personales.
+  // ====================================================================================
+
+  async processFixAccidentalJefaturas(): Promise<void> {
+    this.loading = true;
+
+    let checkedUsers = 0;
+    let repairedUsers = 0;
+    let administrativoAssigned = 0;
+    let unchanged = 0;
+    let manualReview = 0;
+    let errors = 0;
+
+    try {
+      const users: any[] = await firstValueFrom(this.usersService.getAll());
+
+      const activeUsers = users.filter((u: any) => !u.deletedAt);
+
+      const candidates: any[] = [];
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('👥 USUARIOS ACTIVOS A REVISAR:', activeUsers.length);
+
+      // =====================================================
+      // 🔥 PRIMERA PASADA:
+      // DETECTAR CANDIDATOS SIN MODIFICAR BD
+      // =====================================================
+
+      for (const user of activeUsers) {
+        try {
+          checkedUsers++;
+
+          const roles: any[] = await firstValueFrom(
+            this.usersService.getUserRoles(user.id),
+          );
+
+          const activeJefaturas = roles.filter(
+            (userRole: any) =>
+              this.isActiveUserRole(userRole) &&
+              this.getRoleId(userRole) === this.JEFATURA_ROLE_ID,
+          );
+
+          const accidentalJefaturas = activeJefaturas.filter((userRole: any) =>
+            this.isAccidentalJefaturaRole(userRole),
+          );
+
+          if (!accidentalJefaturas.length) {
+            unchanged++;
+
+            continue;
+          }
+
+          const legitimateJefaturas = activeJefaturas.filter(
+            (userRole: any) => !this.isAccidentalJefaturaRole(userRole),
+          );
+
+          // 🔒 No tocar automáticamente casos ambiguos
+          if (legitimateJefaturas.length) {
+            manualReview++;
+
+            console.warn('⚠️ REVISIÓN MANUAL: JEFATURA LEGÍTIMA Y ACCIDENTAL', {
+              userId: user.id,
+              rut: user.rut,
+              username: user.username,
+              accidentales: accidentalJefaturas.map((r: any) =>
+                this.normalizeUserRoleCreatedAt(r),
+              ),
+              legitimas: legitimateJefaturas.map((r: any) =>
+                this.normalizeUserRoleCreatedAt(r),
+              ),
+            });
+
+            continue;
+          }
+
+          candidates.push({
+            user,
+            accidentalJefaturas,
+          });
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR REVISANDO USUARIO:', {
+            userId: user.id,
+            rut: user.rut,
+            error,
+          });
+        }
+      }
+
+      // =====================================================
+      // 🔥 MOSTRAR CANDIDATOS ANTES DE MODIFICAR BD
+      // =====================================================
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      console.log('🔍 CANDIDATOS A REPARACIÓN:', candidates.length);
+
+      console.table(
+        candidates.map(({ user, accidentalJefaturas }) => ({
+          userId: user.id,
+          rut: user.rut,
+          username: user.username,
+          jefaturasAccidentales: accidentalJefaturas.length,
+          fechas: accidentalJefaturas
+            .map((r: any) => this.normalizeUserRoleCreatedAt(r))
+            .join(', '),
+        })),
+      );
+
+      if (!candidates.length) {
+        console.log('✅ NO EXISTEN JEFATURAS ACCIDENTALES PENDIENTES');
+
+        console.table({
+          checkedUsers,
+          repairedUsers,
+          administrativoAssigned,
+          unchanged,
+          manualReview,
+          errors,
+        });
+
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Se detectaron ${candidates.length} usuarios con jefaturas ` +
+          'asignadas masivamente por error durante los lotes del 16 y ' +
+          '19 de mayo de 2026. Se reemplazarán por el perfil ' +
+          'ADMINISTRATIVO. ¿Desea continuar?',
+      );
+
+      if (!confirmed) {
+        console.warn('⚠️ Reparación cancelada');
+
+        return;
+      }
+
+      // =====================================================
+      // 🔥 SEGUNDA PASADA:
+      // APLICAR CORRECCIÓN SOLAMENTE A CANDIDATOS SEGUROS
+      // =====================================================
+
+      for (const { user } of candidates) {
+        try {
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+          console.log('🔧 REPARANDO JEFATURA ACCIDENTAL:', {
+            userId: user.id,
+            rut: user.rut,
+            username: user.username,
+          });
+
+          // El endpoint elimina por userId + roleId.
+          // Ejecutar una sola vez por usuario.
+          await firstValueFrom(
+            this.usersService.deleteUserRole(user.id, this.JEFATURA_ROLE_ID),
+          );
+
+          const alreadyHasAdministrativo = await this.userHasRole(
+            user.id,
+            this.ADMINISTRATIVO_ROLE_ID,
+          );
+
+          if (!alreadyHasAdministrativo) {
+            await this.assignRoleIfNeeded(user.id, this.ADMINISTRATIVO_ROLE_ID);
+
+            administrativoAssigned++;
+          }
+
+          // 🔒 Verificación posterior
+          const hasAdministrativoAfterUpdate = await this.userHasRole(
+            user.id,
+            this.ADMINISTRATIVO_ROLE_ID,
+          );
+
+          if (!hasAdministrativoAfterUpdate) {
+            throw new Error('No fue posible asegurar el perfil ADMINISTRATIVO');
+          }
+
+          repairedUsers++;
+
+          console.log('✅ PERFIL REPARADO:', {
+            userId: user.id,
+            rut: user.rut,
+            eliminado: '4 - JEFATURA',
+            asegurado: '2 - ADMINISTRATIVO',
+          });
+        } catch (error) {
+          errors++;
+
+          console.error('❌ ERROR REPARANDO USUARIO:', {
+            userId: user.id,
+            rut: user.rut,
+            error,
+          });
+        }
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ REPARACIÓN FINALIZADA');
+
+      console.table({
+        checkedUsers,
+        repairedUsers,
+        administrativoAssigned,
+        unchanged,
+        manualReview,
+        errors,
+      });
+    } finally {
+      this.loading = false;
+    }
+  }
 }

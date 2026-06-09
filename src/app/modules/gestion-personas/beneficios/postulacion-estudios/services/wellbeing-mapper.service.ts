@@ -21,7 +21,46 @@ export class WellbeingMapperService {
       return null;
     }
 
-    return new Date(date).toISOString().split('T')[0];
+    // =====================================
+    // 🔥 SI YA VIENE yyyy-MM-dd
+    // NO CONVERTIR A UTC
+    // =====================================
+
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+
+    // =====================================
+    // 🔥 SI VIENE CON HORA
+    // TOMAR SOLO LA PARTE DE FECHA
+    // =====================================
+
+    if (typeof date === 'string' && date.includes('T')) {
+      const dateOnly = date.split('T')[0];
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+        return dateOnly;
+      }
+    }
+
+    // =====================================
+    // 🔥 SI VIENE COMO DATE
+    // USAR COMPONENTES LOCALES
+    // =====================================
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    const year = parsedDate.getFullYear();
+
+    const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+
+    const day = String(parsedDate.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   // =========================================
