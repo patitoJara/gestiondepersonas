@@ -1637,17 +1637,25 @@
           </div>
 
           <!-- =========================
-        PASO 9: DOCUMENTOS
-      ========================= -->
+     PASO 9: DOCUMENTOS
+========================= -->
 
           <div *ngIf="currentStep === 9">
-            <!-- 🔹 OBLIGATORIOS -->
+            <!-- ===================================== -->
+            <!-- 🔹 DOCUMENTOS OBLIGATORIOS -->
+            <!-- ===================================== -->
+
             <div class="section">
               <div class="section-title">Documentos requeridos</div>
 
               <div class="section-sub">
-                <strong>{{ getTotalObligatoriosCargados() }}</strong> de
-                <strong>{{ documentosObligatorios.length }}</strong>
+                <strong>
+                  {{ getTotalObligatoriosCargados() }}
+                </strong>
+                de
+                <strong>
+                  {{ documentosObligatorios.length }}
+                </strong>
                 documentos cargados
               </div>
 
@@ -1657,7 +1665,10 @@
                   *ngFor="let doc of documentosObligatorios"
                   [class.completed]="tieneArchivoObligatorio(doc.key)"
                 >
-                  <!-- HEADER -->
+                  <!-- ===================================== -->
+                  <!-- 🔥 HEADER -->
+                  <!-- ===================================== -->
+
                   <div class="doc-title clickable" (click)="toggleDoc(doc)">
                     <mat-icon
                       [ngClass]="{
@@ -1674,7 +1685,9 @@
                       }}
                     </mat-icon>
 
-                    <span>{{ doc.label }}</span>
+                    <span>
+                      {{ doc.label }}
+                    </span>
 
                     <mat-icon
                       *ngIf="doc.help"
@@ -1686,9 +1699,15 @@
                     </mat-icon>
                   </div>
 
-                  <!-- CONTENIDO -->
+                  <!-- ===================================== -->
+                  <!-- 🔥 CONTENIDO -->
+                  <!-- ===================================== -->
+
                   <div class="doc-content" *ngIf="doc.open !== false">
-                    <!-- UPLOAD -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 SELECCIONAR ARCHIVOS -->
+                    <!-- ===================================== -->
+
                     <div class="file-upload" (click)="triggerFile(doc.key)">
                       <mat-icon class="doc-icon"> upload_file </mat-icon>
 
@@ -1701,13 +1720,17 @@
                       <input
                         [id]="'file-' + doc.key"
                         type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                         multiple
                         hidden
                         (change)="onFileSelected($event, doc.key)"
                       />
                     </div>
 
-                    <!-- SIN ARCHIVOS -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 SIN ARCHIVOS -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="
                         !filesObligatorios[doc.key]?.length &&
@@ -1718,7 +1741,11 @@
                       Sin archivos adjuntos
                     </div>
 
-                    <!-- DOCUMENTOS YA REGISTRADOS -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 ARCHIVOS FÍSICOS YA REGISTRADOS -->
+                    <!-- DESCARGA DESDE BACKEND -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="hasBackendDocumentsForKey(doc.key)"
                       class="file-list uploaded-documents"
@@ -1749,13 +1776,17 @@
                               $event.stopPropagation()
                             "
                           >
-                            <mat-icon>download</mat-icon>
+                            <mat-icon> download </mat-icon>
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <!-- ARCHIVOS NUEVOS PENDIENTES -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 ARCHIVOS LOCALES PENDIENTES -->
+                    <!-- VISTA PREVIA ANTES DE SUBIR -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="filesObligatorios[doc.key]?.length"
                       class="file-list"
@@ -1767,19 +1798,38 @@
                         "
                       >
                         <div class="file-left">
-                          <mat-icon>description</mat-icon>
+                          <mat-icon> description </mat-icon>
 
-                          <span>{{ f.name }}</span>
+                          <span>
+                            {{ f.name }}
+                          </span>
                         </div>
 
-                        <button
-                          mat-icon-button
-                          color="warn"
-                          type="button"
-                          (click)="removeFile(doc.key, i)"
-                        >
-                          <mat-icon>close</mat-icon>
-                        </button>
+                        <div class="file-actions">
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="Ver archivo"
+                            (click)="
+                              openLocalFilePreview(f); $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon> visibility </mat-icon>
+                          </button>
+
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="warn"
+                            matTooltip="Quitar archivo"
+                            (click)="
+                              removeFile(doc.key, i); $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon> close </mat-icon>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1787,7 +1837,10 @@
               </div>
             </div>
 
-            <!-- 🔹 OPCIONALES -->
+            <!-- ===================================== -->
+            <!-- 🔹 DOCUMENTOS OPCIONALES -->
+            <!-- ===================================== -->
+
             <div class="section">
               <div class="section-title">Documentos adicionales</div>
 
@@ -1801,7 +1854,10 @@
                   *ngFor="let doc of documentosOpcionales"
                   [class.completed]="tieneArchivoOpcional(doc.key)"
                 >
-                  <!-- HEADER -->
+                  <!-- ===================================== -->
+                  <!-- 🔥 HEADER -->
+                  <!-- ===================================== -->
+
                   <div class="doc-title clickable" (click)="toggleDoc(doc)">
                     <mat-icon
                       [ngClass]="{
@@ -1818,7 +1874,9 @@
                       }}
                     </mat-icon>
 
-                    <span>{{ doc.label }}</span>
+                    <span>
+                      {{ doc.label }}
+                    </span>
 
                     <mat-icon
                       *ngIf="doc.help"
@@ -1830,9 +1888,15 @@
                     </mat-icon>
                   </div>
 
-                  <!-- CONTENIDO -->
-                  <div *ngIf="doc.open !== false">
-                    <!-- UPLOAD -->
+                  <!-- ===================================== -->
+                  <!-- 🔥 CONTENIDO -->
+                  <!-- ===================================== -->
+
+                  <div class="doc-content" *ngIf="doc.open !== false">
+                    <!-- ===================================== -->
+                    <!-- 🔥 SELECCIONAR ARCHIVOS -->
+                    <!-- ===================================== -->
+
                     <div
                       class="file-upload"
                       (click)="triggerFileOpcional(doc.key)"
@@ -1848,13 +1912,17 @@
                       <input
                         [id]="'file-opc-' + doc.key"
                         type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                         multiple
                         hidden
                         (change)="onFileSelectedOpcional($event, doc.key)"
                       />
                     </div>
 
-                    <!-- SIN ARCHIVOS -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 SIN ARCHIVOS -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="
                         !filesOpcionales[doc.key]?.length &&
@@ -1865,7 +1933,11 @@
                       Sin archivos adjuntos
                     </div>
 
-                    <!-- DOCUMENTOS YA REGISTRADOS -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 ARCHIVOS FÍSICOS YA REGISTRADOS -->
+                    <!-- DESCARGA DESDE BACKEND -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="hasBackendDocumentsForKey(doc.key)"
                       class="file-list uploaded-documents"
@@ -1896,13 +1968,17 @@
                               $event.stopPropagation()
                             "
                           >
-                            <mat-icon>download</mat-icon>
+                            <mat-icon> download </mat-icon>
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <!-- ARCHIVOS NUEVOS PENDIENTES -->
+                    <!-- ===================================== -->
+                    <!-- 🔥 ARCHIVOS LOCALES PENDIENTES -->
+                    <!-- VISTA PREVIA ANTES DE SUBIR -->
+                    <!-- ===================================== -->
+
                     <div
                       *ngIf="filesOpcionales[doc.key]?.length"
                       class="file-list"
@@ -1914,19 +1990,39 @@
                         "
                       >
                         <div class="file-left">
-                          <mat-icon>description</mat-icon>
+                          <mat-icon> description </mat-icon>
 
-                          <span>{{ f.name }}</span>
+                          <span>
+                            {{ f.name }}
+                          </span>
                         </div>
 
-                        <button
-                          mat-icon-button
-                          color="warn"
-                          type="button"
-                          (click)="removeFileOpcional(doc.key, i)"
-                        >
-                          <mat-icon>close</mat-icon>
-                        </button>
+                        <div class="file-actions">
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="primary"
+                            matTooltip="Ver archivo"
+                            (click)="
+                              openLocalFilePreview(f); $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon> visibility </mat-icon>
+                          </button>
+
+                          <button
+                            type="button"
+                            mat-icon-button
+                            color="warn"
+                            matTooltip="Quitar archivo"
+                            (click)="
+                              removeFileOpcional(doc.key, i);
+                              $event.stopPropagation()
+                            "
+                          >
+                            <mat-icon> close </mat-icon>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1934,9 +2030,12 @@
               </div>
             </div>
 
-            <!-- BOTONES -->
+            <!-- ===================================== -->
+            <!-- 🔥 BOTONES -->
+            <!-- ===================================== -->
+
             <div class="actions">
-              <button mat-stroked-button type="button" (click)="previousStep()">
+              <button type="button" mat-stroked-button (click)="previousStep()">
                 Volver
               </button>
 
@@ -1944,9 +2043,10 @@
                 type="button"
                 mat-raised-button
                 class="btn-primary"
+                [disabled]="isSaving"
                 (click)="saveStep9Documents()"
               >
-                Continuar
+                {{ isSaving ? "Guardando..." : "Continuar" }}
               </button>
             </div>
           </div>

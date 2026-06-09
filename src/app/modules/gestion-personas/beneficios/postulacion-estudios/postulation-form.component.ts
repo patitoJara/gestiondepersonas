@@ -3539,12 +3539,43 @@ export class PostulationFormComponent {
       ? summary.documents
       : [];
 
+    console.log('📂 DOCUMENTOS RECIBIDOS DESDE SUMMARY:', documents);
+
     for (const doc of documents) {
-      const key = this.getDocumentKeyByTypeCode(
-        doc.documentTypeCode || doc.document_type_code,
+      const documentTypeCode =
+        doc.documentTypeCode ||
+        doc.document_type_code ||
+        doc.documentType?.code ||
+        doc.document_type?.code ||
+        '';
+
+      const documentTypeId = Number(
+        doc.documentTypeId ||
+          doc.document_type_id ||
+          doc.documentType?.id ||
+          doc.document_type?.id ||
+          0,
       );
 
+      const key =
+        this.getDocumentKeyByTypeCode(documentTypeCode) ||
+        this.getDocumentKeyByTypeId(documentTypeId);
+
+      console.log('🧩 RESTAURANDO DOCUMENTO BACKEND:', {
+        id: doc.id,
+        originalFilename:
+          doc.originalFilename || doc.original_filename || doc.fileName,
+        documentTypeCode,
+        documentTypeId,
+        key,
+      });
+
       if (!key) {
+        console.warn(
+          '⚠️ DOCUMENTO OMITIDO: NO SE PUDO RESOLVER SU CATEGORÍA',
+          doc,
+        );
+
         continue;
       }
 
@@ -3555,11 +3586,22 @@ export class PostulationFormComponent {
       const alreadyExists = this.uploadedDocumentsByKey[key].some(
         (existing: any) => {
           const existingId = Number(existing.id || 0);
+
           const docId = Number(doc.id || 0);
+
           return (
             (existingId && docId && existingId === docId) ||
-            (existing.originalFilename === doc.originalFilename &&
-              Number(existing.sizeBytes || 0) === Number(doc.sizeBytes || 0))
+            ((existing.originalFilename ||
+              existing.original_filename ||
+              existing.fileName) ===
+              (doc.originalFilename || doc.original_filename || doc.fileName) &&
+              Number(
+                existing.sizeBytes ||
+                  existing.size_bytes ||
+                  existing.fileSize ||
+                  0,
+              ) ===
+                Number(doc.sizeBytes || doc.size_bytes || doc.fileSize || 0))
           );
         },
       );
@@ -3568,6 +3610,27 @@ export class PostulationFormComponent {
         this.uploadedDocumentsByKey[key].push(doc);
       }
     }
+
+    console.log(
+      '✅ DOCUMENTOS AGRUPADOS PARA MOSTRAR EN STEP 9:',
+      this.uploadedDocumentsByKey,
+    );
+  }
+
+  private getDocumentKeyByTypeId(documentTypeId: number): string | null {
+    if (!documentTypeId) {
+      return null;
+    }
+
+    const documentType = this.documentTypes.find(
+      (type: any) => Number(type.id) === Number(documentTypeId),
+    );
+
+    if (!documentType?.code) {
+      return null;
+    }
+
+    return this.getDocumentKeyByTypeCode(documentType.code);
   }
 
   private getDocumentKeyByTypeCode(code: string): string | null {
@@ -8227,6 +8290,31 @@ export class PostulationFormComponent {
         'No fue posible descargar el documento. Es posible que el registro corresponda a una carga antigua sin archivo físico.',
       );
     }
+  }
+
+  openLocalFilePreview(file: File): void {
+    if (!file) {
+      this.showWarning('No fue posible abrir el archivo');
+      return;
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+
+    if (!allowedTypes.includes(file.type)) {
+      this.showWarning(
+        'La vista previa solo está disponible para PDF, JPG y PNG',
+      );
+
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 60000);
   }
 
   getFamilyBirthDatePickerValue(value: string | null | undefined): Date | null {
