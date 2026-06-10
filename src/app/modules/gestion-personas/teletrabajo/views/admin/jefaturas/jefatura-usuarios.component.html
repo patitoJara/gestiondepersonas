@@ -37,18 +37,63 @@
       </div>
 
       <div class="disponibles-search">
-        <mat-form-field appearance="fill" class="f-user">
-          <mat-label>Buscar</mat-label>
-          <input matInput [(ngModel)]="filtroDisponible" />
+        <div class="search-title">
+          <mat-icon>manage_search</mat-icon>
+
+          <div>
+            <strong>Buscar funcionario</strong>
+
+            <small> Escriba nombres o apellidos </small>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="f-user">
+          <mat-label> Ejemplo: jaime campusano </mat-label>
+
+          <input
+            matInput
+            [formControl]="busquedaDisponible"
+            autocomplete="off"
+          />
+
+          <button
+            *ngIf="busquedaDisponible.value"
+            type="button"
+            mat-icon-button
+            matSuffix
+            (click)="limpiarBusquedaDisponible()"
+            aria-label="Limpiar búsqueda"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+
+          <mat-hint> Ingrese al menos 3 letras </mat-hint>
         </mat-form-field>
       </div>
 
       <div class="list-content disponibles-list">
-        <mat-selection-list [(ngModel)]="selectedDisponibles">
-          <mat-list-option
-            *ngFor="let u of usuariosDisponiblesFiltrados()"
-            [value]="u"
-          >
+        <div *ngIf="!hayBusquedaDisponibleValida()" class="search-guide">
+          <mat-icon>person_search</mat-icon>
+
+          <span>
+            Escriba al menos tres letras para buscar un funcionario.
+          </span>
+        </div>
+
+        <div
+          *ngIf="hayBusquedaDisponibleValida() && !usuariosDisponibles.length"
+          class="search-guide"
+        >
+          <mat-icon>info</mat-icon>
+
+          <span> No hay funcionarios disponibles con ese nombre. </span>
+        </div>
+
+        <mat-selection-list
+          *ngIf="hayBusquedaDisponibleValida()"
+          [(ngModel)]="selectedDisponibles"
+        >
+          <mat-list-option *ngFor="let u of usuariosDisponibles" [value]="u">
             {{ u.fullName }}
           </mat-list-option>
         </mat-selection-list>

@@ -1,0 +1,960 @@
+<section class="supervision-page">
+  <!-- =====================================================
+       🔥 HEADER
+       ===================================================== -->
+
+  <header class="page-header">
+    <div class="page-title">
+      <div class="title-icon">
+        <mat-icon>fact_check</mat-icon>
+      </div>
+
+      <div>
+        <h1>Supervisión Postulaciones Bienestar 2026</h1>
+
+        <p>
+          Revisión general de postulaciones de apoyo para estudios superiores
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        mat-stroked-button
+        class="refresh-button"
+        (click)="loadPostulations()"
+        [disabled]="loading"
+      >
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+
+      <button
+        type="button"
+        mat-flat-button
+        class="excel-button"
+        (click)="exportFilteredExcel()"
+        [disabled]="
+          loading || exportingExcel || filteredPostulations.length === 0
+        "
+      >
+        <mat-icon>
+          {{ exportingExcel ? "hourglass_top" : "download" }}
+        </mat-icon>
+
+        {{ exportingExcel ? "Generando Excel..." : "Exportar Excel" }}
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================
+       🔥 ERROR
+       ===================================================== -->
+
+  <div class="error-banner" *ngIf="errorMessage">
+    <mat-icon>warning</mat-icon>
+
+    <span>{{ errorMessage }}</span>
+
+    <button
+      type="button"
+      mat-icon-button
+      aria-label="Cerrar mensaje"
+      (click)="errorMessage = ''"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- =====================================================
+       🔥 SUMMARY CARDS
+       ===================================================== -->
+
+  <div class="summary-grid">
+    <article class="summary-card summary-total">
+      <div class="summary-icon">
+        <mat-icon>assignment</mat-icon>
+      </div>
+
+      <div>
+        <span class="summary-label">Total postulaciones</span>
+
+        <strong>{{ totalPostulations }}</strong>
+      </div>
+    </article>
+
+    <article class="summary-card summary-draft">
+      <div class="summary-icon">
+        <mat-icon>edit_note</mat-icon>
+      </div>
+
+      <div>
+        <span class="summary-label">Borradores</span>
+
+        <strong>{{ totalDrafts }}</strong>
+      </div>
+    </article>
+
+    <article class="summary-card summary-submitted">
+      <div class="summary-icon">
+        <mat-icon>task_alt</mat-icon>
+      </div>
+
+      <div>
+        <span class="summary-label">Enviadas</span>
+
+        <strong>{{ totalSubmitted }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <!-- =====================================================
+       🔥 FILTERS
+       ===================================================== -->
+
+  <mat-card class="filters-card">
+    <div class="filters-header">
+      <div>
+        <h2>Filtros de búsqueda</h2>
+
+        <p>Utiliza uno o más criterios para encontrar una postulación.</p>
+      </div>
+
+      <button
+        type="button"
+        mat-stroked-button
+        class="clear-button"
+        (click)="clearFilters()"
+      >
+        <mat-icon>filter_alt_off</mat-icon>
+        Limpiar filtros
+      </button>
+    </div>
+
+    <div class="filters-grid">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar postulación</mat-label>
+
+        <mat-icon matPrefix>search</mat-icon>
+
+        <input
+          matInput
+          [(ngModel)]="filters.searchText"
+          (ngModelChange)="applyFilters()"
+          placeholder="Código, nombre, RUT o establecimiento"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+
+        <mat-select
+          [(ngModel)]="filters.status"
+          (selectionChange)="applyFilters()"
+        >
+          <mat-option value="">Todos los estados</mat-option>
+
+          <mat-option value="DRAFT">Borrador</mat-option>
+
+          <mat-option value="SUBMITTED">Enviada</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Establecimiento</mat-label>
+
+        <mat-select
+          [(ngModel)]="filters.stablishmentId"
+          (selectionChange)="applyFilters()"
+        >
+          <mat-option value="">Todos los establecimientos</mat-option>
+
+          <mat-option
+            *ngFor="let stablishment of stablishmentOptions"
+            [value]="stablishment.id"
+          >
+            {{ stablishment.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-card>
+
+  <!-- =====================================================
+       🔥 LOADING
+       ===================================================== -->
+
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="44"></mat-spinner>
+
+    <p>Cargando postulaciones...</p>
+  </div>
+
+  <!-- =====================================================
+       🔥 TABLE
+       ===================================================== -->
+
+  <mat-card class="table-card" *ngIf="!loading">
+    <div class="table-header">
+      <div>
+        <h2>Listado de postulaciones</h2>
+
+        <p>
+          Mostrando
+          <strong>{{ filteredPostulations.length }}</strong>
+          de
+          <strong>{{ totalPostulations }}</strong>
+          postulaciones
+        </p>
+      </div>
+    </div>
+
+    <div class="table-scroll" *ngIf="filteredPostulations.length > 0">
+      <table class="postulations-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+
+            <th>Afiliado</th>
+
+            <th>RUT</th>
+
+            <th>Establecimiento</th>
+
+            <th>Beneficiario</th>
+
+            <th>Estado</th>
+
+            <th>Actualización</th>
+
+            <th>Documentos</th>
+
+            <th class="actions-column">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let postulation of filteredPostulations;
+              trackBy: trackByPostulationId
+            "
+          >
+            <td>
+              <strong class="postulation-code">
+                {{ postulation.code || "—" }}
+              </strong>
+            </td>
+
+            <td>
+              <span class="affiliate-name">
+                {{ postulation.userFullName || "Sin información" }}
+              </span>
+            </td>
+
+            <td>{{ postulation.userRut || "—" }}</td>
+
+            <td>{{ postulation.stablishmentName || "—" }}</td>
+
+            <td>
+              {{ getBeneficiaryLabel(postulation.beneficiaryType) }}
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(postulation.status)"
+              >
+                {{ getStatusLabel(postulation.status) }}
+              </span>
+            </td>
+
+            <td>{{ formatDate(postulation.updatedAt) }}</td>
+
+            <td>
+              <button
+                type="button"
+                mat-stroked-button
+                class="documents-cell-button"
+                matTooltip="Ver documentos adjuntos"
+                (click)="openDocuments(postulation)"
+              >
+                <mat-icon>folder_open</mat-icon>
+                Ver documentos
+              </button>
+            </td>
+
+            <td class="actions-column">
+              <button
+                type="button"
+                mat-icon-button
+                class="view-button"
+                matTooltip="Ver detalle"
+                (click)="openDetail(postulation)"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+
+              <button
+                type="button"
+                mat-icon-button
+                class="print-row-button"
+                matTooltip="Imprimir detalle"
+                (click)="printPostulationDetail(postulation)"
+              >
+                <mat-icon>print</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredPostulations.length === 0">
+      <mat-icon>search_off</mat-icon>
+
+      <h3>No se encontraron postulaciones</h3>
+
+      <p>Modifica los filtros de búsqueda para obtener resultados.</p>
+    </div>
+  </mat-card>
+
+  <!-- =====================================================
+       🔥 DETAIL LOADING
+       ===================================================== -->
+
+  <div class="detail-loading" *ngIf="loadingDetail">
+    <mat-spinner diameter="38"></mat-spinner>
+
+    <span>Cargando detalle...</span>
+  </div>
+
+  <!-- =====================================================
+     🔥 DETAIL CARD
+     ===================================================== -->
+
+  <mat-card class="detail-card" *ngIf="selectedDetail && !loadingDetail">
+    <div class="detail-header">
+      <div class="detail-title">
+        <div class="detail-title-icon">
+          <mat-icon>description</mat-icon>
+        </div>
+
+        <div>
+          <h2>Detalle de la postulación</h2>
+
+          <p>{{ selectedDetail.code }}</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        mat-icon-button
+        aria-label="Cerrar detalle"
+        matTooltip="Cerrar detalle"
+        (click)="closeDetail()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- =====================================================
+       🔥 INFORMACIÓN GENERAL
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Información general</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Código</span>
+
+          <strong>{{ selectedDetail.code || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Estado</span>
+
+          <strong>{{ getStatusLabel(selectedDetail.status) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Año</span>
+
+          <strong>{{ selectedDetail.periodYear || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Paso actual</span>
+
+          <strong>{{ selectedDetail.currentStep || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Fecha de creación</span>
+
+          <strong>{{ formatDate(selectedDetail.createdAt) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Fecha de envío</span>
+
+          <strong>{{ formatDate(selectedDetail.submittedAt) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Hogar monoparental</span>
+
+          <strong>{{
+            getYesNoLabel(selectedDetail.isSingleParentHome)
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Beneficiario</span>
+
+          <strong>
+            {{ getBeneficiaryLabel(selectedDetail.beneficiaryType) }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 DATOS DEL AFILIADO
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Datos del afiliado</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Nombre</span>
+
+          <strong>{{ selectedDetail.userFullName || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>RUT</span>
+
+          <strong>{{ selectedDetail.userRut || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Establecimiento</span>
+
+          <strong>{{ selectedDetail.stablishmentName || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Teléfono</span>
+
+          <strong>{{ selectedDetail.affiliate?.phone || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Correo electrónico</span>
+
+          <strong>{{ selectedDetail.affiliate?.email || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Dirección</span>
+
+          <strong>{{ selectedDetail.affiliate?.address || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Fecha de nacimiento</span>
+
+          <strong>
+            {{ formatDate(selectedDetail.affiliate?.birthDate) }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Fecha de afiliación</span>
+
+          <strong>
+            {{ formatDate(selectedDetail.affiliate?.affiliateDate) }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Tipo de afiliado</span>
+
+          <strong>{{ selectedDetail.affiliate?.affiliateType || "—" }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 GRUPO FAMILIAR
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Grupo familiar</h3>
+
+      <div
+        class="detail-table-scroll"
+        *ngIf="(selectedSummary?.familyMembers?.length || 0) > 0; else noFamily"
+      >
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Integrante</th>
+              <th>RUT</th>
+              <th>Parentesco</th>
+              <th>Fecha nacimiento</th>
+              <th>Estado civil</th>
+              <th>Previsión</th>
+              <th>Actividad</th>
+              <th>Lugar de trabajo</th>
+              <th>Estudiante</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let member of selectedSummary?.familyMembers || []">
+              <td>{{ getFamilyMemberFullName(member) }}</td>
+
+              <td>{{ member?.rut || "—" }}</td>
+
+              <td>{{ member?.parentTypeName || "—" }}</td>
+
+              <td>{{ formatDate(member?.birthDate) }}</td>
+
+              <td>{{ member?.civilStateName || "—" }}</td>
+
+              <td>{{ member?.previtionName || "—" }}</td>
+
+              <td>
+                {{ member?.othersActivities || member?.activityName || "—" }}
+              </td>
+
+              <td>
+                {{ member?.othersWorkplaces || member?.workPlaceName || "—" }}
+              </td>
+
+              <td>{{ getYesNoLabel(member?.student) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noFamily>
+        <div class="detail-empty">No existen integrantes registrados.</div>
+      </ng-template>
+    </div>
+
+    <!-- =====================================================
+       🔥 ANTECEDENTES ACADÉMICOS
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Antecedentes académicos</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Institución</span>
+
+          <strong>{{
+            selectedSummary?.academicInfo?.institution || "—"
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Carrera</span>
+
+          <strong>{{ selectedSummary?.academicInfo?.career || "—" }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Nivel de estudio</span>
+
+          <strong>
+            {{ selectedSummary?.academicInfo?.studyLevelName || "—" }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Semestre actual</span>
+
+          <strong>
+            {{ selectedSummary?.academicInfo?.currentSemester || "—" }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Duración de la carrera</span>
+
+          <strong>
+            {{ selectedSummary?.academicInfo?.careerDurationSemesters || "—" }}
+            semestres
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Estudia en la región</span>
+
+          <strong>
+            {{ getYesNoLabel(selectedSummary?.academicInfo?.studiesInRegion) }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Beneficio anterior</span>
+
+          <strong>
+            {{
+              getYesNoLabel(selectedSummary?.academicInfo?.hadPreviousBenefit)
+            }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 VERIFICACIÓN ACADÉMICA
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Verificación académica</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Situación académica</span>
+
+          <strong>
+            {{
+              selectedSummary?.academicVerification?.academicSituation || "—"
+            }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Promedio</span>
+
+          <strong>
+            {{ selectedSummary?.academicVerification?.gradeAverage ?? "—" }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Porcentaje de aprobación</span>
+
+          <strong>
+            {{
+              selectedSummary?.academicVerification?.approvalPercentage ?? "—"
+            }}%
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 INGRESOS
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Ingresos familiares</h3>
+
+      <div
+        class="detail-table-scroll"
+        *ngIf="(selectedSummary?.incomes?.length || 0) > 0; else noIncomes"
+      >
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Integrante</th>
+              <th>Tipo de ingreso</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let income of selectedSummary?.incomes || []">
+              <td>{{ getFamilyMemberName(income?.familyMemberId) }}</td>
+
+              <td>{{ income?.name || "—" }}</td>
+
+              <td class="money-cell">
+                {{ formatCurrency(income?.amount) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noIncomes>
+        <div class="detail-empty">No existen ingresos registrados.</div>
+      </ng-template>
+    </div>
+
+    <!-- =====================================================
+       🔥 GASTOS
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Gastos generales</h3>
+
+      <div
+        class="detail-table-scroll"
+        *ngIf="(selectedSummary?.expenses?.length || 0) > 0; else noExpenses"
+      >
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Detalle</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let expense of selectedSummary?.expenses || []">
+              <td>{{ getExpenseCategoryLabel(expense?.category) }}</td>
+
+              <td>{{ expense?.name || expense?.description || "—" }}</td>
+
+              <td class="money-cell">
+                {{ formatCurrency(expense?.amount) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noExpenses>
+        <div class="detail-empty">No existen gastos registrados.</div>
+      </ng-template>
+    </div>
+
+    <!-- =====================================================
+       🔥 GASTOS MÉDICOS
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Gastos médicos</h3>
+
+      <div
+        class="detail-table-scroll"
+        *ngIf="(selectedSummary?.healthRecords?.length || 0) > 0; else noHealth"
+      >
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Integrante</th>
+              <th>Patología o antecedente</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let record of selectedSummary?.healthRecords || []">
+              <td>{{ getHealthMemberName(record) }}</td>
+
+              <td>{{ getHealthDescription(record) }}</td>
+
+              <td class="money-cell">
+                {{ formatCurrency(getHealthAmount(record)) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noHealth>
+        <div class="detail-empty">No existen gastos médicos registrados.</div>
+      </ng-template>
+    </div>
+
+    <!-- =====================================================
+       🔥 VIVIENDA
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Vivienda</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Tipo de vivienda</span>
+
+          <strong>{{
+            selectedSummary?.housing?.typeHousingName || "—"
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Tipo de propiedad</span>
+
+          <strong>{{
+            selectedSummary?.housing?.typePropertyName || "—"
+          }}</strong>
+        </div>
+
+        <div class="detail-item detail-item-wide">
+          <span>Antecedentes de vivienda</span>
+
+          <strong>{{
+            selectedSummary?.housing?.housingBackground || "—"
+          }}</strong>
+        </div>
+
+        <div class="detail-item detail-item-wide">
+          <span>Otros antecedentes</span>
+
+          <strong>{{
+            selectedSummary?.housing?.otherBackground || "—"
+          }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 RESUMEN ECONÓMICO
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Resumen económico</h3>
+
+      <div class="detail-grid detail-financial-grid">
+        <div class="detail-item">
+          <span>Ingresos familiares</span>
+
+          <strong>{{
+            formatCurrency(selectedDetail.totalFamilyIncome)
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Gastos básicos</span>
+
+          <strong>{{
+            formatCurrency(selectedDetail.totalBasicExpenses)
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Gastos educacionales</span>
+
+          <strong>
+            {{ formatCurrency(selectedDetail.totalEducationExpenses) }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Otros gastos</span>
+
+          <strong>{{
+            formatCurrency(selectedDetail.totalOtherExpenses)
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Gastos de salud</span>
+
+          <strong>{{
+            formatCurrency(selectedDetail.totalHealthExpenses)
+          }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Total gastos familiares</span>
+
+          <strong>{{
+            formatCurrency(selectedDetail.totalFamilyExpenses)
+          }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 ESTADO DOCUMENTAL
+       ===================================================== -->
+
+    <div class="detail-section">
+      <h3>Estado documental</h3>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span>Documentos obligatorios</span>
+
+          <strong>
+            {{ selectedSummary?.requiredDocumentsUploaded || 0 }}
+            de
+            {{ selectedSummary?.requiredDocumentsTotal || 0 }}
+          </strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Puede enviar postulación</span>
+
+          <strong>{{ getYesNoLabel(selectedSummary?.canSubmit) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span>Total de archivos adjuntos</span>
+
+          <strong>{{ selectedDocuments.length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+       🔥 DOCUMENTOS
+       ===================================================== -->
+
+    <div class="detail-section documents-section">
+      <h3>Documentos adjuntos</h3>
+
+      <div class="documents-list" *ngIf="selectedDocuments.length > 0">
+        <article
+          class="document-row"
+          *ngFor="let document of selectedDocuments; trackBy: trackByDocumentId"
+        >
+          <div class="document-main">
+            <mat-icon>cloud_done</mat-icon>
+
+            <div>
+              <strong>{{ document.documentTypeName || "Documento" }}</strong>
+
+              <span>
+                {{ document.originalFilename }}
+                ·
+                {{ formatFileSize(document.sizeBytes) }}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            mat-stroked-button
+            class="download-button"
+            [disabled]="downloadingDocumentId === document.id"
+            (click)="downloadDocument(document)"
+          >
+            <mat-icon>download</mat-icon>
+
+            {{
+              downloadingDocumentId === document.id
+                ? "Descargando..."
+                : "Descargar"
+            }}
+          </button>
+        </article>
+      </div>
+
+      <div class="documents-empty" *ngIf="selectedDocuments.length === 0">
+        <mat-icon>folder_off</mat-icon>
+
+        <div>
+          <strong>No existen documentos adjuntos</strong>
+
+          <p>No existen documentos registrados para esta postulación.</p>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+</section>

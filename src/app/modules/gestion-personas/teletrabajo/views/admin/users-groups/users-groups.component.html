@@ -4,7 +4,7 @@
   <div>
     <div class="title-main">Auditoría de Grupos</div>
     <div class="title-sub">
-      Visualización de jefaturas y asignación de usuarios
+      Visualización de grupos y usuarios asignados
     </div>
   </div>
 </div>
@@ -15,33 +15,13 @@
     Grupo
   </button>
 
-  <button class="btn-orange" (click)="exportSinGrupo()">
-    <mat-icon>person_off</mat-icon>
-    Sin grupo
-  </button>
-
-  <button class="btn-purple" (click)="exportTodos()">
-    <mat-icon>groups</mat-icon>
-    Todos
-  </button>
-
   <button class="btn btn-green big" (click)="printGrupo()">
     <mat-icon>picture_as_pdf</mat-icon>
     PDF Grupo
   </button>
-
-  <button class="btn btn-green" (click)="printSinGrupo()">
-    <mat-icon>picture_as_pdf</mat-icon>
-    PDF Sin grupo
-  </button>
-
-  <button class="btn btn-green" (click)="printTodos()">
-    <mat-icon>picture_as_pdf</mat-icon>
-    PDF Todos
-  </button>
 </div>
 
-<div class="layout-4">
+<div class="layout-2">
   <!-- 🟦 GRUPOS -->
   <div class="col">
     <div class="card-header blue">
@@ -64,81 +44,40 @@
   <div class="col">
     <div class="card-header green">
       <mat-icon>group</mat-icon>
+
       <span>
         Usuarios del Grupo
         <small *ngIf="selectedGroup">- {{ selectedGroup.name }}</small>
       </span>
     </div>
 
-    <div *ngIf="!usersInGroup.length" class="empty">
+    <div *ngIf="!selectedGroup" class="empty">
       <mat-icon>info</mat-icon>
-      <span>
-        {{
-          selectedGroup
-            ? "No hay usuarios en este grupo"
-            : "Seleccione un grupo"
-        }}</span
-      >
+      <span>Seleccione un grupo</span>
+    </div>
+
+    <div
+      *ngIf="selectedGroup && !loadingUsers && !usersInGroup.length"
+      class="empty"
+    >
+      <mat-icon>info</mat-icon>
+      <span>No hay usuarios en este grupo</span>
+    </div>
+
+    <div *ngIf="loadingUsers" class="empty">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Cargando usuarios del grupo...</span>
     </div>
 
     <div class="item user" *ngFor="let u of usersInGroup">
       <div class="user-left">
         <mat-icon>person</mat-icon>
-        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
-      </div>
-      <div class="roles">
-        <span
-          class="badge"
-          [ngClass]="'badge-' + r.name?.toLowerCase()"
-          *ngFor="let r of u.roles"
-        >
-          {{ r.name }}
+
+        <span>
+          {{ getFullName(u) }}
         </span>
       </div>
-    </div>
-  </div>
 
-  <!-- 🟨 USUARIOS SIN GRUPO -->
-  <div class="col">
-    <div class="card-header orange">
-      <mat-icon>person_add</mat-icon>
-      <span>Usuarios sin Grupo</span>
-    </div>
-
-    <div *ngIf="!usersWithoutGroup.length" class="empty">
-      <mat-icon>info</mat-icon>
-      <span>No hay usuarios disponibles</span>
-    </div>
-
-    <div class="item user" *ngFor="let u of usersWithoutGroup">
-      <div class="user-left">
-        <mat-icon>person_outline</mat-icon>
-        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
-      </div>
-      <div class="roles">
-        <span
-          class="badge"
-          [ngClass]="'badge-' + r.name?.toLowerCase()"
-          *ngFor="let r of u.roles"
-        >
-          {{ r.name }}
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🟪 TODOS LOS USUARIOS -->
-  <div class="col">
-    <div class="card-header purple">
-      <mat-icon>badge</mat-icon>
-      <span>Todos los Usuarios</span>
-    </div>
-
-    <div class="item user" *ngFor="let u of allUsers">
-      <div class="user-left">
-        <mat-icon>person</mat-icon>
-        <span>{{ u.fullName || u.firstName + " " + u.firstLastName }}</span>
-      </div>
       <div class="roles">
         <span
           class="badge"

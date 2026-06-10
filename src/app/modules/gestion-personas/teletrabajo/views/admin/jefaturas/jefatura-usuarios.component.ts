@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +11,6 @@ import { MatButtonModule } from '@angular/material/button';
 
 import { firstValueFrom } from 'rxjs';
 
-import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { UsersGroupService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users-group.service';
 import { GroupService } from '@app/modules/gestion-personas/teletrabajo/services/admin/group.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,6 +18,8 @@ import { ConfirmDialogOkComponent } from '@app/shared/confirm-dialog/confirm-dia
 import { LoaderService } from '@app/core/services/loader.service';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+
+import { UserSearchService } from '@app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
 
 @Component({
   selector: 'app-jefatura-usuarios',
@@ -28,6 +29,7 @@ import { Router } from '@angular/router';
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatIconModule,
     MatFormFieldModule,
@@ -40,9 +42,6 @@ export class JefaturaUsuariosComponent implements OnInit {
   loader = inject(LoaderService);
   private router = inject(Router);
   private location = inject(Location);
-  
-
-
 
   private SISTEMA_USERS = ['Admin', 'Operador', 'Supervisor', 'Jefatura'];
 
@@ -51,11 +50,30 @@ export class JefaturaUsuariosComponent implements OnInit {
 
   relacionesActivas: any[] = [];
 
-  filtroDisponible = '';
+  busquedaDisponible = new FormControl('');
   loading = false;
+
+  /**
+   * IDs de funcionarios que ya pertenecen a alguna jefatura.
+   * Se utiliza para excluirlos de los resultados disponibles.
+   */
+  
 
   usuariosAsignados: any[] = [];
   usuariosDisponibles: any[] = [];
+
+  /**
+   * Resultados originales entregados por el buscador inteligente.
+   * No se modifican directamente al mover funcionarios.
+   */
+  private resultadosBusquedaDisponibles: any[] = [];
+
+  /**
+   * Usuarios ocupados por otras jefaturas.
+   * Los integrantes de esta misma jefatura no se incluyen aquí,
+   * porque deben poder quitarse y volver a agregarse antes de guardar.
+   */
+  private usuariosConOtrosGruposIds = new Set<number>();
 
   selectedDisponibles: any[] = [];
   selectedAsignados: any[] = [];
@@ -74,10 +92,10 @@ export class JefaturaUsuariosComponent implements OnInit {
   };
 
   constructor(
-    private usersService: UsersService,
     private usersGroupService: UsersGroupService,
     private groupService: GroupService,
     private dialog: MatDialog,
+    private userSearchService: UserSearchService,
   ) {}
 
   // ============================
@@ -92,6 +110,18 @@ export class JefaturaUsuariosComponent implements OnInit {
     this.jefe.id = profile.id;
     this.jefe.fullName = profile.fullName;
 
+    /**
+     * Conectamos el buscador inteligente:
+     * - espera 300 ms
+     * - consulta backend solamente con las primeras 3 letras
+     * - mantiene cache por prefijo
+     * - permite buscar múltiples palabras separadas
+     */
+    this.conectarBusquedaDisponible();
+
+    /**
+     * La carga inicial ya no descarga todos los usuarios.
+     */
     await this.cargarDatos();
 
     this.initialized = true;
@@ -105,58 +135,67 @@ export class JefaturaUsuariosComponent implements OnInit {
     try {
       this.loading = true;
 
-      // 🧹 limpiar estado UI
+      // 🧹 Limpiar estado visual
       this.usuariosAsignados = [];
       this.usuariosDisponibles = [];
       this.selectedAsignados = [];
       this.selectedDisponibles = [];
 
-      const [all, relaciones, groups] = await Promise.all([
-        firstValueFrom(this.usersService.getAll()),
+      /**
+       * Ya no descargamos usersService.getAll().
+       *
+       * Solamente necesitamos:
+       * - grupos
+       * - relaciones activas usuario-grupo
+       */
+      const [relaciones, groups] = await Promise.all([
         firstValueFrom(this.usersGroupService.getAll()),
+
         firstValueFrom(this.groupService.getAll()),
       ]);
 
       // =========================================
-      // 🟦 GROUP DEL JEFE
+      // 🟦 GRUPO DE LA JEFATURA
       // =========================================
+
       const group = (groups as any[]).find((g) => g.user?.id === this.jefe.id);
 
       this.grupo.name = group?.name || '';
       this.grupo.description = group?.description || '';
 
       // =========================================
-      // 👤 NORMALIZAR USUARIOS
+      // 🔗 RELACIONES ACTIVAS
       // =========================================
-      const usuariosNormalizados = (all as any[]).map((u) => this.buildUser(u));
 
-      const usuariosValidos = usuariosNormalizados.filter(
-        (u) => !this.isSistema(u),
-      );
-
-      // =========================================
-      // ☠️ FILTRAR BORRADOS LÓGICOS (🔥 CLAVE)
-      // =========================================
       const relacionesActivas = (relaciones as any[]).filter(
-        (r) => !r.deletedAt,
+        (relation) => !relation.deletedAt && !relation.deleted_at,
+      );
+
+      this.relacionesActivas = relacionesActivas;
+
+      /**
+       * Usuarios que pertenecen a OTRAS jefaturas.
+       *
+       * Los funcionarios de esta jefatura no se bloquean,
+       * porque deben poder moverse temporalmente entre ambas columnas.
+       */
+      this.usuariosConOtrosGruposIds = new Set<number>(
+        relacionesActivas
+          .filter((relation: any) => relation.group?.user?.id !== this.jefe.id)
+          .map((relation: any) => relation.user?.id)
+          .filter(Boolean),
       );
 
       // =========================================
-      // 🔗 USUARIOS QUE YA TIENEN GRUPO
+      // 🟩 ASIGNADOS A ESTA JEFATURA
       // =========================================
-      const usuariosConGrupo = new Set(
-        relacionesActivas.map((r) => r.user?.id),
-      );
 
-      // =========================================
-      // 🟩 ASIGNADOS (DE ESTE JEFE + SIN DUPLICADOS)
-      // =========================================
       const uniqueMap = new Map<number, any>();
 
       relacionesActivas
-        .filter((r) => r.group?.user?.id === this.jefe.id)
-        .forEach((r) => {
-          const user = this.buildUser(r.user);
+        .filter((relation) => relation.group?.user?.id === this.jefe.id)
+        .forEach((relation) => {
+          const user = this.buildUser(relation.user);
 
           if (!uniqueMap.has(user.id)) {
             uniqueMap.set(user.id, user);
@@ -165,25 +204,26 @@ export class JefaturaUsuariosComponent implements OnInit {
 
       this.usuariosAsignados = Array.from(uniqueMap.values());
 
-      // =========================================
-      // 📦 DISPONIBLES (NO ESTÉN EN NINGÚN GRUPO)
-      // =========================================
-      this.usuariosDisponibles = usuariosValidos.filter(
-        (u) => !usuariosConGrupo.has(u.id),
-      );
+      /**
+       * Disponibles comienza vacío.
+       * Se llena solamente al buscar.
+       */
+      this.usuariosDisponibles = [];
 
       this.sinUsuariosAsignados = this.usuariosAsignados.length === 0;
-      this.relacionesActivas = relacionesActivas;
 
       this.estadoInicial = JSON.stringify({
         grupo: this.grupo,
-        asignados: this.usuariosAsignados.map((u) => u.id),
+
+        asignados: this.usuariosAsignados.map((user) => user.id),
       });
 
-      console.log('ASIGNADOS 👉', this.usuariosAsignados);
-      console.log('DISPONIBLES 👉', this.usuariosDisponibles);
+      console.log('✅ ASIGNADOS:', this.usuariosAsignados);
+
+      console.log('✅ CARGA INICIAL LIVIANA');
     } catch (error) {
       console.error('❌ ERROR CARGANDO DATOS', error);
+
       this.showWarning('Error al cargar la jefatura');
     } finally {
       this.loading = false;
@@ -194,12 +234,78 @@ export class JefaturaUsuariosComponent implements OnInit {
   // 🔍 FILTRO
   // ============================
 
-  usuariosDisponiblesFiltrados() {
-    if (!this.filtroDisponible) return this.usuariosDisponibles;
+  // ============================
+  // 🔍 BÚSQUEDA INTELIGENTE
+  // ============================
 
-    return this.usuariosDisponibles.filter((u) =>
-      u.fullName.toLowerCase().includes(this.filtroDisponible.toLowerCase()),
+  private conectarBusquedaDisponible(): void {
+    this.userSearchService
+      .search(this.busquedaDisponible.valueChanges)
+      .subscribe((users: any[]) => {
+        /**
+         * Conservamos los resultados originales.
+         * La lista visible se calcula por separado.
+         */
+        this.resultadosBusquedaDisponibles = (users || []).map((user: any) =>
+          this.buildUser(user),
+        );
+
+        this.actualizarUsuariosDisponibles();
+
+        console.log(
+          '🔍 RESULTADOS BÚSQUEDA:',
+          this.resultadosBusquedaDisponibles,
+        );
+
+        console.log('✅ DISPONIBLES VISIBLES:', this.usuariosDisponibles);
+      });
+  }
+
+  private actualizarUsuariosDisponibles(): void {
+    const term = String(this.busquedaDisponible.value || '').trim();
+
+    /**
+     * Sin búsqueda válida no mostramos resultados.
+     */
+    if (term.length < 3) {
+      this.usuariosDisponibles = [];
+      this.selectedDisponibles = [];
+
+      return;
+    }
+
+    const idsAsignados = new Set<number>(
+      this.usuariosAsignados.map((user: any) => user.id),
     );
+
+    this.usuariosDisponibles = this.resultadosBusquedaDisponibles
+      .filter((user: any) => user.id !== this.jefe.id)
+      .filter((user: any) => !idsAsignados.has(user.id))
+      .filter((user: any) => !this.usuariosConOtrosGruposIds.has(user.id))
+      .filter((user: any) => !this.isSistemaPorNombre(user));
+
+    this.selectedDisponibles = [];
+  }
+
+  limpiarBusquedaDisponible(): void {
+    this.busquedaDisponible.setValue('');
+
+    this.resultadosBusquedaDisponibles = [];
+    this.usuariosDisponibles = [];
+
+    this.selectedDisponibles = [];
+  }
+
+  hayBusquedaDisponibleValida(): boolean {
+    return String(this.busquedaDisponible.value || '').trim().length >= 3;
+  }
+
+  private isSistemaPorNombre(user: any): boolean {
+    const firstWord = String(user?.fullName || '')
+      .trim()
+      .split(' ')[0];
+
+    return this.SISTEMA_USERS.includes(firstWord);
   }
 
   // ========================
@@ -207,19 +313,33 @@ export class JefaturaUsuariosComponent implements OnInit {
   // ========================
 
   agregar() {
-    const validos = this.selectedDisponibles.filter((u) =>
-      this.validarMovimiento(u),
+    const validos = this.selectedDisponibles.filter((user) =>
+      this.validarMovimiento(user),
     );
 
-    if (validos.length === 0) return;
+    if (!validos.length) {
+      return;
+    }
 
-    this.usuariosAsignados.push(...validos);
-
-    this.usuariosDisponibles = this.usuariosDisponibles.filter(
-      (u) => !validos.includes(u),
+    /**
+     * Evitamos duplicados.
+     */
+    const idsAsignados = new Set<number>(
+      this.usuariosAsignados.map((user: any) => user.id),
     );
+
+    const nuevos = validos.filter((user: any) => !idsAsignados.has(user.id));
+
+    this.usuariosAsignados.push(...nuevos);
 
     this.selectedDisponibles = [];
+
+    /**
+     * No limpiamos el texto buscado.
+     * La lista encontrada permanece visible y solamente
+     * desaparecen quienes acabamos de mover.
+     */
+    this.actualizarUsuariosDisponibles();
   }
 
   // ========================
@@ -227,13 +347,27 @@ export class JefaturaUsuariosComponent implements OnInit {
   // ========================
 
   quitar() {
-    this.usuariosDisponibles.push(...this.selectedAsignados);
+    if (!this.selectedAsignados.length) {
+      return;
+    }
+
+    const idsQuitados = new Set<number>(
+      this.selectedAsignados.map((user: any) => user.id),
+    );
 
     this.usuariosAsignados = this.usuariosAsignados.filter(
-      (u) => !this.selectedAsignados.includes(u),
+      (user: any) => !idsQuitados.has(user.id),
     );
 
     this.selectedAsignados = [];
+
+    /**
+     * No insertamos directamente en disponibles.
+     *
+     * Recalculamos la columna izquierda usando
+     * el texto actualmente buscado.
+     */
+    this.actualizarUsuariosDisponibles();
   }
 
   // ============================
@@ -365,14 +499,19 @@ export class JefaturaUsuariosComponent implements OnInit {
   }
 
   private buildUser(u: any) {
+    const fullName =
+      String(u?.fullName || u?.full_name || '').trim() ||
+      [u?.firstName, u?.secondName, u?.firstLastName, u?.secondLastName]
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
     return {
       ...u,
-      fullName: [u.firstName, u.secondName, u.firstLastName, u.secondLastName]
-        .filter(Boolean)
-        .join(' '),
+      fullName,
     };
   }
-
   // 🔥 FILTRO SISTEMA
   private isSistema(u: any): boolean {
     return this.SISTEMA_USERS.includes(u.firstName);
@@ -432,5 +571,4 @@ export class JefaturaUsuariosComponent implements OnInit {
 
     return estadoActual !== this.estadoInicial;
   }
-
 }

@@ -307,6 +307,94 @@ mat-list-option:hover {
 }
 
 
+
+/* =====================================================
+   🔍 BUSCADOR DESTACADO DE FUNCIONARIOS
+===================================================== */
+
+.disponibles-search {
+  padding: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff8ed,
+      #fff3df
+    );
+
+  border-bottom:
+    1px solid #f2d2a8;
+}
+
+.search-title {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 12px;
+
+  color: #d45f00;
+}
+
+.search-title mat-icon {
+  width: 30px;
+  height: 30px;
+
+  font-size: 30px;
+}
+
+.search-title strong {
+  display: block;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.search-title small {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 12px;
+
+  color: #825525;
+}
+
+.disponibles-search .f-user {
+  width: 100%;
+
+  margin: 0;
+}
+
+.search-guide {
+  min-height: 180px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 24px;
+
+  color: #64748b;
+
+  text-align: center;
+
+  font-size: 13px;
+}
+
+.search-guide mat-icon {
+  width: 36px;
+  height: 36px;
+
+  font-size: 36px;
+
+  color: #94a3b8;
+}
+
 @media (max-width: 768px) {
   .dual-container {
     grid-template-columns: 1fr; /* 🔥 una sola columna */

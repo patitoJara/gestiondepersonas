@@ -17,7 +17,6 @@
   backdrop-filter: blur(4px);
 }
 
-
 .postulation-top-bar {
   width: 100%;
   display: flex;
@@ -71,11 +70,6 @@
   box-shadow: 0 5px 12px rgba(21, 101, 192, 0.28);
 }
 
-
-
-
-
-
 .native-date-wrapper {
   position: relative;
   width: 100%;
@@ -112,9 +106,6 @@
   color: #9e9e9e;
 }
 
-
-
-
 .file-actions {
   display: flex;
   align-items: center;
@@ -128,14 +119,6 @@
   justify-content: space-between;
   gap: 12px;
 }
-
-
-
-
-
-
-
-
 
 .loader-box {
   display: flex;
@@ -394,7 +377,6 @@
     }
   }
 }
-
 
 /* =====================================================
 🟦 DATEPICKERS
@@ -1477,6 +1459,27 @@ Step 1 - 2 -
   cursor: not-allowed;
 
   user-select: none;
+}
+
+/* =========================================
+   STEP 2 - BOTONES SIEMPRE VISIBLES
+========================================= */
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+
+  margin-top: 18px;
+  padding: 14px 16px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border-top: 1px solid #dbe5f1;
+
+  box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.08);
+
+  backdrop-filter: blur(6px);
 }
 
 /* SOLO STEP 3 */
@@ -2738,7 +2741,6 @@ Step 1 - 2 -
   border-radius: 12px;
 }
 
-
 /* =========================================
 🔥 POSTULATION SWITCHER
 ========================================= */
@@ -2757,11 +2759,7 @@ Step 1 - 2 -
 
   border: 1px solid #dbe7f5;
 
-  background: linear-gradient(
-    135deg,
-    #ffffff,
-    #f8fbff
-  );
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
 
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
 
@@ -2798,14 +2796,14 @@ Step 1 - 2 -
   .input {
     height: 34px;
 
-    min-width: 520px;
-
-    max-width: 620px;
+    width: 820px;
+    min-width: 620px;
+    max-width: 860px;
 
     padding: 0 14px;
 
     border-radius: 10px;
-    
+
     font-size: 16px;
     font-weight: 600;
 
@@ -2822,9 +2820,7 @@ Step 1 - 2 -
 
       border-color: #1565c0;
 
-      box-shadow:
-        0 0 0 3px
-        rgba(21, 101, 192, 0.08);
+      box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.08);
     }
   }
 }
@@ -2885,20 +2881,14 @@ Step 1 - 2 -
 
   border: 1px solid #dbe7f5;
 
-  background: linear-gradient(
-    135deg,
-    #ffffff,
-    #f8fbff
-  );
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
 
   transition: all 0.2s ease;
 
   &:hover {
     border-color: #1565c0;
 
-    box-shadow:
-      0 4px 12px
-      rgba(21, 101, 192, 0.08);
+    box-shadow: 0 4px 12px rgba(21, 101, 192, 0.08);
   }
 }
 

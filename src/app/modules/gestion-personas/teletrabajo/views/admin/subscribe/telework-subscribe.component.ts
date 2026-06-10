@@ -15,15 +15,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { firstValueFrom, debounceTime, distinctUntilChanged } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { SubscribesService } from '../../../services/admin/subscribes.service';
-import { UsersService } from '@app/modules/gestion-personas/teletrabajo/services/admin/users.service';
 import { TimeService } from '@app/core/services/time.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
-import { filterByRutOrName } from '@app/shared/utils/filter.util';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserSearchService } from 'src/app/modules/gestion-personas/teletrabajo/services/admin/user-search.service';
 import { ChangeDetectorRef } from '@angular/core';
@@ -111,7 +109,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   @ViewChildren('stepItem') stepItems!: QueryList<ElementRef>;
   private fb = inject(FormBuilder);
   private subscribeService = inject(SubscribesService);
-  private usersService = inject(UsersService);
   private dialog = inject(MatDialog);
   private overlapWarningShown = false;
   private timeService = inject(TimeService);
@@ -181,9 +178,15 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     end: [null as Date | null, Validators.required],
   });
 
-  async ngOnInit() {
-    await this.loadUsers();
-
+  ngOnInit(): void {
+    /**
+     * El autocomplete consulta usuarios solamente cuando se escriben
+     * al menos 3 caracteres. UserSearchService administra debounce,
+     * búsqueda por prefijo, cache y filtrado local.
+     *
+     * No cargamos todos los usuarios ni todas las relaciones de roles
+     * al abrir el formulario.
+     */
     this.userSearchService
       .search(this.userSearch.valueChanges)
       .subscribe((users) => {
@@ -212,11 +215,17 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
   }
 
   async selectUser(user: any) {
-    const fullUser = this.users.find((u) => u.id === user.id);
+    /**
+     * El resultado del autocomplete ya contiene los datos necesarios.
+     * Evitamos buscar nuevamente dentro de una base masiva precargada.
+     */
+    this.selectedUser = user;
 
-    console.log('🔍 FULL USER:', fullUser);
+    if (!this.users.some((currentUser) => currentUser.id === user.id)) {
+      this.users.push(user);
+    }
 
-    this.selectedUser = fullUser || user;
+    console.log('🔍 SELECTED USER:', this.selectedUser);
 
     this.form.patchValue({
       userId: user.id,
@@ -256,47 +265,6 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
 
   hasActiveSubscription(): boolean {
     return this.subscriptions.some((s) => this.isActive(s));
-  }
-
-  async loadUsers() {
-    const res = await firstValueFrom(this.usersService.getAllUsersRoles());
-
-    const usersMap: Record<number, User> = {};
-
-    res
-      .filter((r: any) => !r.deletedAt)
-      .forEach((r: any) => {
-        const u = r.user;
-        const roleName = r.role?.name?.toUpperCase();
-
-        if (!usersMap[u.id]) {
-          usersMap[u.id] = {
-            id: u.id,
-            fullName: this.buildFullName(u),
-            rut: u.rut || '',
-            email: u.email,
-            roles: [],
-          };
-        }
-
-        if (roleName && !usersMap[u.id].roles.includes(roleName)) {
-          usersMap[u.id].roles.push(roleName);
-        }
-      });
-
-    const users = Object.values(usersMap).filter((u) =>
-      u.roles.includes('ADMINISTRATIVO'),
-    );
-
-    this.users = users;
-    this.filteredUsers = users;
-    console.log('👥 USERS COMPLETOS:', this.users);
-  }
-
-  private buildFullName(u: any): string {
-    return `${u.firstName} ${u.secondName || ''} ${u.firstLastName || ''} ${u.secondLastName || ''}`
-      .replace(/\s+/g, ' ')
-      .trim();
   }
 
   async loadSubscriptions(userId: number) {
@@ -563,7 +531,7 @@ export class TeleworkSubscribeComponent implements OnInit, AfterViewInit {
     // 🔥 LIMPIEZA REAL
     this.selectedUser = null;
     this.userSearch.setValue(null); // 🔥 CLAVE
-    this.filteredUsers = this.users;
+    this.filteredUsers = [];
     this.subscriptions = [];
 
     this.form.patchValue({

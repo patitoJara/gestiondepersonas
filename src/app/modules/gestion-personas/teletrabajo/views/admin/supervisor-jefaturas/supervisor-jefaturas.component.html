@@ -1,0 +1,377 @@
+<div class="supervisor-page">
+  <section class="hero-card">
+    <div class="hero-icon">
+      <mat-icon>admin_panel_settings</mat-icon>
+    </div>
+
+    <div>
+      <div class="hero-eyebrow">Panel de supervisión</div>
+      <h1>Administración de Jefaturas</h1>
+      <p>Configure responsables y gestione sus funcionarios de forma rápida.</p>
+    </div>
+  </section>
+
+  <section class="existing-groups-card" *ngIf="!jefeSeleccionado">
+    <div class="section-heading existing-heading">
+      <div class="heading-icon"><mat-icon>folder_shared</mat-icon></div>
+
+      <div>
+        <h2>Jefaturas existentes</h2>
+        <p>Abra una jefatura configurada para revisar o modificar sus funcionarios.</p>
+      </div>
+
+      <button
+        type="button"
+        mat-stroked-button
+        class="refresh-groups-btn"
+        [disabled]="loadingJefaturasExistentes"
+        (click)="cargarJefaturasExistentes()"
+      >
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+
+    <mat-form-field appearance="outline" class="existing-filter">
+      <mat-label>Filtrar por nombre de grupo o jefatura</mat-label>
+
+      <input
+        matInput
+        [formControl]="filtroJefaturasExistentes"
+        autocomplete="off"
+      />
+
+      <mat-icon matPrefix>manage_search</mat-icon>
+
+      <button
+        *ngIf="filtroJefaturasExistentes.value"
+        type="button"
+        mat-icon-button
+        matSuffix
+        (click)="limpiarFiltroJefaturasExistentes()"
+        aria-label="Limpiar filtro"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <div *ngIf="loadingJefaturasExistentes" class="empty-state compact">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Cargando jefaturas existentes...</span>
+    </div>
+
+    <div
+      *ngIf="!loadingJefaturasExistentes && jefaturasExistentesFiltradas.length"
+      class="existing-groups-grid"
+    >
+      <button
+        *ngFor="let group of jefaturasExistentesFiltradas"
+        type="button"
+        class="existing-group-card"
+        (click)="abrirJefaturaExistente(group)"
+      >
+        <div class="existing-group-icon">
+          <mat-icon>supervisor_account</mat-icon>
+        </div>
+
+        <div class="existing-group-content">
+          <strong>{{ group.name || "Jefatura sin nombre" }}</strong>
+          <span>{{ group.jefe?.fullName || "Jefe no informado" }}</span>
+          <small>{{ group.description || "Sin descripción" }}</small>
+        </div>
+
+        <mat-icon class="existing-group-arrow">arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <div
+      *ngIf="!loadingJefaturasExistentes && !jefaturasExistentesFiltradas.length"
+      class="empty-state compact"
+    >
+      <mat-icon>folder_off</mat-icon>
+      <span>No se encontraron jefaturas configuradas.</span>
+    </div>
+  </section>
+
+  <section class="search-card">
+    <div class="section-heading">
+      <div class="heading-icon"><mat-icon>person_search</mat-icon></div>
+
+      <div>
+        <h2>Seleccionar jefatura</h2>
+        <p>Busque una persona por nombres o apellidos.</p>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="main-search">
+      <mat-label>Ejemplo: patricio jara</mat-label>
+
+      <input
+        matInput
+        [formControl]="busquedaJefatura"
+        autocomplete="off"
+      />
+
+      <mat-icon matPrefix>search</mat-icon>
+
+      <button
+        *ngIf="busquedaJefatura.value"
+        type="button"
+        mat-icon-button
+        matSuffix
+        (click)="limpiarBusquedaJefatura()"
+        aria-label="Limpiar búsqueda"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <mat-hint>Ingrese al menos tres letras. Puede escribir nombre y apellido.</mat-hint>
+    </mat-form-field>
+
+    <div
+      *ngIf="hayBusquedaJefaturaValida()"
+      class="search-results"
+    >
+      <button
+        *ngFor="let user of jefaturasEncontradas"
+        type="button"
+        class="result-card"
+        (click)="seleccionarJefatura(user)"
+      >
+        <div class="result-avatar">
+          <mat-icon>person</mat-icon>
+        </div>
+
+        <div class="result-content">
+          <strong>{{ user.fullName }}</strong>
+          <span>{{ user.rut || "RUT no informado" }}</span>
+        </div>
+
+        <mat-icon class="result-arrow">arrow_forward</mat-icon>
+      </button>
+
+      <div *ngIf="!jefaturasEncontradas.length" class="empty-state compact">
+        <mat-icon>search_off</mat-icon>
+        <span>No se encontraron personas con ese nombre.</span>
+      </div>
+    </div>
+  </section>
+
+  <ng-container *ngIf="jefeSeleccionado">
+    <section class="selected-card">
+      <div class="selected-main">
+        <div class="selected-avatar">
+          <mat-icon>badge</mat-icon>
+        </div>
+
+        <div>
+          <div class="selected-label">Jefatura seleccionada</div>
+          <h2>{{ jefeSeleccionado.fullName }}</h2>
+          <p>{{ jefeSeleccionado.rut || "RUT no informado" }}</p>
+        </div>
+      </div>
+
+      <div class="status-list">
+        <div class="status-chip success">
+          <mat-icon>verified_user</mat-icon>
+          <span>Rol JEFATURA activo</span>
+        </div>
+
+        <div *ngIf="rolJefaturaAsignadoAhora" class="status-chip info">
+          <mat-icon>add_moderator</mat-icon>
+          <span>Rol asignado automáticamente</span>
+        </div>
+
+        <div class="status-chip" [class.success]="grupoExistente" [class.pending]="!grupoExistente">
+          <mat-icon>{{ grupoExistente ? "folder_shared" : "create_new_folder" }}</mat-icon>
+          <span>{{ grupoExistente ? "Grupo existente" : "Grupo nuevo: se creará al guardar" }}</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        mat-stroked-button
+        class="change-user-btn"
+        (click)="resetSeleccion()"
+      >
+        <mat-icon>swap_horiz</mat-icon>
+        Cambiar jefatura
+      </button>
+    </section>
+
+    <section class="configuration-card">
+      <div class="section-heading small">
+        <div class="heading-icon"><mat-icon>tune</mat-icon></div>
+
+        <div>
+          <h2>Datos del grupo</h2>
+          <p>Puede modificar el nombre y la descripción.</p>
+        </div>
+      </div>
+
+      <div class="configuration-grid">
+        <div class="input-group">
+          <label>Nombre de jefatura</label>
+          <input class="input" [(ngModel)]="grupo.name" />
+        </div>
+
+        <div class="input-group">
+          <label>Descripción</label>
+          <input class="input" [(ngModel)]="grupo.description" />
+        </div>
+      </div>
+    </section>
+
+    <section class="assignment-card">
+      <div class="section-heading small">
+        <div class="heading-icon"><mat-icon>groups</mat-icon></div>
+
+        <div>
+          <h2>Funcionarios de la jefatura</h2>
+          <p>Busque funcionarios disponibles y muévalos entre ambas columnas.</p>
+        </div>
+      </div>
+
+      <div class="dual-container">
+        <div class="list-box available-box">
+          <div class="list-header orange">
+            <div>
+              <strong>Funcionarios disponibles</strong>
+              <span>Busque y seleccione uno o más funcionarios.</span>
+            </div>
+
+            <div class="counter">{{ usuariosDisponibles.length }}</div>
+          </div>
+
+          <div class="available-search">
+            <mat-form-field appearance="outline" class="secondary-search">
+              <mat-label>Ejemplo: jaime campusano</mat-label>
+
+              <input
+                matInput
+                [formControl]="busquedaDisponible"
+                autocomplete="off"
+              />
+
+              <mat-icon matPrefix>manage_search</mat-icon>
+
+              <button
+                *ngIf="busquedaDisponible.value"
+                type="button"
+                mat-icon-button
+                matSuffix
+                (click)="limpiarBusquedaDisponible()"
+                aria-label="Limpiar búsqueda"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+
+              <mat-hint>Ingrese al menos tres letras.</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="list-content">
+            <div *ngIf="!hayBusquedaDisponibleValida()" class="empty-state">
+              <mat-icon>person_search</mat-icon>
+              <span>Escriba un nombre o apellido para buscar funcionarios.</span>
+            </div>
+
+            <div
+              *ngIf="hayBusquedaDisponibleValida() && !usuariosDisponibles.length"
+              class="empty-state"
+            >
+              <mat-icon>info</mat-icon>
+              <span>No hay funcionarios disponibles con ese nombre.</span>
+            </div>
+
+            <mat-selection-list
+              *ngIf="hayBusquedaDisponibleValida()"
+              [(ngModel)]="selectedDisponibles"
+            >
+              <mat-list-option
+                *ngFor="let user of usuariosDisponibles"
+                [value]="user"
+              >
+                {{ user.fullName }}
+              </mat-list-option>
+            </mat-selection-list>
+          </div>
+        </div>
+
+        <div class="dual-actions">
+          <button
+            type="button"
+            mat-fab
+            class="move-btn add"
+            matTooltip="Agregar seleccionados"
+            (click)="agregar()"
+          >
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+
+          <button
+            type="button"
+            mat-fab
+            class="move-btn remove"
+            matTooltip="Quitar seleccionados"
+            (click)="quitar()"
+          >
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+        </div>
+
+        <div class="list-box assigned-box">
+          <div class="list-header purple">
+            <div>
+              <strong>Funcionarios asignados</strong>
+              <span>Integrantes actuales de esta jefatura.</span>
+            </div>
+
+            <div class="counter">{{ usuariosAsignados.length }}</div>
+          </div>
+
+          <div class="list-content">
+            <div *ngIf="!usuariosAsignados.length" class="empty-state">
+              <mat-icon>group_off</mat-icon>
+              <span>Esta jefatura todavía no tiene funcionarios asignados.</span>
+            </div>
+
+            <mat-selection-list [(ngModel)]="selectedAsignados">
+              <mat-list-option
+                *ngFor="let user of usuariosAsignados"
+                [value]="user"
+              >
+                {{ user.fullName }}
+              </mat-list-option>
+            </mat-selection-list>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sticky-actions">
+      <div class="sticky-summary">
+        <strong>{{ grupo.name || "Jefatura sin nombre" }}</strong>
+        <span>{{ usuariosAsignados.length }} funcionario(s) asignado(s)</span>
+      </div>
+
+      <div class="sticky-buttons">
+        <button type="button" mat-stroked-button (click)="volver()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver
+        </button>
+
+        <button
+          type="button"
+          mat-flat-button
+          class="save-btn"
+          [disabled]="!hayCambios() || saving"
+          (click)="guardar()"
+        >
+          <mat-icon>save</mat-icon>
+          {{ saving ? "Guardando..." : "Guardar cambios" }}
+        </button>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -60,7 +60,7 @@ export const routes: Routes = [
           section: 'main',
           title: 'Inicio',
           icon: 'home',
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR_BIENESTAR'],
           iconColor: '#2e7d32', // verde
         },
       },
@@ -150,6 +150,23 @@ export const routes: Routes = [
       // =====================================================
 
       {
+        path: 'admin/supervisor-jefaturas',
+        loadComponent: () =>
+          import('./modules/gestion-personas/teletrabajo/views/admin/supervisor-jefaturas/supervisor-jefaturas.component').then(
+            (m) => m.SupervisorJefaturasComponent,
+          ),
+        data: {
+          module: 'teletrabajo',
+          section: 'admin',
+          //group: 'Administración',
+          title: 'Administrar Jefaturas',
+          icon: 'admin_panel_settings',
+          roles: ['ADMIN', 'SUPERVISOR'],
+          iconColor: '#1565c0',
+        },
+      },
+
+      {
         path: 'users-groups',
         loadComponent: () =>
           import('./modules/gestion-personas/teletrabajo/views/admin/users-groups/users-groups.component').then(
@@ -208,7 +225,7 @@ export const routes: Routes = [
           section: 'admin',
           title: 'Usuarios',
           icon: 'person',
-          roles: ['ADMIN', 'SUPERVISOR'],
+          roles: ['ADMIN', 'SUPERVISOR_BIENESTAR'],
           iconColor: '#1565c0', //azul
         },
       },
@@ -273,7 +290,7 @@ export const routes: Routes = [
           section: 'main',
           title: 'Manual',
           icon: 'menu_book',
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR_BIENESTAR'],
           iconColor: '#2e7d32', // verde
         },
       },
@@ -289,7 +306,7 @@ export const routes: Routes = [
           section: 'main',
           title: 'Acerca del sistema',
           icon: 'info',
-          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
+          roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR_BIENESTAR'],
           iconColor: '#2e7d32', // verde
         },
       },
@@ -310,8 +327,23 @@ export const routes: Routes = [
           title: 'Postulación Estudios',
           icon: 'school',
           //roles: ['ADMIN', 'SUPERVISOR', 'ADMINISTRATIVO', 'JEFATURA'],
-          roles: ['ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR', 'POSTULACION'],
+          roles: ['ADMINISTRATIVO', 'JEFATURA', 'SUPERVISOR_BIENESTAR', 'POSTULACION'],
           iconColor: '#2e7d32', // verde
+        },
+      },
+      {
+        path: 'supervision-postulaciones',
+        loadComponent: () =>
+          import('./modules/gestion-personas/beneficios/supervision-postulaciones/supervision-postulaciones.component').then(
+            (m) => m.SupervisionPostulacionesComponent,
+          ),
+        data: {
+          module: 'beneficios',
+          group: 'Postulación',
+          title: 'Supervisión postulaciones',
+          icon: 'fact_check',
+          roles: ['ADMIN', 'SUPERVISOR_BIENESTAR'],
+          iconColor: '#1565c0',
         },
       },
     ],

@@ -4150,21 +4150,11 @@ export class PostulationFormComponent {
   }
 
   get totalGastos(): number {
-    const f = this.form.value;
-
-    return [
-      f.arriendo,
-      f.luz,
-      f.agua,
-      f.gas,
-      f.telefonoGasto,
-      f.creditos,
-      f.matricula,
-      f.mensualidad,
-      f.alojamiento,
-    ]
-      .map((v) => Number(v) || 0) // 🔥 limpia todo
-      .reduce((acc, val) => acc + val, 0);
+    return (
+      this.totalGastosBasicos +
+      this.totalGastosEducacion +
+      this.totalOtrosGastos
+    );
   }
 
   getStablishmentName(id: any): string {

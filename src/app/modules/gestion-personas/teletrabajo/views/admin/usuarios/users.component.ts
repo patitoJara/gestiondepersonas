@@ -146,33 +146,35 @@ export class UsuariosComponent implements AfterViewInit {
 
           const baseUsers = response?.content || [];
 
-          // 🔥 TRAER USUARIO COMPLETO + ROLES (COMO EL DIALOG)
-          const fullUsers = await Promise.all(
-            baseUsers.map(async (u: any) => {
-              const user = await firstValueFrom(this.api.getById(u.id));
+          /**
+           * Mostrar inmediatamente los datos entregados
+           * por el buscador.
+           *
+           * Ya no hacemos:
+           * - getById() por cada usuario
+           * - getUserRoles() por cada usuario
+           *
+           * El usuario completo se consulta solamente
+           * cuando se presiona Editar.
+           */
+          this.allUsers = baseUsers.map((user: any) => ({
+            ...user,
 
-              const rolesRes: any[] = await firstValueFrom(
-                this.api.getUserRoles(u.id),
-              );
+            fullName: this.buildFullName(user),
 
-              const roles = rolesRes
-                .filter((r) => !r.deletedAt)
-                .map((r) => r.role?.name);
+            roles: Array.isArray(user.roles)
+              ? user.roles
+                  .map((role: any) =>
+                    typeof role === 'string' ? role : role?.name,
+                  )
+                  .filter(Boolean)
+              : [],
+          }));
 
-              return {
-                ...user,
-                roles,
-                fullName: this.buildFullName(user),
-              };
-            }),
-          );
-
-          console.log('FULL USERS:', fullUsers);
-
-          // 🔥 NO MAPEAR DE NUEVO → YA TIENE ROLES
-          this.allUsers = fullUsers;
+          console.log('✅ SEARCH USERS READY:', this.allUsers.length);
         } catch (e) {
           console.error(e);
+
           this.allUsers = [];
         }
       }
@@ -505,6 +507,4 @@ export class UsuariosComponent implements AfterViewInit {
       }
     });
   }
-
-
 }

@@ -24,7 +24,13 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "html2pdf.js",
+              "file-saver",
+              "moment",
+              "moment/locale/es"
+            ]
           },
           "configurations": {
             "production": {
@@ -36,7 +42,7 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "35kB",
+                  "maximumWarning": "40kB",
                   "maximumError": "50kB"
                 }
               ],
