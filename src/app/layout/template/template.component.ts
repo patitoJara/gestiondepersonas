@@ -35,6 +35,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 import { OnDestroy } from '@angular/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TokenService } from '@app/core/services/token.service';
 import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
@@ -64,6 +65,7 @@ import { AppRouteData } from '@app/core/models/route-data.model';
     MatFormFieldModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatTooltipModule,
   ],
 })
 export class TemplateComponent implements OnInit, OnDestroy {
@@ -154,18 +156,19 @@ export class TemplateComponent implements OnInit, OnDestroy {
       shareReplay(),
     );
 
-  ngOnInit(): void {
-    this.timeService.loadServerTime();
+  async ngOnInit(): Promise<void> {
+    await this.timeService.loadServerTime();
+
     this.loadSessionData();
 
     this.router.events.subscribe(async () => {
       const isMobile = await firstValueFrom(this.isHandset$);
 
       /*
-      if (isMobile && this.drawer?.opened) {
-        this.drawer.close();
-      }
-        */
+    if (isMobile && this.drawer?.opened) {
+      this.drawer.close();
+    }
+    */
     });
   }
 
@@ -173,6 +176,27 @@ export class TemplateComponent implements OnInit, OnDestroy {
     if (this.timerSub) {
       clearInterval(this.timerSub);
       this.timerSub = undefined; // 🔥 deja el estado limpio
+    }
+  }
+
+  private getTokenExpirationMs(): number | null {
+    const token = this.tokenService.getAccessToken();
+
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+
+      return payload?.exp ? Number(payload.exp) * 1000 : null;
+    } catch (error) {
+      console.error(
+        '[session] No fue posible obtener la expiración del token',
+        error,
+      );
+
+      return null;
     }
   }
 
@@ -397,26 +421,55 @@ export class TemplateComponent implements OnInit, OnDestroy {
     }
   }
 
-  startRealExpirationTimer() {
+  startRealExpirationTimer(): void {
     if (this.timerSub) {
       clearInterval(this.timerSub);
     }
 
-    this.timerSub = setInterval(() => {
-      this.remainingMinutes--;
+    const updateRemainingTime = () => {
+      const expirationMs = this.getTokenExpirationMs();
 
-      this.showExtendButton = this.remainingMinutes <= 5;
+      if (!expirationMs) {
+        this.forceLogout();
+        return;
+      }
+
+      /**
+       * La diferencia fundamental:
+       * no usamos Date.now() directamente.
+       * Usamos la hora corregida por el servidor.
+       */
+      const remainingMs = expirationMs - this.timeService.nowMs();
+
+      this.remainingMinutes = Math.max(0, Math.ceil(remainingMs / 60000));
+
+      this.showExtendButton =
+        this.remainingMinutes > 0 && this.remainingMinutes <= 5;
 
       if (this.remainingMinutes <= 0 && !this.warned) {
         this.warned = true;
 
         if (this.timerSub) {
           clearInterval(this.timerSub);
+          this.timerSub = undefined;
         }
 
         this.showSessionExpiredModal();
       }
-    }, 60000);
+    };
+
+    /**
+     * Ejecutar inmediatamente para no esperar el primer intervalo.
+     */
+    updateRemainingTime();
+
+    /**
+     * Recalcular cada 15 segundos.
+     * No se limita a restar un minuto artificialmente.
+     */
+    this.timerSub = setInterval(() => {
+      updateRemainingTime();
+    }, 15000);
   }
 
   showSessionExpiredModal(): void {
@@ -518,24 +571,4 @@ export class TemplateComponent implements OnInit, OnDestroy {
     return this.router.url.split('?')[0] === route;
   }
 
-  startSessionTimer() {
-    const totalMinutes = 60;
-
-    setInterval(() => {
-      this.remainingMinutes--;
-
-      // 🔥 mostrar botón cuando queden 5 min
-      this.showExtendButton = this.remainingMinutes <= 5;
-
-      // 🔥 cerrar sesión
-      if (this.remainingMinutes <= 0) {
-        this.logout();
-      }
-    }, 60000); // 1 minuto
-  }
-
-  resetSessionTimer() {
-    this.remainingMinutes = 60;
-    this.showExtendButton = false;
-  }
 }

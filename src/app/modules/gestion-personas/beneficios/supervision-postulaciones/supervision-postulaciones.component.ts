@@ -12,6 +12,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LoaderService } from '@app/core/services/loader.service';
 
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '@app/shared/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogYesNoComponent } from '@app/shared/confirm-dialog/confirm-dialog-yes-no.component';
+
 import {
   SupervisionDocument,
   SupervisionPostulation,
@@ -19,6 +23,8 @@ import {
 } from './supervision-postulaciones.service';
 
 import { SupervisionPostulacionesReportService } from './supervision-postulaciones-report.service';
+
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -29,6 +35,12 @@ interface StablishmentFilterOption {
   id: number;
   name: string;
 }
+
+type SupervisionAdministrativeAction =
+  | 'DELETE'
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'RESTORE';
 
 @Component({
   selector: 'app-supervision-postulaciones',
@@ -44,6 +56,7 @@ interface StablishmentFilterOption {
     MatProgressSpinnerModule,
     MatSelectModule,
     MatTooltipModule,
+    MatCheckboxModule,
   ],
   templateUrl: './supervision-postulaciones.component.html',
   styleUrl: './supervision-postulaciones.component.scss',
@@ -52,6 +65,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
   private supervisionService = inject(SupervisionPostulacionesService);
   private reportService = inject(SupervisionPostulacionesReportService);
   private loader = inject(LoaderService);
+  private dialog = inject(MatDialog);
 
   // =========================================================
   // 🔥 DATA
@@ -94,6 +108,12 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
   errorMessage = '';
 
+  successMessage = '';
+
+  actionInProgressId: number | null = null;
+
+  actionInProgressType: SupervisionAdministrativeAction | null = null;
+
   filters = {
     searchText: '',
     status: '',
@@ -117,13 +137,16 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
     this.errorMessage = '';
 
-    this.supervisionService.search().subscribe({
+    const selectedStatus = this.normalizeStatus(this.filters.status);
+
+    const request$ =
+      selectedStatus === 'DELETED'
+        ? this.supervisionService.searchDeleted()
+        : this.supervisionService.search();
+
+    request$.subscribe({
       next: (response: any) => {
         this.postulations = this.extractPostulations(response);
-
-        // =====================================
-        // 🔥 CALCULAR UNA SOLA VEZ
-        // =====================================
 
         this.buildSummaryCards();
 
@@ -131,9 +154,8 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
         this.applyFilters();
 
-        // Evitar imprimir el arreglo completo.
-        // DevTools puede volverse pesado al expandir objetos grandes.
         console.log('📦 SUPERVISION POSTULATIONS:', {
+          selectedStatus,
           rawResponse: response,
           total: this.postulations.length,
           filtered: this.filteredPostulations.length,
@@ -158,11 +180,17 @@ export class SupervisionPostulacionesComponent implements OnInit {
         this.totalSubmitted = 0;
 
         this.errorMessage =
-          'No fue posible cargar las postulaciones. Revise que el endpoint general esté habilitado para el rol supervisor.';
+          selectedStatus === 'DELETED'
+            ? 'No fue posible cargar las postulaciones eliminadas.'
+            : 'No fue posible cargar las postulaciones.';
 
         this.loading = false;
       },
     });
+  }
+
+  onStatusFilterChange(): void {
+    this.loadPostulations();
   }
 
   /**
@@ -193,7 +221,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
     return list
       .filter((postulation: any) => {
-        return postulation?.id && !this.isSoftDeleted(postulation);
+        return Boolean(postulation?.id);
       })
       .map((postulation: any) => {
         return {
@@ -219,7 +247,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
       });
   }
 
-  private isSoftDeleted(postulation: any): boolean {
+  isSoftDeleted(postulation: any): boolean {
     return Boolean(
       postulation?.deletedAt ||
       postulation?.deleted_at ||
@@ -298,6 +326,8 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
       const stablishmentName = this.normalizeText(postulation.stablishmentName);
 
+      const status = this.normalizeStatus(postulation.status);
+
       const matchesSearch =
         !searchText ||
         code.includes(searchText) ||
@@ -306,14 +336,90 @@ export class SupervisionPostulacionesComponent implements OnInit {
         stablishmentName.includes(searchText);
 
       const matchesStatus =
-        !selectedStatus ||
-        this.normalizeStatus(postulation.status) === selectedStatus;
+        selectedStatus === 'DELETED'
+          ? this.isSoftDeleted(postulation)
+          : !selectedStatus || status === selectedStatus;
 
       const matchesStablishment =
         !selectedStablishmentId ||
         Number(postulation.stablishmentId || 0) === selectedStablishmentId;
 
       return matchesSearch && matchesStatus && matchesStablishment;
+    });
+  }
+
+  isDeleted(postulation: SupervisionPostulation): boolean {
+    return this.isSoftDeleted(postulation);
+  }
+
+  private executeRestoreAction(postulation: SupervisionPostulation): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId) {
+      return;
+    }
+
+    this.actionInProgressId = postulationId;
+
+    this.actionInProgressType = 'RESTORE';
+
+    this.supervisionService.restorePostulation(postulationId).subscribe({
+      next: () => {
+        if (Number(this.selectedDetail?.id || 0) === postulationId) {
+          this.closeDetail();
+        }
+
+        this.finishAdministrativeAction();
+
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '480px',
+          disableClose: true,
+
+          data: {
+            title: 'Postulación recuperada',
+
+            message:
+              `La postulación ${postulation.code || `#${postulationId}`} ` +
+              'fue recuperada correctamente.',
+
+            confirmText: 'Aceptar',
+            cancelText: '',
+            icon: 'restore',
+            color: 'primary',
+          },
+        });
+
+        this.loadPostulations();
+      },
+
+      error: (error) => {
+        console.error('❌ ERROR RESTORING POSTULATION:', {
+          postulationId,
+          status: error?.status,
+          error,
+        });
+
+        this.finishAdministrativeAction();
+
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '480px',
+          disableClose: true,
+
+          data: {
+            title: 'No fue posible recuperar la postulación',
+
+            message:
+              Number(error?.status) === 401 || Number(error?.status) === 403
+                ? 'El servidor rechazó la recuperación porque el usuario no cuenta con permisos suficientes.'
+                : 'No fue posible recuperar la postulación eliminada.',
+
+            confirmText: 'Aceptar',
+            cancelText: '',
+            icon: 'warning',
+            color: 'warn',
+          },
+        });
+      },
     });
   }
 
@@ -324,7 +430,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
       stablishmentId: '',
     };
 
-    this.applyFilters();
+    this.loadPostulations();
   }
 
   private normalizeText(value: any): string {
@@ -611,6 +717,275 @@ export class SupervisionPostulacionesComponent implements OnInit {
   }
 
   // =========================================================
+  // 🔥 ADMINISTRACIÓN DE POSTULACIONES
+  // Rol requerido en backend: SUPERVISOR_BIENESTAR
+  // =========================================================
+
+  canReturnToDraft(status: any): boolean {
+    return this.normalizeStatus(status) === 'SUBMITTED';
+  }
+
+  canMarkAsSubmitted(status: any): boolean {
+    return this.normalizeStatus(status) === 'DRAFT';
+  }
+
+  isActionInProgress(postulation: SupervisionPostulation): boolean {
+    return (
+      this.actionInProgressId !== null &&
+      Number(postulation?.id || 0) === this.actionInProgressId
+    );
+  }
+
+  returnToDraft(postulation: SupervisionPostulation): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId || this.actionInProgressId !== null) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '520px',
+
+      disableClose: true,
+
+      data: {
+        title: 'Devolver postulación a borrador',
+
+        message:
+          `La postulación ${postulation.code || `#${postulationId}`} ` +
+          'volverá al estado BORRADOR. ' +
+          'El funcionario podrá corregir la información y adjuntar los documentos faltantes. ' +
+          'Posteriormente deberá enviarla nuevamente para continuar con la revisión.',
+
+        yesText: 'Devolver a borrador',
+
+        noText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === true) {
+        this.executeAdministrativeAction(postulation, 'DRAFT');
+      }
+    });
+  }
+
+  markAsSubmitted(postulation: SupervisionPostulation): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId || this.actionInProgressId !== null) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '520px',
+
+      disableClose: true,
+
+      data: {
+        title: 'Marcar postulación como enviada',
+
+        message:
+          `La postulación ${postulation.code || `#${postulationId}`} ` +
+          'quedará nuevamente en estado ENVIADA. ' +
+          'El funcionario dejará de poder modificar sus datos y adjuntar documentos. ' +
+          'Verifique previamente que la información y los archivos requeridos estén completos.',
+
+        yesText: 'Marcar como enviada',
+
+        noText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === true) {
+        this.executeAdministrativeAction(postulation, 'SUBMITTED');
+      }
+    });
+  }
+
+  deletePostulation(postulation: SupervisionPostulation): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId || this.actionInProgressId !== null) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '520px',
+
+      disableClose: true,
+
+      data: {
+        title: 'Eliminar postulación',
+
+        message:
+          `Está a punto de eliminar la postulación ` +
+          `${postulation.code || `#${postulationId}`} de ` +
+          `${postulation.userFullName || 'un funcionario'}. ` +
+          'La postulación dejará de aparecer en el listado de supervisión. ' +
+          'Esta acción debe utilizarse solamente cuando la postulación no corresponda o haya sido creada por error.',
+
+        yesText: 'Eliminar postulación',
+
+        noText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === true) {
+        this.executeAdministrativeAction(postulation, 'DELETE');
+      }
+    });
+  }
+
+  private executeAdministrativeAction(
+    postulation: SupervisionPostulation,
+    action: 'DELETE' | 'DRAFT' | 'SUBMITTED',
+  ): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId) {
+      return;
+    }
+
+    this.actionInProgressId = postulationId;
+
+    this.actionInProgressType = action;
+
+    const request$ =
+      action === 'DELETE'
+        ? this.supervisionService.softDeletePostulation(postulationId)
+        : this.supervisionService.changeStatus(postulationId, action);
+
+    request$.subscribe({
+      next: () => {
+        if (Number(this.selectedDetail?.id || 0) === postulationId) {
+          this.closeDetail();
+        }
+
+        this.finishAdministrativeAction();
+
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '480px',
+          disableClose: true,
+
+          data: {
+            title: this.getAdministrativeSuccessTitle(action),
+
+            message: this.getAdministrativeSuccessMessage(postulation, action),
+
+            confirmText: 'Aceptar',
+            cancelText: '',
+            icon: 'check_circle',
+            color: 'primary',
+          },
+        });
+
+        this.loadPostulations();
+      },
+
+      error: (error) => {
+        console.error('❌ ERROR ADMINISTRATING POSTULATION:', {
+          postulationId,
+          action,
+          status: error?.status,
+          error,
+        });
+
+        this.finishAdministrativeAction();
+
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '480px',
+          disableClose: true,
+
+          data: {
+            title: 'No fue posible completar la acción',
+
+            message: this.getAdministrativeErrorMessage(action, error),
+
+            confirmText: 'Aceptar',
+            cancelText: '',
+            icon: 'warning',
+            color: 'warn',
+          },
+        });
+      },
+    });
+  }
+
+  private getAdministrativeSuccessTitle(
+    action: SupervisionAdministrativeAction,
+  ): string {
+    if (action === 'DRAFT') {
+      return 'Postulación devuelta a borrador';
+    }
+
+    if (action === 'SUBMITTED') {
+      return 'Postulación marcada como enviada';
+    }
+
+    return 'Postulación eliminada';
+  }
+
+  private finishAdministrativeAction(): void {
+    this.actionInProgressId = null;
+
+    this.actionInProgressType = null;
+  }
+
+  private getAdministrativeSuccessMessage(
+    postulation: SupervisionPostulation,
+    action: SupervisionAdministrativeAction,
+  ): string {
+    const code = postulation.code || `#${postulation.id}`;
+
+    if (action === 'DRAFT') {
+      return `La postulación ${code} fue devuelta a borrador. El funcionario podrá corregir la información y adjuntar los documentos faltantes.`;
+    }
+
+    if (action === 'SUBMITTED') {
+      return `La postulación ${code} fue marcada nuevamente como enviada. La edición quedó bloqueada para el funcionario.`;
+    }
+
+    return `La postulación ${code} fue eliminada correctamente.`;
+  }
+
+  private getAdministrativeErrorMessage(
+    action: SupervisionAdministrativeAction,
+    error: any,
+  ): string {
+    if (Number(error?.status) === 401) {
+      return (
+        'El servidor rechazó la operación porque el usuario autenticado ' +
+        'no tiene autorización para ejecutar esta acción. ' +
+        'Debe habilitarse el permiso correspondiente para el rol ' +
+        'SUPERVISOR_BIENESTAR en el backend.'
+      );
+    }
+
+    if (Number(error?.status) === 403) {
+      return (
+        'El usuario autenticado no cuenta con permisos suficientes ' +
+        'para ejecutar esta acción.'
+      );
+    }
+
+    if (action === 'DRAFT') {
+      return 'No fue posible devolver la postulación a borrador.';
+    }
+
+    if (action === 'SUBMITTED') {
+      return (
+        'No fue posible marcar la postulación como enviada. ' +
+        'Verifique que los documentos obligatorios estén completos.'
+      );
+    }
+
+    return 'No fue posible eliminar la postulación.';
+  }
+
+  // =========================================================
   // 🔥 EXCEL-COMPATIBLE EXPORT
   // =========================================================
 
@@ -619,14 +994,16 @@ export class SupervisionPostulacionesComponent implements OnInit {
   // =========================================================
 
   exportFilteredExcel(): void {
-    const postulations = this.filteredPostulations;
+    const postulations = this.filteredPostulations.filter(
+      (postulation) => !this.isSoftDeleted(postulation),
+    );
 
     if (!postulations.length) {
-      this.errorMessage = 'No existen postulaciones para exportar.';
-      return;
-    }
+      this.errorMessage =
+        this.filters.status === 'DELETED'
+          ? 'Las postulaciones eliminadas no se incluyen en la exportación Excel.'
+          : 'No existen postulaciones activas para exportar.';
 
-    if (this.exportingExcel) {
       return;
     }
 
@@ -973,7 +1350,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
           this.errorMessage = 'No fue posible construir el archivo Excel.';
         } finally {
           this.exportingExcel = false;
-          this.loader.unlock();      
+          this.loader.unlock();
         }
       },
 
@@ -987,6 +1364,40 @@ export class SupervisionPostulacionesComponent implements OnInit {
         this.errorMessage =
           'No fue posible obtener la información para exportar el Excel.';
       },
+    });
+  }
+
+  restorePostulation(postulation: SupervisionPostulation): void {
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId || this.actionInProgressId !== null) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogYesNoComponent, {
+      width: '520px',
+
+      disableClose: true,
+
+      data: {
+        title: 'Recuperar postulación eliminada',
+
+        message:
+          `La postulación ${postulation.code || `#${postulationId}`} ` +
+          'será recuperada y volverá al estado BORRADOR. ' +
+          'El funcionario podrá revisar los antecedentes, realizar correcciones ' +
+          'y adjuntar los documentos faltantes antes de enviarla nuevamente.',
+
+        yesText: 'Recuperar postulación',
+
+        noText: 'Cancelar',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === true) {
+        this.executeRestoreAction(postulation);
+      }
     });
   }
 
@@ -1008,6 +1419,30 @@ export class SupervisionPostulacionesComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  canDelete(postulation: SupervisionPostulation): boolean {
+    return !this.isSoftDeleted(postulation);
+  }
+
+  canRestore(postulation: SupervisionPostulation): boolean {
+    return this.isSoftDeleted(postulation);
+  }
+
+  getPostulationStatusLabel(postulation: SupervisionPostulation): string {
+    if (this.isSoftDeleted(postulation)) {
+      return 'Eliminada';
+    }
+
+    return this.getStatusLabel(postulation.status);
+  }
+
+  getPostulationStatusClass(postulation: SupervisionPostulation): string {
+    if (this.isSoftDeleted(postulation)) {
+      return 'status-deleted';
+    }
+
+    return this.getStatusClass(postulation.status);
+  }
+
   // =========================================================
   // 🔥 VISUAL HELPERS
   // =========================================================
@@ -1023,6 +1458,10 @@ export class SupervisionPostulacionesComponent implements OnInit {
       return 'Enviada';
     }
 
+    if (normalizedStatus === 'DELETED') {
+      return 'Eliminada';
+    }
+
     return normalizedStatus || 'Sin estado';
   }
 
@@ -1035,6 +1474,10 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
     if (normalizedStatus === 'SUBMITTED') {
       return 'status-submitted';
+    }
+
+    if (normalizedStatus === 'DELETED') {
+      return 'status-deleted';
     }
 
     return 'status-default';

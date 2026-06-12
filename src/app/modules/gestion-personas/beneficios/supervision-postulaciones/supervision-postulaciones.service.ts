@@ -33,7 +33,9 @@ export interface SupervisionDocument {
 
 export interface SupervisionPostulation extends PostulationResponse {
   documents?: SupervisionDocument[];
+
   uploadedDocuments?: SupervisionDocument[];
+
   [key: string]: any;
 }
 
@@ -46,23 +48,14 @@ export class SupervisionPostulacionesService {
   private apiUrl = `${environment.apiUrl}/wellbeing/postulations`;
 
   /**
-   * Lista general de postulaciones para supervisión.
+   * Lista general de postulaciones activas para supervisión.
    *
-   * Endpoint existente:
    * GET /api/v1/wellbeing/postulations
-   *
-   * La primera versión puede cargar el listado completo y aplicar
-   * filtros en frontend. El método igualmente queda preparado para
-   * enviar filtros al backend cuando estén disponibles.
    */
   search(
     params: Record<string, string | number | boolean | null | undefined> = {},
   ): Observable<any> {
     let httpParams = new HttpParams();
-
-    // =========================================
-    // 🔥 TRAER SUFICIENTES REGISTROS PARA LA PRUEBA
-    // =========================================
 
     httpParams = httpParams.set('page', '0');
 
@@ -79,6 +72,34 @@ export class SupervisionPostulacionesService {
     }
 
     return this.http.get<any>(this.apiUrl, {
+      params: httpParams,
+    });
+  }
+
+  /**
+   * Lista exclusivamente las postulaciones eliminadas.
+   *
+   * GET /api/v1/wellbeing/postulations/deleted
+   *
+   * Filtros opcionales:
+   * - userId
+   * - periodYear
+   * - status
+   */
+  searchDeleted(
+    params: Record<string, string | number | boolean | null | undefined> = {},
+  ): Observable<SupervisionPostulation[]> {
+    let httpParams = new HttpParams();
+
+    for (const [key, value] of Object.entries(params)) {
+      if (value === null || value === undefined || value === '') {
+        continue;
+      }
+
+      httpParams = httpParams.set(key, String(value));
+    }
+
+    return this.http.get<SupervisionPostulation[]>(`${this.apiUrl}/deleted`, {
       params: httpParams,
     });
   }
@@ -104,12 +125,51 @@ export class SupervisionPostulacionesService {
   /**
    * Descarga física de un documento.
    *
-   * Endpoint existente:
    * GET /api/v1/wellbeing/postulations/documents/{documentId}/download
    */
   downloadDocument(documentId: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/documents/${documentId}/download`, {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Cambia administrativamente el estado operativo.
+   *
+   * PATCH /api/v1/wellbeing/postulations/{postulationId}/status
+   *
+   * Estados permitidos:
+   * - DRAFT
+   * - SUBMITTED
+   */
+  changeStatus(
+    postulationId: number,
+    status: 'DRAFT' | 'SUBMITTED',
+  ): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${postulationId}/status`, {
+      status,
+    });
+  }
+
+  /**
+   * Elimina lógicamente una postulación.
+   *
+   * DELETE /api/v1/wellbeing/postulations/{postulationId}
+   *
+   * El backend completa deleted_at.
+   */
+  softDeletePostulation(postulationId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${postulationId}`);
+  }
+
+  /**
+   * Recupera una postulación eliminada lógicamente.
+   *
+   * POST /api/v1/wellbeing/postulations/{postulationId}/restore
+   *
+   * El backend vuelve a dejar deleted_at = NULL.
+   */
+  restorePostulation(postulationId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${postulationId}/restore`, {});
   }
 }

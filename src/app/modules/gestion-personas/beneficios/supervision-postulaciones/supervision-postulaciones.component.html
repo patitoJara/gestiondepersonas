@@ -30,21 +30,33 @@
         Actualizar
       </button>
 
-      <button
-        type="button"
-        mat-flat-button
-        class="excel-button"
-        (click)="exportFilteredExcel()"
-        [disabled]="
-          loading || exportingExcel || filteredPostulations.length === 0
+      <span
+        [matTooltip]="
+          filters.status === 'DELETED'
+            ? 'Las postulaciones eliminadas no se incluyen en la exportación Excel.'
+            : ''
         "
+        [matTooltipDisabled]="filters.status !== 'DELETED'"
       >
-        <mat-icon>
-          {{ exportingExcel ? "hourglass_top" : "download" }}
-        </mat-icon>
+        <button
+          type="button"
+          mat-flat-button
+          class="excel-button"
+          (click)="exportFilteredExcel()"
+          [disabled]="
+            loading ||
+            exportingExcel ||
+            filteredPostulations.length === 0 ||
+            filters.status === 'DELETED'
+          "
+        >
+          <mat-icon>
+            {{ exportingExcel ? "hourglass_top" : "download" }}
+          </mat-icon>
 
-        {{ exportingExcel ? "Generando Excel..." : "Exportar Excel" }}
-      </button>
+          {{ exportingExcel ? "Generando Excel..." : "Exportar Excel" }}
+        </button>
+      </span>
     </div>
   </header>
 
@@ -62,6 +74,21 @@
       mat-icon-button
       aria-label="Cerrar mensaje"
       (click)="errorMessage = ''"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="success-banner" *ngIf="successMessage">
+    <mat-icon>check_circle</mat-icon>
+
+    <span>{{ successMessage }}</span>
+
+    <button
+      type="button"
+      mat-icon-button
+      aria-label="Cerrar mensaje"
+      (click)="successMessage = ''"
     >
       <mat-icon>close</mat-icon>
     </button>
@@ -141,7 +168,7 @@
         <input
           matInput
           [(ngModel)]="filters.searchText"
-          (ngModelChange)="applyFilters()"
+          (ngModelChange)="onStatusFilterChange()"
           placeholder="Código, nombre, RUT o establecimiento"
         />
       </mat-form-field>
@@ -151,13 +178,12 @@
 
         <mat-select
           [(ngModel)]="filters.status"
-          (selectionChange)="applyFilters()"
+          (selectionChange)="onStatusFilterChange()"
         >
           <mat-option value="">Todos los estados</mat-option>
-
           <mat-option value="DRAFT">Borrador</mat-option>
-
           <mat-option value="SUBMITTED">Enviada</mat-option>
+          <mat-option value="DELETED">Eliminada</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -240,6 +266,7 @@
               let postulation of filteredPostulations;
               trackBy: trackByPostulationId
             "
+            [class.deleted-row]="isDeleted(postulation)"
           >
             <td>
               <strong class="postulation-code">
@@ -264,9 +291,9 @@
             <td>
               <span
                 class="status-badge"
-                [ngClass]="getStatusClass(postulation.status)"
+                [ngClass]="getPostulationStatusClass(postulation)"
               >
-                {{ getStatusLabel(postulation.status) }}
+                {{ getPostulationStatusLabel(postulation) }}
               </span>
             </td>
 
@@ -286,25 +313,105 @@
             </td>
 
             <td class="actions-column">
-              <button
-                type="button"
-                mat-icon-button
-                class="view-button"
-                matTooltip="Ver detalle"
-                (click)="openDetail(postulation)"
-              >
-                <mat-icon>visibility</mat-icon>
-              </button>
+              <div class="row-actions">
+                <button
+                  type="button"
+                  mat-icon-button
+                  class="view-button"
+                  matTooltip="Ver detalle"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="openDetail(postulation)"
+                >
+                  <mat-icon>visibility</mat-icon>
+                </button>
 
-              <button
-                type="button"
-                mat-icon-button
-                class="print-row-button"
-                matTooltip="Imprimir detalle"
-                (click)="printPostulationDetail(postulation)"
-              >
-                <mat-icon>print</mat-icon>
-              </button>
+                <button
+                  type="button"
+                  mat-icon-button
+                  class="print-row-button"
+                  matTooltip="Imprimir detalle"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="printPostulationDetail(postulation)"
+                >
+                  <mat-icon>print</mat-icon>
+                </button>
+
+                <button
+                  *ngIf="canReturnToDraft(postulation.status)"
+                  type="button"
+                  mat-icon-button
+                  class="draft-row-button"
+                  matTooltip="Devolver a borrador para corrección"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="returnToDraft(postulation)"
+                >
+                  <mat-icon>
+                    {{
+                      isActionInProgress(postulation) &&
+                      actionInProgressType === "DRAFT"
+                        ? "hourglass_top"
+                        : "edit_note"
+                    }}
+                  </mat-icon>
+                </button>
+
+                <button
+                  *ngIf="canMarkAsSubmitted(postulation.status)"
+                  type="button"
+                  mat-icon-button
+                  class="submit-row-button"
+                  matTooltip="Marcar nuevamente como enviada"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="markAsSubmitted(postulation)"
+                >
+                  <mat-icon>
+                    {{
+                      isActionInProgress(postulation) &&
+                      actionInProgressType === "SUBMITTED"
+                        ? "hourglass_top"
+                        : "task_alt"
+                    }}
+                  </mat-icon>
+                </button>
+
+                <button
+                  *ngIf="canDelete(postulation)"
+                  type="button"
+                  mat-icon-button
+                  class="delete-row-button"
+                  matTooltip="Eliminar postulación"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="deletePostulation(postulation)"
+                >
+                  <mat-icon>
+                    {{
+                      isActionInProgress(postulation) &&
+                      actionInProgressType === "DELETE"
+                        ? "hourglass_top"
+                        : "delete"
+                    }}
+                  </mat-icon>
+                </button>
+
+                <button
+                  *ngIf="canRestore(postulation)"
+                  type="button"
+                  mat-icon-button
+                  class="restore-row-button"
+                  matTooltip="Recuperar postulación como borrador"
+                  [disabled]="actionInProgressId !== null"
+                  (click)="restorePostulation(postulation)"
+                >
+                  <mat-icon>
+                    {{
+                      isActionInProgress(postulation) &&
+                      actionInProgressType === "RESTORE"
+                        ? "hourglass_top"
+                        : "restore"
+                    }}
+                  </mat-icon>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

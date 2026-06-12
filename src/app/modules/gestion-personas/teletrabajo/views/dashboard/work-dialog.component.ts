@@ -75,7 +75,7 @@ export class WorkDialogComponent {
     const clean = this.description?.trim();
 
     if (!clean) {
-      this.showMsg('Debe ingresar una actividad');
+      this.showMsg('Debe ingresar una Minuta');
       return;
     }
 

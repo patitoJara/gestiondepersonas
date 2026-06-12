@@ -196,10 +196,80 @@ h3 {
     );
   gap: 14px;
   margin-top: 18px;
+  align-items: start;
 }
 
 .filters-grid mat-form-field {
   width: 100%;
+}
+
+.filters-footer {
+  display: flex;
+  align-items: center;
+  margin-top: -6px;
+  padding-left: 2px;
+}
+
+.filters-footer mat-checkbox {
+  font-size: 13px;
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #c8e6c9;
+  border-radius: 10px;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.success-banner span {
+  flex: 1;
+  font-size: 14px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.draft-row-button {
+  color: #ef6c00;
+}
+
+.submit-row-button {
+  color: #2e7d32;
+}
+
+.delete-row-button {
+  color: #c62828;
+}
+
+.restore-row-button {
+  color: #1565c0;
+}
+
+.actions-column {
+  min-width: 190px;
+  width: 190px;
+  text-align: center !important;
+}
+
+.status-deleted {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.deleted-row {
+  background: #fff8f8;
+}
+
+.deleted-row:hover {
+  background: #fff1f1 !important;
 }
 
 .clear-button {
@@ -314,11 +384,6 @@ h3 {
 .muted-text {
   color: #8994a3;
   font-size: 12px;
-}
-
-.actions-column {
-  width: 86px;
-  text-align: center !important;
 }
 
 .view-button {
@@ -552,10 +617,77 @@ h3 {
   }
 
   .actions-column {
-    min-width: 116px;
+    min-width: 190px;
   }
 
   .documents-section {
     scroll-margin-top: 16px;
   }
+}
+
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #c8e6c9;
+  border-radius: 10px;
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.success-banner span {
+  flex: 1;
+  font-size: 14px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.draft-row-button {
+  color: #ef6c00;
+}
+
+.submit-row-button {
+  color: #2e7d32;
+}
+
+.delete-row-button {
+  color: #c62828;
+}
+
+.actions-column {
+  min-width: 190px;
+  width: 190px;
+  text-align: center !important;
+}
+
+.status-deleted {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.restore-row-button {
+  color: #1565c0;
+}
+
+.deleted-row {
+  background: #fff8f8;
+}
+
+.deleted-row:hover {
+  background: #fff1f1 !important;
+}
+
+
+.header-actions span {
+  display: inline-flex;
+}
+
+.header-actions span button:disabled {
+  cursor: not-allowed;
 }

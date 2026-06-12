@@ -202,6 +202,8 @@ export class PostulationFormComponent {
   openingPostulation = false;
   private pendingPostulationToOpen: number | null = null;
 
+  private lastCenteredStep: number | null = null;
+
   form: FormGroup;
   studies: Study[] = [];
   stablishments: Stablishment[] = [];
@@ -6192,9 +6194,37 @@ export class PostulationFormComponent {
     return familiar.nombre || 'No informado';
   }
 
-  ngAfterViewChecked() {
-    const el = document.querySelector('.step.active');
-    el?.scrollIntoView({ behavior: 'auto', inline: 'center' });
+  ngAfterViewChecked(): void {
+    // Solo centrar cuando realmente cambia el paso.
+    // Evita ejecutar scroll en cada actualización visual de Angular.
+    if (this.lastCenteredStep === this.currentStep) {
+      return;
+    }
+
+    this.lastCenteredStep = this.currentStep;
+
+    const stepsContainer = document.querySelector(
+      '.steps',
+    ) as HTMLElement | null;
+
+    const activeStep = stepsContainer?.querySelector(
+      '.step.active',
+    ) as HTMLElement | null;
+
+    if (!stepsContainer || !activeStep) {
+      return;
+    }
+
+    // Centrado exclusivamente horizontal.
+    // No modifica la posición vertical de la página.
+    const left =
+      activeStep.offsetLeft -
+      (stepsContainer.clientWidth - activeStep.clientWidth) / 2;
+
+    stepsContainer.scrollTo({
+      left: Math.max(0, left),
+      behavior: 'auto',
+    });
   }
 
   getStepState(stepId: number) {

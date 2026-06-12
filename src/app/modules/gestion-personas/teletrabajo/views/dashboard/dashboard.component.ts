@@ -443,12 +443,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // ===============================
-  // 🟣 ACTIVIDADES (WORKS)
+  // 🟣 Minuta (WORKS)
   // ===============================
 
   async crearWork(): Promise<void> {
     const ref = this.openWorkDialog({
-      title: 'Nueva actividad',
+      title: 'Nueva minuta',
     });
 
     const result = await firstValueFrom(ref.afterClosed());
@@ -476,14 +476,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     await firstValueFrom(this.workService.create(payload));
 
-    this.showOk('✅ Actividad guardada');
+    this.showOk('✅ Minuta guardada');
 
     await this.loadWorks();
   }
 
   async editarWork(w: any): Promise<void> {
     const ref = this.openWorkDialog({
-      title: 'Editar actividad',
+      title: 'Editar minuta',
       description: w.description,
     });
 
@@ -520,7 +520,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.workService.update(w.id, payload));
 
-      this.showOk('✏️ Actividad actualizada');
+      this.showOk('✏️ Minuta actualizada');
       await this.loadWorks();
     } catch (e) {
       console.error('❌ ERROR:', e);
@@ -534,8 +534,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       panelClass: 'sirus-dialog',
       data: {
-        title: 'Eliminar actividad',
-        message: `¿Eliminar esta actividad?\n\n"${w.description}"`,
+        title: 'Eliminar minuta',
+        message: `¿Eliminar esta minuta?\n\n"${w.description}"`,
       },
     });
 
@@ -546,11 +546,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       await firstValueFrom(this.workService.delete(w.id));
 
-      this.showOk('🗑️ Actividad eliminada');
+      this.showOk('🗑️ Minuta eliminada');
       await this.loadWorks();
     } catch (e) {
       console.error(e);
-      this.showError('Error al eliminar actividad');
+      this.showError('Error al eliminar minuta');
     }
   }
 
