@@ -79,8 +79,15 @@ export class WellbeingDocumentsService {
   // =========================================
   // 🔥 DELETE DOCUMENT
   // =========================================
+  // Ruta validada en producción:
+  // DELETE /api/v1/wellbeing/postulations/documents/{documentId}
+  //
+  // Nota:
+  // La ruta /my/documents/{documentId} respondió 401 en pruebas,
+  // por eso se usa la ruta general validada.
+  // =========================================
 
   deleteDocument(documentId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/my/documents/${documentId}`);
+    return this.http.delete<void>(`${this.apiUrl}/documents/${documentId}`);
   }
 }

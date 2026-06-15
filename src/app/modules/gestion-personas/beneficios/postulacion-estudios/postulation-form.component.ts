@@ -204,6 +204,8 @@ export class PostulationFormComponent {
 
   private lastCenteredStep: number | null = null;
 
+  private readonly minimumPhysicalFileBytes = 1024;
+
   form: FormGroup;
   studies: Study[] = [];
   stablishments: Stablishment[] = [];
@@ -3522,7 +3524,11 @@ export class PostulationFormComponent {
         doc.sizeBytes || doc.size_bytes || doc.fileSize || 0,
       );
 
-      if (documentTypeId && originalFilename) {
+      if (
+        documentTypeId &&
+        originalFilename &&
+        this.hasValidBackendDocument(doc)
+      ) {
         this.uploadedDocumentFingerprints.add(
           this.buildDocumentFingerprint(
             documentTypeId,
@@ -3570,11 +3576,36 @@ export class PostulationFormComponent {
         documentTypeCode,
         documentTypeId,
         key,
+        sizeBytes:
+          doc.sizeBytes ||
+          doc.size_bytes ||
+          doc.fileSize ||
+          doc.file_size ||
+          doc?.['size'],
+        uploadedAt:
+          doc.uploadedAt ||
+          doc.uploaded_at ||
+          doc.createdAt ||
+          doc.created_at ||
+          doc.updatedAt ||
+          doc.updated_at,
       });
 
       if (!key) {
         console.warn(
           '⚠️ DOCUMENTO OMITIDO: NO SE PUDO RESOLVER SU CATEGORÍA',
+          doc,
+        );
+
+        continue;
+      }
+
+      // 🔥 NUEVO:
+      // Evita mostrar como cargado un documento que solo tenga nombre,
+      // pero no tenga evidencia mínima de archivo físico.
+      if (!this.hasValidBackendDocument(doc)) {
+        console.warn(
+          '⚠️ DOCUMENTO OMITIDO: SIN TAMAÑO O FECHA VÁLIDA DE ARCHIVO FÍSICO',
           doc,
         );
 
@@ -3601,9 +3632,18 @@ export class PostulationFormComponent {
                 existing.sizeBytes ||
                   existing.size_bytes ||
                   existing.fileSize ||
+                  existing.file_size ||
+                  existing?.['size'] ||
                   0,
               ) ===
-                Number(doc.sizeBytes || doc.size_bytes || doc.fileSize || 0))
+                Number(
+                  doc.sizeBytes ||
+                    doc.size_bytes ||
+                    doc.fileSize ||
+                    doc.file_size ||
+                    doc?.['size'] ||
+                    0,
+                ))
           );
         },
       );
@@ -3617,6 +3657,164 @@ export class PostulationFormComponent {
       '✅ DOCUMENTOS AGRUPADOS PARA MOSTRAR EN STEP 9:',
       this.uploadedDocumentsByKey,
     );
+  }
+
+  hasDraftDocumentsReviewWarning(): boolean {
+    return !this.isSubmitted && this.hasAnyBackendDocument();
+  }
+
+  hasAnyBackendDocument(): boolean {
+    return Object.values(this.uploadedDocumentsByKey || {}).some(
+      (documents: any) => Array.isArray(documents) && documents.length > 0,
+    );
+  }
+
+  // =========================================================
+  // 🔥 STEP 9 - RESET DOCUMENT UPLOAD
+  // =========================================================
+
+  canResetDocumentUpload(): boolean {
+    return !this.isSubmitted && this.hasAnyBackendDocument();
+  }
+
+  confirmResetDocumentUpload(): void {
+    if (!this.canResetDocumentUpload() || this.isSaving) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Esta acción quitará todos los documentos registrados en esta postulación para que pueda volver a subirlos correctamente.\n\n' +
+        'Los demás antecedentes de la postulación no serán modificados.\n\n' +
+        '¿Desea continuar?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.resetDocumentUpload();
+  }
+
+  private getAllBackendDocuments(): any[] {
+    return Object.values(this.uploadedDocumentsByKey || {})
+      .flat()
+      .filter((document: any) =>
+        Number(document?.id || document?.documentId || 0),
+      );
+  }
+
+  async removeBackendDocument(key: string, document: any): Promise<void> {
+    const documentId = Number(document?.id || document?.documentId || 0);
+
+    if (!documentId || this.isSaving) {
+      return;
+    }
+
+    const fileName =
+      document?.originalFilename ||
+      document?.original_filename ||
+      document?.fileName ||
+      'este documento';
+
+    const confirmed = window.confirm(
+      `¿Desea quitar el archivo "${fileName}" de esta postulación?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      await firstValueFrom(
+        this.wellbeingDocumentsService.deleteDocument(documentId),
+      );
+
+      this.uploadedDocumentsByKey[key] = (
+        this.uploadedDocumentsByKey[key] || []
+      ).filter((item: any) => {
+        const itemId = Number(item?.id || item?.documentId || 0);
+        return itemId !== documentId;
+      });
+
+      if (!this.uploadedDocumentsByKey[key]?.length) {
+        delete this.uploadedDocumentsByKey[key];
+      }
+
+      this.showSuccess('Documento quitado correctamente.');
+    } catch (error: any) {
+      console.error('❌ ERROR QUITANDO DOCUMENTO:', error);
+
+      this.showError('No fue posible quitar el documento. Intente nuevamente.');
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  async resetDocumentUpload(): Promise<void> {
+    if (!this.postulationId || this.isSaving) {
+      return;
+    }
+
+    const documents = this.getAllBackendDocuments();
+
+    if (!documents.length) {
+      this.showWarning('No existen documentos registrados para limpiar.');
+      return;
+    }
+
+    try {
+      this.isSaving = true;
+
+      console.groupCollapsed('🧹 RESET STEP 9 DOCUMENTS');
+
+      console.log('📄 DOCUMENTOS A ELIMINAR:', documents);
+
+      for (const document of documents) {
+        const documentId = Number(document?.id || document?.documentId || 0);
+
+        if (!documentId) {
+          continue;
+        }
+
+        await firstValueFrom(
+          this.wellbeingDocumentsService.deleteDocument(documentId),
+        );
+
+        console.log('🗑️ DOCUMENTO ELIMINADO:', documentId);
+      }
+
+      this.uploadedDocumentsByKey = {};
+      this.uploadedDocumentFingerprints.clear();
+
+      this.filesObligatorios = {};
+      this.filesOpcionales = {};
+
+      await this.loadSummary();
+
+      if (this.summary) {
+        this.restoreDocumentsFromSummary(this.summary);
+        this.seedUploadedDocumentFingerprintsFromSummary();
+      }
+
+      this.showSuccess(
+        'Documentos limpiados correctamente. Ahora puede volver a subirlos.',
+      );
+
+      console.groupEnd();
+    } catch (error: any) {
+      console.error('❌ ERROR REINICIANDO CARGA DE DOCUMENTOS:', {
+        status: error?.status,
+        error,
+      });
+
+      this.showError(
+        'No fue posible limpiar los documentos. Intente nuevamente.',
+      );
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   private getDocumentKeyByTypeId(documentTypeId: number): string | null {
@@ -4294,11 +4492,36 @@ export class PostulationFormComponent {
     await this.moveToStep(step);
   }
 
-  tieneArchivoObligatorio(key: string): boolean {
+  private hasValidLocalFile(file: File): boolean {
     return (
-      !!this.filesObligatorios[key]?.length ||
-      !!this.uploadedDocumentsByKey[key]?.length
+      Boolean(file) && Number(file.size || 0) >= this.minimumPhysicalFileBytes
     );
+  }
+
+  private hasValidBackendDocument(document: any): boolean {
+    const sizeBytes = Number(
+      document?.sizeBytes ||
+        document?.size_bytes ||
+        document?.fileSize ||
+        document?.file_size ||
+        document?.['size'] ||
+        0,
+    );
+
+    const uploadedAt =
+      document?.uploadedAt ||
+      document?.uploaded_at ||
+      document?.createdAt ||
+      document?.created_at ||
+      document?.updatedAt ||
+      document?.updated_at;
+
+    const hasValidSize = sizeBytes >= this.minimumPhysicalFileBytes;
+
+    const hasValidDate =
+      Boolean(uploadedAt) && !Number.isNaN(new Date(uploadedAt).getTime());
+
+    return hasValidSize && hasValidDate;
   }
 
   // ============================
@@ -4500,17 +4723,39 @@ export class PostulationFormComponent {
   }
 
   tieneArchivo(key: string): boolean {
-    return (
-      !!this.filesObligatorios[key]?.length ||
-      !!this.uploadedDocumentsByKey[key]?.length
+    const hasLocalFile = (this.filesObligatorios[key] || []).some((file) =>
+      this.hasValidLocalFile(file),
     );
+
+    const hasBackendFile = (this.uploadedDocumentsByKey[key] || []).some(
+      (document) => this.hasValidBackendDocument(document),
+    );
+
+    return hasLocalFile || hasBackendFile;
+  }
+
+  tieneArchivoObligatorio(key: string): boolean {
+    const hasLocalFile = (this.filesObligatorios[key] || []).some((file) =>
+      this.hasValidLocalFile(file),
+    );
+
+    const hasBackendFile = (this.uploadedDocumentsByKey[key] || []).some(
+      (document) => this.hasValidBackendDocument(document),
+    );
+
+    return hasLocalFile || hasBackendFile;
   }
 
   tieneArchivoOpcional(key: string): boolean {
-    return (
-      !!this.filesOpcionales[key]?.length ||
-      !!this.uploadedDocumentsByKey[key]?.length
+    const hasLocalFile = (this.filesOpcionales[key] || []).some((file) =>
+      this.hasValidLocalFile(file),
     );
+
+    const hasBackendFile = (this.uploadedDocumentsByKey[key] || []).some(
+      (document) => this.hasValidBackendDocument(document),
+    );
+
+    return hasLocalFile || hasBackendFile;
   }
 
   getTotalObligatoriosCargados(): number {

@@ -1656,16 +1656,111 @@
           </div>
 
           <!-- =========================
-     PASO 9: DOCUMENTOS
-========================= -->
+          PASO 9: DOCUMENTOS
+          ========================= -->
 
           <div *ngIf="currentStep === 9" class="step9-container">
+            <!-- 🔹 PANEL RESUMEN DOCUMENTAL -->
+            <div class="step9-dashboard">
+              <div class="step9-dashboard-main">
+                <div class="step9-dashboard-icon">
+                  <mat-icon>folder_copy</mat-icon>
+                </div>
+
+                <div>
+                  <h3>Documentos de respaldo</h3>
+
+                  <p>
+                    Adjunte los documentos obligatorios para continuar con su
+                    postulación. Puede revisar, descargar o reiniciar la carga
+                    si necesita volver a subir los archivos.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step9-dashboard-stats">
+                <div class="step9-stat-card completed">
+                  <span>Cargados</span>
+
+                  <strong>
+                    {{ getTotalObligatoriosCargados() }}
+                  </strong>
+                </div>
+
+                <div class="step9-stat-card total">
+                  <span>Obligatorios</span>
+
+                  <strong>
+                    {{ documentosObligatorios.length }}
+                  </strong>
+                </div>
+
+                <div class="step9-stat-card pending">
+                  <span>Pendientes</span>
+
+                  <strong>
+                    {{
+                      documentosObligatorios.length -
+                        getTotalObligatoriosCargados()
+                    }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div
+              *ngIf="hasDraftDocumentsReviewWarning()"
+              class="old-documents-warning"
+            >
+              <div class="old-documents-warning-icon">
+                <mat-icon>info_outline</mat-icon>
+              </div>
+
+              <div class="old-documents-warning-content">
+                <strong>Revise sus documentos antes de enviar</strong>
+
+                <span>
+                  Verifique que cada archivo adjunto corresponda al documento
+                  solicitado y que pueda abrirse correctamente. Si algún archivo
+                  no corresponde, no abre o no está disponible, vuelva a subirlo
+                  antes de continuar.
+                </span>
+              </div>
+            </div>
+
+            <!-- 🔹 ACCIÓN PARA LIMPIAR DOCUMENTOS -->
+            <div *ngIf="canResetDocumentUpload()" class="step9-reset-panel">
+              <div>
+                <strong>¿Necesita volver a subir sus documentos?</strong>
+
+                <span>
+                  Puede limpiar los documentos registrados y comenzar nuevamente
+                  la carga, sin modificar los demás antecedentes de la
+                  postulación.
+                </span>
+              </div>
+
+              <button
+                type="button"
+                mat-stroked-button
+                class="btn-reset-documents"
+                [disabled]="isSaving"
+                (click)="confirmResetDocumentUpload()"
+              >
+                <mat-icon>refresh</mat-icon>
+
+                {{
+                  isSaving ? "Procesando..." : "Reiniciar carga de documentos"
+                }}
+              </button>
+            </div>
+
             <!-- 🔹 AVISO DE DESPLAZAMIENTO -->
             <div class="step9-scroll-hint">
               <mat-icon>south</mat-icon>
 
               <div>
-                <strong>Revise todos los documentos</strong>
+                <strong>Listado de documentos</strong>
 
                 <span>
                   Desplácese hacia abajo para visualizar el listado completo.
@@ -1785,7 +1880,8 @@
                           </div>
 
                           <div class="file-actions">
-                            <span class="hint">Documento ya registrado</span>
+                            <span class="hint">Archivo registrado</span>
+                            >
 
                             <button
                               type="button"
@@ -1798,6 +1894,18 @@
                               "
                             >
                               <mat-icon>download</mat-icon>
+                            </button>
+                            <button
+                              type="button"
+                              mat-icon-button
+                              color="warn"
+                              matTooltip="Quitar documento registrado"
+                              (click)="
+                                removeBackendDocument(doc.key, d);
+                                $event.stopPropagation()
+                              "
+                            >
+                              <mat-icon>close</mat-icon>
                             </button>
                           </div>
                         </div>
@@ -1959,8 +2067,8 @@
                           </div>
 
                           <div class="file-actions">
-                            <span class="hint">Documento ya registrado</span>
-
+                            <span class="hint">Archivo registrado</span>
+                            >
                             <button
                               type="button"
                               mat-icon-button
@@ -1972,6 +2080,18 @@
                               "
                             >
                               <mat-icon>download</mat-icon>
+                            </button>
+                            <button
+                              type="button"
+                              mat-icon-button
+                              color="warn"
+                              matTooltip="Quitar documento registrado"
+                              (click)="
+                                removeBackendDocument(doc.key, d);
+                                $event.stopPropagation()
+                              "
+                            >
+                              <mat-icon>close</mat-icon>
                             </button>
                           </div>
                         </div>
