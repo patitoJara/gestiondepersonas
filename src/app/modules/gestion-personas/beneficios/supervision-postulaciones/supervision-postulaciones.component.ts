@@ -66,6 +66,7 @@ export class SupervisionPostulacionesComponent implements OnInit {
   private reportService = inject(SupervisionPostulacionesReportService);
   private loader = inject(LoaderService);
   private dialog = inject(MatDialog);
+  private readonly minimumPhysicalFileBytes = 1024;
 
   // =========================================================
   // 🔥 DATA
@@ -80,6 +81,26 @@ export class SupervisionPostulacionesComponent implements OnInit {
   selectedSummary: any = null;
 
   selectedDocuments: SupervisionDocument[] = [];
+
+  allSelectedDocuments: SupervisionDocument[] = [];
+
+  missingPhysicalDocuments: SupervisionDocument[] = [];
+
+  invalidPhysicalDocuments: SupervisionDocument[] = [];
+
+  requiredDocumentReviewRows: any[] = [];
+
+  documentWarningsByPostulationId: Record<number, string> = {};
+  checkingDocumentWarnings = false;
+
+  private readonly verifiedDocumentPostulationIds = new Set<number>([
+    45, // POST-A01290F047 verificada manualmente
+    50, // POST-32D8572275 verificada manualmente
+  ]);
+
+  private readonly confirmedMissingPhysicalFileCodes = new Set<string>([
+    'POST-99EB608C10', // Confirmada sin archivos físicos
+  ]);
 
   // =========================================================
   // 🔥 CACHED VALUES
@@ -153,6 +174,8 @@ export class SupervisionPostulacionesComponent implements OnInit {
         this.buildStablishmentOptions();
 
         this.applyFilters();
+
+        this.checkSubmittedDocumentWarnings();
 
         console.log('📦 SUPERVISION POSTULATIONS:', {
           selectedStatus,
@@ -471,6 +494,10 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
     this.selectedDocuments = [];
 
+    this.allSelectedDocuments = [];
+
+    this.requiredDocumentReviewRows = [];
+
     /**
      * El resumen y los documentos se consultan
      * simultáneamente.
@@ -494,12 +521,41 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
         this.selectedDetail = this.normalizeSummary(summary, postulation);
 
-        this.selectedDocuments = this.extractDocuments(documents);
+        /**
+         * Lista completa sin deduplicar.
+         * Se usa para revisar correctamente los documentos obligatorios,
+         * porque un mismo archivo puede venir asociado a más de un tipo documental.
+         */
+        this.allSelectedDocuments = this.extractDocuments(documents, false);
+
+        /**
+         * Lista limpia para mostrar en pantalla.
+         * Evita que el supervisor vea el mismo archivo repetido muchas veces.
+         */
+        this.selectedDocuments = this.removeDuplicatedDocuments(
+          this.allSelectedDocuments,
+        );
+
+        this.invalidPhysicalDocuments = this.allSelectedDocuments.filter(
+          (document) => !this.hasPhysicalFile(document),
+        );
+
+        this.missingPhysicalDocuments = this.getMissingPhysicalDocuments(
+          summary,
+          this.allSelectedDocuments,
+        );
+
+        this.requiredDocumentReviewRows = this.buildRequiredDocumentReviewRows(
+          summary,
+          this.allSelectedDocuments,
+          this.selectedDetail,
+        );
 
         console.log('📄 SUPERVISION DETAIL READY:', {
           detailId: this.selectedDetail?.id,
-
-          documents: this.selectedDocuments.length,
+          allDocuments: this.allSelectedDocuments.length,
+          visibleDocuments: this.selectedDocuments.length,
+          requiredDocumentReviewRows: this.requiredDocumentReviewRows,
         });
 
         this.loadingDetail = false;
@@ -570,10 +626,12 @@ export class SupervisionPostulacionesComponent implements OnInit {
 
   closeDetail(): void {
     this.selectedDetail = null;
-
     this.selectedSummary = null;
-
     this.selectedDocuments = [];
+    this.allSelectedDocuments = [];
+    this.missingPhysicalDocuments = [];
+    this.invalidPhysicalDocuments = [];
+    this.requiredDocumentReviewRows = [];
   }
 
   openDocuments(postulation: SupervisionPostulation): void {
@@ -604,7 +662,10 @@ export class SupervisionPostulacionesComponent implements OnInit {
    * El detalle puede devolver los documentos en diferentes propiedades.
    * Dejamos la lectura tolerante para adaptarnos sin romper la vista.
    */
-  private extractDocuments(response: any): SupervisionDocument[] {
+  private extractDocuments(
+    response: any,
+    removeDuplicates: boolean = true,
+  ): SupervisionDocument[] {
     const candidates = [
       response,
       response?.content,
@@ -625,9 +686,92 @@ export class SupervisionPostulacionesComponent implements OnInit {
       return [];
     }
 
-    return documents
+    const normalizedDocuments = documents
       .map((document: any) => this.normalizeDocument(document))
       .filter((document: SupervisionDocument) => Boolean(document.id));
+
+    return removeDuplicates
+      ? this.removeDuplicatedDocuments(normalizedDocuments)
+      : normalizedDocuments;
+  }
+
+  private removeDuplicatedDocuments(
+    documents: SupervisionDocument[],
+  ): SupervisionDocument[] {
+    const map = new Map<string, SupervisionDocument>();
+
+    for (const document of documents || []) {
+      const filename = String(document?.originalFilename || '')
+        .trim()
+        .toUpperCase();
+
+      const size = Number(document?.sizeBytes || document?.['size'] || 0);
+
+      const key = `${filename}|${size}`;
+
+      if (!map.has(key)) {
+        map.set(key, document);
+      }
+    }
+
+    return Array.from(map.values());
+  }
+
+  getUniqueFamilyMembers(): any[] {
+    const members = this.selectedSummary?.familyMembers || [];
+
+    const map = new Map<string, any>();
+
+    for (const member of members) {
+      const rut = String(member?.rut || '')
+        .replace(/\./g, '')
+        .replace(/-/g, '')
+        .trim()
+        .toUpperCase();
+
+      const name = this.normalizeText(
+        [member?.names, member?.lastNames].filter(Boolean).join(' '),
+      );
+
+      const key = rut || name;
+
+      if (!key) {
+        continue;
+      }
+
+      const existing = map.get(key);
+
+      if (!existing) {
+        map.set(key, member);
+        continue;
+      }
+
+      const existingScore = this.getFamilyMemberCompletenessScore(existing);
+      const currentScore = this.getFamilyMemberCompletenessScore(member);
+
+      if (currentScore > existingScore) {
+        map.set(key, member);
+      }
+    }
+
+    return Array.from(map.values());
+  }
+
+  private getFamilyMemberCompletenessScore(member: any): number {
+    const fields = [
+      member?.birthDate,
+      member?.civilStateName,
+      member?.previtionName,
+      member?.activityName,
+      member?.othersActivities,
+      member?.workPlaceName,
+      member?.othersWorkplaces,
+      member?.student,
+    ];
+
+    return fields.filter(
+      (value) => value !== null && value !== undefined && value !== '',
+    ).length;
   }
 
   private normalizeDocument(document: any): SupervisionDocument {
@@ -685,11 +829,49 @@ export class SupervisionPostulacionesComponent implements OnInit {
       },
 
       error: (error) => {
-        console.error('❌ ERROR DOWNLOADING DOCUMENT:', error);
+        console.error('❌ ERROR DOWNLOADING DOCUMENT:', {
+          documentId,
+          document,
+          status: error?.status,
+          error,
+        });
 
         this.downloadingDocumentId = null;
 
-        this.errorMessage = 'No fue posible descargar el documento.';
+        let message =
+          'El documento figura registrado en la postulación, pero no fue posible obtener el archivo físico desde el servidor. ' +
+          'Debe revisarse la carga documental o devolver la postulación a borrador para que el funcionario vuelva a subirlo.';
+
+        if (Number(error?.status) === 401 || Number(error?.status) === 403) {
+          message =
+            'El documento figura registrado en la postulación, pero no fue posible obtener el archivo físico desde el servidor. ' +
+            'Debe devolverse la postulación a borrador para que el funcionario vuelva a subir el documento.';
+        }
+
+        if (Number(error?.status) === 404) {
+          message =
+            'El documento está registrado en la postulación, pero el archivo físico no se encuentra disponible en el servidor. ' +
+            'Debe devolverse la postulación a borrador para que el funcionario vuelva a subir el archivo.';
+        }
+
+        if (Number(error?.status) === 500) {
+          message =
+            'El documento está registrado, pero ocurrió un error del servidor al intentar obtener el archivo físico. ' +
+            'Debe revisarse la carga documental o devolver la postulación a borrador para regularizar.';
+        }
+
+        this.dialog.open(ConfirmDialogComponent, {
+          width: '560px',
+          disableClose: true,
+          data: {
+            title: 'Archivo físico no disponible',
+            message,
+            confirmText: 'Aceptar',
+            cancelText: '',
+            icon: 'warning',
+            color: 'warn',
+          },
+        });
       },
     });
   }
@@ -714,6 +896,31 @@ export class SupervisionPostulacionesComponent implements OnInit {
     anchor.remove();
 
     window.URL.revokeObjectURL(url);
+  }
+
+  downloadRequiredDocument(row: any): void {
+    const document = row?.document;
+
+    if (!document?.id) {
+      this.dialog.open(ConfirmDialogComponent, {
+        width: '520px',
+        disableClose: true,
+        data: {
+          title: 'Documento sin archivo disponible',
+          message:
+            'El documento obligatorio figura registrado, pero no existe un archivo asociado para descargar. ' +
+            'Debe devolverse la postulación a borrador para que el funcionario vuelva a subir el documento.',
+          confirmText: 'Aceptar',
+          cancelText: '',
+          icon: 'warning',
+          color: 'warn',
+        },
+      });
+
+      return;
+    }
+
+    this.downloadDocument(document);
   }
 
   // =========================================================
@@ -774,6 +981,25 @@ export class SupervisionPostulacionesComponent implements OnInit {
     const postulationId = Number(postulation?.id || 0);
 
     if (!postulationId || this.actionInProgressId !== null) {
+      return;
+    }
+
+    if (this.hasTableDocumentWarning(postulation)) {
+      this.dialog.open(ConfirmDialogComponent, {
+        width: '520px',
+        disableClose: true,
+        data: {
+          title: 'Documentos pendientes por regularizar',
+          message:
+            'La postulación tiene documentos registrados sin archivo físico o documentos obligatorios pendientes. ' +
+            'Debe devolverse a borrador para que el funcionario vuelva a subir los archivos.',
+          confirmText: 'Aceptar',
+          cancelText: '',
+          icon: 'warning',
+          color: 'warn',
+        },
+      });
+
       return;
     }
 
@@ -1755,5 +1981,339 @@ export class SupervisionPostulacionesComponent implements OnInit {
     );
 
     return member ? this.getFamilyMemberFullName(member) : '—';
+  }
+
+  private hasPhysicalFile(document: any): boolean {
+    const sizeBytes = Number(
+      document?.sizeBytes ||
+        document?.size_bytes ||
+        document?.fileSize ||
+        document?.file_size ||
+        document?.['size'] ||
+        0,
+    );
+
+    const uploadedAt =
+      document?.uploadedAt ||
+      document?.uploaded_at ||
+      document?.createdAt ||
+      document?.created_at ||
+      document?.updatedAt ||
+      document?.updated_at;
+
+    const hasValidSize = sizeBytes >= this.minimumPhysicalFileBytes;
+
+    const hasValidDate =
+      Boolean(uploadedAt) && !Number.isNaN(new Date(uploadedAt).getTime());
+
+    return hasValidSize && hasValidDate;
+  }
+
+  private getDocumentCode(document: any): string {
+    return String(
+      document?.documentTypeCode ||
+        document?.document_type_code ||
+        document?.code ||
+        document?.typeCode ||
+        '',
+    )
+      .trim()
+      .toUpperCase();
+  }
+
+  private getMissingPhysicalDocuments(
+    summary: any,
+    documents: SupervisionDocument[],
+  ): SupervisionDocument[] {
+    const requiredDocuments = this.extractRequiredDocuments(summary);
+
+    const uploadedValidCodes = new Set(
+      documents
+        .filter((document) => this.hasPhysicalFile(document))
+        .map((document) => this.getDocumentCode(document))
+        .filter(Boolean),
+    );
+
+    return requiredDocuments.filter((requiredDocument: any) => {
+      const code = this.getDocumentCode(requiredDocument);
+
+      return code && !uploadedValidCodes.has(code);
+    });
+  }
+
+  private extractRequiredDocuments(summary: any): any[] {
+    const candidates = [
+      summary?.requiredDocuments,
+      summary?.summary?.requiredDocuments,
+      summary?.documentRequirements,
+      summary?.summary?.documentRequirements,
+      summary?.requiredDocumentTypes,
+      summary?.summary?.requiredDocumentTypes,
+    ];
+
+    const requiredDocuments = candidates.find((candidate) =>
+      Array.isArray(candidate),
+    );
+
+    if (Array.isArray(requiredDocuments)) {
+      return requiredDocuments;
+    }
+
+    const pending = summary?.pendingRequiredDocuments || [];
+
+    if (Array.isArray(pending)) {
+      return pending.map((item: any) => {
+        if (typeof item === 'string') {
+          return {
+            documentTypeName: item,
+            documentTypeCode: item,
+          };
+        }
+
+        return item;
+      });
+    }
+
+    return [];
+  }
+
+  hasDocumentUploadProblems(): boolean {
+    return (
+      this.invalidPhysicalDocuments.length > 0 ||
+      this.missingPhysicalDocuments.length > 0
+    );
+  }
+
+  private checkSubmittedDocumentWarnings(): void {
+    const submittedPostulations = this.postulations.filter((postulation) => {
+      return (
+        this.normalizeStatus(postulation.status) === 'SUBMITTED' &&
+        !this.isSoftDeleted(postulation)
+      );
+    });
+
+    console.log('🔎 CHEQUEO DOCUMENTOS ENVIADAS:', {
+      totalPostulations: this.postulations.length,
+      submitted: submittedPostulations.length,
+      submittedIds: submittedPostulations.map((p) => ({
+        id: p.id,
+        code: p.code,
+        status: p.status,
+      })),
+    });
+
+    if (!submittedPostulations.length) {
+      this.documentWarningsByPostulationId = {};
+      return;
+    }
+
+    this.checkingDocumentWarnings = true;
+
+    const requests = submittedPostulations.map((postulation) => {
+      const postulationId = Number(postulation.id);
+
+      return forkJoin({
+        summary: this.supervisionService
+          .getSummary(postulationId)
+          .pipe(catchError(() => of(null))),
+        documents: this.supervisionService
+          .getDocuments(postulationId)
+          .pipe(catchError(() => of([]))),
+      }).pipe(
+        catchError(() =>
+          of({
+            summary: null,
+            documents: [],
+          }),
+        ),
+      );
+    });
+
+    forkJoin(requests).subscribe({
+      next: (results: any[]) => {
+        const warnings: Record<number, string> = {};
+
+        results.forEach((result, index) => {
+          const postulation = submittedPostulations[index];
+
+          const postulationId = Number(postulation.id);
+
+          const summary = result?.summary;
+
+          const documents = this.extractDocuments(result?.documents);
+
+          const invalidDocuments = documents.filter(
+            (document) => !this.hasPhysicalFile(document),
+          );
+
+          const missingDocuments = this.getMissingPhysicalDocuments(
+            summary,
+            documents,
+          );
+
+          if (invalidDocuments.length || missingDocuments.length) {
+            warnings[postulationId] = 'Revisar archivos';
+          }
+        });
+
+        console.log('⚠️ ADVERTENCIAS DOCUMENTALES TABLA:', {
+          warnings,
+          totalConAdvertencia: Object.keys(warnings).length,
+        });
+
+        this.documentWarningsByPostulationId = warnings;
+
+        this.checkingDocumentWarnings = false;
+      },
+    });
+  }
+
+  hasTableDocumentWarning(postulation: SupervisionPostulation): boolean {
+    const postulationCode = String(postulation?.code || '')
+      .trim()
+      .toUpperCase();
+
+    if (this.confirmedMissingPhysicalFileCodes.has(postulationCode)) {
+      return true;
+    }
+
+    const postulationId = Number(postulation?.id || 0);
+
+    if (!postulationId) {
+      return false;
+    }
+
+    if (this.verifiedDocumentPostulationIds.has(postulationId)) {
+      return false;
+    }
+
+    const status = this.normalizeStatus(postulation?.status);
+
+    if (status !== 'SUBMITTED') {
+      return false;
+    }
+
+    return Boolean(this.documentWarningsByPostulationId[postulationId]);
+  }
+
+  private getRequiredDocumentsForReview(): any[] {
+    return [
+      {
+        code: 'ID_POSTULANTE',
+        label: 'Fotocopia de cédula de identidad del postulante',
+      },
+      {
+        code: 'ALUMNO_REGULAR',
+        label: 'Certificado de alumno regular vigente',
+      },
+      {
+        code: 'NOTAS_ANIO',
+        label: 'Certificado de notas año 2025',
+      },
+      {
+        code: 'NOTAS_MEDIA_PRIMER_ANIO',
+        label: 'Certificado de notas enseñanza media (solo primer año)',
+      },
+      {
+        code: 'DEUDA_ARANCEL',
+        label: 'Certificado de deuda o pago de arancel del año académico',
+      },
+      {
+        code: 'BECAS_BENEFICIOS',
+        label: 'Certificado de becas o beneficios educacionales',
+      },
+      {
+        code: 'MODALIDAD_ESTUDIOS',
+        label: 'Certificado modalidad de estudios (online/presencial)',
+      },
+    ];
+  }
+
+  private buildRequiredDocumentReviewRows(
+    summary: any,
+    documents: SupervisionDocument[],
+    postulation: any,
+  ): any[] {
+    const requiredDocuments = this.getRequiredDocumentsForReview();
+
+    const documentsByCode = new Map<string, SupervisionDocument[]>();
+
+    for (const document of documents || []) {
+      const code = this.getDocumentCode(document);
+
+      if (!code) {
+        continue;
+      }
+
+      const current = documentsByCode.get(code) || [];
+      current.push(document);
+      documentsByCode.set(code, current);
+    }
+
+    const postulationCode = String(postulation?.code || '')
+      .trim()
+      .toUpperCase();
+
+    const isConfirmedMissingPhysicalFile =
+      this.confirmedMissingPhysicalFileCodes.has(postulationCode);
+
+    return requiredDocuments.map((requiredDocument) => {
+      const uploaded = documentsByCode.get(requiredDocument.code) || [];
+
+      if (!uploaded.length) {
+        return {
+          ...requiredDocument,
+          status: 'missing',
+          statusLabel: 'Falta subir',
+          fileName: '—',
+          document: null,
+          documents: [],
+        };
+      }
+
+      const validUploaded = uploaded.filter((document) =>
+        this.hasPhysicalFile(document),
+      );
+
+      if (isConfirmedMissingPhysicalFile || !validUploaded.length) {
+        return {
+          ...requiredDocument,
+          status: 'verify',
+          statusLabel: 'Pendiente verificar descarga',
+          fileName: 'Registrado, sin tamaño o fecha válida de archivo',
+          document: uploaded[0] || null,
+          documents: uploaded,
+        };
+      }
+
+      return {
+        ...requiredDocument,
+        status: 'ok',
+        statusLabel: 'Registrado',
+        fileName: validUploaded
+          .map((document) => {
+            const size = this.formatFileSize(
+              document.sizeBytes || document?.['size'],
+            );
+
+            return `${document.originalFilename} (${size})`;
+          })
+          .join(', '),
+        document: validUploaded[0] || null,
+        documents: validUploaded,
+      };
+    });
+  }
+
+  getRequiredDocumentStatusClass(row: any): string {
+    if (row?.status === 'missing') {
+      return 'doc-status-missing';
+    }
+
+    if (row?.status === 'verify') {
+      return 'doc-status-verify';
+    }
+
+    return 'doc-status-ok';
   }
 }

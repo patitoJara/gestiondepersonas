@@ -289,12 +289,23 @@
             </td>
 
             <td>
-              <span
-                class="status-badge"
-                [ngClass]="getPostulationStatusClass(postulation)"
-              >
-                {{ getPostulationStatusLabel(postulation) }}
-              </span>
+              <div class="status-cell">
+                <span
+                  class="table-document-warning"
+                  *ngIf="hasTableDocumentWarning(postulation)"
+                  matTooltip="Debe verificarse la disponibilidad física de los documentos obligatorios registrados."
+                >
+                  <mat-icon>warning</mat-icon>
+                  Revisar obligatorios
+                </span>
+
+                <span
+                  class="status-badge"
+                  [ngClass]="getPostulationStatusClass(postulation)"
+                >
+                  {{ getPostulationStatusLabel(postulation) }}
+                </span>
+              </div>
             </td>
 
             <td>{{ formatDate(postulation.updatedAt) }}</td>
@@ -623,7 +634,7 @@
           </thead>
 
           <tbody>
-            <tr *ngFor="let member of selectedSummary?.familyMembers || []">
+            <tr *ngFor="let member of getUniqueFamilyMembers()">
               <td>{{ getFamilyMemberFullName(member) }}</td>
 
               <td>{{ member?.rut || "—" }}</td>
@@ -977,6 +988,43 @@
       </div>
     </div>
 
+    <!-- =========================================================
+     AVISO DOCUMENTOS SIN ARCHIVO FÍSICO
+========================================================= -->
+    <div
+      class="document-warning"
+      *ngIf="invalidPhysicalDocuments.length || missingPhysicalDocuments.length"
+    >
+      <mat-icon>warning</mat-icon>
+
+      <div>
+        <strong>Archivos pendientes por regularizar</strong>
+
+        <p>
+          Esta postulación tiene documentos registrados, pero algunos no poseen
+          archivo físico disponible para descarga. Esto puede corresponder a
+          cargas realizadas cuando la API solo guardaba el nombre del archivo.
+        </p>
+
+        <ul>
+          <li *ngFor="let document of invalidPhysicalDocuments">
+            {{ document.documentTypeName || "Documento" }}:
+            {{ document.originalFilename || "Sin nombre de archivo" }}
+            <strong> — registrado sin archivo físico</strong>
+          </li>
+
+          <li *ngFor="let document of missingPhysicalDocuments">
+            {{
+              document.documentTypeName ||
+                document.originalFilename ||
+                "Documento obligatorio"
+            }}
+            <strong> — falta subir archivo</strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+
     <!-- =====================================================
        🔥 ESTADO DOCUMENTAL
        ===================================================== -->
@@ -1013,6 +1061,73 @@
        🔥 DOCUMENTOS
        ===================================================== -->
 
+    <!-- =====================================================
+     REVISIÓN DE DOCUMENTOS OBLIGATORIOS
+===================================================== -->
+    <div class="detail-section" *ngIf="requiredDocumentReviewRows.length">
+      <h3>Revisión de documentos obligatorios</h3>
+
+      <div class="detail-table-scroll">
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>Documento obligatorio</th>
+              <th>Archivo registrado</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let row of requiredDocumentReviewRows">
+              <td>{{ row.label }}</td>
+
+              <td>{{ row.fileName }}</td>
+
+              <td>
+                <span
+                  class="doc-status"
+                  [ngClass]="getRequiredDocumentStatusClass(row)"
+                >
+                  {{ row.statusLabel }}
+                </span>
+              </td>
+
+              <td>
+                <button
+                  *ngIf="row.status === 'verify'"
+                  type="button"
+                  mat-stroked-button
+                  class="verify-download-button"
+                  [disabled]="downloadingDocumentId === row.document?.id"
+                  (click)="downloadRequiredDocument(row)"
+                >
+                  <mat-icon>download</mat-icon>
+
+                  {{
+                    downloadingDocumentId === row.document?.id
+                      ? "Probando..."
+                      : "Probar descarga"
+                  }}
+                </button>
+
+                <span *ngIf="row.status === 'ok'" class="document-ok-text">
+                  Verificado
+                </span>
+
+                <span
+                  *ngIf="row.status === 'missing'"
+                  class="document-missing-text"
+                >
+                  Debe regularizar
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="detail-section documents-section">
       <h3>Documentos adjuntos</h3>
 
@@ -1025,11 +1140,12 @@
             <mat-icon>cloud_done</mat-icon>
 
             <div>
-              <strong>{{ document.documentTypeName || "Documento" }}</strong>
+              <strong>{{
+                document.originalFilename || "Archivo adjunto"
+              }}</strong>
 
               <span>
-                {{ document.originalFilename }}
-                ·
+                Archivo registrado en la postulación ·
                 {{ formatFileSize(document.sizeBytes) }}
               </span>
             </div>
