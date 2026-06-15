@@ -1020,15 +1020,74 @@ export class TeleworkReportComponent {
   }
 
   toLocalDate(date: any): Date {
-    if (!date) return new Date();
-
-    // 🔥 si viene ISO (backend)
-    if (typeof date === 'string' && date.includes('T')) {
-      const [y, m, d] = date.split('T')[0].split('-');
-      return new Date(+y, +m - 1, +d);
+    if (!date) {
+      return new Date(NaN);
     }
 
-    return new Date(date);
+    // 🔥 Si ya viene como Date desde datepicker
+    if (date instanceof Date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    // 🔥 Backend ISO: 2026-06-15T08:01:00
+    // 🔥 Backend fecha pura: 2026-06-15
+    // IMPORTANTE: NO usar new Date('2026-06-15')
+    if (typeof date === 'string') {
+      const datePart = date.includes('T') ? date.split('T')[0] : date;
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [y, m, d] = datePart.split('-').map(Number);
+
+        return new Date(y, m - 1, d);
+      }
+
+      // dd/MM/yyyy
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(datePart)) {
+        const [d, m, y] = datePart.split('/').map(Number);
+
+        return new Date(y, m - 1, d);
+      }
+    }
+
+    const parsed = new Date(date);
+
+    if (isNaN(parsed.getTime())) {
+      return new Date(NaN);
+    }
+
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+
+  parseDateTimeLocal(value: any): Date | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours(),
+        value.getMinutes(),
+        value.getSeconds(),
+      );
+    }
+
+    if (typeof value === 'string' && value.includes('T')) {
+      const [datePart, timePartRaw] = value.split('T');
+
+      const [y, m, d] = datePart.split('-').map(Number);
+
+      const timePart = timePartRaw.replace('Z', '');
+      const [hh, mm, ss] = timePart.split(':').map(Number);
+
+      return new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0);
+    }
+
+    const parsed = new Date(value);
+
+    return isNaN(parsed.getTime()) ? null : parsed;
   }
 
   trackByFn(index: number, item: any) {
