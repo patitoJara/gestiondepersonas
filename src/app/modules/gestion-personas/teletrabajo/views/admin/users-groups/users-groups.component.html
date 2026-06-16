@@ -2,23 +2,60 @@
   <mat-icon>groups</mat-icon>
 
   <div>
-    <div class="title-main">Auditoría de Grupos</div>
+    <div class="title-main">Auditoría Grupos/Jefaturas</div>
     <div class="title-sub">
-      Visualización de grupos y usuarios asignados
+      Visualización de grupos, jefaturas responsables y funcionarios asignados
     </div>
   </div>
 </div>
 
 <div class="toolbar">
-  <button class="btn-blue" (click)="exportGrupo()">
+  <button
+    class="btn-blue"
+    [disabled]="!selectedGroup || !usersInGroup.length"
+    (click)="exportGrupo()"
+  >
     <mat-icon>download</mat-icon>
     Grupo
   </button>
 
-  <button class="btn btn-green big" (click)="printGrupo()">
+  <button
+    class="btn btn-green big"
+    [disabled]="!selectedGroup || !usersInGroup.length"
+    (click)="printGrupo()"
+  >
     <mat-icon>picture_as_pdf</mat-icon>
     PDF Grupo
   </button>
+</div>
+
+<div class="audit-summary">
+  <div class="summary-card blue-summary">
+    <mat-icon>folder_shared</mat-icon>
+
+    <div>
+      <strong>{{ groups.length }}</strong>
+      <span>Grupo(s) configurado(s)</span>
+    </div>
+  </div>
+
+  <div class="summary-card orange-summary">
+    <mat-icon>info</mat-icon>
+
+    <div>
+      <strong>Auditoría</strong>
+      <span>Revise nombres genéricos y grupos sin funcionarios</span>
+    </div>
+  </div>
+
+  <div class="summary-card green-summary" *ngIf="selectedGroup">
+    <mat-icon>group</mat-icon>
+
+    <div>
+      <strong>{{ getGroupUsersCount(selectedGroup) }}</strong>
+      <span>Funcionario(s) del grupo seleccionado</span>
+    </div>
+  </div>
 </div>
 
 <div class="layout-2">
@@ -26,17 +63,44 @@
   <div class="col">
     <div class="card-header blue">
       <mat-icon>groups</mat-icon>
-      <span>Grupos</span>
+      <span>Grupos / Jefaturas</span>
+    </div>
+
+    <div *ngIf="loadingGroups" class="empty">
+      <mat-icon>hourglass_empty</mat-icon>
+      <span>Cargando grupos...</span>
     </div>
 
     <div
-      class="item"
+      class="item group-item"
       *ngFor="let g of groups"
       (click)="selectGroup(g)"
       [class.active]="selectedGroup?.id === g.id"
+      [class.empty-group]="isEmptyGroup(g)"
     >
-      <mat-icon>folder</mat-icon>
-      {{ g.name }}
+      <mat-icon>{{ isEmptyGroup(g) ? "folder_off" : "folder" }}</mat-icon>
+
+      <div class="group-info">
+        <strong>{{ getGroupDisplayName(g) }}</strong>
+
+        <small> Jefatura: {{ getFullName(g.user) || "No informada" }} </small>
+
+        <small> ID grupo: {{ g.id }} </small>
+
+        <div class="group-badges">
+          <span class="mini-badge count-badge">
+            {{ getGroupUsersCount(g) }} funcionario(s)
+          </span>
+
+          <span *ngIf="isEmptyGroup(g)" class="mini-badge empty-badge">
+            Sin funcionarios
+          </span>
+
+          <span *ngIf="isGenericGroupName(g)" class="mini-badge generic-badge">
+            Nombre genérico
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -46,22 +110,45 @@
       <mat-icon>group</mat-icon>
 
       <span>
-        Usuarios del Grupo
-        <small *ngIf="selectedGroup">- {{ selectedGroup.name }}</small>
+        Funcionarios asignados
+        <small *ngIf="selectedGroup">
+          - {{ getGroupDisplayName(selectedGroup) }}
+        </small>
       </span>
+    </div>
+
+    <div *ngIf="selectedGroup" class="selected-group-summary">
+      <div>
+        <strong>{{ getGroupDisplayName(selectedGroup) }}</strong>
+        <span>
+          Jefatura:
+          {{ getFullName(selectedGroup.user) || "No informada" }}
+        </span>
+        <span>ID grupo: {{ selectedGroup.id }}</span>
+      </div>
+
+      <div
+        class="selected-count"
+        [class.zero]="getGroupUsersCount(selectedGroup) === 0"
+      >
+        {{ getGroupUsersCount(selectedGroup) }} funcionario(s)
+      </div>
     </div>
 
     <div *ngIf="!selectedGroup" class="empty">
       <mat-icon>info</mat-icon>
-      <span>Seleccione un grupo</span>
+      <span>Seleccione un grupo para revisar sus funcionarios asignados.</span>
     </div>
 
     <div
       *ngIf="selectedGroup && !loadingUsers && !usersInGroup.length"
       class="empty"
     >
-      <mat-icon>info</mat-icon>
-      <span>No hay usuarios en este grupo</span>
+      <mat-icon>folder_off</mat-icon>
+      <span>
+        Esta jefatura no tiene funcionarios asignados. Puede revisarla en
+        Administración de Jefaturas.
+      </span>
     </div>
 
     <div *ngIf="loadingUsers" class="empty">

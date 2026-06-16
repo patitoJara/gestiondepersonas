@@ -531,6 +531,12 @@
 
         <div class="detail-item">
           <span>Beneficiario</span>
+          <strong>
+            {{ getBeneficiaryPersonName(selectedDetail, selectedSummary) }}
+          </strong>
+        </div>
+        <div class="detail-item">
+          <span>Tipo de beneficiario</span>
 
           <strong>
             {{ getBeneficiaryLabel(selectedDetail.beneficiaryType) }}

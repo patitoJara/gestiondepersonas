@@ -175,7 +175,7 @@ export const routes: Routes = [
         data: {
           module: 'teletrabajo',
           section: 'admin',
-          title: 'Auditoría de Grupos',
+          title: 'Auditoría Grupos/Jefaturas',
           icon: 'groups',
           roles: ['ADMIN', 'SUPERVISOR'],
           iconColor: '#1565c0', //azul

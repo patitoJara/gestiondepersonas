@@ -117,10 +117,7 @@ export class SupervisionPostulacionesReportService {
       },
     };
 
-    const worker = (html2pdf() as any)
-      .set(options)
-      .from(element)
-      .toPdf();
+    const worker = (html2pdf() as any).set(options).from(element).toPdf();
 
     return worker
       .get('pdf')
@@ -171,13 +168,11 @@ export class SupervisionPostulacionesReportService {
       ? summary.familyMembers
       : [];
 
-    const incomes = Array.isArray(summary?.incomes)
-      ? summary.incomes
-      : [];
+    const beneficiaryName = this.getBeneficiaryName(postulation, familyMembers);
 
-    const expenses = Array.isArray(summary?.expenses)
-      ? summary.expenses
-      : [];
+    const incomes = Array.isArray(summary?.incomes) ? summary.incomes : [];
+
+    const expenses = Array.isArray(summary?.expenses) ? summary.expenses : [];
 
     const healthRecords = Array.isArray(summary?.healthRecords)
       ? summary.healthRecords
@@ -218,6 +213,7 @@ export class SupervisionPostulacionesReportService {
                     'Hogar monoparental',
                     this.yesNo(postulation?.isSingleParentHome),
                   ],
+                  ['Beneficiario', beneficiaryName],
                   [
                     'Tipo de beneficiario',
                     this.getBeneficiary(postulation?.beneficiaryType),
@@ -353,6 +349,33 @@ export class SupervisionPostulacionesReportService {
   // 🔥 ENCABEZADO INSTITUCIONAL
   // El THEAD permite repetirlo en todas las páginas.
   // =========================================================
+
+  private getBeneficiaryName(postulation: any, familyMembers: any[]): string {
+    const beneficiaryFamilyMemberId =
+      postulation?.beneficiaryFamilyMemberId ??
+      postulation?.beneficiary_family_member_id ??
+      postulation?.beneficiaryFamilyMember?.id ??
+      postulation?.beneficiary_family_member?.id ??
+      null;
+
+    const numericId = Number(beneficiaryFamilyMemberId);
+
+    if (Number.isFinite(numericId) && numericId > 0) {
+      const member = familyMembers.find((item: any) => {
+        const memberId = Number(item?.id || item?.backendId || 0);
+
+        return memberId === numericId;
+      });
+
+      if (member) {
+        return this.fullName(member);
+      }
+
+      return `Integrante familiar ID ${numericId}`;
+    }
+
+    return postulation?.userFullName || 'Afiliado';
+  }
 
   private buildHeader(postulation: any): string {
     const logoUrl = `${window.location.origin}/assets/logoSSM.png`;
@@ -725,7 +748,16 @@ export class SupervisionPostulacionesReportService {
 
   private fullName(item: any): string {
     return (
-      [item?.names, item?.lastNames].filter(Boolean).join(' ').trim() || '—'
+      [
+        item?.names,
+        item?.lastNames,
+        item?.last_names,
+        item?.firstName,
+        item?.lastName,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—'
     );
   }
 

@@ -11,25 +11,93 @@
     </div>
   </section>
 
-  <section class="existing-groups-card" *ngIf="!jefeSeleccionado">
+  <section
+    class="mode-card"
+    *ngIf="!jefeSeleccionado && modoTrabajo === 'inicio'"
+  >
+    <div class="section-heading">
+      <div class="heading-icon"><mat-icon>route</mat-icon></div>
+
+      <div>
+        <h2>¿Qué desea hacer?</h2>
+        <p>Seleccione una opción para administrar las jefaturas.</p>
+      </div>
+    </div>
+
+    <div class="mode-grid">
+      <button
+        type="button"
+        class="mode-option-card"
+        (click)="mostrarJefaturasExistentes()"
+      >
+        <div class="mode-icon">
+          <mat-icon>folder_shared</mat-icon>
+        </div>
+
+        <div>
+          <strong>Administrar jefatura existente</strong>
+          <span>
+            Buscar una jefatura ya configurada para modificar sus funcionarios,
+            nombre o descripción.
+          </span>
+        </div>
+
+        <mat-icon class="mode-arrow">arrow_forward</mat-icon>
+      </button>
+
+      <button
+        type="button"
+        class="mode-option-card"
+        (click)="crearNuevaJefatura()"
+      >
+        <div class="mode-icon">
+          <mat-icon>person_add</mat-icon>
+        </div>
+
+        <div>
+          <strong>Crear nueva jefatura</strong>
+          <span>
+            Buscar un funcionario y configurar su grupo de jefatura.
+          </span>
+        </div>
+
+        <mat-icon class="mode-arrow">arrow_forward</mat-icon>
+      </button>
+    </div>
+  </section>
+
+  <section
+    class="existing-groups-card"
+    *ngIf="!jefeSeleccionado && modoTrabajo === 'existente'"
+  >
     <div class="section-heading existing-heading">
       <div class="heading-icon"><mat-icon>folder_shared</mat-icon></div>
 
       <div>
+        <div class="mode-eyebrow">Administrar jefatura existente</div>
         <h2>Jefaturas existentes</h2>
-        <p>Abra una jefatura configurada para revisar o modificar sus funcionarios.</p>
+        <p>
+          Busque una jefatura ya configurada para revisar o modificar sus
+          funcionarios, nombre o descripción.
+        </p>
       </div>
 
-      <button
-        type="button"
-        mat-stroked-button
-        class="refresh-groups-btn"
-        [disabled]="loadingJefaturasExistentes"
-        (click)="cargarJefaturasExistentes()"
-      >
-        <mat-icon>refresh</mat-icon>
-        Actualizar
-      </button>
+      <div class="heading-actions">
+        <button
+          type="button"
+          mat-stroked-button
+          [disabled]="loadingJefaturasExistentes"
+          (click)="cargarJefaturasExistentes()"
+        >
+          <mat-icon>refresh</mat-icon>
+          Actualizar
+        </button>
+
+        <button type="button" mat-stroked-button (click)="volverAlInicio()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver al inicio
+        </button>
+      </div>
     </div>
 
     <mat-form-field appearance="outline" class="existing-filter">
@@ -85,7 +153,9 @@
     </div>
 
     <div
-      *ngIf="!loadingJefaturasExistentes && !jefaturasExistentesFiltradas.length"
+      *ngIf="
+        !loadingJefaturasExistentes && !jefaturasExistentesFiltradas.length
+      "
       class="empty-state compact"
     >
       <mat-icon>folder_off</mat-icon>
@@ -93,24 +163,54 @@
     </div>
   </section>
 
-  <section class="search-card">
-    <div class="section-heading">
-      <div class="heading-icon"><mat-icon>person_search</mat-icon></div>
+  <section
+    class="search-card"
+    *ngIf="!jefeSeleccionado && modoTrabajo === 'nueva'"
+  >
+    <div class="section-heading existing-heading">
+      <div class="heading-icon"><mat-icon>person_add</mat-icon></div>
 
       <div>
-        <h2>Seleccionar jefatura</h2>
-        <p>Busque una persona por nombres o apellidos.</p>
+        <div class="mode-eyebrow">Crear nueva jefatura</div>
+        <h2>Paso 1: Seleccionar funcionario responsable</h2>
+        <p>
+          Busque al funcionario que quedará como jefatura. Luego podrá
+          configurar el nombre del grupo y asignar sus funcionarios.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        mat-stroked-button
+        class="refresh-groups-btn"
+        (click)="volverAlInicio()"
+      >
+        <mat-icon>arrow_back</mat-icon>
+        Volver al inicio
+      </button>
+    </div>
+
+    <div class="creation-steps">
+      <div class="creation-step active">
+        <span>1</span>
+        Seleccionar jefatura
+      </div>
+
+      <div class="creation-step">
+        <span>2</span>
+        Configurar grupo
+      </div>
+
+      <div class="creation-step">
+        <span>3</span>
+        Asignar funcionarios
       </div>
     </div>
 
     <mat-form-field appearance="outline" class="main-search">
       <mat-label>Ejemplo: patricio jara</mat-label>
 
-      <input
-        matInput
-        [formControl]="busquedaJefatura"
-        autocomplete="off"
-      />
+      <input matInput [formControl]="busquedaJefatura" autocomplete="off" />
 
       <mat-icon matPrefix>search</mat-icon>
 
@@ -125,13 +225,12 @@
         <mat-icon>close</mat-icon>
       </button>
 
-      <mat-hint>Ingrese al menos tres letras. Puede escribir nombre y apellido.</mat-hint>
+      <mat-hint>
+        Ingrese al menos tres letras. Puede escribir nombre y apellido.
+      </mat-hint>
     </mat-form-field>
 
-    <div
-      *ngIf="hayBusquedaJefaturaValida()"
-      class="search-results"
-    >
+    <div *ngIf="hayBusquedaJefaturaValida()" class="search-results">
       <button
         *ngFor="let user of jefaturasEncontradas"
         type="button"
@@ -182,9 +281,19 @@
           <span>Rol asignado automáticamente</span>
         </div>
 
-        <div class="status-chip" [class.success]="grupoExistente" [class.pending]="!grupoExistente">
-          <mat-icon>{{ grupoExistente ? "folder_shared" : "create_new_folder" }}</mat-icon>
-          <span>{{ grupoExistente ? "Grupo existente" : "Grupo nuevo: se creará al guardar" }}</span>
+        <div
+          class="status-chip"
+          [class.success]="grupoExistente"
+          [class.pending]="!grupoExistente"
+        >
+          <mat-icon>{{
+            grupoExistente ? "folder_shared" : "create_new_folder"
+          }}</mat-icon>
+          <span>{{
+            grupoExistente
+              ? "Grupo existente"
+              : "Grupo nuevo: se creará al guardar"
+          }}</span>
         </div>
       </div>
 
@@ -192,10 +301,10 @@
         type="button"
         mat-stroked-button
         class="change-user-btn"
-        (click)="resetSeleccion()"
+        (click)="volverAlInicio()"
       >
-        <mat-icon>swap_horiz</mat-icon>
-        Cambiar jefatura
+        <mat-icon>home</mat-icon>
+        Volver al inicio
       </button>
     </section>
 
@@ -222,13 +331,32 @@
       </div>
     </section>
 
-    <section class="assignment-card">
+    <section class="assignment-card assignment-workspace">
       <div class="section-heading small">
         <div class="heading-icon"><mat-icon>groups</mat-icon></div>
 
         <div>
           <h2>Funcionarios de la jefatura</h2>
-          <p>Busque funcionarios disponibles y muévalos entre ambas columnas.</p>
+          <p>
+            Busque funcionarios, revise sus asociaciones actuales y asígnelos a
+            esta jefatura.
+          </p>
+        </div>
+      </div>
+
+      <div class="assignment-context-bar">
+        <div class="assignment-context-main">
+          <strong>{{ grupo.name || "Jefatura sin nombre" }}</strong>
+          <span>Jefatura: {{ jefeSeleccionado.fullName }}</span>
+        </div>
+
+        <div class="assignment-context-count">
+          {{ usuariosAsignados.length }} funcionario(s) asignado(s)
+        </div>
+
+        <div class="assignment-scroll-hint">
+          <mat-icon>keyboard_arrow_down</mat-icon>
+          <span>Desplácese para revisar y guardar</span>
         </div>
       </div>
 
@@ -236,8 +364,11 @@
         <div class="list-box available-box">
           <div class="list-header orange">
             <div>
-              <strong>Funcionarios disponibles</strong>
-              <span>Busque y seleccione uno o más funcionarios.</span>
+              <strong>Funcionarios encontrados</strong>
+              <span>
+                Si ya pertenecen a otro grupo, se mostrará la jefatura
+                correspondiente.
+              </span>
             </div>
 
             <div class="counter">{{ usuariosDisponibles.length }}</div>
@@ -273,20 +404,27 @@
           <div class="list-content">
             <div *ngIf="!hayBusquedaDisponibleValida()" class="empty-state">
               <mat-icon>person_search</mat-icon>
-              <span>Escriba un nombre o apellido para buscar funcionarios.</span>
+              <span
+                >Escriba un nombre o apellido para buscar funcionarios.</span
+              >
             </div>
 
             <div
-              *ngIf="hayBusquedaDisponibleValida() && !usuariosDisponibles.length"
+              *ngIf="
+                hayBusquedaDisponibleValida() && !usuariosDisponibles.length
+              "
               class="empty-state"
             >
               <mat-icon>info</mat-icon>
-              <span>No hay funcionarios disponibles con ese nombre.</span>
+              <span>No se encontraron funcionarios con ese nombre.</span>
             </div>
 
             <mat-selection-list
               *ngIf="hayBusquedaDisponibleValida()"
               [(ngModel)]="selectedDisponibles"
+              (selectionChange)="
+                actualizarAvisosFuncionariosSeleccionados($event)
+              "
             >
               <mat-list-option
                 *ngFor="let user of usuariosDisponibles"
@@ -295,6 +433,44 @@
                 {{ user.fullName }}
               </mat-list-option>
             </mat-selection-list>
+
+            <div
+              *ngIf="avisosFuncionariosSeleccionados.length"
+              class="selected-warning-box"
+            >
+              <div class="selected-warning-title">
+                <mat-icon>info</mat-icon>
+                <strong>Funcionario asociado a otra jefatura</strong>
+              </div>
+
+              <p>
+                El funcionario seleccionado ya pertenece a otro grupo. Puede
+                asignarse igualmente a esta jefatura en casos de reemplazo,
+                subrogancia, licencia u otra necesidad administrativa.
+              </p>
+
+              <div
+                *ngFor="let user of avisosFuncionariosSeleccionados"
+                class="selected-warning-user"
+              >
+                <strong>{{ user.fullName }}</strong>
+
+                <div
+                  *ngFor="let item of user.otrosGrupos"
+                  class="selected-warning-group"
+                >
+                  <span>
+                    Grupo:
+                    <strong>{{ item.groupName }}</strong>
+                  </span>
+
+                  <span>
+                    Jefatura:
+                    <strong>{{ item.jefe?.fullName || "No informada" }}</strong>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -333,7 +509,9 @@
           <div class="list-content">
             <div *ngIf="!usuariosAsignados.length" class="empty-state">
               <mat-icon>group_off</mat-icon>
-              <span>Esta jefatura todavía no tiene funcionarios asignados.</span>
+              <span
+                >Esta jefatura todavía no tiene funcionarios asignados.</span
+              >
             </div>
 
             <mat-selection-list [(ngModel)]="selectedAsignados">
@@ -356,9 +534,9 @@
       </div>
 
       <div class="sticky-buttons">
-        <button type="button" mat-stroked-button (click)="volver()">
-          <mat-icon>arrow_back</mat-icon>
-          Volver
+        <button type="button" mat-stroked-button (click)="volverAlInicio()">
+          <mat-icon>home</mat-icon>
+          Volver al inicio
         </button>
 
         <button

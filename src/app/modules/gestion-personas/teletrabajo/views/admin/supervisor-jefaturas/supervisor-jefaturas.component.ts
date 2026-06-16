@@ -60,9 +60,12 @@ export class SupervisorJefaturasComponent implements OnInit {
 
   selectedDisponibles: any[] = [];
   selectedAsignados: any[] = [];
+  avisosFuncionariosSeleccionados: any[] = [];
 
   loadingJefatura = false;
   saving = false;
+
+  modoTrabajo: 'inicio' | 'existente' | 'nueva' = 'inicio';
 
   tieneRolJefatura = false;
   rolJefaturaAsignadoAhora = false;
@@ -70,7 +73,7 @@ export class SupervisorJefaturasComponent implements OnInit {
 
   private estadoInicial = '';
   private relacionesActivas: any[] = [];
-  private usuariosConOtrosGruposIds = new Set<number>();
+  private otrosGruposPorUsuario = new Map<number, any[]>();
   private readonly USUARIOS_SISTEMA = [
     'ADMIN',
     'OPERADOR',
@@ -90,12 +93,26 @@ export class SupervisorJefaturasComponent implements OnInit {
   ngOnInit(): void {
     this.conectarBusquedaJefatura();
     this.conectarBusquedaDisponible();
+  }
 
-    /**
-     * Entrada rápida y liviana: únicamente consulta los grupos existentes.
-     * No descarga todos los usuarios ni todas las relaciones al abrir la vista.
-     */
+  mostrarJefaturasExistentes(): void {
+    this.modoTrabajo = 'existente';
+    this.resetSeleccion();
     void this.cargarJefaturasExistentes();
+  }
+
+  crearNuevaJefatura(): void {
+    this.modoTrabajo = 'nueva';
+    this.resetSeleccion();
+  }
+
+  volverAlInicio(): void {
+    this.modoTrabajo = 'inicio';
+    this.resetSeleccion();
+    this.jefaturasExistentes = [];
+    this.jefaturasEncontradas = [];
+    this.limpiarBusquedaJefatura();
+    this.limpiarFiltroJefaturasExistentes();
   }
 
   // ============================================================
@@ -111,9 +128,7 @@ export class SupervisorJefaturasComponent implements OnInit {
       this.jefaturasExistentes = (groups || [])
         .filter(
           (group: any) =>
-            !group.deletedAt &&
-            !group.deleted_at &&
-            group.user?.id,
+            !group.deletedAt && !group.deleted_at && group.user?.id,
         )
         .map((group: any) => ({
           ...group,
@@ -147,11 +162,7 @@ export class SupervisorJefaturasComponent implements OnInit {
 
     return this.jefaturasExistentes.filter((group: any) => {
       const searchableText = this.normalizeText(
-        [
-          group?.name,
-          group?.description,
-          group?.jefe?.fullName,
-        ]
+        [group?.name, group?.description, group?.jefe?.fullName]
           .filter(Boolean)
           .join(' '),
       );
@@ -169,6 +180,7 @@ export class SupervisorJefaturasComponent implements OnInit {
       return;
     }
 
+    this.modoTrabajo = 'existente';
     await this.seleccionarJefatura(group.jefe);
   }
 
@@ -309,15 +321,31 @@ export class SupervisorJefaturasComponent implements OnInit {
       a.fullName.localeCompare(b.fullName),
     );
 
-    this.usuariosConOtrosGruposIds = new Set<number>(
-      this.relacionesActivas
-        .filter(
-          (relation: any) =>
-            !currentGroupId || Number(relation.group?.id) !== currentGroupId,
-        )
-        .map((relation: any) => Number(relation.user?.id || 0))
-        .filter(Boolean),
-    );
+    this.otrosGruposPorUsuario = new Map<number, any[]>();
+
+    this.relacionesActivas
+      .filter(
+        (relation: any) =>
+          !currentGroupId || Number(relation.group?.id) !== currentGroupId,
+      )
+      .forEach((relation: any) => {
+        const userId = Number(relation.user?.id || 0);
+
+        if (!userId) {
+          return;
+        }
+
+        const current = this.otrosGruposPorUsuario.get(userId) || [];
+
+        current.push({
+          groupId: relation.group?.id,
+          groupName: relation.group?.name || 'Grupo sin nombre',
+          groupDescription: relation.group?.description || '',
+          jefe: this.buildUser(relation.group?.user),
+        });
+
+        this.otrosGruposPorUsuario.set(userId, current);
+      });
 
     this.resultadosBusquedaDisponibles = [];
     this.usuariosDisponibles = [];
@@ -350,6 +378,7 @@ export class SupervisorJefaturasComponent implements OnInit {
     if (!this.jefeSeleccionado || term.length < 3) {
       this.usuariosDisponibles = [];
       this.selectedDisponibles = [];
+      this.avisosFuncionariosSeleccionados = [];
       return;
     }
 
@@ -358,12 +387,21 @@ export class SupervisorJefaturasComponent implements OnInit {
     );
 
     this.usuariosDisponibles = this.resultadosBusquedaDisponibles
-      .filter((user: any) => Number(user.id) !== Number(this.jefeSeleccionado.id))
-      .filter((user: any) => !assignedIds.has(Number(user.id)))
       .filter(
-        (user: any) => !this.usuariosConOtrosGruposIds.has(Number(user.id)),
+        (user: any) => Number(user.id) !== Number(this.jefeSeleccionado.id),
       )
-      .filter((user: any) => !this.isSistema(user));
+      .filter((user: any) => !assignedIds.has(Number(user.id)))
+      .filter((user: any) => !this.isSistema(user))
+      .map((user: any) => {
+        const otrosGrupos =
+          this.otrosGruposPorUsuario.get(Number(user.id)) || [];
+
+        return {
+          ...user,
+          otrosGrupos,
+          perteneceAOtraJefatura: otrosGrupos.length > 0,
+        };
+      });
 
     this.selectedDisponibles = [];
   }
@@ -373,6 +411,7 @@ export class SupervisorJefaturasComponent implements OnInit {
     this.resultadosBusquedaDisponibles = [];
     this.usuariosDisponibles = [];
     this.selectedDisponibles = [];
+    this.avisosFuncionariosSeleccionados = [];
   }
 
   hayBusquedaJefaturaValida(): boolean {
@@ -381,6 +420,22 @@ export class SupervisorJefaturasComponent implements OnInit {
 
   hayBusquedaDisponibleValida(): boolean {
     return String(this.busquedaDisponible.value || '').trim().length >= 3;
+  }
+
+  get seleccionadosConOtrosGrupos(): any[] {
+    return (this.selectedDisponibles || []).filter(
+      (user: any) => user?.perteneceAOtraJefatura,
+    );
+  }
+
+  actualizarAvisosFuncionariosSeleccionados(event?: any): void {
+    const seleccionados = event?.source?.selectedOptions?.selected
+      ? event.source.selectedOptions.selected.map((option: any) => option.value)
+      : this.selectedDisponibles || [];
+
+    this.avisosFuncionariosSeleccionados = seleccionados.filter(
+      (user: any) => user?.perteneceAOtraJefatura,
+    );
   }
 
   // ============================================================
@@ -405,6 +460,7 @@ export class SupervisorJefaturasComponent implements OnInit {
     );
 
     this.selectedDisponibles = [];
+    this.avisosFuncionariosSeleccionados = [];
     this.actualizarUsuariosDisponibles();
   }
 
@@ -458,8 +514,8 @@ export class SupervisorJefaturasComponent implements OnInit {
         this.usuariosAsignados.map((user: any) => Number(user.id)),
       );
 
-      const removedRelations = currentRelations.filter((relation: any) =>
-        !finalIds.has(Number(relation.user?.id)),
+      const removedRelations = currentRelations.filter(
+        (relation: any) => !finalIds.has(Number(relation.user?.id)),
       );
 
       const addedIds = Array.from(finalIds).filter(
@@ -519,7 +575,9 @@ export class SupervisorJefaturasComponent implements OnInit {
       return Number(updated?.id || this.grupo.id);
     }
 
-    const created: any = await firstValueFrom(this.groupService.create(payload));
+    const created: any = await firstValueFrom(
+      this.groupService.create(payload),
+    );
 
     if (!created?.id) {
       throw new Error('El backend no retornó el ID del nuevo grupo');
@@ -552,7 +610,10 @@ export class SupervisorJefaturasComponent implements OnInit {
   }
 
   hayCambios(): boolean {
-    return Boolean(this.jefeSeleccionado) && this.crearEstadoActual() !== this.estadoInicial;
+    return (
+      Boolean(this.jefeSeleccionado) &&
+      this.crearEstadoActual() !== this.estadoInicial
+    );
   }
 
   private crearEstadoActual(): string {

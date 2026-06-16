@@ -1324,7 +1324,8 @@ export class SupervisionPostulacionesComponent implements OnInit {
               'RUT afiliado': postulation.userRut,
               'Nombre afiliado': postulation.userFullName,
               Establecimiento: postulation.stablishmentName,
-              Beneficiario: this.getBeneficiaryLabel(
+              Beneficiario: this.getBeneficiaryPersonName(postulation, summary),
+              'Tipo de beneficiario': this.getBeneficiaryLabel(
                 postulation.beneficiaryType,
               ),
               'Hogar monoparental': this.getYesNoLabel(
@@ -1786,21 +1787,22 @@ export class SupervisionPostulacionesComponent implements OnInit {
     }
 
     const member = (this.selectedSummary?.familyMembers || []).find(
-      (item: any) => Number(item?.id || 0) === id,
+      (item: any) => Number(item?.id || item?.backendId || 0) === id,
     );
 
     if (!member) {
       return '—';
     }
 
-    return (
-      [member?.names, member?.lastNames].filter(Boolean).join(' ').trim() || '—'
-    );
+    return this.getFamilyMemberFullName(member);
   }
 
   getFamilyMemberFullName(member: any): string {
     return (
-      [member?.names, member?.lastNames].filter(Boolean).join(' ').trim() || '—'
+      [member?.names, member?.lastNames, member?.last_names]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—'
     );
   }
 
@@ -1976,9 +1978,11 @@ export class SupervisionPostulacionesComponent implements OnInit {
   private getFamilyNameFromSummary(summary: any, familyMemberId: any): string {
     const id = Number(familyMemberId || 0);
 
-    const member = (summary?.familyMembers || []).find(
-      (item: any) => Number(item?.id || 0) === id,
-    );
+    const member = (summary?.familyMembers || []).find((item: any) => {
+      const memberId = Number(item?.id || item?.backendId || 0);
+
+      return memberId === id;
+    });
 
     return member ? this.getFamilyMemberFullName(member) : '—';
   }
@@ -2194,6 +2198,72 @@ export class SupervisionPostulacionesComponent implements OnInit {
     }
 
     return Boolean(this.documentWarningsByPostulationId[postulationId]);
+  }
+
+  getBeneficiaryPersonName(postulation: any, summary: any): string {
+    const beneficiaryFamilyMemberId = this.getBeneficiaryFamilyMemberId(
+      postulation,
+      summary,
+    );
+
+    if (beneficiaryFamilyMemberId) {
+      const familyMembers = Array.isArray(summary?.familyMembers)
+        ? summary.familyMembers
+        : [];
+
+      const member = familyMembers.find((item: any) => {
+        const memberId = Number(item?.id || item?.backendId || 0);
+
+        return memberId === Number(beneficiaryFamilyMemberId);
+      });
+
+      if (member) {
+        return this.getFamilyMemberFullName(member);
+      }
+
+      return `Integrante familiar ID ${beneficiaryFamilyMemberId}`;
+    }
+
+    return (
+      postulation?.userFullName ||
+      this.getAffiliateFullName(postulation?.affiliate) ||
+      'Afiliado'
+    );
+  }
+
+  private getBeneficiaryFamilyMemberId(
+    postulation: any,
+    summary: any,
+  ): number | null {
+    const value =
+      postulation?.beneficiaryFamilyMemberId ??
+      postulation?.beneficiary_family_member_id ??
+      summary?.postulation?.beneficiaryFamilyMemberId ??
+      summary?.postulation?.beneficiary_family_member_id ??
+      summary?.summary?.postulation?.beneficiaryFamilyMemberId ??
+      summary?.summary?.postulation?.beneficiary_family_member_id ??
+      null;
+
+    const numericValue = Number(value);
+
+    return Number.isFinite(numericValue) && numericValue > 0
+      ? numericValue
+      : null;
+  }
+
+  private getAffiliateFullName(affiliate: any): string {
+    return (
+      [
+        affiliate?.names,
+        affiliate?.lastNames,
+        affiliate?.last_names,
+        affiliate?.firstName,
+        affiliate?.lastName,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || ''
+    );
   }
 
   private getRequiredDocumentsForReview(): any[] {
