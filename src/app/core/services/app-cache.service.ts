@@ -6,24 +6,74 @@ import { Injectable } from '@angular/core';
 export class AppCacheService {
   private readonly versionKey = 'gestionPersonasCacheVersion';
 
-  private readonly appVersion = '2026-06-16-01';
+  private readonly appVersion = '2026-06-16-02';
+
+  /**
+   * Claves conocidas de formularios que pueden quedar pegadas
+   * entre sesiones o después de una actualización.
+   */
+  private readonly formLocalStorageKeysToRemove = [
+    'last_route',
+
+    // Postulación Bienestar / Estudios Superiores
+    'wellbeing_current_step',
+    'wellbeing_postulation_id',
+    'wellbeing_workflow',
+
+    // Posibles formularios futuros o existentes
+    'postulation_current_step',
+    'postulation_id',
+    'postulation_workflow',
+
+    'form_current_step',
+    'form_id',
+    'form_workflow',
+
+    'wizard_current_step',
+    'wizard_id',
+    'wizard_workflow',
+  ];
+
+  /**
+   * Prefijos asociados a formularios.
+   * Esto permite limpiar nuevas claves sin tener que agregarlas una por una.
+   */
+  private readonly formLocalStoragePrefixesToRemove = [
+    'wellbeing_',
+    'postulation_',
+    'form_',
+    'wizard_',
+    'survey_',
+    'encuesta_',
+    'demand_',
+    'demanda_',
+  ];
 
   clearBeforeLoginIfNeeded(): void {
     try {
+      this.clearSessionStorage();
+      this.clearFormLocalStorage();
+
       const currentVersion = localStorage.getItem(this.versionKey);
 
-      if (currentVersion === this.appVersion) {
-        return;
+      if (currentVersion !== this.appVersion) {
+        this.clearCacheStorage();
+
+        localStorage.setItem(this.versionKey, this.appVersion);
+
+        console.log(
+          '[AppCacheService] Cache Storage limpiado por cambio de versión.',
+        );
       }
 
-      this.clearSessionStorage();
-      this.clearCacheStorage();
-
-      localStorage.setItem(this.versionKey, this.appVersion);
-
-      console.log('[AppCacheService] Cache de aplicación limpiado.');
+      console.log(
+        '[AppCacheService] Datos temporales de formularios limpiados antes del login.',
+      );
     } catch (error) {
-      console.warn('No fue posible limpiar cache antes del login:', error);
+      console.warn(
+        '[AppCacheService] No fue posible limpiar cache antes del login:',
+        error,
+      );
     }
   }
 
@@ -31,7 +81,35 @@ export class AppCacheService {
     try {
       sessionStorage.clear();
     } catch (error) {
-      console.warn('No fue posible limpiar sessionStorage:', error);
+      console.warn(
+        '[AppCacheService] No fue posible limpiar sessionStorage:',
+        error,
+      );
+    }
+  }
+
+  private clearFormLocalStorage(): void {
+    try {
+      for (const key of this.formLocalStorageKeysToRemove) {
+        localStorage.removeItem(key);
+      }
+
+      const keys = Object.keys(localStorage);
+
+      for (const key of keys) {
+        const shouldRemove = this.formLocalStoragePrefixesToRemove.some(
+          (prefix) => key.startsWith(prefix),
+        );
+
+        if (shouldRemove) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (error) {
+      console.warn(
+        '[AppCacheService] No fue posible limpiar datos temporales de formularios:',
+        error,
+      );
     }
   }
 
@@ -44,7 +122,10 @@ export class AppCacheService {
       .keys()
       .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
       .catch((error) => {
-        console.warn('No fue posible limpiar Cache Storage:', error);
+        console.warn(
+          '[AppCacheService] No fue posible limpiar Cache Storage:',
+          error,
+        );
       });
   }
 }
