@@ -6,7 +6,9 @@ import { Injectable } from '@angular/core';
 export class AppCacheService {
   private readonly versionKey = 'gestionPersonasCacheVersion';
 
-  private readonly appVersion = '2026-06-16-02';
+  private readonly formCleanedAtKey = 'gestionPersonasFormCacheLastCleanedAt';
+
+  private readonly appVersion = '2026-06-16-03';
 
   /**
    * Claves conocidas de formularios que pueden quedar pegadas
@@ -19,6 +21,9 @@ export class AppCacheService {
     'wellbeing_current_step',
     'wellbeing_postulation_id',
     'wellbeing_workflow',
+
+    // Formulario antiguo / respaldo completo
+    'postulacion_full',
 
     // Posibles formularios futuros o existentes
     'postulation_current_step',
@@ -41,6 +46,7 @@ export class AppCacheService {
   private readonly formLocalStoragePrefixesToRemove = [
     'wellbeing_',
     'postulation_',
+    'postulacion_',
     'form_',
     'wizard_',
     'survey_',
@@ -53,6 +59,8 @@ export class AppCacheService {
     try {
       this.clearSessionStorage();
       this.clearFormLocalStorage();
+
+      localStorage.setItem(this.formCleanedAtKey, new Date().toISOString());
 
       const currentVersion = localStorage.getItem(this.versionKey);
 
