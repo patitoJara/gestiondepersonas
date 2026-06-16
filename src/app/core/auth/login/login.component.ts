@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   AfterViewInit,
+  OnInit,
   ViewChild,
   ElementRef,
 } from '@angular/core';
@@ -24,6 +25,7 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { TokenService } from '@app/core/services/token.service';
 import { SessionService } from '@app/core/services/session.service';
+import { AppCacheService } from '@app/core/services/app-cache.service';
 // Dialog
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 import { finalize } from 'rxjs';
@@ -47,11 +49,12 @@ import { finalize } from 'rxjs';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements AfterViewInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthLoginService);
   private tokenService = inject(TokenService);
   private sessionService = inject(SessionService);
+  private appCacheService = inject(AppCacheService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private dialog = inject(MatDialog);
@@ -77,6 +80,10 @@ export class LoginComponent implements AfterViewInit {
 
   get f() {
     return this.form.controls;
+  }
+
+  ngOnInit(): void {
+    this.appCacheService.clearBeforeLoginIfNeeded();
   }
 
   // src/app/telework/views/auth/login/login.component.ts
