@@ -17,7 +17,6 @@ import { ManualesComponent } from './sections/manuales.component';
 import { ReportesComponent } from './sections/reportes.component';
 import { RolesUsuariosComponent } from './sections/roles-usuarios.component';
 
-
 import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 
 @Component({
@@ -42,11 +41,10 @@ import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
     CierreInstitucionalComponent,
     ManualesComponent,
     ReportesComponent,
-    RolesUsuariosComponent
+    RolesUsuariosComponent,
   ],
 })
 export class ManualComponent implements AfterViewInit {
-
   @ViewChild('manualScroll') manualScroll!: ElementRef<HTMLDivElement>;
 
   showIndexBtn = false;
@@ -90,16 +88,42 @@ export class ManualComponent implements AfterViewInit {
   // 🔥 (OPCIONAL) ÍNDICE DINÁMICO
   sections = [
     { id: 'objetivo', label: '1  Objetivo del Sistema' },
-    { id: 'principios', label: '2  Principios de Funcionamiento' },
-    { id: 'rolesusuarios', label: '3 Modelo de Roles y Asignación de Usuarios' },
-    { id: 'vista-funcionario', label: '4  Vista Funcionario' },
-    { id: 'vista-admin', label: '5  Vista Administrador / RRHH' },
-    { id: 'usuarios', label: '6  Administración de Usuarios' },
-    { id: 'suscripciones', label: '7  Gestión de Suscripciones' },
-    { id: 'reportes', label: '8  Módulo de Reportes' },      
-    { id: 'validaciones', label: '9  Validaciones Backend' },
-    { id: 'modelo', label: '10  Modelo de Datos' },
-    { id: 'vpn', label: '11  Configuración VPN (Acceso Remoto)' },
-    { id: 'gusuario', label: '12  Gestión de Sesión de Usuario' }
+    { id: 'alcance', label: '2  Alcance General de la Plataforma' },
+    { id: 'principios', label: '3  Principios de Funcionamiento' },
+    { id: 'rolesusuarios', label: '4  Modelo de Roles y Permisos' },
+
+    { id: 'teletrabajo', label: '5  Módulo Teletrabajo' },
+    { id: 'vista-funcionario', label: '6  Registro de Jornada' },
+    { id: 'vista-admin', label: '7  Supervisión / Administración Teletrabajo' },
+    { id: 'suscripciones', label: '8  Gestión de Suscripciones' },
+    { id: 'reportes', label: '9  Reportes y Auditoría de Teletrabajo' },
+
+    { id: 'beneficios', label: '10  Módulo Beneficios' },
+    {
+      id: 'postulacion-estudios',
+      label: '11  Postulación Apoyo Estudios Superiores',
+    },
+    {
+      id: 'documentos-postulacion',
+      label: '12  Carga de Documentos de Postulación',
+    },
+    {
+      id: 'supervision-postulaciones',
+      label: '13  Supervisión de Postulaciones Bienestar',
+    },
+
+    { id: 'usuarios', label: '14  Administración de Usuarios' },
+    { id: 'jefaturas', label: '15  Administración de Jefaturas y Grupos' },
+    { id: 'auditoria-grupos', label: '16  Auditoría Grupos/Jefaturas' },
+
+    { id: 'validaciones', label: '17  Validaciones Backend Obligatorias' },
+    { id: 'modelo', label: '18  Modelo de Datos' },
+    { id: 'vpn', label: '19  Configuración VPN para Acceso Remoto' },
+    { id: 'gusuario', label: '20  Gestión de Sesión de Usuario' },
+    {
+      id: 'actualizacion-sistema',
+      label: '21  Actualización de Versión del Sistema',
+    },
+    { id: 'soporte', label: '22  Soporte y Recomendaciones Generales' },
   ];
 }

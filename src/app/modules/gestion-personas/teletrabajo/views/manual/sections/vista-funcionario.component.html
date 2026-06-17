@@ -1,48 +1,68 @@
-<!-- 3. VISTA FUNCIONARIO -->
+<!-- 6. REGISTRO DE JORNADA -->
 <mat-card class="manual-section" id="vista-funcionario">
 
   <div class="section-header">
-    <mat-icon class="icon-primary">person</mat-icon>
-    <h2>4. Vista Funcionario – Mi Registro</h2>
+    <mat-icon class="icon-primary">how_to_reg</mat-icon>
+    <h2>6. Registro de Jornada</h2>
   </div>
 
   <p>
-    La vista "Mi Registro" permite al funcionario visualizar información
-    personal y generar eventos de teletrabajo.
+    La opción <strong>Registro de jornada</strong> permite al funcionario o
+    funcionaria registrar los eventos de ingreso y salida asociados a una jornada
+    autorizada de teletrabajo.
   </p>
 
-  <h3 class="subsection-title">Información Superior</h3>
+  <p>
+    Las marcaciones se validan con la hora del servidor institucional y con los
+    rangos horarios definidos para cada jornada.
+  </p>
+
+  <h3 class="subsection-title">Información superior</h3>
   <ul class="manual-list">
-    <li>Nombre y RUT del funcionario.</li>
-    <li>Estado de suscripción.</li>
+    <li>Nombre del funcionario o funcionaria.</li>
+    <li>Estado de la suscripción vigente.</li>
     <li>Fecha y hora del servidor institucional.</li>
+    <li>Información de la jornada autorizada, cuando corresponda.</li>
   </ul>
 
-  <h3 class="subsection-title">Marcación</h3>
+  <h3 class="subsection-title">Marcación de ingreso y salida</h3>
   <ul class="manual-list">
-    <li>Botón <strong>"Marcar Ingreso"</strong>.</li>
-    <li>Botón <strong>"Marcar Salida"</strong>.</li>
-    <li>Sin límite diario de registros.</li>
+    <li>Botón <strong>Ingreso</strong> para registrar el inicio de la jornada.</li>
+    <li>Botón <strong>Salida</strong> para registrar el término de la jornada.</li>
+    <li>Los botones estarán disponibles solo cuando exista una suscripción vigente y válida.</li>
+    <li>El sistema mostrará mensajes informativos cuando la marcación no pueda realizarse.</li>
   </ul>
 
   <div class="manual-box box-rule">
-    <mat-icon>rule</mat-icon>
+    <mat-icon>schedule</mat-icon>
     <div>
-      Cada pulsación genera un nuevo evento. No existe reemplazo ni
-      anulación automática de registros.
+      La fecha y hora de cada marcación son generadas por el servidor
+      institucional. El usuario no puede modificar manualmente estos datos.
     </div>
   </div>
 
-  <h3 class="subsection-title">Eventos del Día</h3>
+  <h3 class="subsection-title">Marcaciones del día</h3>
   <ul class="manual-list">
-    <li>Tabla filtrada automáticamente por fecha actual.</li>
-    <li>Columnas: Hora – Tipo – Origen.</li>
+    <li>El sistema muestra las marcaciones realizadas durante el día.</li>
+    <li>Se visualizan los eventos de ingreso y salida registrados.</li>
+    <li>La información permite al usuario revisar si su jornada fue registrada correctamente.</li>
   </ul>
 
-  <h3 class="subsection-title">Historial Completo</h3>
+  <h3 class="subsection-title">Minuta del día</h3>
   <ul class="manual-list">
-    <li>Visualización cronológica unificada.</li>
-    <li>Columnas: Fecha/Hora – Tipo – Origen – Registro Base.</li>
+    <li>Permite registrar actividades realizadas durante la jornada de teletrabajo.</li>
+    <li>El usuario puede agregar una nueva minuta.</li>
+    <li>Las minutas pueden editarse o eliminarse cuando corresponda.</li>
+    <li>Se recomienda registrar actividades claras y concretas.</li>
   </ul>
+
+  <div class="manual-box box-info">
+    <mat-icon>info</mat-icon>
+    <div>
+      El registro de jornada depende de la suscripción autorizada y de los rangos
+      horarios definidos. Si el sistema muestra un aviso, el usuario debe revisar
+      el mensaje indicado en pantalla.
+    </div>
+  </div>
 
 </mat-card>

@@ -11,7 +11,10 @@
       <mat-icon class="header-icon">menu_book</mat-icon>
       <div>
         <h1>Manual del Sistema</h1>
-        <p>Sistema de Registro de Eventos – Teletrabajo</p>
+        <p>
+          Gestión de las Personas – Manual interno de módulos, operación y
+          funcionamiento
+        </p>
       </div>
     </div>
   </mat-card>
@@ -30,16 +33,303 @@
   </mat-card>
 
   <!-- 🧩 SECCIONES -->
-  <section id="objetivo"><app-objetivo></app-objetivo></section>
-  <section id="principios"><app-principios></app-principios></section>
-  <section id="rolesusuarios"><app-rolesusuarios></app-rolesusuarios></section>
-  <section id="vista-funcionario"><app-vista-funcionario></app-vista-funcionario></section>
-  <section id="vista-admin"><app-vista-admin></app-vista-admin></section>
-  <section id="usuarios"><app-usuarios></app-usuarios></section>
-  <section id="suscripciones"><app-suscripciones></app-suscripciones></section>
-  <section id="reportes"><app-reportes></app-reportes></section>
-  <section id="validaciones"><app-validaciones></app-validaciones></section>
-  <section id="modelo"><app-modelo></app-modelo></section>
-  <section id="vpn"><app-manuales></app-manuales></section>
-  <section id="gusuario"><app-gestionusuario></app-gestionusuario></section>
+
+  <section id="objetivo">
+    <app-objetivo></app-objetivo>
+  </section>
+
+  <section id="alcance">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">dashboard</mat-icon>
+        <h2>2. Alcance General de la Plataforma</h2>
+      </div>
+
+      <p>
+        La plataforma <strong>Gestión de las Personas</strong> centraliza
+        distintas funcionalidades institucionales asociadas a la gestión
+        operativa de funcionarios y funcionarias del Servicio de Salud
+        Magallanes.
+      </p>
+
+      <p>
+        Entre sus principales módulos se encuentran Teletrabajo, Beneficios,
+        Postulación Apoyo Estudios Superiores, Supervisión de Postulaciones,
+        Administración de Usuarios, Administración de Jefaturas y Auditoría
+        Grupos/Jefaturas.
+      </p>
+
+      <p>
+        Las opciones visibles en el menú lateral pueden variar según el rol
+        activo del usuario.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="principios">
+    <app-principios></app-principios>
+  </section>
+
+  <section id="rolesusuarios">
+    <app-rolesusuarios></app-rolesusuarios>
+  </section>
+
+  <section id="teletrabajo">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">laptop_mac</mat-icon>
+        <h2>5. Módulo Teletrabajo</h2>
+      </div>
+
+      <p>
+        El módulo Teletrabajo permite registrar eventos de ingreso y salida,
+        consultar registros personales, revisar suscripciones autorizadas y
+        generar reportes de apoyo para supervisión y auditoría.
+      </p>
+
+      <p>
+        Las marcaciones se validan con la hora del servidor institucional y con
+        los rangos horarios autorizados para cada jornada.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="vista-funcionario">
+    <app-vista-funcionario></app-vista-funcionario>
+  </section>
+
+  <section id="vista-admin">
+    <app-vista-admin></app-vista-admin>
+  </section>
+
+  <section id="suscripciones">
+    <app-suscripciones></app-suscripciones>
+  </section>
+
+  <section id="reportes">
+    <app-reportes></app-reportes>
+  </section>
+
+  <section id="beneficios">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">volunteer_activism</mat-icon>
+        <h2>10. Módulo Beneficios</h2>
+      </div>
+
+      <p>
+        El módulo Beneficios permite acceder a procesos institucionales de apoyo
+        o postulación definidos por el Servicio de Salud Magallanes.
+      </p>
+
+      <p>
+        Actualmente incorpora la opción <strong>Postulación Estudios</strong>,
+        correspondiente al proceso de postulación al beneficio de Apoyo para
+        Estudios Superiores.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="postulacion-estudios">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">assignment</mat-icon>
+        <h2>11. Postulación Apoyo Estudios Superiores</h2>
+      </div>
+
+      <p>
+        Esta funcionalidad permite al funcionario o funcionaria ingresar una
+        solicitud de postulación, completando antecedentes personales,
+        familiares, académicos, económicos, de salud, vivienda y documentación
+        de respaldo.
+      </p>
+
+      <p>
+        El formulario se organiza en etapas sucesivas para facilitar el ingreso
+        ordenado de la información.
+      </p>
+
+      <ul class="manual-list">
+        <li>Datos del afiliado.</li>
+        <li>Grupo familiar.</li>
+        <li>Postulante.</li>
+        <li>Antecedentes académicos.</li>
+        <li>Verificación académica.</li>
+        <li>Ingresos familiares.</li>
+        <li>Gastos.</li>
+        <li>Salud y vivienda.</li>
+        <li>Documentos.</li>
+        <li>Confirmación.</li>
+        <li>Finalizado.</li>
+      </ul>
+    </mat-card>
+  </section>
+
+  <section id="documentos-postulacion">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">upload_file</mat-icon>
+        <h2>12. Carga de Documentos de Postulación</h2>
+      </div>
+
+      <p>
+        La etapa de documentos permite adjuntar los antecedentes obligatorios y
+        adicionales requeridos para la evaluación de la postulación.
+      </p>
+
+      <p>
+        El sistema informa visualmente el avance de carga, los documentos
+        obligatorios cargados y los documentos pendientes. El usuario puede
+        revisar los archivos antes de enviar la postulación y quitar documentos
+        cuando sea necesario corregir una carga.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="supervision-postulaciones">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">fact_check</mat-icon>
+        <h2>13. Supervisión de Postulaciones Bienestar</h2>
+      </div>
+
+      <p>
+        La supervisión de postulaciones permite revisar solicitudes ingresadas
+        por los funcionarios, consultar antecedentes, visualizar documentos,
+        generar reportes y apoyar el proceso de seguimiento institucional.
+      </p>
+
+      <p>
+        Esta funcionalidad está disponible para los perfiles autorizados según
+        los roles definidos en el sistema.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="usuarios">
+    <app-usuarios></app-usuarios>
+  </section>
+
+  <section id="jefaturas">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">groups</mat-icon>
+        <h2>15. Administración de Jefaturas y Grupos</h2>
+      </div>
+
+      <p>
+        La administración de jefaturas y grupos permite gestionar la relación
+        entre funcionarios, grupos de trabajo y jefaturas responsables.
+      </p>
+
+      <p>
+        Desde esta funcionalidad es posible crear nuevas jefaturas, administrar
+        jefaturas existentes, agregar funcionarios, quitar funcionarios y
+        mantener organizada la información para efectos operativos y de
+        supervisión.
+      </p>
+
+      <p>
+        Un funcionario puede estar asociado a más de una jefatura cuando exista
+        una necesidad administrativa, como reemplazos, subrogancias, licencias
+        médicas, vacaciones o apoyo temporal entre unidades.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="auditoria-grupos">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">manage_search</mat-icon>
+        <h2>16. Auditoría Grupos/Jefaturas</h2>
+      </div>
+
+      <p>
+        La auditoría de grupos y jefaturas permite revisar la información
+        registrada sin modificarla. Está orientada a consulta, control y
+        respaldo institucional.
+      </p>
+
+      <p>
+        Permite visualizar grupos existentes, jefatura responsable, ID del
+        grupo, cantidad de funcionarios asignados, funcionarios pertenecientes a
+        cada grupo, grupos sin funcionarios y grupos con nombres genéricos.
+      </p>
+
+      <p>
+        Una jefatura puede existir aunque no tenga funcionarios asignados. En
+        ese caso, el sistema la mantiene visible como
+        <strong>Sin funcionarios asignados</strong>, permitiendo conservar
+        trazabilidad.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="validaciones">
+    <app-validaciones></app-validaciones>
+  </section>
+
+  <section id="modelo">
+    <app-modelo></app-modelo>
+  </section>
+
+  <section id="vpn">
+    <app-manuales></app-manuales>
+  </section>
+
+  <section id="gusuario">
+    <app-gestionusuario></app-gestionusuario>
+  </section>
+
+  <section id="actualizacion-sistema">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">system_update</mat-icon>
+        <h2>21. Actualización de Versión del Sistema</h2>
+      </div>
+
+      <p>
+        El sistema Gestión de las Personas puede recibir actualizaciones
+        periódicas de frontend para incorporar mejoras visuales, ajustes de
+        formularios, correcciones de funcionamiento o nuevas funcionalidades.
+      </p>
+
+      <p>
+        En algunos casos, el navegador del usuario puede mantener temporalmente
+        una versión anterior de la plataforma. Esto puede provocar que se
+        visualicen pantallas antiguas, botones que no aparecen correctamente,
+        información desactualizada o formularios con datos temporales de una
+        sesión anterior.
+      </p>
+
+      <p>
+        Si el usuario visualiza una versión antigua del sistema o detecta que
+        una pantalla no se muestra correctamente, se recomienda cerrar sesión,
+        volver a ingresar y, si el problema continúa, presionar
+        <strong>Ctrl + F5</strong>
+        en la pantalla de acceso.
+      </p>
+    </mat-card>
+  </section>
+
+  <section id="soporte">
+    <mat-card class="manual-section">
+      <div class="section-header">
+        <mat-icon class="icon-primary">support_agent</mat-icon>
+        <h2>22. Soporte y Recomendaciones Generales</h2>
+      </div>
+
+      <p>
+        Ante inconvenientes de acceso, visualización, formularios, marcaciones,
+        suscripciones o reportes, el usuario debe comunicarse con el área
+        correspondiente según el módulo utilizado.
+      </p>
+
+      <p>
+        Para facilitar la revisión, se recomienda indicar nombre completo,
+        correo institucional, módulo donde ocurre el problema, breve descripción
+        y captura de pantalla cuando sea posible.
+      </p>
+    </mat-card>
+  </section>
 </div>
