@@ -81,6 +81,8 @@ export class UsuariosComponent implements AfterViewInit {
 
   dataSource = new MatTableDataSource<any>([]);
   private rolesCache = new Map<number, any[]>();
+  private rolesLoadingIds = new Set<number>();
+  private rolesLoadedIds = new Set<number>();
 
   loading = false;
   total = 0;
@@ -116,10 +118,18 @@ export class UsuariosComponent implements AfterViewInit {
 
       this.paginator.firstPage();
       this.applyCurrentView();
+
+      setTimeout(() => {
+        void this.loadRolesForVisibleUsers();
+      }, 0);
     });
 
     this.paginator.page.subscribe(() => {
       this.applyCurrentView();
+
+      setTimeout(() => {
+        void this.loadRolesForVisibleUsers();
+      }, 0);
     });
 
     // 🔥 BÚSQUEDA INTELIGENTE
@@ -139,6 +149,8 @@ export class UsuariosComponent implements AfterViewInit {
       if (prefix !== this.currentPrefix) {
         this.currentPrefix = prefix;
 
+        this.clearRolesState();
+
         try {
           const response: any = await firstValueFrom(
             this.api.searchUsers(prefix),
@@ -146,30 +158,24 @@ export class UsuariosComponent implements AfterViewInit {
 
           const baseUsers = response?.content || [];
 
-          /**
-           * Mostrar inmediatamente los datos entregados
-           * por el buscador.
-           *
-           * Ya no hacemos:
-           * - getById() por cada usuario
-           * - getUserRoles() por cada usuario
-           *
-           * El usuario completo se consulta solamente
-           * cuando se presiona Editar.
-           */
+          // 🔥 Cargar roles reales desde users_roles
           this.allUsers = baseUsers.map((user: any) => ({
             ...user,
-
             fullName: this.buildFullName(user),
-
-            roles: Array.isArray(user.roles)
-              ? user.roles
-                  .map((role: any) =>
-                    typeof role === 'string' ? role : role?.name,
-                  )
-                  .filter(Boolean)
-              : [],
+            roles: [],
+            rolesLoaded: false,
+            rolesLoading: false,
           }));
+
+          console.log('✅ SEARCH USERS READY:', this.allUsers.length);
+
+          this.applyCurrentView();
+
+          setTimeout(() => {
+            void this.loadRolesForVisibleUsers();
+          }, 0);
+
+          return;
 
           console.log('✅ SEARCH USERS READY:', this.allUsers.length);
         } catch (e) {
@@ -187,9 +193,104 @@ export class UsuariosComponent implements AfterViewInit {
     this.cdr.detectChanges();
   }
 
+  // ====================================================================================
+  // 🔥 CARGAR ROLES REALES PARA MOSTRAR EN TABLA
+  // ====================================================================================
+
+  private async loadRolesForTable(userId: number): Promise<any[]> {
+    try {
+      if (!userId) {
+        return [];
+      }
+
+      if (this.rolesCache.has(userId)) {
+        return this.rolesCache.get(userId)!;
+      }
+
+      const res: any[] = await firstValueFrom(this.api.getUserRoles(userId));
+
+      console.log(
+        '🔎 ROLES RAW USER:',
+        userId,
+        (res || []).map((item: any) => ({
+          relationId: item?.id,
+          roleId: item?.role?.id,
+          roleName: item?.role?.name,
+          deletedAt: item?.deletedAt || item?.deleted_at || null,
+        })),
+      );
+
+      const roles = (res || [])
+        .filter((item: any) => !item?.deletedAt && !item?.deleted_at)
+        .map((item: any) => {
+          const roleId =
+            item?.role?.id ||
+            item?.roleId ||
+            item?.role_id ||
+            item?.idRole ||
+            item?.id_role ||
+            null;
+
+          const roleName =
+            item?.role?.name ||
+            item?.roleName ||
+            item?.role_name ||
+            item?.name ||
+            this.getRoleNameById(roleId);
+
+          return roleName
+            ? {
+                id: Number(roleId) || null,
+                name: roleName,
+              }
+            : null;
+        })
+        .filter(Boolean);
+
+      console.log('✅ ROLES MAPEADOS USER:', userId, roles);
+
+      this.rolesCache.set(userId, roles);
+
+      return roles;
+    } catch (error) {
+      console.error('❌ Error cargando roles para tabla:', {
+        userId,
+        error,
+      });
+
+      return [];
+    }
+  }
+
+  private getRoleNameById(roleId: any): string {
+    switch (Number(roleId)) {
+      case 1:
+        return 'ADMIN';
+
+      case 2:
+        return 'ADMINISTRATIVO';
+
+      case 3:
+        return 'SUPERVISOR';
+
+      case 4:
+        return 'JEFATURA';
+
+      case 5:
+        return 'SIN PERFIL ASIGNADO';
+
+      case 6:
+        return 'SUPERVISOR_BIENESTAR';
+
+      default:
+        return '';
+    }
+  }
+
   applyCurrentView(): void {
     if (!this.allUsers.length) {
       this.dataSource.data = [];
+      this.paginator.length = 0;
       return;
     }
 
@@ -204,19 +305,100 @@ export class UsuariosComponent implements AfterViewInit {
       data = data.filter((u: any) => {
         const full = this.buildFullName(u).toLowerCase();
 
-        // 🔥 TODAS las palabras deben estar
         return words.every((w) => full.includes(w));
       });
     }
 
+    const active = this.sort?.active || 'id';
+    const direction = this.sort?.direction || 'asc';
+
+    data = data.sort((a: any, b: any) => {
+      const valueA = this.getSortValue(a, active);
+      const valueB = this.getSortValue(b, active);
+
+      if (valueA < valueB) {
+        return direction === 'asc' ? -1 : 1;
+      }
+
+      if (valueA > valueB) {
+        return direction === 'asc' ? 1 : -1;
+      }
+
+      return 0;
+    });
+
     this.dataSource.data = data;
     this.paginator.length = data.length;
+
+    setTimeout(() => {
+      void this.loadRolesForVisibleUsers();
+    }, 0);
+  }
+
+  private async loadRolesForVisibleUsers(): Promise<void> {
+    if (!this.dataSource?.data?.length || !this.paginator) {
+      return;
+    }
+
+    const start = this.paginator.pageIndex * this.paginator.pageSize;
+    const end = start + this.paginator.pageSize;
+
+    const visibleUsers = this.dataSource.data.slice(start, end);
+
+    const usersToLoad = visibleUsers.filter((user: any) => {
+      const userId = Number(user?.id);
+
+      return (
+        userId &&
+        !this.rolesLoadingIds.has(userId) &&
+        (!this.rolesLoadedIds.has(userId) || user.rolesLoaded === false)
+      );
+    });
+
+    if (!usersToLoad.length) {
+      return;
+    }
+
+    usersToLoad.forEach((user: any) => {
+      user.rolesLoading = true;
+      this.rolesLoadingIds.add(Number(user.id));
+    });
+
+    this.dataSource.data = [...this.dataSource.data];
+
+    await Promise.all(
+      usersToLoad.map(async (user: any) => {
+        const userId = Number(user.id);
+
+        try {
+          const roles = await this.loadRolesForTable(userId);
+
+          this.allUsers = this.allUsers.map((item: any) => {
+            if (Number(item.id) !== userId) {
+              return item;
+            }
+
+            return {
+              ...item,
+              roles,
+              rolesLoaded: true,
+              rolesLoading: false,
+            };
+          });
+        } finally {
+          this.rolesLoadingIds.delete(userId);
+          this.rolesLoadedIds.add(userId);
+        }
+      }),
+    );
+
+    this.applyCurrentView();
   }
 
   getSortValue(item: any, field: string): any {
     switch (field) {
       case 'fullName':
-        return this.buildFullName(item).toLowerCase(); // 🔥 CLAVE
+        return this.buildFullName(item).toLowerCase();
 
       case 'email':
         return (item.email || '').toLowerCase();
@@ -225,14 +407,23 @@ export class UsuariosComponent implements AfterViewInit {
         return (item.username || '').toLowerCase();
 
       case 'rut':
-        return (item.rut || '').replace(/\./g, '');
+        return (item.rut || '').replace(/\./g, '').toLowerCase();
+
+      case 'roles':
+        return this.getRoles(item).toLowerCase();
 
       case 'id':
         return Number(item.id) || 0;
 
       default:
-        return item[field];
+        return item[field] || '';
     }
+  }
+
+  private clearRolesState(): void {
+    this.rolesCache.clear();
+    this.rolesLoadingIds.clear();
+    this.rolesLoadedIds.clear();
   }
 
   async onSearchChange(value: string) {
@@ -291,6 +482,8 @@ export class UsuariosComponent implements AfterViewInit {
   clearSearch(): void {
     this.q = '';
     this.currentPrefix = '';
+
+    this.clearRolesState();
 
     // 🔹 limpiar datos
     this.allUsers = [];
@@ -386,9 +579,35 @@ export class UsuariosComponent implements AfterViewInit {
   getRoles(row: User): string {
     return (
       (row.roles || [])
-        .map((r: any) => (typeof r === 'string' ? r : r?.name))
+        .map((r: any) => this.getRoleName(r))
         .filter(Boolean)
         .join(', ') || '—'
+    );
+  }
+
+  getRoleName(role: any): string {
+    if (!role) {
+      return '';
+    }
+
+    if (typeof role === 'string') {
+      return role;
+    }
+
+    return role?.name || role?.roleName || role?.role_name || '';
+  }
+
+  getRoleBadgeClass(role: any): string {
+    const name = this.getRoleName(role);
+
+    return (
+      'badge-' +
+      String(name || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/_/g, '-')
+        .replace(/\s+/g, '-')
     );
   }
 

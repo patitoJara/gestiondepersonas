@@ -75,17 +75,22 @@
     <!-- rol -->
     <ng-container matColumnDef="roles">
       <th mat-header-cell *matHeaderCellDef>Roles</th>
+
       <td mat-cell *matCellDef="let row">
         <div class="roles">
-          <span
-            class="badge"
-            [ngClass]="'badge-' + r.toLowerCase()"
-            *ngFor="
-              let r of row.roles && row.roles.length ? row.roles : ['Sin rol']
-            "
-          >
-            {{ r }}
-          </span>
+          <ng-container *ngIf="row.roles && row.roles.length; else sinRol">
+            <span
+              class="badge"
+              [ngClass]="getRoleBadgeClass(r)"
+              *ngFor="let r of row.roles"
+            >
+              {{ getRoleName(r) }}
+            </span>
+          </ng-container>
+
+          <ng-template #sinRol>
+            <span class="badge badge-sin-rol"> Sin rol </span>
+          </ng-template>
         </div>
       </td>
     </ng-container>

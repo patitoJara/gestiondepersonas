@@ -36,6 +36,16 @@ ACCIONES TABLA
   gap: 6px;
 }
 
+.badge-sin-rol,
+.badge-sin-perfil-asignado {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  font-weight: 800;
+}
+
+
+
 /* ==============================
 📱 RESPONSIVE CELULAR
 (No afecta PC)
