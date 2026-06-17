@@ -1,5 +1,6 @@
 // src\app\core\services\token.service.ts
 import { Injectable } from '@angular/core';
+import { TimeService } from './time.service';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -18,6 +19,7 @@ export class TokenService {
 
   activeRoleChanges = this.activeRole$.asObservable();
 
+  constructor(private timeService: TimeService) {}
   // =====================================================
   // TOKENS
   // =====================================================
@@ -67,7 +69,7 @@ export class TokenService {
 
       // 🔹 PRIORIDAD 1 → expiresIn (más preciso)
       if (expiresIn) {
-        expiresAtMs = Date.now() + expiresIn;
+        expiresAtMs = this.timeService.nowMs() + expiresIn;
         console.log('[TokenService] Expiración desde expiresIn');
       } else {
         // 🔹 PRIORIDAD 2 → JWT exp
