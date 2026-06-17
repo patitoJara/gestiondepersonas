@@ -122,6 +122,18 @@
       <mat-icon>person_edit</mat-icon>
       Corregir username desde RUT
     </button>
+
+    <!-- 🔥 ASIGNAR ROL 2 DESDE IDS -->
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      [disabled]="loading || !txtContent"
+      (click)="processAssignRole2FromUserIds()"
+    >
+      <mat-icon>admin_panel_settings</mat-icon>
+      Asignar rol 2 por IDs
+    </button>
   </div>
 
   <!-- ========================================================= -->

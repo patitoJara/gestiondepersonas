@@ -1896,4 +1896,168 @@ export class AffiliatedImportComponent {
       this.loading = false;
     }
   }
+
+  // ====================================================================================
+  // 🔥 ASIGNAR ROL 2 - ADMINISTRATIVO DESDE ARCHIVO CON IDS DE USERS
+  // ====================================================================================
+  // Formato esperado:
+  // id
+  // 915
+  // 916
+  // 917
+  // 918
+  // ====================================================================================
+
+  async processAssignRole2FromUserIds(): Promise<void> {
+    console.log('🔥 CLICK ASIGNAR ROL 2 DESDE IDS');
+
+    if (!this.txtContent?.trim()) {
+      console.warn(
+        '⚠️ Primero debes cargar el archivo agregarrolfaltantes.txt',
+      );
+      return;
+    }
+
+    const userIds = this.extractUserIdsFromTxt(this.txtContent);
+
+    if (!userIds.length) {
+      console.warn('⚠️ No se encontraron IDs válidos en el archivo');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Se detectaron ${userIds.length} usuarios.\n\n` +
+        `Se agregará el rol 2 - ADMINISTRATIVO a los usuarios que no lo tengan.\n\n` +
+        `¿Desea continuar?`,
+    );
+
+    if (!confirmed) {
+      console.warn('⚠️ Proceso cancelado');
+      return;
+    }
+
+    this.loading = true;
+
+    let checked = 0;
+    let assigned = 0;
+    let alreadyHadRole = 0;
+    let errors = 0;
+
+    try {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('👥 IDS A PROCESAR:', userIds);
+
+      for (const userId of userIds) {
+        try {
+          checked++;
+
+          const hasRole = await this.userHasRole(
+            userId,
+            this.ADMINISTRATIVO_ROLE_ID,
+          );
+
+          if (hasRole) {
+            alreadyHadRole++;
+
+            console.log('✅ Usuario ya tenía rol 2:', {
+              userId,
+              roleId: this.ADMINISTRATIVO_ROLE_ID,
+            });
+
+            continue;
+          }
+
+          console.log('🔐 Asignando rol 2:', {
+            userId,
+            roleId: this.ADMINISTRATIVO_ROLE_ID,
+          });
+
+          await firstValueFrom(
+            this.usersService.addUserRole(userId, this.ADMINISTRATIVO_ROLE_ID),
+          );
+
+          assigned++;
+
+          console.log('✅ Rol 2 asignado correctamente:', {
+            userId,
+            roleId: this.ADMINISTRATIVO_ROLE_ID,
+          });
+        } catch (error) {
+          errors++;
+
+          console.error('❌ Error asignando rol 2:', {
+            userId,
+            error,
+          });
+        }
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ ASIGNACIÓN DE ROL 2 FINALIZADA');
+
+      console.table({
+        totalArchivo: userIds.length,
+        revisados: checked,
+        asignados: assigned,
+        yaTenianRol2: alreadyHadRole,
+        errores: errors,
+      });
+
+      alert(
+        `Proceso finalizado.\n\n` +
+          `Total archivo: ${userIds.length}\n` +
+          `Revisados: ${checked}\n` +
+          `Rol 2 asignado: ${assigned}\n` +
+          `Ya tenían rol 2: ${alreadyHadRole}\n` +
+          `Errores: ${errors}`,
+      );
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  // ====================================================================================
+  // 🔥 EXTRAER IDS DE USERS DESDE TXT / CSV
+  // ====================================================================================
+
+  private extractUserIdsFromTxt(txt: string): number[] {
+    const lines = txt
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => !!line);
+
+    if (!lines.length) {
+      return [];
+    }
+
+    const delimiter = lines[0].includes(';') ? ';' : ',';
+
+    const headerColumns = lines[0]
+      .split(delimiter)
+      .map((column) => column.trim().toLowerCase());
+
+    const idColumnIndex = headerColumns.findIndex((column) =>
+      ['id', 'user_id', 'userid', 'user'].includes(column),
+    );
+
+    const hasHeader = idColumnIndex >= 0;
+
+    const columnIndex = hasHeader ? idColumnIndex : 0;
+
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+
+    const ids = dataLines
+      .map((line) => {
+        const columns = line.split(delimiter).map((value) => value.trim());
+
+        const rawId = columns[columnIndex] || '';
+
+        const userId = Number(rawId);
+
+        return Number.isInteger(userId) && userId > 0 ? userId : null;
+      })
+      .filter((id): id is number => id !== null);
+
+    return Array.from(new Set(ids));
+  }
 }
