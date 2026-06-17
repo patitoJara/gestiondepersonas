@@ -8,7 +8,7 @@ export class AppCacheService {
 
   private readonly formCleanedAtKey = 'gestionPersonasFormCacheLastCleanedAt';
 
-  private readonly appVersion = '2026-06-16-03';
+  private readonly appVersion = '2026-06-17-01';
 
   /**
    * Claves conocidas de formularios que pueden quedar pegadas
