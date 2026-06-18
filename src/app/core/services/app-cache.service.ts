@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment';
+
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +10,7 @@ export class AppCacheService {
 
   private readonly formCleanedAtKey = 'gestionPersonasFormCacheLastCleanedAt';
 
-  private readonly appVersion = '2026-06-17-02';
+  private readonly appVersion = environment.version;
 
   /**
    * Claves conocidas de formularios que pueden quedar pegadas

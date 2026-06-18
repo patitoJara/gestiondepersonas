@@ -5,9 +5,10 @@ import { CanActivateFn, Router } from '@angular/router';
 import { TokenService } from '../services/token.service';
 import { TimeService } from '../services/time.service';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = async (route, state) => {
   const tokenService = inject(TokenService);
   const router = inject(Router);
+  const timeService = inject(TimeService);
 
   const token = tokenService.getAccessToken();
 
@@ -18,13 +19,17 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  const timeService = inject(TimeService);
+  await timeService.loadServerTime();
+
   const exp = tokenService.getTokenExpiration();
 
   if (!exp || exp <= timeService.nowMs()) {
+    tokenService.clear();
+
     router.navigate(['/auth/login'], {
       queryParams: { returnUrl: state.url },
     });
+
     return false;
   }
 

@@ -9,6 +9,19 @@ import localeEsCL from '@angular/common/locales/es-CL';
 import * as moment from 'moment';
 import 'moment/locale/es';
 
+import { environment } from './environments/environment';
+
+// 🔇 Silenciar logs cuando enableDebugTools = false
+if (!environment.enableDebugTools) {
+  console.log = () => {};
+  console.debug = () => {};
+  console.info = () => {};
+  console.warn = () => {};
+
+  // Dejamos console.error activo para errores reales.
+  // console.error = () => {};
+}
+
 // 🔑 Locale Angular + Moment
 registerLocaleData(localeEsCL);
 moment.locale('es');

@@ -67,29 +67,50 @@ export class TokenService {
     try {
       let expiresAtMs: number | null = null;
 
-      // 🔹 PRIORIDAD 1 → expiresIn (más preciso)
-      if (expiresIn) {
-        expiresAtMs = this.timeService.nowMs() + expiresIn;
+      /**
+       * PRIORIDAD 1 → expiresIn
+       *
+       * Ojo:
+       * - Si viene pequeño, asumimos que viene en segundos: 3600 = 1 hora.
+       * - Si viene grande, asumimos que ya viene en milisegundos.
+       */
+      if (expiresIn && Number.isFinite(expiresIn)) {
+        const expiresInMs = expiresIn < 100000 ? expiresIn * 1000 : expiresIn;
+
+        expiresAtMs = this.timeService.nowMs() + expiresInMs;
+
         console.log('[TokenService] Expiración desde expiresIn');
       } else {
-        // 🔹 PRIORIDAD 2 → JWT exp
+        /**
+         * PRIORIDAD 2 → JWT exp
+         */
         const payload = JSON.parse(atob(token.split('.')[1]));
         const expSeconds = payload.exp;
 
         if (!expSeconds) return;
 
-        expiresAtMs = expSeconds * 1000;
+        expiresAtMs = Number(expSeconds) * 1000;
+
         console.log('[TokenService] Expiración desde JWT');
       }
 
       sessionStorage.setItem(this.EXPIRES_AT_KEY, expiresAtMs.toString());
 
+      const remainingMinutes = Math.ceil(
+        (expiresAtMs - this.timeService.nowMs()) / 60000,
+      );
+
       console.log('[TokenService] Expira en:', new Date(expiresAtMs));
+      console.log(
+        '[TokenService] Duración real del token:',
+        remainingMinutes,
+        'minutos',
+      );
     } catch (e) {
       console.error('Error leyendo expiración del token', e);
     }
   }
-  
+
   getTokenExpiration(): number | null {
     const v = sessionStorage.getItem(this.EXPIRES_AT_KEY);
 

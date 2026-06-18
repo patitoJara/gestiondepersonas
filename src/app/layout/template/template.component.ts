@@ -379,7 +379,7 @@ export class TemplateComponent implements OnInit, OnDestroy {
   async extendSession(): Promise<void> {
     if (this.isRefreshing) return;
 
-    sessionStorage.setItem('allowRefresh', 'true'); // 🔥 clave
+    sessionStorage.setItem('allowRefresh', 'true');
 
     this.warned = false;
     this.isRefreshing = true;
@@ -387,9 +387,20 @@ export class TemplateComponent implements OnInit, OnDestroy {
     try {
       const response: any = await firstValueFrom(this.auth.refresh());
 
-      this.tokenService.setAccessToken(response.token);
-      this.tokenService.setRefreshToken(response.refreshToken);
-      this.tokenService.setExpirationFromToken(response.token);
+      const token = response?.token || response?.accessToken;
+      const refreshToken = response?.refreshToken || response?.refresh_token;
+
+      if (!token) {
+        throw new Error('Refresh sin token válido');
+      }
+
+      this.tokenService.setAccessToken(token);
+
+      if (refreshToken) {
+        this.tokenService.setRefreshToken(refreshToken);
+      }
+
+      this.tokenService.setExpirationFromToken(token);
 
       this.sessionService.startSessionFromToken();
 
@@ -397,9 +408,10 @@ export class TemplateComponent implements OnInit, OnDestroy {
         clearInterval(this.timerSub);
         this.timerSub = undefined;
       }
+
       this.startRealExpirationTimer();
 
-      this.snackBar.open('Sesión extendida', '', {
+      this.snackBar.open('Sesión extendida automáticamente', '', {
         duration: 2000,
       });
     } catch (error) {
@@ -407,17 +419,13 @@ export class TemplateComponent implements OnInit, OnDestroy {
         clearInterval(this.timerSub);
         this.timerSub = undefined;
       }
-      this.tokenService.clear();
 
-      //this.router.navigate(['/auth/login']);
       this.forceLogout();
     } finally {
       sessionStorage.removeItem('allowRefresh');
 
-      this.remainingMinutes = 60;
+      this.isRefreshing = false;
       this.showExtendButton = false;
-
-      this.startRealExpirationTimer();
     }
   }
 
@@ -445,6 +453,19 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
       this.showExtendButton =
         this.remainingMinutes > 0 && this.remainingMinutes <= 5;
+
+      /**
+       * Si quedan 5 minutos o menos, intentamos renovar automáticamente.
+       * Así evitamos que el usuario quede fuera mientras está usando el sistema.
+       */
+      if (
+        this.remainingMinutes > 0 &&
+        this.remainingMinutes <= 5 &&
+        !this.isRefreshing
+      ) {
+        this.extendSession();
+        return;
+      }
 
       if (this.remainingMinutes <= 0 && !this.warned) {
         this.warned = true;
@@ -541,10 +562,9 @@ export class TemplateComponent implements OnInit, OnDestroy {
 
     sessionStorage.removeItem('allowRefresh');
     this.isRefreshing = false;
-
     this.warned = false;
-    this.tokenService.clear();
-    this.router.navigate(['/auth/login']);
+
+    this.sessionService.logout('manual');
   }
 
   goToProfile(): void {
@@ -570,5 +590,4 @@ export class TemplateComponent implements OnInit, OnDestroy {
   isActive(route: string): boolean {
     return this.router.url.split('?')[0] === route;
   }
-
 }
