@@ -2,7 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, Subject, timer } from 'rxjs';
-import { TokenService } from '../../core/services/token.service';
+import { TokenService } from './token.service';
 import { TimeService } from './time.service';
 
 @Injectable({ providedIn: 'root' })
@@ -61,9 +61,13 @@ export class SessionService implements OnDestroy {
   }
 
   logout(reason: 'manual' | 'timeout' = 'manual'): void {
-    console.log(`🚪 [SessionService] Logout ejecutado (${reason})`);
+    console.log(`[SessionService] Logout ejecutado (${reason})`);
 
     this.clearSession();
+
+    sessionStorage.clear();
+    localStorage.clear();
+
     this.tokenService.clear();
 
     this.router.navigate(['/auth/login'], { replaceUrl: true });
