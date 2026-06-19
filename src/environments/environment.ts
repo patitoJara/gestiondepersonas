@@ -5,7 +5,7 @@ export const environment = {
   environmentName: 'Desarrollo',
 
   appName: 'Telework-SM',
-  version: '2026-06-18-02',
+  version: '2026-06-18-03',
 
   /*
   baseUrl: 'https://teletrabajo-production.up.railway.app',

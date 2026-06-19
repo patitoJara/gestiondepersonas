@@ -26,6 +26,8 @@ import { AuthLoginService } from '@app/core/auth/services/auth.login.service';
 import { TokenService } from '@app/core/services/token.service';
 import { SessionService } from '@app/core/services/session.service';
 import { AppCacheService } from '@app/core/services/app-cache.service';
+import { environment } from 'src/environments/environment';
+
 // Dialog
 import { ErrorConfirmDialogComponent } from '@app/shared/confirm-dialog/errorConfirmDialogComponent';
 import { finalize } from 'rxjs';
@@ -73,9 +75,11 @@ export class LoginComponent implements OnInit, AfterViewInit {
   });
 
   constructor() {
-    console.log(
-      '[LoginComponent] 🟢 Componente de login cargado correctamente (tokens ya limpios)',
-    );
+    if (environment.enableDebugTools) {
+      console.log(
+        '[LoginComponent] 🟢 Componente de login cargado correctamente (tokens ya limpios)',
+      );
+    }
   }
 
   get f() {
@@ -188,8 +192,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
               console.log('[login.component] navegación resultado:', ok);
 
               if (ok) {
-                this.sessionService.startSession('login');
-              } else {
+                this.sessionService.startSessionFromToken();
+              } else if (environment.enableDebugTools) {
                 console.warn('[login.component] ⚠️ Router no navegó');
               }
             });
@@ -225,13 +229,17 @@ export class LoginComponent implements OnInit, AfterViewInit {
     const button = this.loginButton?.nativeElement;
 
     if (!button) {
-      console.warn('[login] ⚠️ Botón INGRESAR no encontrado');
+      if (environment.enableDebugTools) {
+        console.warn('[login] ⚠️ Botón INGRESAR no encontrado');
+      }
       return;
     }
 
     button.focus();
 
-    console.log('[login] 🎯 Foco actual:', document.activeElement);
+    if (environment.enableDebugTools) {
+      console.log('[login] 🎯 Foco actual:', document.activeElement);
+    }
   }
 
   goToRecover(): void {

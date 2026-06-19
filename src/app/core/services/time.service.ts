@@ -43,9 +43,11 @@ export class TimeService {
       );
 
       if (!res?.dateTime) {
-        console.warn(
-          '[time] El servidor no entregó dateTime. Se utilizará la hora local.',
-        );
+        if (environment.enableDebugTools) {
+          console.warn(
+            '[time] El servidor no entregó dateTime. Se utilizará la hora local.',
+          );
+        }
 
         this.serverOffsetMs = 0;
         this.synchronized$.next(false);
@@ -64,16 +66,20 @@ export class TimeService {
       this.serverOffsetMs = serverTimeMs - Date.now();
       this.synchronized$.next(true);
 
-      console.log(
-        '[time] 🕒 Hora sincronizada. Diferencia con servidor:',
-        this.serverOffsetMs,
-        'ms',
-      );
+      if (environment.enableDebugTools) {
+        console.log(
+          '[time] 🕒 Hora sincronizada. Diferencia con servidor:',
+          this.serverOffsetMs,
+          'ms',
+        );
+      }
     } catch (error) {
-      console.error(
-        '[time] Error obteniendo hora del servidor. Se utilizará la hora local.',
-        error,
-      );
+      if (environment.enableDebugTools) {
+        console.warn(
+          '[time] Error obteniendo hora del servidor. Se utilizará la hora local.',
+          error,
+        );
+      }
 
       this.serverOffsetMs = 0;
       this.synchronized$.next(false);
