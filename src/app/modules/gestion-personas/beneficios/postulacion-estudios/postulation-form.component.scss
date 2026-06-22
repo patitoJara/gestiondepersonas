@@ -3526,3 +3526,81 @@ Step 1 - 2 -
       color: #46607a;
     }
   }
+
+  .deadline-banner {
+  margin: 18px 0 22px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #eef6ff;
+  border: 1px solid #b8d9f5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 22px rgba(15, 54, 92, 0.08);
+}
+
+.deadline-banner.closed {
+  background: #fff1f1;
+  border-color: #f3b5b5;
+}
+
+.deadline-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(25, 118, 210, 0.12);
+  color: #0b5ea8;
+  flex: 0 0 auto;
+}
+
+.deadline-banner.closed .deadline-icon {
+  background: rgba(198, 40, 40, 0.12);
+  color: #b71c1c;
+}
+
+.deadline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.deadline-title {
+  font-weight: 800;
+  color: #17324d;
+  font-size: 15px;
+}
+
+.deadline-text {
+  font-size: 13px;
+  color: #536579;
+  margin-top: 3px;
+}
+
+.deadline-counter {
+  font-weight: 900;
+  font-size: 18px;
+  color: #0b5ea8;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 9px 16px;
+  white-space: nowrap;
+  border: 1px solid rgba(11, 94, 168, 0.18);
+}
+
+.deadline-banner.closed .deadline-counter {
+  color: #b71c1c;
+  border-color: rgba(183, 28, 28, 0.18);
+}
+
+@media (max-width: 720px) {
+  .deadline-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .deadline-counter {
+    width: 100%;
+    text-align: center;
+  }
+}

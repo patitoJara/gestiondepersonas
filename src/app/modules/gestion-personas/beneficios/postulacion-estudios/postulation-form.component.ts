@@ -5,6 +5,7 @@ import {
   ElementRef,
   ChangeDetectorRef,
   NgZone,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -194,7 +195,7 @@ interface IngresoFamiliar {
   templateUrl: './postulation-form.component.html',
   styleUrl: './postulation-form.component.scss',
 })
-export class PostulationFormComponent {
+export class PostulationFormComponent implements OnDestroy {
   @ViewChild('fileInputExtra') fileInputExtra!: ElementRef;
   private emailService = inject(EmailService);
 
@@ -628,6 +629,13 @@ export class PostulationFormComponent {
 
   estudiaenlaRegion = ['Si', 'No'];
 
+  private readonly postulationDeadline = new Date(2026, 5, 22, 23, 59, 59, 999);
+  //private readonly postulationDeadline = new Date(2026, 5, 22, 14, 44, 0, 0);
+  //getPostulationDeadlineText():
+  deadlineCountdownText = '';
+  private deadlineCountdownInterval: ReturnType<typeof setInterval> | null =
+    null;
+
   /* ---------------------------------------------------------------------------------------------------
                                             ngOnInit() {
   ------------------------------------------------------------------------------------------------------*/
@@ -660,6 +668,7 @@ export class PostulationFormComponent {
       // =====================================
 
       await this.prepareInitialFormEntry();
+      this.startPostulationDeadlineCountdown();
     } catch (e) {
       console.error('❌ INIT ERROR:', e);
 
@@ -684,14 +693,60 @@ export class PostulationFormComponent {
     }
   }
 
-  private readonly postulationDeadline = new Date(2026, 5, 23, 23, 59, 59, 999);
+  ngOnDestroy(): void {
+    if (this.deadlineCountdownInterval) {
+      clearInterval(this.deadlineCountdownInterval);
+    }
+  }
+
+  private startPostulationDeadlineCountdown(): void {
+    this.updatePostulationDeadlineCountdown();
+
+    if (this.deadlineCountdownInterval) {
+      clearInterval(this.deadlineCountdownInterval);
+    }
+
+    this.deadlineCountdownInterval = setInterval(() => {
+      this.updatePostulationDeadlineCountdown();
+    }, 1000);
+  }
+
+  private updatePostulationDeadlineCountdown(): void {
+    const now = new Date().getTime();
+    const deadline = this.postulationDeadline.getTime();
+    const diff = deadline - now;
+
+    if (diff <= 0) {
+      this.deadlineCountdownText = 'Proceso cerrado';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (days > 0) {
+      this.deadlineCountdownText =
+        `${days} día${days === 1 ? '' : 's'} ` +
+        `${hours} h ${minutes} min ${seconds} seg`;
+    } else {
+      this.deadlineCountdownText = `${hours} h ${minutes} min ${seconds} seg`;
+    }
+
+    this.cdr.markForCheck();
+  }
 
   isPostulationDeadlineExpired(): boolean {
     return new Date().getTime() > this.postulationDeadline.getTime();
   }
 
   getPostulationDeadlineText(): string {
-    return '23/06/2026 a las 23:59';
+    return '22/06/2026 a las 23:59';
+    //return '22/06/2026 a las 14:44';
   }
 
   private showPostulationClosedMessage(): void {
@@ -786,6 +841,12 @@ export class PostulationFormComponent {
     );
 
     const selectedStatus = String(selected?.status || '').toUpperCase();
+
+    // 🔒 Si el proceso está cerrado, NO permitir abrir borradores editables
+    if (this.isPostulationDeadlineExpired() && selectedStatus === 'DRAFT') {
+      this.showPostulationClosedMessage();
+      return;
+    }
 
     const savedStep = Number(selected?.currentStep || 1);
 

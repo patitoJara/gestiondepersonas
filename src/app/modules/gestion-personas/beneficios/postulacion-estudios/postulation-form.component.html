@@ -25,6 +25,35 @@
         <div class="title-sub">Bienestar SSM 2026</div>
       </div>
 
+      <div
+        class="deadline-banner"
+        [class.closed]="isPostulationDeadlineExpired()"
+      >
+        <div class="deadline-icon">
+          <mat-icon>
+            {{ isPostulationDeadlineExpired() ? "lock" : "schedule" }}
+          </mat-icon>
+        </div>
+
+        <div class="deadline-content">
+          <div class="deadline-title">
+            {{
+              isPostulationDeadlineExpired()
+                ? "Proceso de postulación cerrado"
+                : "Tiempo restante para el cierre de postulación"
+            }}
+          </div>
+
+          <div class="deadline-text">
+            Cierre oficial: {{ getPostulationDeadlineText() }}
+          </div>
+        </div>
+
+        <div class="deadline-counter">
+          {{ deadlineCountdownText }}
+        </div>
+      </div>
+
       <!-- Selector de postulación: permite alternar entre borrador activo y postulaciones enviadas -->
       <div *ngIf="!showPostulationForm" class="postulation-start-panel">
         <div class="section-title">
