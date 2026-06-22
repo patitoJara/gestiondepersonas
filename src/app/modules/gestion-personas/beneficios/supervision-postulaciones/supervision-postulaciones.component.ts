@@ -842,10 +842,17 @@ export class SupervisionPostulacionesComponent implements OnInit {
           'El documento figura registrado en la postulación, pero no fue posible obtener el archivo físico desde el servidor. ' +
           'Debe revisarse la carga documental o devolver la postulación a borrador para que el funcionario vuelva a subirlo.';
 
-        if (Number(error?.status) === 401 || Number(error?.status) === 403) {
+        if (Number(error?.status) === 401) {
           message =
-            'El documento figura registrado en la postulación, pero no fue posible obtener el archivo físico desde el servidor. ' +
-            'Debe devolverse la postulación a borrador para que el funcionario vuelva a subir el documento.';
+            'El documento está registrado en la postulación, pero no fue posible descargar el archivo físico. ' +
+            'Este archivo puede corresponder a una carga anterior realizada con un formato de almacenamiento no compatible con el mecanismo actual de descarga. ' +
+            'La sesión continúa activa. Para regularizarlo, debe devolverse la postulación a borrador y solicitar al funcionario que vuelva a cargar este documento.';
+        }
+
+        if (Number(error?.status) === 403) {
+          message =
+            'El documento está registrado en la postulación, pero el usuario actual no cuenta con permisos suficientes para descargarlo. ' +
+            'Debe revisarse la autorización del perfil o solicitar apoyo técnico.';
         }
 
         if (Number(error?.status) === 404) {

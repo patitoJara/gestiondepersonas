@@ -70,6 +70,7 @@
             type="button"
             mat-stroked-button
             class="btn-secondary"
+            [disabled]="isPostulationDeadlineExpired()"
             (click)="startNewPostulationFromSelector()"
           >
             Nueva postulación
@@ -1003,21 +1004,22 @@
 
                 <div class="ssm-grid-3">
                   <div class="ssm-field">
-                    <label>Situación Acedémica</label>
+                    <label>Situación Académica</label>
                     <select
                       class="input"
                       [(ngModel)]="verificacion.tipo"
                       [ngModelOptions]="{ standalone: true }"
                     >
-                      <option value="primer">Primer año</option>
-                      <option value="continuidad">Segundo año</option>
-                      <option value="continuidad">Tercer año</option>
-                      <option value="continuidad">Cuarto año</option>
-                      <option value="continuidad">Quinto año</option>
-                      <option value="continuidad">Sexto año</option>
-                      <option value="continuidad">Septimo año</option>
-                      <option value="continuidad">Octavo año</option>
-                      <option value="continuidad">Curso Superior</option>
+                      <option value="">Seleccione situación académica</option>
+                      <option value="PRIMER_ANIO">Primer año</option>
+                      <option value="SEGUNDO_ANIO">Segundo año</option>
+                      <option value="TERCER_ANIO">Tercer año</option>
+                      <option value="CUARTO_ANIO">Cuarto año</option>
+                      <option value="QUINTO_ANIO">Quinto año</option>
+                      <option value="SEXTO_ANIO">Sexto año</option>
+                      <option value="SEPTIMO_ANIO">Séptimo año</option>
+                      <option value="OCTAVO_ANIO">Octavo año</option>
+                      <option value="CURSO_SUPERIOR">Curso superior</option>
                     </select>
                   </div>
 

@@ -684,38 +684,64 @@ export class PostulationFormComponent {
     }
   }
 
-  /*
-  async ngOnInit() {
+  private readonly postulationDeadline = new Date(2026, 5, 23, 23, 59, 59, 999);
+
+  isPostulationDeadlineExpired(): boolean {
+    return new Date().getTime() > this.postulationDeadline.getTime();
+  }
+
+  getPostulationDeadlineText(): string {
+    return '23/06/2026 a las 23:59';
+  }
+
+  private showPostulationClosedMessage(): void {
+    this.dialog.open(ConfirmDialogOkComponent, {
+      width: '560px',
+      disableClose: false,
+      data: {
+        title: 'Proceso de postulación cerrado',
+        message:
+          'El período de postulación al Apoyo de Estudios Superiores finalizó el ' +
+          this.getPostulationDeadlineText() +
+          '. Ya no es posible crear, modificar ni enviar postulaciones.',
+        confirmText: 'Aceptar',
+        icon: 'lock',
+        color: 'warn',
+      },
+    });
+  }
+
+  async startNewPostulationFromSelector(): Promise<void> {
+    if (this.isPostulationDeadlineExpired()) {
+      this.showPostulationClosedMessage();
+      return;
+    }
+
     try {
       this.loader.show();
 
-      this.loggedUser = this.tokenService.getUserProfile();
+      console.log('🆕 NUEVA POSTULACIÓN DESDE MIS POSTULACIONES');
 
-      await this.loadCatalogs();
+      this.clearPostulationSession();
 
-      console.log('🚀 WELLBEING MODULE READY');
+      this.isSubmitted = false;
+      this.summary = null;
+      this.postulationId = null;
+      this.selectedPostulationViewId = null;
+      this.codigoPostulacion = '';
+      this.currentStep = 1;
 
-      await this.startWorkflow();
+      await this.prepareNewBaseFormFromUsers();
+
+      this.showPostulationForm = true;
     } catch (e) {
-      console.error('❌ INIT ERROR:', e);
-
-      this.showError('Error cargando el formulario');
+      console.error('❌ ERROR INICIANDO NUEVA POSTULACIÓN:', e);
+      this.showError('No fue posible iniciar una nueva postulación');
     } finally {
-      this.isLoading = false;
-      this.openingPostulation = false;
-
       this.loader.hide();
-
-      setTimeout(() => {
-        this.loader.hide();
-
-        console.log('🔓 INIT FINALIZADO - LOADER OFF', {
-          loaderOverlay: document.querySelectorAll('.loader-overlay').length,
-        });
-      }, 300);
     }
   }
-*/
+
   /* ---------------------------------------------------------------------------------------------------
                         FIN ngOnInit() {
   ------------------------------------------------------------------------------------------------------*/
@@ -755,37 +781,43 @@ export class PostulationFormComponent {
       return;
     }
 
+    const selected = this.availablePostulations.find(
+      (item: any) => Number(item.id) === Number(this.selectedPostulationViewId),
+    );
+
+    const selectedStatus = String(selected?.status || '').toUpperCase();
+
+    const savedStep = Number(selected?.currentStep || 1);
+
     await this.openPostulationFromSelector(
       Number(this.selectedPostulationViewId),
     );
 
     this.showPostulationForm = true;
+
+    if (selectedStatus === 'DRAFT') {
+      this.showDraftRecoveredMessage(savedStep);
+    }
   }
 
-  async startNewPostulationFromSelector(): Promise<void> {
-    try {
-      this.loader.show();
+  private showDraftRecoveredMessage(savedStep: number): void {
+    const step = Number(savedStep || 1);
 
-      console.log('🆕 NUEVA POSTULACIÓN DESDE MIS POSTULACIONES');
-
-      this.clearPostulationSession();
-
-      this.isSubmitted = false;
-      this.summary = null;
-      this.postulationId = null;
-      this.selectedPostulationViewId = null;
-      this.codigoPostulacion = '';
-      this.currentStep = 1;
-
-      await this.prepareNewBaseFormFromUsers();
-
-      this.showPostulationForm = true;
-    } catch (e) {
-      console.error('❌ ERROR INICIANDO NUEVA POSTULACIÓN:', e);
-      this.showError('No fue posible iniciar una nueva postulación');
-    } finally {
-      this.loader.hide();
-    }
+    this.dialog.open(ConfirmDialogOkComponent, {
+      width: '560px',
+      disableClose: false,
+      data: {
+        title: 'Postulación en borrador recuperada',
+        message:
+          'Tu postulación fue cargada correctamente. No has perdido la información ingresada anteriormente. ' +
+          `El sistema registra avance hasta el paso ${step}. ` +
+          'Para continuar, avanza por los pasos del formulario usando el botón “Siguiente” hasta llegar al paso donde quedaste. ' +
+          'Revisa cada sección antes de enviar la postulación.',
+        confirmText: 'Aceptar',
+        icon: 'info',
+        color: 'primary',
+      },
+    });
   }
 
   // =========================================================
@@ -3854,6 +3886,11 @@ export class PostulationFormComponent {
 
   async cierrePostulacion(): Promise<boolean> {
     if (!this.postulationId || this.isSaving || this.isFinalizing) {
+      return false;
+    }
+
+    if (this.isPostulationDeadlineExpired()) {
+      this.showPostulationClosedMessage();
       return false;
     }
 
@@ -7461,20 +7498,69 @@ export class PostulationFormComponent {
   }
 
   private restoreAcademicVerificationFromSummary(summary: any): void {
-    const verification = summary?.academicVerification;
-    if (!verification) return;
+    const verification =
+      summary?.academicVerification ||
+      summary?.academic_verification ||
+      summary?.verification ||
+      summary?.academicInfo?.academicVerification ||
+      summary?.postulation?.academicVerification ||
+      summary?.postulation?.academic_verification ||
+      null;
+
+    if (!verification) {
+      this.verificacion = {
+        tipo: '',
+        promedio: null,
+        aprobacion: null,
+      };
+
+      console.warn('⚠️ ACADEMIC VERIFICATION NO VENÍA EN SUMMARY');
+      return;
+    }
+
+    const rawAcademicSituation =
+      verification.academicSituation ??
+      verification.academic_situation ??
+      verification.situation ??
+      verification.tipo ??
+      '';
+
+    const rawGradeAverage =
+      verification.gradeAverage ??
+      verification.grade_average ??
+      verification.average ??
+      verification.promedio ??
+      null;
+
+    const rawApprovalPercentage =
+      verification.approvalPercentage ??
+      verification.approval_percentage ??
+      verification.aprobacion ??
+      null;
 
     this.verificacion = {
-      tipo: verification.academicSituation || '',
+      tipo: rawAcademicSituation ? String(rawAcademicSituation).trim() : '',
       promedio:
-        verification.gradeAverage != null
-          ? Number(verification.gradeAverage)
+        rawGradeAverage !== null &&
+        rawGradeAverage !== undefined &&
+        rawGradeAverage !== ''
+          ? Number(rawGradeAverage)
           : null,
       aprobacion:
-        verification.approvalPercentage != null
-          ? Number(verification.approvalPercentage)
+        rawApprovalPercentage !== null &&
+        rawApprovalPercentage !== undefined &&
+        rawApprovalPercentage !== ''
+          ? Number(rawApprovalPercentage)
           : null,
     };
+
+    console.log('♻️ ACADEMIC VERIFICATION RESTORED:', {
+      verification,
+      rawAcademicSituation,
+      rawGradeAverage,
+      rawApprovalPercentage,
+      verificacion: this.verificacion,
+    });
   }
 
   private restoreIncomesFromSummary(summary: any): void {
@@ -8012,15 +8098,33 @@ export class PostulationFormComponent {
     try {
       this.isSaving = true;
 
+      const academicSituation = String(this.verificacion.tipo || '').trim();
+
+      if (!academicSituation) {
+        this.showWarning('Debe seleccionar la situación académica');
+        return;
+      }
+
       const payload: any = {
-        academicSituation: this.verificacion.tipo,
+        academicSituation,
 
-        gradeAverage: Number(this.verificacion.promedio || 0),
+        gradeAverage:
+          this.verificacion.promedio !== null &&
+          this.verificacion.promedio !== undefined
+            ? Number(this.verificacion.promedio)
+            : null,
 
-        approvalPercentage: Number(this.verificacion.aprobacion || 0),
+        approvalPercentage:
+          this.verificacion.aprobacion !== null &&
+          this.verificacion.aprobacion !== undefined
+            ? Number(this.verificacion.aprobacion)
+            : null,
       };
 
-      console.log('🚀 ACADEMIC VERIFICATION:', payload);
+      console.log('🚀 ACADEMIC VERIFICATION:', {
+        verificacion: this.verificacion,
+        payload,
+      });
 
       await firstValueFrom(
         this.wellbeingPostulationService.saveAcademicVerification(
@@ -8034,6 +8138,7 @@ export class PostulationFormComponent {
       console.log('✅ STEP 5 SAVED');
     } catch (e) {
       console.error('❌ ERROR STEP 5', e);
+      this.showError('Error guardando verificación académica');
     } finally {
       this.isSaving = false;
     }

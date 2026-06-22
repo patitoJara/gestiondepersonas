@@ -33,6 +33,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  const isDocumentDownload =
+    req.url.includes('/wellbeing/postulations/documents/') &&
+    req.url.includes('/download');
+
   const token = tokenService.getAccessToken();
 
   const authReq = token
@@ -46,6 +50,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status !== 401) {
+        return throwError(() => error);
+      }
+
+      console.warn('[AuthInterceptor] 401 detectado:', {
+        url: req.url,
+        isDocumentDownload,
+        status: error.status,
+      });
+
+      /**
+       * Importante:
+       * Si falla la descarga de un documento con 401,
+       * NO se debe cerrar la sesión completa.
+       * Dejamos que el componente muestre el mensaje:
+       * "Archivo físico no disponible".
+       */
+      if (isDocumentDownload) {
         return throwError(() => error);
       }
 
